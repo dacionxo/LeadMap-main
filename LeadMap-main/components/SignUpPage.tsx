@@ -11,6 +11,7 @@ export default function SignUpPage() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [emailSent, setEmailSent] = useState(false)
   const [isHoveringSubmit, setIsHoveringSubmit] = useState(false)
   const [isHoveringGoogle, setIsHoveringGoogle] = useState(false)
   const [isHoveringMicrosoft, setIsHoveringMicrosoft] = useState(false)
@@ -21,41 +22,55 @@ export default function SignUpPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setEmailSent(false)
 
     try {
+      // Step 1-4: User submits email + password → Backend validates → Create user record → Hash password with bcrypt
+      // (Supabase handles validation, user creation, and password hashing automatically)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name,
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`
         }
       })
 
       if (error) throw error
 
       if (data.user) {
-        // Create user profile via API route (bypasses RLS)
-        const response = await fetch('/api/users/create-profile', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email: data.user.email!,
-            name,
-          }),
-        })
+        // Steps 5-7: Generate email verification token → Store token → Send verification email
+        // (Supabase handles token generation, storage, and email sending automatically)
+        
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+          // Email confirmation required - show success message
+          setEmailSent(true)
+        } else if (data.session) {
+          // Email confirmation not required - create profile and redirect
+          // This happens if email confirmation is disabled in Supabase settings
+          const response = await fetch('/api/users/create-profile', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: data.user.id,
+              email: data.user.email!,
+              name,
+            }),
+          })
 
-        const result = await response.json()
+          const result = await response.json()
 
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to create user profile')
+          if (!response.ok) {
+            throw new Error(result.error || 'Failed to create user profile')
+          }
+
+          router.push('/dashboard')
         }
-
-        router.push('/dashboard')
       }
     } catch (error: any) {
       // Handle rate limit errors specifically
@@ -177,6 +192,39 @@ export default function SignUpPage() {
                       </p>
                     </div>
 
+                    {/* Email Verification Success Message */}
+                    {emailSent ? (
+                      <div className="space-y-6">
+                        <div className="p-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                            Check your email
+                          </h2>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            We've sent a verification link to <strong>{email}</strong>
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Click the link in the email to verify your account and complete your registration. 
+                            The link will expire in 24 hours.
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            Didn't receive the email? Check your spam folder or
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEmailSent(false)
+                              setError('')
+                            }}
+                            className="text-sm text-primary hover:underline font-medium"
+                          >
+                            Try again
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
                     {/* Sign Up Form */}
                     <form onSubmit={handleAuth} className="space-y-4">
                       <div>
@@ -399,6 +447,8 @@ export default function SignUpPage() {
                       {' '}and{' '}
                       <a href="/privacy" className="underline hover:text-gray-700 dark:hover:text-gray-300">Privacy Policy</a>.
                     </p>
+                    </>
+                    )}
                   </div>
                 </div>
               </div>

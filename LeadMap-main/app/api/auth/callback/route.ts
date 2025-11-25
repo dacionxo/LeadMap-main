@@ -16,8 +16,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${requestUrl.origin}/?error=${encodeURIComponent(error.message)}`)
     }
 
-    // If this is a new OAuth user, create their profile using service role key (bypasses RLS)
-    if (data.user) {
+    // Steps 8-11: User clicks link → Token validated → Mark email as verified → Login session is created
+    // (Supabase handles token validation, email verification, and session creation automatically)
+    
+    // Now create user profile after email verification (if it doesn't exist)
+    if (data.user && data.session) {
       // Check if service role key is configured before trying to create profile
       if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_supabase_service_role_key') {
         try {
@@ -40,7 +43,7 @@ export async function GET(request: NextRequest) {
             .eq('id', data.user.id)
             .single()
 
-          // Only create profile if it doesn't exist (new OAuth user)
+          // Only create profile if it doesn't exist (new user after email verification or OAuth)
           if (!existingProfile) {
             const trialEnd = new Date()
             trialEnd.setDate(trialEnd.getDate() + 7)
@@ -50,7 +53,8 @@ export async function GET(request: NextRequest) {
               .insert({
                 id: data.user.id,
                 email: data.user.email || '',
-                name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
+                name: data.user.user_metadata?.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+                role: 'user',
                 trial_end: trialEnd.toISOString(),
                 is_subscribed: false,
                 plan_tier: 'free'
@@ -59,6 +63,8 @@ export async function GET(request: NextRequest) {
             if (profileError) {
               console.error('Error creating user profile:', profileError)
               // Don't block the redirect, but log the error
+            } else {
+              console.log('User profile created successfully after email verification')
             }
           }
         } catch (profileError) {

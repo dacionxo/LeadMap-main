@@ -26,6 +26,7 @@ export default function LandingPage() {
   const [isSignUp, setIsSignUp] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [emailSent, setEmailSent] = useState(false)
   const [showSolutionsDropdown, setShowSolutionsDropdown] = useState(false)
   const [activeTab, setActiveTab] = useState<FeatureTab>('lead-discovery')
   const [showFeatureCards, setShowFeatureCards] = useState(true)
@@ -202,42 +203,56 @@ export default function LandingPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setEmailSent(false)
 
     try {
       if (isSignUp) {
+        // Step 1-4: User submits email + password → Backend validates → Create user record → Hash password with bcrypt
+        // (Supabase handles validation, user creation, and password hashing automatically)
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               name,
-            }
+            },
+            emailRedirectTo: `${window.location.origin}/api/auth/callback`
           }
         })
 
         if (error) throw error
 
         if (data.user) {
-          // Create user profile via API route (bypasses RLS)
-          const response = await fetch('/api/users/create-profile', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId: data.user.id,
-              email: data.user.email!,
-              name,
-            }),
-          })
+          // Steps 5-7: Generate email verification token → Store token → Send verification email
+          // (Supabase handles token generation, storage, and email sending automatically)
+          
+          // Check if email confirmation is required
+          if (data.user && !data.session) {
+            // Email confirmation required - show success message
+            setEmailSent(true)
+          } else if (data.session) {
+            // Email confirmation not required - create profile and redirect
+            // This happens if email confirmation is disabled in Supabase settings
+            const response = await fetch('/api/users/create-profile', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userId: data.user.id,
+                email: data.user.email!,
+                name,
+              }),
+            })
 
-          const result = await response.json()
+            const result = await response.json()
 
-          if (!response.ok) {
-            throw new Error(result.error || 'Failed to create user profile')
+            if (!response.ok) {
+              throw new Error(result.error || 'Failed to create user profile')
+            }
+
+            router.push('/dashboard')
           }
-
-          router.push('/dashboard')
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
