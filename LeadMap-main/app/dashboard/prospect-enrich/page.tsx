@@ -301,6 +301,11 @@ function ProspectEnrichInner() {
       // Get the current category from selected filters
       const currentCategory = getPrimaryCategory(selectedFilters)
       
+      if (!profile?.id) {
+        alert('Please log in to save prospects')
+        return
+      }
+      
       for (const listing of unsavedListings) {
         try {
           const sourceId = listing.listing_id || listing.property_url
