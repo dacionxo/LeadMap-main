@@ -196,7 +196,7 @@ export default function ListDetailPage() {
     const client = supabase
     if (!client) return
     
-    async function fetchCrmContacts() {
+    async function fetchCrmContacts(client: NonNullable<typeof supabase>) {
       try {
         const { data: { user } } = await client.auth.getUser()
         if (!user) return
@@ -221,7 +221,7 @@ export default function ListDetailPage() {
       }
     }
 
-    fetchCrmContacts()
+    fetchCrmContacts(client)
   }, [supabase])
 
   // Sync header scroll with data container
@@ -362,7 +362,8 @@ export default function ListDetailPage() {
   }, [listings, selectedIds])
 
   const handleBulkRemove = useCallback(async () => {
-    if (!supabase || selectedIds.size === 0) return
+    const client = supabase
+    if (!client || selectedIds.size === 0) return
 
     if (!confirm(`Remove ${selectedIds.size} item(s) from this list?`)) {
       return
@@ -372,7 +373,7 @@ export default function ListDetailPage() {
       // Get the list_item IDs for the selected listings
       // We need to fetch list_items to get their IDs
       const selectedListingIds = Array.from(selectedIds)
-      const { data: listItems } = await supabase
+      const { data: listItems } = await client
         .from('list_items')
         .select('id')
         .eq('list_id', listId)
@@ -421,10 +422,11 @@ export default function ListDetailPage() {
   }
 
   const handleSave = async (listing: Listing, saved: boolean) => {
-    if (!supabase) return
+    const client = supabase
+    if (!client) return
     
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await client.auth.getUser()
       if (!user) return
 
       const sourceId = listing.listing_id || listing.property_url
@@ -439,7 +441,7 @@ export default function ListDetailPage() {
         const firstName = nameParts[0] || null
         const lastName = nameParts.slice(1).join(' ') || 'Property Owner'
 
-        const { error } = await supabase
+        const { error } = await client
           .from('contacts')
           .insert([{
             user_id: user.id,
@@ -461,7 +463,7 @@ export default function ListDetailPage() {
           setCrmContactIds(prev => new Set([...Array.from(prev), sourceId]))
         }
       } else {
-        const { error } = await supabase
+        const { error } = await client
           .from('contacts')
           .delete()
           .eq('user_id', user.id)
@@ -480,13 +482,14 @@ export default function ListDetailPage() {
   }
 
   const handleRemoveFromList = async (listing: Listing) => {
-    if (!supabase) return
+    const client = supabase
+    if (!client) return
     
     try {
       const sourceId = listing.listing_id || listing.property_url
       if (!sourceId || !listId) return
 
-      const { error } = await supabase
+      const { error } = await client
         .from('list_items')
         .delete()
         .eq('list_id', listId)
