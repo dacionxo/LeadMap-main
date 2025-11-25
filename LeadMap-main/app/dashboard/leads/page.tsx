@@ -316,9 +316,11 @@ function LeadsPageContent() {
         {activeView === 'table' && (
           <LeadsTable 
             listings={listings.filter(l => {
+              // Filter by search term (street or city) - using 'street' property, not 'address'
               const matchesSearch = !searchTerm || 
                 (l.street?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
                 (l.city?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+              // Filter by status (active/expired)
               const matchesStatus = statusFilter === 'all' ||
                 (statusFilter === 'active' && l.active) ||
                 (statusFilter === 'expired' && !l.active)
