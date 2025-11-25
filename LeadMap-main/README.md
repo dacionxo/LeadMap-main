@@ -92,7 +92,17 @@ STRIPE_PRO_PRICE_ID=price_pro_monthly
 2. Enable Maps JavaScript API
 3. Create an API key and restrict it to your domain
 
-### 6. Run Development Server
+### 6. OAuth Setup (Google & Microsoft)
+
+For OAuth authentication with Google and Microsoft, see the detailed guide:
+- **[OAuth Setup Guide](./OAUTH_SETUP_GUIDE.md)** - Complete step-by-step instructions
+
+Quick summary:
+1. Create OAuth apps in Google Cloud Console and Azure Portal
+2. Configure credentials in Supabase Dashboard > Authentication > Providers
+3. Set up redirect URLs
+
+### 7. Run Development Server
 
 ```bash
 npm run dev
