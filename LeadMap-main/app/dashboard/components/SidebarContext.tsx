@@ -1,0 +1,52 @@
+'use client'
+
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+
+interface SidebarContextType {
+  isOpen: boolean
+  toggle: () => void
+  close: () => void
+  open: () => void
+}
+
+const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
+
+export function SidebarProvider({ children }: { children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(true)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    // Load sidebar state from localStorage
+    const saved = localStorage.getItem('sidebarOpen')
+    if (saved !== null) {
+      setIsOpen(saved === 'true')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (mounted) {
+      // Save sidebar state to localStorage
+      localStorage.setItem('sidebarOpen', isOpen.toString())
+    }
+  }, [isOpen, mounted])
+
+  const toggle = () => setIsOpen(prev => !prev)
+  const close = () => setIsOpen(false)
+  const open = () => setIsOpen(true)
+
+  return (
+    <SidebarContext.Provider value={{ isOpen, toggle, close, open }}>
+      {children}
+    </SidebarContext.Provider>
+  )
+}
+
+export function useSidebar() {
+  const context = useContext(SidebarContext)
+  if (context === undefined) {
+    throw new Error('useSidebar must be used within a SidebarProvider')
+  }
+  return context
+}
+

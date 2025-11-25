@@ -1,0 +1,10 @@
+import DashboardLayout from '../components/DashboardLayout'
+
+export default function LeadsLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return <DashboardLayout>{children}</DashboardLayout>
+}
+

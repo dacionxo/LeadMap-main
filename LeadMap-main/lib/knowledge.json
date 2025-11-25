@@ -1,0 +1,378 @@
+{
+  "product": {
+    "name": "LeadMap",
+    "description": "A modern, AI-powered SaaS platform for real estate professionals to discover undervalued property leads with interactive maps, advanced filtering, and intelligent data enrichment.",
+    "tagline": "The AI lead platform for faster, smarter closings"
+  },
+  "features": [
+    {
+      "keywords": ["leads", "lead", "property", "properties", "listings", "listing"],
+      "title": "Property Lead Discovery",
+      "description": "Find undervalued properties with price drop alerts. Our platform tracks properties across multiple sources and alerts you when prices drop, days on market increase, or listings expire.",
+      "details": [
+        "Real-time property tracking",
+        "Price drop notifications",
+        "Days on market monitoring",
+        "Expired listing detection",
+        "Multiple data sources"
+      ]
+    },
+    {
+      "keywords": ["map", "maps", "geographic", "location", "geography", "visualize", "marker", "markers", "red dot", "blue dot", "green dot", "purple dot", "pin", "pins"],
+      "title": "Interactive Maps",
+      "description": "Visualize leads on Google Maps with color-coded markers. Red for expired leads, blue for geo-sourced leads, green for enriched leads, and purple for default/probate leads.",
+      "details": [
+        "Google Maps integration",
+        "Color-coded markers by lead type",
+        "Clickable property details",
+        "Geographic filtering",
+        "Address geocoding"
+      ],
+      "variations": [
+        "The map view is super handy! Red markers = expired listings (great opportunities), blue = geo-sourced leads, green = enriched with contact info, and purple = probate or default leads. Click any marker to see the property details.",
+        "Yeah, the map feature is pretty cool. Each color means something different - red dots are expired listings (those are gold mines), blue ones come from Google Places, green means we've enriched the contact info, and purple are probate leads.",
+        "The map uses color coding to help you spot opportunities fast. Red markers show expired listings (sellers might be frustrated), blue shows geo-sourced properties, green means we found owner contact info, and purple indicates probate or default situations."
+      ]
+    },
+    {
+      "keywords": ["filter", "filters", "search", "find", "filtering"],
+      "title": "Advanced Filtering",
+      "description": "Filter leads by type (All, Expired, Probate, Geo, Enriched), price range, location, days on market, and more. Find exactly what you're looking for quickly.",
+      "details": [
+        "Filter by lead type",
+        "Price range filtering",
+        "Location-based search",
+        "Days on market filters",
+        "Price drop percentage filters"
+      ]
+    },
+    {
+      "keywords": ["enrich", "enrichment", "owner", "contact", "skip trace", "data"],
+      "title": "AI-Powered Enrichment",
+      "description": "Enrich leads with owner contact information including email and phone numbers. Each enrichment includes a confidence score so you know how reliable the data is.",
+      "details": [
+        "Owner email lookup",
+        "Owner phone number discovery",
+        "Confidence scoring (0-100%)",
+        "Source tracking",
+        "Batch enrichment support"
+      ]
+    },
+    {
+      "keywords": ["email", "template", "templates", "outreach", "message"],
+      "title": "Email Templates",
+      "description": "Pre-built email templates for property owner outreach. Customize templates with property details, use AI-powered rewriting, and copy directly to your email client.",
+      "details": [
+        "Pre-built templates",
+        "Property detail tokens",
+        "AI-powered rewriting",
+        "One-click copy",
+        "Template management"
+      ]
+    },
+    {
+      "keywords": ["trial", "free", "pricing", "plan", "subscription", "cost", "price"],
+      "title": "Pricing & Trials",
+      "description": "Start with a 7-day free trial, no credit card required. After that, choose our Pro Plan at $150/month for unlimited leads and full access to all features.",
+      "details": [
+        "7-day free trial",
+        "No credit card required",
+        "$150/month Pro Plan",
+        "Unlimited leads",
+        "All features included"
+      ]
+    },
+    {
+      "keywords": ["upgrade", "upgrading", "billing", "bill", "payment", "pay", "subscribe", "subscription", "plan", "pro plan"],
+      "title": "Upgrade & Billing",
+      "description": "Upgrading is simple! After your 7-day free trial ends, you can subscribe to the Pro Plan for $150/month. No long-term contracts, cancel anytime. You'll get unlimited leads, full enrichment access, email templates, and all premium features.",
+      "details": [
+        "$150/month Pro Plan",
+        "No credit card needed for trial",
+        "Cancel anytime",
+        "Unlimited everything",
+        "All features unlocked"
+      ],
+      "variations": [
+        "To upgrade, just head to the pricing page after your trial ends. It's $150/month for the Pro Plan - no contracts, cancel whenever. You get unlimited leads, enrichment, templates, the whole shebang.",
+        "Upgrading's pretty straightforward. Once your free trial wraps up, you can jump on the Pro Plan for $150/month. Cancel anytime, no strings attached. Everything's included - unlimited leads, enrichment, email templates, maps, you name it.",
+        "After your 7-day trial, upgrading to Pro is $150/month. No credit card needed for the trial, and you can cancel the Pro plan anytime. It unlocks everything - unlimited leads, full enrichment, all the templates, and premium features."
+      ]
+    },
+    {
+      "keywords": ["probate", "probate leads", "estate", "decedent"],
+      "title": "Probate Leads",
+      "description": "Access probate property leads with case numbers, decedent names, and filing dates. These properties often represent excellent opportunities for real estate professionals.",
+      "details": [
+        "Case number tracking",
+        "Decedent information",
+        "Filing date tracking",
+        "Geographic filtering",
+        "CSV import support"
+      ]
+    },
+    {
+      "keywords": ["expired", "expired listing", "expired leads"],
+      "title": "Expired Listings",
+      "description": "Automatically detect and track expired listings. When a property disappears from active listings, we mark it as expired so you can reach out to frustrated sellers.",
+      "details": [
+        "Automatic expiration detection",
+        "Expired listing alerts",
+        "Seller contact opportunities",
+        "Historical tracking"
+      ]
+    },
+    {
+      "keywords": ["geo", "geographic", "google places", "location-based"],
+      "title": "Geo-Sourced Leads",
+      "description": "Discover leads from Google Places API integration. Find real estate agencies and properties based on geographic location and radius searches.",
+      "details": [
+        "Google Places integration",
+        "Radius-based searches",
+        "Location metadata",
+        "Source tracking"
+      ]
+    },
+    {
+      "keywords": ["dashboard", "workspace", "insights", "analytics", "stats"],
+      "title": "Dashboard & Analytics",
+      "description": "Get insights into your lead pipeline with workspace analytics. Track active leads, expired leads, probate leads, and average enrichment confidence scores.",
+      "details": [
+        "Real-time lead counts",
+        "Workspace insights",
+        "Quick actions",
+        "Onboarding checklist",
+        "Progress tracking"
+      ]
+    },
+    {
+      "keywords": ["admin", "upload", "csv", "import", "bulk"],
+      "title": "Admin Features",
+      "description": "Upload leads via CSV, manage email templates, and handle probate lead imports. Full admin panel for managing your lead database.",
+      "details": [
+        "CSV bulk import",
+        "Email template management",
+        "Probate lead upload",
+        "Data management tools"
+      ]
+    },
+    {
+      "keywords": ["authentication", "login", "sign up", "oauth", "google", "microsoft"],
+      "title": "Authentication",
+      "description": "Secure authentication with email/password or OAuth providers (Google and Microsoft). Automatic profile creation and 7-day free trial assignment.",
+      "details": [
+        "Email/password login",
+        "Google OAuth",
+        "Microsoft OAuth",
+        "Automatic trial setup",
+        "Secure session management"
+      ]
+    },
+    {
+      "keywords": ["dark mode", "theme", "light mode", "dark", "light"],
+      "title": "Dark Mode",
+      "description": "Full dark mode support with persistent theme preference. Switch between light and dark themes with a single click.",
+      "details": [
+        "Light and dark themes",
+        "Persistent preferences",
+        "System theme detection",
+        "Theme toggle button"
+      ]
+    }
+  ],
+  "common_questions": [
+    {
+      "question": "how do i get started",
+      "keywords": ["start", "getting started", "begin", "setup", "onboard"],
+      "answer": "Getting started is easy! Sign up for a free account and you'll automatically get a 7-day free trial. Once you're in, you can start by exploring the dashboard, uploading your first CSV of leads, or checking out properties on the map. The onboarding checklist will guide you through the key features."
+    },
+    {
+      "question": "what is leadmap",
+      "keywords": ["what is", "what's", "about", "platform", "service"],
+      "answer": "LeadMap is an AI-powered SaaS platform designed specifically for real estate professionals. We help you discover undervalued property leads through interactive maps, advanced filtering, and intelligent data enrichment. Think of us as your all-in-one tool for finding properties with price drops, expired listings, probate opportunities, and more."
+    },
+    {
+      "question": "how much does it cost",
+      "keywords": ["cost", "price", "pricing", "how much", "subscription", "monthly"],
+      "answer": "We offer a 7-day free trial with no credit card required. After your trial, our Pro Plan is $150/month and includes unlimited leads and access to all features including enrichment, email templates, maps, and analytics."
+    },
+    {
+      "question": "how do i upgrade",
+      "keywords": ["upgrade", "upgrading", "how to upgrade", "subscribe", "pro plan", "pro", "upgrade to pro"],
+      "answer": "Upgrading is super simple! After your 7-day free trial ends, you can subscribe to the Pro Plan for $150/month. No credit card needed for the trial, and you can cancel the Pro plan anytime. Just head to the pricing page when you're ready.",
+      "variations": [
+        "To upgrade, just go to the pricing page after your trial ends. It's $150/month for Pro - no contracts, cancel whenever. You get everything unlocked.",
+        "After your free trial wraps up, upgrading to Pro is $150/month. Cancel anytime, no strings attached. Head to pricing when you're ready to upgrade.",
+        "Upgrading's easy - once your trial ends, jump on the Pro Plan for $150/month. No credit card needed for trial, cancel Pro anytime. Check out the pricing page when you want to upgrade."
+      ]
+    },
+    {
+      "question": "how do i contact support",
+      "keywords": ["support", "contact", "help", "customer service", "get help", "assistance"],
+      "answer": "For support, you can reach out via email at support@leadmap.com or use the help section in your dashboard. I'm also here to help answer questions about the platform! Most common questions are covered in the FAQ, but feel free to ask me anything.",
+      "variations": [
+        "Need help? Shoot an email to support@leadmap.com or check the help section in your dashboard. I'm here too if you have questions about how things work!",
+        "You can contact support at support@leadmap.com or use the help section in your dashboard. I'm also around to answer questions - just ask!",
+        "For support, email support@leadmap.com or hit up the help section in your dashboard. I'm here to help with platform questions too!"
+      ]
+    },
+    {
+      "question": "what are the red dots on the map",
+      "keywords": ["red dot", "red marker", "red pin", "red dots", "what are red"],
+      "answer": "Red markers on the map are expired listings - properties that were previously listed but have since been removed from active listings. These are often great opportunities because the sellers might be frustrated and more willing to negotiate. Click any red marker to see the property details.",
+      "variations": [
+        "Those red dots? Those are expired listings - properties that dropped off active listings. Usually means frustrated sellers, which equals opportunity! Click one to see the details.",
+        "Red markers = expired listings. They fell off the active market, so sellers might be more open to deals. Click any red marker for property info.",
+        "The red dots are expired listings - properties that aren't actively listed anymore. Sellers might be frustrated, so these can be great opportunities. Click a marker to see details."
+      ]
+    },
+    {
+      "question": "how do i enrich leads",
+      "keywords": ["enrich", "enrichment", "how to enrich", "owner contact"],
+      "answer": "To enrich a lead, simply click the 'Enrich' button next to any property in the leads table. Our system will look up owner contact information including email and phone numbers. Each enrichment includes a confidence score so you know how reliable the data is. You can also enrich multiple leads at once."
+    },
+    {
+      "question": "what are expired leads",
+      "keywords": ["expired", "expired listing", "what are expired"],
+      "answer": "Expired leads are properties that were previously listed but have since been removed from active listings. These represent great opportunities because the sellers may be frustrated and more willing to negotiate. We automatically detect when listings expire and mark them for you."
+    },
+    {
+      "question": "how do i use email templates",
+      "keywords": ["email template", "templates", "how to use templates", "outreach"],
+      "answer": "Email templates make outreach easy! Click 'Generate Email' on any lead, select a template, and customize it with property details. You can use AI-powered rewriting to personalize the message, then copy it directly to your email client. Templates include tokens like {address} and {price} that automatically fill in property information."
+    },
+    {
+      "question": "can i upload my own leads",
+      "keywords": ["upload", "csv", "import", "my own leads", "bulk import"],
+      "answer": "Absolutely! If you're on a paid plan, you can access the admin panel and upload leads via CSV. Just make sure your CSV includes columns for address, city, state, zip, price, price_drop_percent, days_on_market, and url. We'll handle the rest and add them to your lead database."
+    },
+    {
+      "question": "what data sources do you use",
+      "keywords": ["data source", "sources", "where do leads come from", "data"],
+      "answer": "We aggregate leads from multiple sources including Redfin, Google Places, probate records, and more. Leads are automatically tracked and updated. You can see the source of each lead in the leads table, and we track metadata like geo_source and enrichment_source for transparency."
+    },
+    {
+      "question": "what about the free trial",
+      "keywords": ["free trial", "trial", "free", "trial period"],
+      "answer": "The free trial is 7 days, no credit card required. You get full access to all features during the trial. After that, it's $150/month for the Pro Plan if you want to continue. You can cancel anytime.",
+      "variations": [
+        "7-day free trial, no credit card needed. Full access to everything. After that, $150/month for Pro if you want to keep going. Cancel anytime.",
+        "Free trial's 7 days with no credit card required. You get all features unlocked. Then it's $150/month for Pro, but you can cancel whenever.",
+        "7-day trial, no credit card needed. Full access during trial. After that, Pro is $150/month - cancel anytime if you don't want to continue."
+      ]
+    }
+  ],
+  "greetings": [
+    {
+      "keywords": ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening", "whats up", "sup", "yo"],
+      "responses": [
+        "Hey there! 👋 What's up? I'm here to help with anything LeadMap-related.",
+        "Hi! 👋 Ready to find some great property leads? What can I help you with?",
+        "Hey! What's going on? I'm your LeadMap assistant - ask me anything about the platform.",
+        "Hello! 👋 I'm here to help you get the most out of LeadMap. What would you like to know?",
+        "Yo! 👋 What can I help you with today? I know everything about LeadMap."
+      ]
+    },
+    {
+      "keywords": ["how are you", "how's it going", "what's up", "howdy"],
+      "responses": [
+        "Doing great, thanks for asking! Ready to help you find some leads. What's on your mind?",
+        "All good here! What can I help you with today?",
+        "Pretty good! What do you need help with?",
+        "I'm doing well! How can I help you with LeadMap?"
+      ]
+    }
+  ],
+  "small_talk": [
+    {
+      "keywords": ["thanks", "thank you", "thx", "ty", "appreciate"],
+      "responses": [
+        "You're welcome! Happy to help. Anything else?",
+        "No problem! Let me know if you need anything else.",
+        "Anytime! Feel free to ask if you have more questions.",
+        "Glad I could help! Hit me up if you need anything else."
+      ]
+    },
+    {
+      "keywords": ["cool", "nice", "awesome", "sweet", "rad"],
+      "responses": [
+        "Right? Pretty cool stuff. What else can I help with?",
+        "Yeah, it's pretty neat! Need help with anything else?",
+        "Glad you think so! Anything else you want to know?",
+        "Awesome! What else can I help you with?"
+      ]
+    }
+  ],
+  "nonsense": [
+    {
+      "keywords": ["sing", "song", "music", "dance", "joke", "funny"],
+      "responses": [
+        "Haha, I'm not much of a singer, but I'm great at helping you find property leads! What do you need help with?",
+        "I'd love to, but I'm better at answering LeadMap questions than singing 😄 What can I help you with?",
+        "Haha, not my strong suit! But I'm really good at helping with LeadMap features. What do you need?",
+        "I like the way you think, but I'm more of a lead-finding assistant than a performer 😄 What can I help with?"
+      ]
+    },
+    {
+      "keywords": ["taco", "tacos", "pizza", "food", "eat", "hungry"],
+      "responses": [
+        "Haha, I don't eat, but I can help you find property leads! What do you need help with?",
+        "I'm not much of a foodie, but I'm great at LeadMap questions! What can I help with?",
+        "Haha, I'm more of a data assistant than a food critic 😄 What LeadMap questions do you have?",
+        "I like your style, but I'm better at helping with property leads than food recommendations! What do you need?"
+      ]
+    },
+    {
+      "keywords": ["weather", "rain", "sunny", "snow", "temperature"],
+      "responses": [
+        "I'm not a weather app, but I can help you find property leads! What do you need help with?",
+        "I'm more of a LeadMap expert than a meteorologist 😄 What can I help you with?",
+        "Haha, I don't track weather, but I'm great at helping with LeadMap features! What do you need?",
+        "I'm better at property leads than weather forecasts! What LeadMap questions do you have?"
+      ]
+    }
+  ],
+  "responses": {
+    "thinking_phrases": [
+      "Hmm, let me think...",
+      "Okay, here's what I found:",
+      "Let me break that down for you.",
+      "So here's the deal:",
+      "Alright, here's the scoop:",
+      "Got it! Here's what you need to know:",
+      "Let me check on that...",
+      "Hmm...",
+      "Okay, so:"
+    ],
+    "confidence_boosters": [
+      "Absolutely!",
+      "Great question!",
+      "I'd be happy to help with that.",
+      "Sure thing!",
+      "Of course!",
+      "Definitely!",
+      "You bet!",
+      "Yeah, totally!",
+      "For sure!"
+    ],
+    "filler_phrases": [
+      "Let me break that down for you.",
+      "Here's what you need to know:",
+      "So here's the deal:",
+      "The way it works is:",
+      "Basically,",
+      "In a nutshell,",
+      "Here's the scoop:",
+      "Long story short,"
+    ],
+    "fallback": [
+      "Hmm, I'm not entirely sure about that specific question. Could you rephrase it? I'm great at answering questions about LeadMap features, pricing, how to use the platform, and lead generation strategies.",
+      "I'm not 100% certain about that one. Try asking about LeadMap features, how to enrich leads, pricing, or using the dashboard. I'm here to help!",
+      "That's a bit outside my current knowledge. I'm best at helping with LeadMap features, lead management, and platform questions. Want to try rephrasing?",
+      "I'm not completely sure about that. I specialize in LeadMap features, lead generation, and platform usage. Can you ask in a different way?",
+      "Haha, not sure about that one, but I like the way you think! I'm better at LeadMap questions - try asking about features, pricing, or how to use the platform.",
+      "That's a bit outside my wheelhouse. I'm really good at LeadMap stuff though - features, pricing, how things work. Want to try a different question?",
+      "Hmm, I don't have a great answer for that. But I'm awesome at LeadMap questions! Try asking about features, pricing, or platform usage."
+    ]
+  }
+}

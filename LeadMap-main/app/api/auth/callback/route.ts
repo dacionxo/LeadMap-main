@@ -1,0 +1,77 @@
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+export async function GET(request: NextRequest) {
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+
+  if (code) {
+    const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (error) {
+      console.error('Error exchanging code for session:', error)
+      return NextResponse.redirect(`${requestUrl.origin}/?error=${encodeURIComponent(error.message)}`)
+    }
+
+    // If this is a new OAuth user, create their profile using service role key (bypasses RLS)
+    if (data.user) {
+      // Check if service role key is configured before trying to create profile
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_supabase_service_role_key') {
+        try {
+          // Use service role key to bypass RLS
+          const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.SUPABASE_SERVICE_ROLE_KEY,
+            {
+              auth: {
+                autoRefreshToken: false,
+                persistSession: false
+              }
+            }
+          )
+
+          // Check if user profile already exists
+          const { data: existingProfile } = await supabaseAdmin
+            .from('users')
+            .select('id')
+            .eq('id', data.user.id)
+            .single()
+
+          // Only create profile if it doesn't exist (new OAuth user)
+          if (!existingProfile) {
+            const trialEnd = new Date()
+            trialEnd.setDate(trialEnd.getDate() + 7)
+
+            const { error: profileError } = await supabaseAdmin
+              .from('users')
+              .insert({
+                id: data.user.id,
+                email: data.user.email || '',
+                name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
+                trial_end: trialEnd.toISOString(),
+                is_subscribed: false,
+                plan_tier: 'free'
+              })
+
+            if (profileError) {
+              console.error('Error creating user profile:', profileError)
+              // Don't block the redirect, but log the error
+            }
+          }
+        } catch (profileError) {
+          console.error('Error setting up admin client or creating profile:', profileError)
+          // Don't block the redirect, just log the error
+        }
+      } else {
+        console.warn('SUPABASE_SERVICE_ROLE_KEY not configured, skipping profile creation. User can still sign in.')
+        // Don't block the redirect, just log the warning
+      }
+    }
+  }
+
+  // URL to redirect to after sign in process completes
+  return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+}
