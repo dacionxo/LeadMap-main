@@ -213,7 +213,8 @@ export async function add_to_list(
     // Prepare category tag - use provided category or default to 'all'
     const categoryTag = category || 'all'
     const tags = existingContact?.tags || []
-    const updatedTags = tags.includes(categoryTag) ? tags : [...tags.filter(t => !['all', 'expired', 'probate', 'fsbo', 'frbo', 'foreclosure', 'imports', 'trash'].includes(t)), categoryTag]
+    const categoryValues = ['all', 'expired', 'probate', 'fsbo', 'frbo', 'foreclosure', 'imports', 'trash']
+    const updatedTags = tags.includes(categoryTag) ? tags : [...tags.filter((t: string) => !categoryValues.includes(t)), categoryTag]
 
     if (!existingContact) {
       // Parse agent name
