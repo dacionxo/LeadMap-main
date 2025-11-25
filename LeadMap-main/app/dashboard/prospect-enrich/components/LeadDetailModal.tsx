@@ -204,7 +204,25 @@ export default function LeadDetailModal({
       .join(', ') || 'Address not available'
   }, [listing?.street, listing?.city, listing?.state, listing?.zip_code])
 
-  const streetAddress = useMemo(() => listing?.street || '', [listing?.street])
+  // Build streetAddress - use street if available, otherwise try to build from available fields
+  const streetAddress = useMemo(() => {
+    if (listing?.street) {
+      return listing.street
+    }
+    // If no street, try to build from city, state, zip
+    const cityStateZip = [listing?.city, listing?.state, listing?.zip_code]
+      .filter(Boolean)
+      .join(', ')
+    if (cityStateZip) {
+      return cityStateZip
+    }
+    // If still nothing, try property_url as last resort
+    if (listing?.property_url) {
+      return 'Property Listing'
+    }
+    return ''
+  }, [listing?.street, listing?.city, listing?.state, listing?.zip_code, listing?.property_url])
+  
   const cityStateZip = useMemo(() => {
     return [listing?.city, listing?.state, listing?.zip_code].filter(Boolean).join(', ')
   }, [listing?.city, listing?.state, listing?.zip_code])
@@ -319,7 +337,8 @@ export default function LeadDetailModal({
                 >
                   {streetAddress || 'Address not available'}
                 </h2>
-                {cityStateZip && (
+                {/* Only show cityStateZip if streetAddress doesn't already include it (i.e., when we have a street address) */}
+                {cityStateZip && listing?.street && (
                   <p
                     style={{
                       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, sans-serif',
