@@ -428,7 +428,7 @@ function LeadsTable({ listings, loading, onRefresh, onEnrich, onGenerateEmail, o
                       {onAddToCrm && (
                         <AddToCrmButton
                           listing={listing}
-                          onAdded={onAddToCrm}
+                          onSaved={onAddToCrm ? () => onAddToCrm(listing) : undefined}
                           variant="compact"
                         />
                       )}
