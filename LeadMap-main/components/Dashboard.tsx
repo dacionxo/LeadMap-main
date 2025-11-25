@@ -66,7 +66,7 @@ interface MapLead {
 function transformListingToLead(listing: Listing): MapLead {
   return {
     id: listing.listing_id,
-    address: listing.street || '',
+    address: listing.street || 'Address not available',
     city: listing.city || '',
     state: listing.state || '',
     zip: listing.zip_code || '',
@@ -74,8 +74,8 @@ function transformListingToLead(listing: Listing): MapLead {
     price_drop_percent: 0,
     days_on_market: 0,
     url: listing.property_url || '',
-    latitude: undefined,
-    longitude: undefined,
+    latitude: listing.lat ? Number(listing.lat) : undefined,
+    longitude: listing.lng ? Number(listing.lng) : undefined,
     property_type: undefined,
     beds: listing.beds ?? undefined,
     sqft: listing.sqft ?? undefined,

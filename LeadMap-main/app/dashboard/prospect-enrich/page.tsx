@@ -1718,7 +1718,7 @@ function ProspectEnrichInner() {
                   isActive={true}
                   listings={filteredListings.map(l => ({
                     id: l.listing_id,
-                    address: l.street || '',
+                    address: l.street || 'Address not available',
                     city: l.city || '',
                     state: l.state || '',
                     zip: l.zip_code || '',
@@ -1728,14 +1728,16 @@ function ProspectEnrichInner() {
                       : 0,
                     days_on_market: l.time_listed ? parseInt(l.time_listed) : 0,
                     url: l.property_url || '',
-                    latitude: undefined,
-                    longitude: undefined,
+                    latitude: l.lat ? Number(l.lat) : undefined,
+                    longitude: l.lng ? Number(l.lng) : undefined,
                     beds: l.beds || undefined,
                     sqft: l.sqft || undefined,
                     year_built: l.year_built || undefined,
                     agent_name: l.agent_name || undefined,
                     agent_email: l.agent_email || undefined,
-                    expired: l.status?.toLowerCase().includes('expired') || false
+                    expired: l.status?.toLowerCase().includes('expired') || false,
+                    geo_source: l.listing_source_name || null,
+                    enrichment_confidence: null
                   }))} 
                   loading={listingsLoading} 
                 />

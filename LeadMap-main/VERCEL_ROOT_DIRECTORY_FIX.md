@@ -141,3 +141,4 @@ If Root Directory setting doesn't work, we can try updating `vercel.json`:
 
 But **first try the Root Directory setting** - it's the proper way to fix this.
 
+
