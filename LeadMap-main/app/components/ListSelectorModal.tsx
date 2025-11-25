@@ -160,6 +160,14 @@ export default function ListSelectorModal({
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `
+      }} />
       {/* Backdrop */}
       <div
         style={{
@@ -320,7 +328,13 @@ export default function ListSelectorModal({
               padding: '48px',
               color: isDark ? '#94a3b8' : '#64748b'
             }}>
-              <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
+              <Loader2 
+                size={24} 
+                style={{ 
+                  animation: 'spin 1s linear infinite',
+                  transformOrigin: 'center'
+                }} 
+              />
             </div>
           ) : showCreateForm ? (
             /* Create New List Form */
@@ -503,7 +517,13 @@ export default function ListSelectorModal({
                         </div>
                       </div>
                       {addingToList === list.id && (
-                        <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                        <Loader2 
+                          size={20} 
+                          style={{ 
+                            animation: 'spin 1s linear infinite',
+                            transformOrigin: 'center'
+                          }} 
+                        />
                       )}
                     </button>
                   ))}
@@ -557,13 +577,6 @@ export default function ListSelectorModal({
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </>
   )
 }

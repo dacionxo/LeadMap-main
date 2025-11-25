@@ -196,6 +196,8 @@ export default function ListDetailPage() {
     if (!supabase) return
     
     async function fetchCrmContacts() {
+      if (!supabase) return // Type guard for TypeScript
+      
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
