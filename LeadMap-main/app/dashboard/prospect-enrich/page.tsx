@@ -843,9 +843,28 @@ function ProspectEnrichInner() {
         })
         break
       }
-      case 'saved':
-        sourceListings = savedListings
+      case 'saved': {
+        // Filter saved listings to only show those that exist in the current category
+        // This ensures saved listings are properly separated by category
+        // Use allListings since it contains all listings for the current category (including saved ones)
+        const currentCategoryListingIds = new Set(allListings.map(l => l.listing_id))
+        
+        // Filter saved listings to only include those in the current category
+        // Also deduplicate by listing_id to prevent duplicates
+        const savedMap = new Map<string, Listing>()
+        savedListings.forEach(listing => {
+          const listingId = listing.listing_id
+          if (listingId && currentCategoryListingIds.has(listingId)) {
+            // Only add if not already in map (deduplication)
+            if (!savedMap.has(listingId)) {
+              savedMap.set(listingId, listing)
+            }
+          }
+        })
+        
+        sourceListings = Array.from(savedMap.values())
         break
+      }
       default:
         sourceListings = listings
     }
@@ -919,7 +938,7 @@ function ProspectEnrichInner() {
           return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       }
     })
-  }, [listings, savedListings, viewType, selectedFilters, apolloFilters, sortBy, applyApolloFilters, crmContactIds, listItemIds])
+  }, [listings, allListings, savedListings, viewType, selectedFilters, apolloFilters, sortBy, applyApolloFilters, crmContactIds, listItemIds, activeCategory])
 
   const filteredListings = useMemo(() => {
     return baseListings.filter(l => {
