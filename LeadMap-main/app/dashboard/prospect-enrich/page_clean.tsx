@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useApp } from '@/app/providers'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import LeadsTable from '@/components/LeadsTable'
-import GoogleMapsView from '@/components/GoogleMapsView'
+import MapboxView from '@/components/MapboxView'
 import EmailTemplateModal from '@/components/EmailTemplateModal'
 import AddToCrmButton from './components/AddToCrmButton'
 import ProspectInsights from './components/ProspectInsights'
@@ -116,7 +116,7 @@ interface FilterOption {
   count?: number
 }
 
-// Type for GoogleMapsView Lead interface - must match exactly
+// Type for MapboxView Lead interface - must match exactly
 interface MapLead {
   id: string
   address: string
@@ -839,7 +839,7 @@ function ProspectEnrichContent() {
 
             {activeView === 'map' && (
               <div style={{ flex: 1, overflow: 'hidden' }}>
-                <GoogleMapsView isActive={activeView === 'map'} listings={filteredListings.map(transformListingToLead)} loading={listingsLoading} />
+                <MapboxView isActive={activeView === 'map'} listings={filteredListings.map(transformListingToLead)} loading={listingsLoading} />
               </div>
             )}
 

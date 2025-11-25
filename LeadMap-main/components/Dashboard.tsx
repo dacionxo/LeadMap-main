@@ -5,7 +5,7 @@ import { useApp } from '@/app/providers'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Navigation from './Navigation'
 import LeadsTable from './LeadsTable'
-import GoogleMapsView from './GoogleMapsView'
+import MapboxView from './MapboxView'
 import TrialExpired from './TrialExpired'
 import EmailTemplateModal from './EmailTemplateModal'
 import { postEnrichLeads } from '@/lib/api'
@@ -35,7 +35,7 @@ interface Listing {
 
 type FilterType = 'all' | 'expired' | 'probate' | 'geo' | 'enriched'
 
-// Type for GoogleMapsView Lead interface - must match exactly
+// Type for MapboxView Lead interface - must match exactly
 interface MapLead {
   id: string
   address: string
@@ -314,7 +314,7 @@ export default function Dashboard() {
             onGenerateEmail={handleGenerateEmail}
           />
         ) : (
-          <GoogleMapsView 
+          <MapboxView 
             isActive={activeTab === 'map'}
             listings={listings.map(transformListingToLead)}
             loading={listingsLoading}

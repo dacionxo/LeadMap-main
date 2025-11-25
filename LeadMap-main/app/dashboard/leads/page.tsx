@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useApp } from '@/app/providers'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import LeadsTable from '@/components/LeadsTable'
-import GoogleMapsView from '@/components/GoogleMapsView'
+import MapboxView from '@/components/MapboxView'
 import EmailTemplateModal from '@/components/EmailTemplateModal'
 import { postEnrichLeads } from '@/lib/api'
 import { Search, Filter, Download } from 'lucide-react'
@@ -53,7 +53,7 @@ interface Listing {
 type FilterType = 'all' | 'expired' | 'probate' | 'geo' | 'enriched'
 type ViewType = 'table' | 'map' | 'analytics'
 
-// Type for GoogleMapsView Lead interface - must match exactly
+// Type for MapboxView Lead interface - must match exactly
 interface MapLead {
   id: string;
   address: string;
@@ -391,7 +391,7 @@ function LeadsPageContent() {
           />
         )}
         {activeView === 'map' && (
-          <GoogleMapsView 
+          <MapboxView 
             isActive={activeView === 'map'}
             listings={listings.map(transformListingToLead) as any}
             loading={listingsLoading}
