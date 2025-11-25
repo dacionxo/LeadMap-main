@@ -79,5 +79,11 @@ export async function GET(request: NextRequest) {
   }
 
   // URL to redirect to after sign in process completes
+  // If user was verified, redirect to verification confirmation page
+  if (data.user && data.session) {
+    return NextResponse.redirect(`${requestUrl.origin}/verify-email?verified=true`)
+  }
+  
+  // Fallback to dashboard if no session
   return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
 }
