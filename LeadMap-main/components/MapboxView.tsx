@@ -40,9 +40,14 @@ const MapboxView: React.FC<MapboxViewProps> = ({ isActive, listings, loading }) 
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
+  const searchMarker = useRef<mapboxgl.Marker | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [geocodedLeads, setGeocodedLeads] = useState<Map<string, { lat: number; lng: number }>>(new Map());
   const [geocodingCount, setGeocodingCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const geocodingInProgress = useRef<Set<string>>(new Set());
 
   // Function to get marker color based on lead type
@@ -156,12 +161,115 @@ const MapboxView: React.FC<MapboxViewProps> = ({ isActive, listings, loading }) 
 
     // Cleanup
     return () => {
+      if (searchMarker.current) {
+        searchMarker.current.remove();
+        searchMarker.current = null;
+      }
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
     };
   }, []);
+
+  // Search for addresses using Mapbox Geocoding API
+  const searchAddress = async (query: string) => {
+    if (!query.trim() || query.length < 3) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    if (!MAPBOX_TOKEN) return;
+
+    setIsSearching(true);
+
+    try {
+      const encodedQuery = encodeURIComponent(query.trim());
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedQuery}.json?access_token=${MAPBOX_TOKEN}&limit=5&types=address,place,poi`
+      );
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const data = await response.json();
+      setSearchResults(data.features || []);
+      setShowSearchResults(true);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle search result selection
+  const handleSearchResultClick = (result: any) => {
+    if (!map.current) return;
+
+    const [lng, lat] = result.center;
+    const placeName = result.place_name || result.text || 'Searched Location';
+
+    // Remove previous search marker
+    if (searchMarker.current) {
+      searchMarker.current.remove();
+    }
+
+    // Create new search marker (different style from property markers)
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div style="
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #ff6b6b;
+        border: 3px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        cursor: pointer;
+      ">
+        <div style="
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: white;
+        "></div>
+      </div>
+    `;
+
+    searchMarker.current = new mapboxgl.Marker(el)
+      .setLngLat([lng, lat])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 })
+          .setHTML(`
+            <div style="padding: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <h3 style="margin: 0 0 4px 0; color: #1f2937; font-size: 14px; font-weight: 600;">
+                ${placeName}
+              </h3>
+            </div>
+          `)
+      )
+      .addTo(map.current);
+
+    // Open popup
+    searchMarker.current.togglePopup();
+
+    // Fly to location
+    map.current.flyTo({
+      center: [lng, lat],
+      zoom: 14,
+      duration: 1500
+    });
+
+    // Close search results
+    setShowSearchResults(false);
+    setSearchQuery(placeName);
+  };
 
   // Geocode address using Mapbox Geocoding API
   const geocodeAddress = async (lead: Lead, cached: Map<string, { lat: number; lng: number }>): Promise<{ lat: number; lng: number } | null> => {
@@ -405,10 +513,76 @@ const MapboxView: React.FC<MapboxViewProps> = ({ isActive, listings, loading }) 
           </div>
         </div>
       </div>
+
+      {/* Search Bar */}
+      <div className="mb-4 relative">
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              searchAddress(e.target.value);
+            }}
+            onFocus={() => {
+              if (searchResults.length > 0) {
+                setShowSearchResults(true);
+              }
+            }}
+            onBlur={() => {
+              // Delay hiding results to allow click
+              setTimeout(() => setShowSearchResults(false), 200);
+            }}
+            placeholder="Search for an address or location..."
+            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+          />
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </div>
+          {isSearching && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Search Results Dropdown */}
+        {showSearchResults && searchResults.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            {searchResults.map((result, index) => (
+              <div
+                key={index}
+                onClick={() => handleSearchResultClick(result)}
+                className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+              >
+                <div className="font-medium text-gray-900 text-sm">
+                  {result.text || result.place_name}
+                </div>
+                {result.place_name && result.place_name !== result.text && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {result.place_name}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showSearchResults && searchResults.length === 0 && searchQuery.length >= 3 && !isSearching && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+            No results found
+          </div>
+        )}
+      </div>
       
       <div 
         ref={mapContainer} 
-        style={{ width: '100%', height: '600px', borderRadius: '8px', overflow: 'hidden' }}
+        style={{ width: '100%', height: '600px', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}
       />
     </div>
   );
