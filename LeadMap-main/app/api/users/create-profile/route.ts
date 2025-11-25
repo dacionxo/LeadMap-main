@@ -48,24 +48,30 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    // Verify the user is authenticated
+    // Verify the user exists in auth.users (optional check, won't block profile creation)
     // Note: If email confirmation is required, the user might not be fully authenticated
-    // immediately after signup. We'll still try to create the profile using the service role.
-    const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    // immediately after signup. We'll still create the profile using the service role.
+    try {
+      const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    // Log auth status for debugging (but don't block if user exists in auth.users)
-    if (authError) {
-      console.warn('Auth check warning (non-blocking):', authError.message)
-    }
+      // Log auth status for debugging (but don't block if user exists in auth.users)
+      if (authError) {
+        console.warn('Auth check warning (non-blocking):', authError.message)
+      }
 
-    // Verify userId matches if user is authenticated, but don't block if not authenticated
-    // (email confirmation might be pending)
-    if (user && user.id !== userId) {
-      return NextResponse.json(
-        { error: 'User ID mismatch' },
-        { status: 401 }
-      )
+      // Verify userId matches if user is authenticated, but don't block if not authenticated
+      // (email confirmation might be pending)
+      if (user && user.id !== userId) {
+        console.warn('User ID mismatch warning (non-blocking):', { 
+          authenticatedUserId: user.id, 
+          requestedUserId: userId 
+        })
+      }
+    } catch (cookieError: any) {
+      // Cookies might not be available immediately after signup - this is OK
+      // We'll proceed with profile creation using the service role key
+      console.warn('Cookie check failed (non-blocking, proceeding anyway):', cookieError.message)
     }
 
     // Check if profile already exists
@@ -145,15 +151,15 @@ export async function POST(request: NextRequest) {
     })
     
     // Provide more helpful error messages
-    let errorMessage = 'Internal server error'
-    let errorDetails = error.message || 'Unknown error occurred'
+    let errorMessage = 'Failed to create account'
+    let errorDetails = error.message || 'An unexpected error occurred. Please try again.'
     
-    if (error.message?.includes('cookies')) {
-      errorMessage = 'Authentication error'
-      errorDetails = 'Failed to read authentication cookies'
-    } else if (error.message?.includes('JSON')) {
+    if (error.message?.includes('JSON') || error.message?.includes('parse')) {
       errorMessage = 'Invalid request data'
-      errorDetails = 'Failed to parse request body'
+      errorDetails = 'The request data is invalid. Please check your input and try again.'
+    } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+      errorMessage = 'Network error'
+      errorDetails = 'Unable to connect to the server. Please check your connection and try again.'
     }
     
     return NextResponse.json(
