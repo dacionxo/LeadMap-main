@@ -121,7 +121,7 @@ function ProspectEnrichContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [activeView, setActiveView] = useState<ViewType>('table')
-  const [selectedFilters, setSelectedFilters] = useState<Set<FilterType>>(new Set(['all']))
+  const [selectedFilters, setSelectedFilters] = useState<Set<FilterType>>(new Set<FilterType>(['all']))
   const [apolloFilters, setApolloFilters] = useState<Record<string, any>>({})
   const [filtersVisible, setFiltersVisible] = useState(true)
   const [viewTypeSelector, setViewTypeSelector] = useState<'default' | 'table' | 'cards' | 'map'>('default')
