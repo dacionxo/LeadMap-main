@@ -193,16 +193,15 @@ export default function ListDetailPage() {
 
   // Fetch CRM contacts for save status
   useEffect(() => {
-    if (!supabase) return
+    const client = supabase
+    if (!client) return
     
     async function fetchCrmContacts() {
-      if (!supabase) return // Type guard for TypeScript
-      
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await client.auth.getUser()
         if (!user) return
 
-        const { data: contacts } = await supabase
+        const { data: contacts } = await client
           .from('contacts')
           .select('id, source_id')
           .eq('user_id', user.id)
