@@ -44,6 +44,8 @@ interface Listing {
   monthly_payment_estimate?: string | null
   ai_investment_score?: number | null
   time_listed?: string | null
+  lat?: number | null
+  lng?: number | null
   created_at?: string
   updated_at?: string
 }
@@ -51,7 +53,7 @@ interface Listing {
 type FilterType = 'all' | 'expired' | 'probate' | 'geo' | 'enriched'
 type ViewType = 'table' | 'map' | 'analytics'
 
-// Type for GoogleMapsView Lead interface
+// Type for GoogleMapsView Lead interface - must match exactly
 interface MapLead {
   id: string;
   address: string;
@@ -64,13 +66,17 @@ interface MapLead {
   url: string;
   latitude?: number;
   longitude?: number;
+  property_type?: string;
   beds?: number;
   sqft?: number;
   year_built?: number;
+  description?: string;
   agent_name?: string;
   agent_email?: string;
+  primary_photo?: string;
   expired?: boolean;
   geo_source?: string | null;
+  owner_email?: string;
   enrichment_confidence?: number | null;
 }
 
@@ -86,15 +92,19 @@ function transformListingToLead(listing: Listing): MapLead {
     price_drop_percent: 0,
     days_on_market: 0,
     url: listing.property_url || '',
-    latitude: listing.lat || undefined,
-    longitude: listing.lng || undefined,
-    beds: listing.beds || undefined,
-    sqft: listing.sqft || undefined,
-    year_built: listing.year_built || undefined,
-    agent_name: listing.agent_name || undefined,
-    agent_email: listing.agent_email || undefined,
+    latitude: listing.lat ?? undefined,
+    longitude: listing.lng ?? undefined,
+    property_type: undefined,
+    beds: listing.beds ?? undefined,
+    sqft: listing.sqft ?? undefined,
+    year_built: listing.year_built ?? undefined,
+    description: undefined,
+    agent_name: listing.agent_name ?? undefined,
+    agent_email: listing.agent_email ?? undefined,
+    primary_photo: undefined,
     expired: !listing.active,
     geo_source: null,
+    owner_email: undefined,
     enrichment_confidence: null
   }
 }
