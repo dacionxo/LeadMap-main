@@ -384,7 +384,7 @@ function ProspectEnrichContent() {
   }
 
   const clearAllFilters = () => {
-    setSelectedFilters(new Set(['all']))
+    setSelectedFilters(new Set<FilterType>(['all']))
     setSearchTerm('')
     setStatusFilter('all')
     setPriceRange({ min: '', max: '' })
