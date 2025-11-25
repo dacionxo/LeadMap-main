@@ -31,6 +31,8 @@ interface Listing {
   active?: boolean
   last_scraped_at?: string | null
   created_at?: string
+  lat?: number | null
+  lng?: number | null
 }
 
 type FilterType = 'all' | 'expired' | 'probate' | 'geo' | 'enriched'
