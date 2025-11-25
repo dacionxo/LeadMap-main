@@ -212,7 +212,7 @@ export function useProspectData(userId: string | undefined) {
       let data: Listing[] = []
 
       if (activeCategory === 'all') {
-        // Aggregate from all tables
+        // Aggregate from all tables - ensure every category is included
         const tablesToFetch = [
           DEFAULT_LISTINGS_TABLE,
           'expired_listings',
@@ -224,17 +224,41 @@ export function useProspectData(userId: string | undefined) {
           'foreclosure_listings'
         ]
 
-        // Fetch in parallel
-        const promises = tablesToFetch.map(table => 
-          supabase
-            .from(table)
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(1000) // Hard limit for client-side "all" view to prevent browser crash
-        )
+        // Fetch in parallel with error handling - don't fail entire aggregation if one table fails
+        const promises = tablesToFetch.map(async (table) => {
+          try {
+            const result = await supabase
+              .from(table)
+              .select('*')
+              .order('created_at', { ascending: false })
+              .limit(1000) // Hard limit for client-side "all" view to prevent browser crash
+            
+            if (result.error) {
+              console.warn(`Error fetching from ${table}:`, result.error)
+              return { data: [], error: result.error }
+            }
+            return result
+          } catch (error) {
+            console.warn(`Exception fetching from ${table}:`, error)
+            return { data: [], error }
+          }
+        })
 
-        const results = await Promise.all(promises)
-        data = results.flatMap(r => r.data || [])
+        const results = await Promise.allSettled(promises)
+        
+        // Aggregate all successful results, ignoring failures
+        data = results
+          .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+          .flatMap(r => {
+            const result = r.value
+            return result?.data || []
+          })
+        
+        // Log any failures for debugging
+        const failures = results.filter(r => r.status === 'rejected')
+        if (failures.length > 0) {
+          console.warn(`Failed to fetch from ${failures.length} table(s) when aggregating "all prospects"`)
+        }
         
         // Client-side sort for aggregated data
         data.sort((a, b) => {
@@ -242,6 +266,8 @@ export function useProspectData(userId: string | undefined) {
           const timeB = new Date(b.created_at || 0).getTime()
           return timeB - timeA
         })
+        
+        console.log(`Aggregated ${data.length} listings from ${tablesToFetch.length} tables for "all prospects"`)
 
       } else {
         // Single category fetch

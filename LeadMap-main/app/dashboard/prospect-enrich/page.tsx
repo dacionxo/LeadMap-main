@@ -610,13 +610,11 @@ function ProspectEnrichInner() {
           new_listings: 0
         }
 
-        const tableFilters: FilterType[] = ['all', 'expired', 'probate', 'fsbo', 'frbo', 'imports', 'trash', 'foreclosure']
-
+        const tableFilters: FilterType[] = ['expired', 'probate', 'fsbo', 'frbo', 'imports', 'trash', 'foreclosure']
+        
+        // Fetch counts from individual category tables
         await Promise.all(tableFilters.map(async (filterKey) => {
           const tableName = getTableName(filterKey)
-          // "all" returns 'listings' (default table) but we don't want to count 'listings' as 'all' here
-          // because 'all' logic is usually sum of all or just 'listings' count depending on definition.
-          // In the original code, 'all' was using 'listings' table count.
           
           if (!tableName) return
           
@@ -627,8 +625,36 @@ function ProspectEnrichInner() {
             counts[filterKey] = count || 0
           } catch (e) {
             // Table might not exist yet - ignore
+            console.warn(`Table ${tableName} not found or error counting:`, e)
           }
         }))
+        
+        // Calculate "all" count as sum of all category tables
+        const allTables = [
+          DEFAULT_LISTINGS_TABLE,
+          'expired_listings',
+          'probate_leads',
+          'fsbo_leads',
+          'frbo_leads',
+          'imports',
+          'trash',
+          'foreclosure_listings'
+        ]
+        
+        let allCount = 0
+        await Promise.all(allTables.map(async (tableName) => {
+          try {
+            const { count } = await supabase
+              .from(tableName)
+              .select('*', { count: 'exact', head: true })
+            allCount += count || 0
+          } catch (e) {
+            // Table might not exist yet - ignore
+            console.warn(`Table ${tableName} not found or error counting:`, e)
+          }
+        }))
+        
+        counts.all = allCount
 
         // Calculate high_value, price_drop, new_listings from listings table
         const { data: listingsData } = await supabase
