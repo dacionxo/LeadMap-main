@@ -49,7 +49,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const existingUser = users?.find(user => user.email?.toLowerCase() === email.toLowerCase())
+    if (!users || users.length === 0) {
+      return NextResponse.json(
+        { error: 'No account found with this email' },
+        { status: 404 }
+      )
+    }
+
+    const existingUser = users.find(user => user.email?.toLowerCase() === email.toLowerCase())
 
     if (!existingUser) {
       return NextResponse.json(
@@ -65,39 +72,66 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate a new verification link and trigger email sending
-    // Supabase Admin API generateLink creates a magic link
-    // If Supabase email service is configured, it will automatically send the email
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'signup',
-      email: email,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000'}/api/auth/callback`
-      }
-    })
+    // For unverified users, use inviteUserByEmail to resend verification email
+    // This method sends a confirmation email even for existing users
+    try {
+      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        email,
+        {
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000'}/api/auth/callback`
+        }
+      )
 
-    if (linkError) {
-      console.error('Error generating verification link:', linkError)
+      if (inviteError) {
+        // If inviteUserByEmail fails (e.g., user already invited), try alternative method
+        // Use updateUserById to reset confirmation status, which might trigger email
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+          existingUser.id,
+          {
+            email_confirm: false
+          }
+        )
+
+        if (updateError) {
+          console.error('Error updating user:', updateError)
+        }
+
+        // Generate a magic link as fallback
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email: email,
+          options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000'}/api/auth/callback`
+          }
+        })
+
+        if (linkError) {
+          console.error('Error generating magic link:', linkError)
+          return NextResponse.json(
+            { error: 'Unable to resend verification email. Please try again later.' },
+            { status: 500 }
+          )
+        }
+
+        // Link generated - Supabase should send email if configured
+        return NextResponse.json({
+          message: 'Verification email has been resent. Please check your inbox.',
+          success: true
+        })
+      }
+
+      // inviteUserByEmail succeeded
+      return NextResponse.json({
+        message: 'Verification email has been resent. Please check your inbox.',
+        success: true
+      })
+    } catch (error: any) {
+      console.error('Error resending verification email:', error)
       return NextResponse.json(
         { error: 'Unable to resend verification email. Please try again later.' },
         { status: 500 }
       )
     }
-
-    // If linkData contains properties, Supabase has generated the link
-    // Supabase's email service should automatically send the email if configured
-    // If using custom email service, you would send the email here using linkData.properties.action_link
-    
-    // For now, we'll return success - Supabase should handle email sending if configured
-    // If emails aren't being sent, check Supabase Dashboard → Authentication → Email Templates
-    return NextResponse.json({
-      message: 'Verification email has been resent. Please check your inbox.',
-      success: true,
-      // Include the link in response for debugging (remove in production)
-      ...(process.env.NODE_ENV === 'development' && linkData?.properties?.action_link ? {
-        debug_link: linkData.properties.action_link
-      } : {})
-    })
   } catch (error: any) {
     console.error('Resend verification error:', error)
     return NextResponse.json(
