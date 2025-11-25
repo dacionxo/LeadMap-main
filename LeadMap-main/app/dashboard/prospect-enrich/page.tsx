@@ -799,7 +799,9 @@ function ProspectEnrichInner() {
     
     switch (viewType) {
       case 'total':
-        sourceListings = listings
+        // For "total" view, show all listings including saved ones
+        // Use allListings which contains all listings for the current category
+        sourceListings = allListings
         break
       case 'net_new': {
         // Net new = listings created in last 30 days, excluding saved listings and listings in lists
@@ -2225,10 +2227,11 @@ function ProspectEnrichInner() {
                         </div>
 
                         {/* Virtualized Table Content - Inside scroll container */}
-                        {/* resolvedTableName is guaranteed to be valid here since shouldUseVirtualizedTable checks for table-based categories */}
+                        {/* When activeCategory is 'all', pass listings prop to use aggregated data instead of fetching from single table */}
                         <VirtualizedListingsTable
                           scrollContainerRef={dataScrollContainerRef}
-                          tableName={resolvedTableName}
+                          tableName={activeCategory === 'all' ? undefined : resolvedTableName}
+                          listings={activeCategory === 'all' ? filteredListings : undefined}
                           filters={{
                             search: searchTerm,
                             city: apolloFilters.city?.[0],
@@ -2691,10 +2694,11 @@ function ProspectEnrichInner() {
                         </div>
 
                         {/* Virtualized Table Content - Inside scroll container */}
-                        {/* resolvedTableName is guaranteed to be valid here since shouldUseVirtualizedTable checks for table-based categories */}
+                        {/* When activeCategory is 'all', pass listings prop to use aggregated data instead of fetching from single table */}
                         <VirtualizedListingsTable
                           scrollContainerRef={dataScrollContainerRef}
-                          tableName={resolvedTableName}
+                          tableName={activeCategory === 'all' ? undefined : resolvedTableName}
+                          listings={activeCategory === 'all' ? filteredListings : undefined}
                           filters={{
                             search: searchTerm,
                             city: apolloFilters.city?.[0],
