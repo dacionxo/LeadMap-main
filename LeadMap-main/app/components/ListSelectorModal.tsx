@@ -103,6 +103,7 @@ export default function ListSelectorModal({
       fetchLists()
       setShowCreateForm(false)
       setNewListName('')
+      setNewListType('properties')
       setSearchQuery('')
     }
   }, [isOpen, profile?.id, fetchLists])
@@ -132,6 +133,7 @@ export default function ListSelectorModal({
       
       setShowCreateForm(false)
       setNewListName('')
+      setNewListType('properties')
     } catch (err: any) {
       console.error('Error creating list:', err)
       setError(err.message || 'Failed to create list')
