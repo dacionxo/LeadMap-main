@@ -71,9 +71,13 @@ export default function ListDetailPage() {
   // Validate listId
   useEffect(() => {
     if (listId && typeof listId === 'string') {
-      console.log('📋 List detail page loaded with listId:', listId)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📋 List detail page loaded with listId:', listId)
+      }
     } else {
-      console.error('❌ Invalid listId:', listId)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('❌ Invalid listId:', listId)
+      }
       router.push('/dashboard/lists')
     }
   }, [listId, router])
@@ -132,7 +136,7 @@ export default function ListDetailPage() {
 
       const response = await fetch(`/api/lists/${listId}/items?${params}`)
       
-      if (!response.ok) {
+        if (!response.ok) {
         let errorData: any = {}
         try {
           errorData = await response.json()
@@ -141,22 +145,28 @@ export default function ListDetailPage() {
           errorData = { error: response.statusText || 'Unknown error' }
         }
         
-        console.error('❌ API Error:', { 
-          status: response.status, 
-          statusText: response.statusText,
-          error: errorData.error,
-          details: errorData.details
-        })
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('❌ API Error:', { 
+            status: response.status, 
+            statusText: response.statusText,
+            error: errorData.error,
+            details: errorData.details
+          })
+        }
         
         if (response.status === 404) {
-          console.error('List not found. Details:', errorData)
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('List not found. Details:', errorData)
+          }
           alert(`List not found: ${errorData.details || errorData.error || 'Unknown error'}`)
           router.push('/dashboard/lists')
           return
         }
         
         // Don't throw error, just set empty state
-        console.error('Failed to fetch list items:', errorData.error || 'Unknown error')
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Failed to fetch list items:', errorData.error || 'Unknown error')
+        }
         setListings([])
         setTotalCount(0)
         setTotalPages(0)
@@ -164,11 +174,13 @@ export default function ListDetailPage() {
       }
 
       const data: ListItemsResponse = await response.json()
-      console.log('✅ List data fetched:', { 
-        listId, 
-        listName: data.list?.name, 
-        itemCount: data.totalCount 
-      })
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ List data fetched:', { 
+          listId, 
+          listName: data.list?.name, 
+          itemCount: data.totalCount 
+        })
+      }
       
       setList({
         id: data.list.id,
@@ -179,7 +191,9 @@ export default function ListDetailPage() {
       setTotalCount(data.totalCount)
       setTotalPages(data.totalPages)
     } catch (err) {
-      console.error('Error fetching list data:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error fetching list data:', err)
+      }
       setListings([])
     } finally {
       setLoading(false)
@@ -217,7 +231,9 @@ export default function ListDetailPage() {
           setCrmContactIds(contactIds)
         }
       } catch (err) {
-        console.error('Error fetching CRM contacts:', err)
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Error fetching CRM contacts:', err)
+        }
       }
     }
 
@@ -286,7 +302,9 @@ export default function ListDetailPage() {
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
     } catch (err) {
-      console.error('Error exporting CSV:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error exporting CSV:', err)
+      }
       alert('Failed to export list')
     }
   }, [listings, list])
@@ -342,7 +360,9 @@ export default function ListDetailPage() {
       
       setSelectedIds(new Set())
     } catch (err) {
-      console.error('Error exporting CSV:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error exporting CSV:', err)
+      }
       alert('Failed to export selected items')
     }
   }, [listings, selectedIds, list])
@@ -402,13 +422,17 @@ export default function ListDetailPage() {
       setSelectedIds(new Set())
       await fetchListData()
     } catch (err) {
-      console.error('Error removing items:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error removing items:', err)
+      }
       alert('Failed to remove items from list')
     }
   }, [selectedIds, listId, supabase, fetchListData])
 
   const handleListingClick = (listing: Listing) => {
-    console.log('Listing clicked:', listing)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Listing clicked:', listing)
+    }
   }
 
   const handleSelect = (listingId: string, selected: boolean) => {
@@ -477,7 +501,9 @@ export default function ListDetailPage() {
         }
       }
     } catch (err) {
-      console.error('Error saving listing:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error saving listing:', err)
+      }
     }
   }
 
@@ -499,11 +525,15 @@ export default function ListDetailPage() {
       if (!error) {
         await fetchListData()
       } else {
-        console.error('Error removing from list:', error)
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Error removing from list:', error)
+        }
         alert('Failed to remove item from list')
       }
     } catch (err) {
-      console.error('Error removing from list:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error removing from list:', err)
+      }
       alert('Failed to remove item from list')
     }
   }
