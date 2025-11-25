@@ -839,7 +839,7 @@ function ProspectEnrichContent() {
 
             {activeView === 'map' && (
               <div style={{ flex: 1, overflow: 'hidden' }}>
-                <GoogleMapsView listings={filteredListings.map(transformListingToLead)} loading={listingsLoading} />
+                <GoogleMapsView isActive={activeView === 'map'} listings={filteredListings.map(transformListingToLead)} loading={listingsLoading} />
               </div>
             )}
 
