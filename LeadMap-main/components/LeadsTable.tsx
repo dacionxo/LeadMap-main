@@ -28,6 +28,7 @@ interface Listing {
   ai_investment_score?: number | null
   active?: boolean
   created_at?: string
+  listing_source_name?: string | null
 }
 
 interface LeadsTableProps {
