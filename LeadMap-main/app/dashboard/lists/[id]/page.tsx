@@ -211,11 +211,14 @@ export default function ListDetailPage() {
     if (!client) return
     
     async function fetchCrmContacts() {
+      const currentClient = client
+      if (!currentClient) return
+      
       try {
-        const { data: { user } } = await client.auth.getUser()
+        const { data: { user } } = await currentClient.auth.getUser()
         if (!user) return
 
-        const { data: contacts } = await client
+        const { data: contacts } = await currentClient
           .from('contacts')
           .select('id, source_id')
           .eq('user_id', user.id)
