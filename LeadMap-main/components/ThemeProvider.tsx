@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -13,6 +14,8 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const isHomePage = pathname === '/'
   const [theme, setTheme] = useState<Theme>('system')
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
   const [mounted, setMounted] = useState(false)
@@ -34,7 +37,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     let resolved: 'light' | 'dark' = 'light'
 
-    if (theme === 'system') {
+    // Force light mode on home page
+    if (isHomePage) {
+      resolved = 'light'
+      root.classList.add('light')
+    } else if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       resolved = systemTheme
       root.classList.add(systemTheme)
@@ -44,12 +51,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     setResolvedTheme(resolved)
-    localStorage.setItem('theme', theme)
-  }, [theme, mounted])
+    // Only save theme to localStorage if not on home page
+    if (!isHomePage) {
+      localStorage.setItem('theme', theme)
+    }
+  }, [theme, mounted, isHomePage])
 
-  // Listen for system theme changes
+  // Listen for system theme changes (only when not on home page)
   useEffect(() => {
-    if (!mounted || theme !== 'system') return
+    if (!mounted || theme !== 'system' || isHomePage) return
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handleChange = (e: MediaQueryListEvent) => {
@@ -61,7 +71,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [theme, mounted])
+  }, [theme, mounted, isHomePage])
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
