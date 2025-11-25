@@ -210,7 +210,7 @@ export default function ListDetailPage() {
     const client = supabase
     if (!client) return
     
-    async function fetchCrmContacts(client: NonNullable<typeof supabase>) {
+    async function fetchCrmContacts() {
       try {
         const { data: { user } } = await client.auth.getUser()
         if (!user) return
@@ -237,7 +237,7 @@ export default function ListDetailPage() {
       }
     }
 
-    fetchCrmContacts(client)
+    fetchCrmContacts()
   }, [supabase])
 
   // Sync header scroll with data container
