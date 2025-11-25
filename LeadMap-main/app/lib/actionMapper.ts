@@ -5,11 +5,11 @@
  * Enables cross-page communication and action routing
  */
 
-// Re-export types from PageStateContext (must come before import for TypeScript)
-export type { ActionType, ActionContext, Listing } from '@/app/contexts/PageStateContext'
-
-// Import for runtime use in this module
+// Import types from PageStateContext for runtime use
 import { ActionType, ActionContext, Listing } from '@/app/contexts/PageStateContext'
+
+// Re-export types for external use
+export type { ActionType, ActionContext, Listing }
 
 // ============================================================================
 // Action Route Configuration
