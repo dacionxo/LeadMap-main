@@ -65,7 +65,7 @@ import DashboardLayout from '../components/DashboardLayout'
 
 interface Listing {
   listing_id: string
-  property_url: string
+  property_url?: string | null
   permalink?: string | null
   scrape_date?: string | null
   last_scraped_at?: string | null
