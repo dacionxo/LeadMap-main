@@ -468,23 +468,25 @@ export default function ListDetailPage() {
         const firstName = nameParts[0] || null
         const lastName = nameParts.slice(1).join(' ') || 'Property Owner'
 
-        const { error } = await client
-          .from('contacts')
-          .insert([{
-            user_id: user.id,
-            first_name: firstName,
-            last_name: lastName,
-            email: listing.agent_email || null,
-            phone: listing.agent_phone || null,
-            address: listing.street || null,
-            city: listing.city || null,
-            state: listing.state || null,
-            zip_code: listing.zip_code || null,
-            source: 'listing',
-            source_id: sourceId,
-            status: 'new',
-            notes: `Saved from list: ${list?.name || 'N/A'}\nList Price: ${listing.list_price ? `$${listing.list_price.toLocaleString()}` : 'N/A'}`
-          }])
+        const contactData = {
+          user_id: user.id,
+          first_name: firstName,
+          last_name: lastName,
+          email: listing.agent_email || null,
+          phone: listing.agent_phone || null,
+          address: listing.street || null,
+          city: listing.city || null,
+          state: listing.state || null,
+          zip_code: listing.zip_code || null,
+          source: 'listing',
+          source_id: sourceId,
+          status: 'new',
+          notes: `Saved from list: ${list?.name || 'N/A'}\nList Price: ${listing.list_price ? `$${listing.list_price.toLocaleString()}` : 'N/A'}`
+        }
+
+        const { error } = await (client
+          .from('contacts') as any)
+          .insert([contactData])
 
         if (!error) {
           setCrmContactIds(prev => new Set([...Array.from(prev), sourceId]))
