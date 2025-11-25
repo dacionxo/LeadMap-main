@@ -174,19 +174,19 @@ const MapComponent: React.FC<{
             </div>
           `;
           
-          // Add event listener to Street View button
-          google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
-            const btn = document.getElementById(`street-view-btn-${lead.id}`);
-            if (btn) {
-              btn.addEventListener('click', () => {
-                onStreetViewClick(lead.latitude!, lead.longitude!, address);
-              });
-            }
-          });
-          
           if (infoWindow) {
             infoWindow.setContent(contentDiv);
             infoWindow.open(map, marker);
+            
+            // Add event listener to Street View button after info window is open
+            google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+              const btn = document.getElementById(`street-view-btn-${lead.id}`);
+              if (btn) {
+                btn.addEventListener('click', () => {
+                  onStreetViewClick(lead.latitude!, lead.longitude!, address);
+                });
+              }
+            });
           }
         });
 
