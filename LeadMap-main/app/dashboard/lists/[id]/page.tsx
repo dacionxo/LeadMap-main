@@ -222,9 +222,9 @@ export default function ListDetailPage() {
           .eq('user_id', user.id)
           .eq('source', 'listing')
 
-        if (contacts) {
+        if (contacts && Array.isArray(contacts)) {
           const contactIds = new Set<string>()
-          contacts.forEach(contact => {
+          contacts.forEach((contact: { id?: string; source_id?: string | null }) => {
             if (contact.source_id) {
               contactIds.add(contact.source_id)
             }
