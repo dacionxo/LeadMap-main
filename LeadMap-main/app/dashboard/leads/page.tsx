@@ -317,11 +317,11 @@ function LeadsPageContent() {
           <LeadsTable 
             listings={listings.filter(l => {
               const matchesSearch = !searchTerm || 
-                l.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                l.city.toLowerCase().includes(searchTerm.toLowerCase())
+                (l.street?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+                (l.city?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
               const matchesStatus = statusFilter === 'all' ||
-                (statusFilter === 'active' && !l.expired) ||
-                (statusFilter === 'expired' && l.expired)
+                (statusFilter === 'active' && l.active) ||
+                (statusFilter === 'expired' && !l.active)
               return matchesSearch && matchesStatus
             })}
             loading={listingsLoading}
