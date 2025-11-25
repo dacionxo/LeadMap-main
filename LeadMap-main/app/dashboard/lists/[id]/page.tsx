@@ -224,7 +224,8 @@ export default function ListDetailPage() {
 
         if (contacts && Array.isArray(contacts)) {
           const contactIds = new Set<string>()
-          contacts.forEach((contact: { id?: string; source_id?: string | null }) => {
+          const typedContacts = contacts as Array<{ id?: string; source_id?: string | null }>
+          typedContacts.forEach(contact => {
             if (contact.source_id) {
               contactIds.add(contact.source_id)
             }
