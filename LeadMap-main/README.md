@@ -56,6 +56,9 @@ NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
 # Google Maps API (Alternative)
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 
+# Google Street View API (for property detail modals)
+NEXT_PUBLIC_GOOGLE_STREET_VIEW_API_KEY=your_google_street_view_api_key
+
 # App Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 

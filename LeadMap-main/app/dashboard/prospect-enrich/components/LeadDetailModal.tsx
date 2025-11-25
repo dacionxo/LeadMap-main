@@ -1225,6 +1225,8 @@ export default function LeadDetailModal({
 
 // MapPreview component - uses Google Street View (like DealMachine)
 function MapPreview({ listing }: { listing: Listing | null }) {
+  // Use Street View API key if available, otherwise fall back to general Google Maps API key
+  const streetViewApiKey = process.env.NEXT_PUBLIC_GOOGLE_STREET_VIEW_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
   
   // Build address string for Street View
@@ -1233,9 +1235,9 @@ function MapPreview({ listing }: { listing: Listing | null }) {
     .join(', ')
 
   // Try to use Google Street View if we have an address and API key
-  if (googleMapsApiKey && address) {
+  if (streetViewApiKey && address) {
     const encodedAddress = encodeURIComponent(address)
-    const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x480&location=${encodedAddress}&key=${googleMapsApiKey}`
+    const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x480&location=${encodedAddress}&key=${streetViewApiKey}`
     return (
       <img
         src={streetViewUrl}

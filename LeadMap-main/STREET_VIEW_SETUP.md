@@ -54,11 +54,17 @@ For security, restrict your API key:
 
 ### 5. Add API Key to Environment Variables
 
-Add your Google Maps API key to your `.env.local` file:
+Add your Google Street View API key to your `.env.local` file:
 
 ```env
+# Street View API Key (used specifically for Street View in property modals)
+NEXT_PUBLIC_GOOGLE_STREET_VIEW_API_KEY=your_google_street_view_api_key_here
+
+# General Google Maps API Key (used for static maps fallback)
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
+
+**Note:** The component will use `NEXT_PUBLIC_GOOGLE_STREET_VIEW_API_KEY` if available, otherwise it falls back to `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.
 
 **For production (Vercel):**
 1. Go to your Vercel project settings
