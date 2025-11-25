@@ -25,8 +25,55 @@ export default function SignUpPage() {
     setEmailSent(false)
 
     try {
-      // Step 1-4: User submits email + password → Backend validates → Create user record → Hash password with bcrypt
-      // (Supabase handles validation, user creation, and password hashing automatically)
+      // WORLD-CLASS SIGNUP FLOW: Check user status before attempting signup
+      // STEP 1: Look up the email in the database
+      const checkResponse = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      })
+
+      const checkResult = await checkResponse.json()
+
+      // CASE 1: User exists AND email is verified → Block signup
+      if (checkResult.exists && checkResult.verified) {
+        setError(checkResult.error || 'This email is already registered. Please log in instead.')
+        setLoading(false)
+        return
+      }
+
+      // CASE 2: User exists BUT email is NOT verified → Resend verification email
+      if (checkResult.exists && !checkResult.verified) {
+        // Resend verification email
+        const resendResponse = await fetch('/api/auth/resend-verification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        })
+
+        const resendResult = await resendResponse.json()
+
+        if (resendResponse.ok) {
+          setEmailSent(true)
+          setError('')
+        } else {
+          setError(resendResult.error || 'Unable to resend verification email. Please try again later.')
+        }
+        setLoading(false)
+        return
+      }
+
+      // CASE 3: User does NOT exist → Create new user
+      if (!checkResult.shouldProceed) {
+        // If check failed but didn't block, proceed with normal signup
+        // (fallback for edge cases)
+      }
+
+      // Proceed with normal Supabase signup
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -39,7 +86,7 @@ export default function SignUpPage() {
       })
 
       if (error) {
-        // Comprehensive check for existing user errors
+        // Comprehensive check for existing user errors (fallback)
         const errorMessage = error.message?.toLowerCase() || ''
         const errorCode = error.code || ''
         
