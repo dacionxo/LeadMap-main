@@ -30,7 +30,7 @@ export default function TermsPage() {
         const id = entry.target.getAttribute('id')
         if (id) {
           if (entry.isIntersecting) {
-            setVisibleSections((prev) => new Set([...prev, id]))
+            setVisibleSections((prev) => new Set([...Array.from(prev), id]))
             setActiveSection(id)
           }
         }
