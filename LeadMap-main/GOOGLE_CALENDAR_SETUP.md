@@ -40,13 +40,15 @@ NEXT_PUBLIC_APP_URL=https://your-domain.com  # or http://localhost:3000 for loca
 3. Click **"Create"**
 4. Fill in the required information:
    - **App name**: NextDeal (or your app name)
-   - **User support email**: Your email address
+   - **User support email**: Your email address (e.g., `david@growyourdigitalleverage.com`)
    - **Developer contact information**: Your email address
    - **App logo**: (Optional) Upload your app logo
    - **Application home page**: `https://www.growyourdigitalleverage.com`
-   - **Application privacy policy link**: `https://www.growyourdigitalleverage.com/privacy`
-   - **Application terms of service link**: `https://www.growyourdigitalleverage.com/terms`
+   - **Application privacy policy link**: `https://www.growyourdigitalleverage.com/privacy` ⚠️ **Required for verification**
+   - **Application terms of service link**: `https://www.growyourdigitalleverage.com/terms` ⚠️ **Required for verification**
    - **Authorized domains**: Add `growyourdigitalleverage.com`
+   
+   > **Note**: Privacy Policy and Terms of Service links are required if you want to verify your app with Google later. Users can still use the app without verification, but they'll see a warning.
 5. Click **"Save and Continue"**
 6. On the **"Scopes"** page, click **"Add or Remove Scopes"**
 7. Add the following scopes:
@@ -198,12 +200,40 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
   4. After making changes, wait 5-10 minutes for changes to propagate
   5. Try the OAuth flow again
 
-### OAuth Consent Screen Shows "Unverified App"
-- **Solution**: 
-  - This is normal for apps in testing mode or newly published apps
-  - You can publish your app in Google Cloud Console to remove the warning (but it will still show "Unverified" until you complete verification)
-  - For production use, you may want to complete Google's verification process (takes several days)
-  - Or add test users in the OAuth consent screen settings if staying in testing mode
+### Warning: "Google hasn't verified this app"
+- **What it means**: 
+  - This warning appears because your app requests sensitive scopes (like Calendar access)
+  - It's normal for apps that haven't completed Google's verification process
+  - Users can still use the app by clicking "Advanced" → "Go to NextDeal (unsafe)"
+
+- **Solutions**:
+
+  **Option 1: For Testing/Development (Quick Fix)**
+  - Add test users in OAuth consent screen settings
+  - Test users won't see the verification warning
+  - Go to: APIs & Services > OAuth consent screen > Test users
+  - Add email addresses of users who need to test
+
+  **Option 2: For Production (Recommended Long-term)**
+  - Complete Google's OAuth verification process
+  - This removes the warning for all users
+  - Process takes 4-6 weeks and requires:
+    - Privacy Policy URL (must be accessible)
+    - Terms of Service URL (must be accessible)
+    - Video demonstration of app functionality
+    - Detailed explanation of why you need each scope
+    - Security assessment (for sensitive scopes)
+  - Start verification: APIs & Services > OAuth consent screen > "PUBLISH APP" → "Request verification"
+
+  **Option 3: Use Less Sensitive Scopes (If Possible)**
+  - Consider if you really need all the scopes you're requesting
+  - Some scopes are less sensitive and don't trigger verification warnings
+  - However, Calendar access typically requires verification
+
+- **For Now (Immediate Use)**:
+  - Users can click "Advanced" → "Go to NextDeal (unsafe)" to proceed
+  - The app will work, but users will see the warning each time
+  - This is acceptable for development and early production use
 
 ### Token Refresh Issues
 - **Solution**: 
