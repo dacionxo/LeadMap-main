@@ -6,8 +6,9 @@
  * 2. Trigger follow-up workflows for completed events
  * 
  * Usage:
- * - Run via cron: */5 * * * * node scripts/calendar-cron.ts
- * - Or use a service like Vercel Cron, GitHub Actions, etc.
+ * - Run via cron: every 5 minutes (e.g., "*/5 * * * *" in cron syntax)
+ * - Or use Vercel Cron Jobs (configured in vercel.json)
+ * - Or use a service like GitHub Actions, etc.
  */
 
 const CALENDAR_SERVICE_KEY = process.env.CALENDAR_SERVICE_KEY || 'your-service-key'
