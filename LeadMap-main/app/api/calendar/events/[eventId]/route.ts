@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { getValidAccessToken, pushEventToGoogleCalendar, deleteEventFromGoogleCalendar } from '@/lib/google-calendar-sync'
 
 export const runtime = 'nodejs'
 
@@ -278,6 +279,66 @@ export async function PUT(
       )
     }
 
+    // Sync to Google Calendar if connected
+    try {
+      const { data: googleConnection } = await supabase
+        .from('calendar_connections')
+        .select('id, access_token, refresh_token, token_expires_at, calendar_id, sync_enabled')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .eq('sync_enabled', true)
+        .single()
+
+      if (googleConnection && googleConnection.calendar_id) {
+        const validAccessToken = await getValidAccessToken(
+          googleConnection.access_token,
+          googleConnection.refresh_token,
+          googleConnection.token_expires_at
+        )
+
+        if (validAccessToken) {
+          const syncResult = await pushEventToGoogleCalendar(
+            event,
+            validAccessToken,
+            googleConnection.calendar_id
+          )
+
+          if (syncResult.success) {
+            // Update sync status
+            const syncUpdate: Record<string, any> = {
+              sync_status: 'synced',
+              last_synced_at: new Date().toISOString(),
+            }
+            
+            if (syncResult.externalEventId) {
+              syncUpdate.external_event_id = syncResult.externalEventId
+              syncUpdate.external_calendar_id = googleConnection.calendar_id
+            }
+
+            await supabase
+              .from('calendar_events')
+              .update(syncUpdate)
+              .eq('id', eventId)
+
+            // Update access token if it was refreshed
+            if (validAccessToken !== googleConnection.access_token) {
+              const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString()
+              await supabase
+                .from('calendar_connections')
+                .update({
+                  access_token: validAccessToken,
+                  token_expires_at: expiresAt,
+                })
+                .eq('id', googleConnection.id)
+            }
+          }
+        }
+      }
+    } catch (syncError) {
+      console.error('Error syncing event update to Google Calendar:', syncError)
+      // Don't fail the request if sync fails
+    }
+
     return NextResponse.json({ event })
   } catch (error) {
     console.error('Error in PUT /api/calendar/events/[eventId]:', error)
@@ -331,7 +392,7 @@ export async function DELETE(
     // Verify event exists and belongs to user
     const { data: existingEvent, error: fetchError } = await supabase
       .from('calendar_events')
-      .select('id, external_event_id')
+      .select('id, external_event_id, external_calendar_id')
       .eq('id', eventId)
       .eq('user_id', user.id)
       .single()
@@ -343,7 +404,51 @@ export async function DELETE(
       )
     }
 
-    // Delete event
+    // Delete from Google Calendar if synced
+    if (existingEvent.external_event_id && existingEvent.external_calendar_id) {
+      try {
+        const { data: googleConnection } = await supabase
+          .from('calendar_connections')
+          .select('id, access_token, refresh_token, token_expires_at, calendar_id')
+          .eq('user_id', user.id)
+          .eq('provider', 'google')
+          .eq('calendar_id', existingEvent.external_calendar_id)
+          .single()
+
+        if (googleConnection) {
+          const validAccessToken = await getValidAccessToken(
+            googleConnection.access_token,
+            googleConnection.refresh_token,
+            googleConnection.token_expires_at
+          )
+
+          if (validAccessToken) {
+            await deleteEventFromGoogleCalendar(
+              existingEvent.external_event_id,
+              validAccessToken,
+              existingEvent.external_calendar_id
+            )
+
+            // Update access token if it was refreshed
+            if (validAccessToken !== googleConnection.access_token) {
+              const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString()
+              await supabase
+                .from('calendar_connections')
+                .update({
+                  access_token: validAccessToken,
+                  token_expires_at: expiresAt,
+                })
+                .eq('id', googleConnection.id)
+            }
+          }
+        }
+      } catch (syncError) {
+        console.error('Error deleting event from Google Calendar:', syncError)
+        // Continue with local deletion even if Google sync fails
+      }
+    }
+
+    // Delete event from local database
     const { error } = await supabase
       .from('calendar_events')
       .delete()
@@ -357,8 +462,6 @@ export async function DELETE(
         { status: 500 }
       )
     }
-
-    // TODO: Delete from external calendars if synced
 
     return NextResponse.json({ success: true })
   } catch (error) {

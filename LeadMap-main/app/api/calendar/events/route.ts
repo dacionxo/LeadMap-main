@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { getValidAccessToken, pushEventToGoogleCalendar } from '@/lib/google-calendar-sync'
 
 export const runtime = 'nodejs'
 
@@ -421,6 +422,64 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('calendar_reminders')
         .insert(reminders)
+    }
+
+    // Push to Google Calendar if user has Google Calendar connected
+    try {
+      const { data: googleConnection } = await supabase
+        .from('calendar_connections')
+        .select('id, access_token, refresh_token, token_expires_at, calendar_id, sync_enabled')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .eq('sync_enabled', true)
+        .single()
+
+      if (googleConnection && googleConnection.calendar_id) {
+        const validAccessToken = await getValidAccessToken(
+          googleConnection.access_token,
+          googleConnection.refresh_token,
+          googleConnection.token_expires_at
+        )
+
+        if (validAccessToken) {
+          const syncResult = await pushEventToGoogleCalendar(
+            event,
+            validAccessToken,
+            googleConnection.calendar_id
+          )
+
+          if (syncResult.success && syncResult.externalEventId) {
+            // Update event with external event ID and sync status
+            await supabase
+              .from('calendar_events')
+              .update({
+                external_event_id: syncResult.externalEventId,
+                external_calendar_id: googleConnection.calendar_id,
+                sync_status: 'synced',
+                last_synced_at: new Date().toISOString(),
+              })
+              .eq('id', event.id)
+
+            // Update access token if it was refreshed
+            if (validAccessToken !== googleConnection.access_token) {
+              const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString()
+              await supabase
+                .from('calendar_connections')
+                .update({
+                  access_token: validAccessToken,
+                  token_expires_at: expiresAt,
+                })
+                .eq('id', googleConnection.id)
+            }
+          } else {
+            console.error('Failed to sync event to Google Calendar:', syncResult.error)
+            // Don't fail the request, just log the error
+          }
+        }
+      }
+    } catch (syncError) {
+      console.error('Error syncing event to Google Calendar:', syncError)
+      // Don't fail the request if sync fails
     }
 
     return NextResponse.json({ event }, { status: 201 })
