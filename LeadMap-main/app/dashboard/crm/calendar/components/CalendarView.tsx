@@ -54,13 +54,17 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
   useEffect(() => {
     const handleSettingsUpdate = (event: CustomEvent) => {
       setSettings(event.detail)
+      // Refetch events when timezone changes to update display
+      if (event.detail?.default_timezone) {
+        fetchEvents()
+      }
     }
 
     window.addEventListener('calendarSettingsUpdated', handleSettingsUpdate as EventListener)
     return () => {
       window.removeEventListener('calendarSettingsUpdated', handleSettingsUpdate as EventListener)
     }
-  }, [])
+  }, [fetchEvents])
 
   // Apply default view from settings on initial load
   useEffect(() => {
@@ -135,6 +139,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           }
         }
         
+        // Events are stored in UTC (TIMESTAMPTZ), FullCalendar will display them in the timezone specified
+        // The timezone prop on FullCalendar handles the conversion
         return {
           id: event.id,
           title: event.title,
@@ -150,6 +156,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             relatedType: event.related_type,
             relatedId: event.related_id,
             status: event.status,
+            timezone: event.timezone || settings?.default_timezone,
           },
         }
       })

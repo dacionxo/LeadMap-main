@@ -60,12 +60,32 @@ export default function CreateEventModal({
       if (response.ok) {
         const data = await response.json()
         const event = data.event
+        
+        // Get current timezone setting for proper display
+        const currentTimezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+        const eventTimezone = event.timezone || currentTimezone
+        
+        // Convert UTC times to the event's timezone for display in the form
+        // The times are stored in UTC, but we need to show them in the event's timezone
+        let startTime = ''
+        let endTime = ''
+        
+        if (event.start_time && event.end_time) {
+          // Create date objects from UTC times
+          const startDate = new Date(event.start_time)
+          const endDate = new Date(event.end_time)
+          
+          // Format in the event's timezone (or current setting timezone)
+          startTime = formatDateInTimezone(startDate, eventTimezone)
+          endTime = formatDateInTimezone(endDate, eventTimezone)
+        }
+        
         setFormData({
           title: event.title || '',
           description: event.description || '',
           eventType: event.event_type || 'call',
-          startTime: event.start_time ? new Date(event.start_time).toISOString().slice(0, 16) : '',
-          endTime: event.end_time ? new Date(event.end_time).toISOString().slice(0, 16) : '',
+          startTime,
+          endTime,
           allDay: event.all_day || false,
           location: event.location || '',
           conferencingLink: event.conferencing_link || '',
@@ -76,6 +96,50 @@ export default function CreateEventModal({
     } catch (error) {
       console.error('Error fetching event data:', error)
     }
+  }
+
+  // Helper function to format date in specific timezone for datetime-local input
+  const formatDateInTimezone = (date: Date, timezone: string): string => {
+    // Use Intl.DateTimeFormat to get the date/time in the specified timezone
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    
+    const parts = formatter.formatToParts(date)
+    const year = parts.find(p => p.type === 'year')?.value
+    const month = parts.find(p => p.type === 'month')?.value
+    const day = parts.find(p => p.type === 'day')?.value
+    const hour = parts.find(p => p.type === 'hour')?.value
+    const minute = parts.find(p => p.type === 'minute')?.value
+    
+    return `${year}-${month}-${day}T${hour}:${minute}`
+  }
+
+  // Helper function to convert local datetime string to UTC ISO string
+  // Treats the input as being in the specified timezone
+  const convertLocalToUTC = (localDateTime: string, timezone: string): string => {
+    if (!localDateTime) return new Date().toISOString()
+    
+    // Create a date string that includes timezone info
+    // We'll use a workaround: create date in the target timezone, then convert to UTC
+    const date = new Date(localDateTime)
+    
+    // Get the offset for the target timezone at this date
+    const utcTime = date.getTime()
+    const targetTime = new Date(date.toLocaleString('en-US', { timeZone: timezone }))
+    const localTime = new Date(date.toLocaleString('en-US'))
+    const offset = targetTime.getTime() - localTime.getTime()
+    
+    // Adjust the date by the offset to get the correct UTC time
+    const utcDate = new Date(utcTime - offset)
+    
+    return utcDate.toISOString()
   }
 
   const fetchSettings = async () => {
@@ -146,9 +210,13 @@ export default function CreateEventModal({
     setLoading(true)
 
     try {
-      const startTime = new Date(formData.startTime).toISOString()
-      const endTime = new Date(formData.endTime).toISOString()
       const timezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+      
+      // Convert local datetime input to UTC, treating the input as being in the specified timezone
+      // The datetime-local input gives us a date string without timezone info
+      // We need to interpret it as being in the user's timezone setting
+      const startTime = convertLocalToUTC(formData.startTime, timezone)
+      const endTime = convertLocalToUTC(formData.endTime, timezone)
 
       const url = isEditMode ? `/api/calendar/events/${eventId}` : '/api/calendar/events'
       const method = isEditMode ? 'PUT' : 'POST'

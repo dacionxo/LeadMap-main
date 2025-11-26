@@ -167,6 +167,15 @@ export async function PATCH(request: NextRequest) {
 
       if (error) throw error
       settings = data
+
+      // If timezone changed, update existing events' timezone field
+      if (body.defaultTimezone !== undefined && body.defaultTimezone !== existing.default_timezone) {
+        await supabase
+          .from('calendar_events')
+          .update({ timezone: body.defaultTimezone })
+          .eq('user_id', user.id)
+          .is('timezone', null) // Only update events without explicit timezone
+      }
     } else {
       const { data, error } = await supabase
         .from('user_calendar_settings')
