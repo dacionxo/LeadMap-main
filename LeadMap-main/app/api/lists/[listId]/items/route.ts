@@ -181,10 +181,11 @@ export async function GET(
 
     const fetchedListings: any[] = []
 
-    // Fetch listings - Apollo-style dual-key lookup (listing_id OR property_url)
+    // Fetch listings - Apollo Pattern Step 3: Batch fetch real items
+    // Apollo Pattern: Group by item_type, then batch fetch using item_id values
     // NOTE: listings table has NO 'id' column - only listing_id (TEXT PRIMARY KEY) and property_url (TEXT UNIQUE)
     if (listingItems.length > 0) {
-      // Extract all item_id values from memberships (as TEXT)
+      // Extract all item_id values from memberships (as TEXT) - Apollo Step 3
       const listingItemIds = listingItems
         .map(item => String(item.item_id).trim())
         .filter(Boolean)
@@ -193,9 +194,11 @@ export async function GET(
       if (listingItemIds.length === 0) {
         console.warn('⚠️ No valid listing item_ids found after filtering')
       } else {
-        console.log('🔍 Fetching listings with item_ids:', listingItemIds.slice(0, 5))
+        console.log('🔍 Apollo Step 3: Batch fetching listings with item_ids:', listingItemIds.slice(0, 5))
+        console.log('📋 Total item_ids to fetch:', listingItemIds.length)
 
-        // Fetch by listing_id (primary key) - CORRECT COLUMN
+        // Apollo Pattern: Query listings table using item_id values
+        // Try listing_id first (most common case)
         const { data: listingsA, error: errA } = await supabase
           .from('listings')
           .select('*')
@@ -207,7 +210,7 @@ export async function GET(
           console.log(`✅ Found ${listingsA.length} listings by listing_id (primary key)`)
         }
 
-        // Fetch by property_url (fallback for URL-based item_ids) - CORRECT COLUMN
+        // Apollo Pattern: Also try property_url (for URL-based item_ids)
         const { data: listingsB, error: errB } = await supabase
           .from('listings')
           .select('*')
@@ -219,7 +222,7 @@ export async function GET(
           console.log(`✅ Found ${listingsB.length} listings by property_url (unique key)`)
         }
 
-        // Merge results safely (remove duplicates by listing_id)
+        // Apollo Pattern Step 4: Reconstruct final rows (merge and deduplicate)
         const listingMap = new Map<string, any>()
         
         // Add listings from first query (by listing_id)
@@ -240,15 +243,39 @@ export async function GET(
           })
         }
 
-        // Convert map to array
+        // Convert map to array (Apollo Step 4: final rows)
         const listings = Array.from(listingMap.values())
         fetchedListings.push(...listings)
 
-        console.log(`📊 Total unique listings fetched: ${listings.length} out of ${listingItemIds.length} memberships`)
+        console.log(`📊 Apollo Step 4: Total unique listings reconstructed: ${listings.length} out of ${listingItemIds.length} memberships`)
         
-        if (listings.length === 0 && listingItemIds.length > 0) {
-          console.warn('⚠️ WARNING: No listings found despite having item_ids. Check if item_id values match listing_id or property_url in listings table.')
-          console.warn('Sample item_ids:', listingItemIds.slice(0, 3))
+        // Debug: Show which item_ids were NOT found
+        if (listings.length < listingItemIds.length) {
+          const foundIds = new Set(listings.map(l => String(l.listing_id)))
+          const foundUrls = new Set(listings.map(l => String(l.property_url || '')))
+          const missingIds = listingItemIds.filter(id => 
+            !foundIds.has(id) && !foundUrls.has(id)
+          )
+          console.warn(`⚠️ WARNING: ${missingIds.length} item_ids from memberships were NOT found in listings table`)
+          console.warn('Missing item_ids (first 5):', missingIds.slice(0, 5))
+          console.warn('This means item_id values in list_memberships do not match listing_id or property_url in listings table')
+          
+          // Try to find what these IDs might be
+          if (missingIds.length > 0 && missingIds.length <= 10) {
+            console.log('🔍 Attempting to find these IDs in listings table...')
+            for (const missingId of missingIds.slice(0, 5)) {
+              const { data: checkListing } = await supabase
+                .from('listings')
+                .select('listing_id, property_url')
+                .or(`listing_id.eq.${missingId},property_url.eq.${missingId}`)
+                .limit(1)
+              if (checkListing && checkListing.length > 0) {
+                console.log(`  Found match for "${missingId}":`, checkListing[0])
+              } else {
+                console.log(`  No match found for "${missingId}"`)
+              }
+            }
+          }
         }
       }
     }
