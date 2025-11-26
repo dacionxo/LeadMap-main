@@ -7,7 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import type { EventInput, DateSelectArg, EventClickArg, EventChangeArg } from '@fullcalendar/core'
-import { Calendar, Plus, Settings, RefreshCw, ChevronLeft, ChevronRight, Search, HelpCircle, Grid3x3, Check, X } from 'lucide-react'
+import { Plus, Settings, RefreshCw, ChevronLeft, ChevronRight, Search, HelpCircle, X } from 'lucide-react'
 import CalendarHelpModal from './CalendarHelpModal'
 
 interface CalendarEvent {
