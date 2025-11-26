@@ -212,7 +212,15 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
 
   useEffect(() => {
     fetchEvents()
-  }, [fetchEvents, view, settings?.show_declined_events, settings?.color_code_by_event_type, settings?.default_timezone])
+  }, [fetchEvents, view, settings?.show_declined_events, settings?.color_code_by_event_type])
+
+  // Whenever the canonical allEvents changes or timezone changes, re-set events
+  // so FullCalendar re-renders using the current timeZone prop
+  useEffect(() => {
+    // Re-create object references so FullCalendar sees a new event source
+    // This ensures FullCalendar applies the current timeZone when rendering
+    setEvents(allEvents.map((e) => ({ ...e })))
+  }, [allEvents, settings?.default_timezone])
 
   // Listen for settings updates (after fetchEvents is defined)
   useEffect(() => {
