@@ -70,7 +70,7 @@ export default function AddToListsModal({
       const data = await response.json()
 
       if (response.ok) {
-        const membershipIds = new Set((data.lists || []).map((l: List) => l.id))
+        const membershipIds = new Set<string>((data.lists || []).map((l: List) => l.id))
         setSelectedListIds(membershipIds)
       }
     } catch (error) {
