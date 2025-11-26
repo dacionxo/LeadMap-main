@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 
     // Filter declined events if setting is disabled
     if (userSettings?.show_declined_events === false) {
-      query = query.neq('status', 'cancelled')
+      query = query.neq('status', 'cancelled').neq('status', 'declined')
     }
 
     const { data: events, error } = await query

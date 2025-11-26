@@ -656,6 +656,21 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             loading={(isLoading) => {
               setLoading(isLoading)
             }}
+            eventDidMount={(info) => {
+              // Apply color coding based on settings
+              if (settings?.color_code_by_event_type === false) {
+                const defaultColor = settings?.default_calendar_color || '#3b82f6'
+                info.event.setProp('backgroundColor', defaultColor)
+                info.event.setProp('borderColor', defaultColor)
+              }
+              
+              // Style declined/cancelled events
+              if (info.event.extendedProps.status === 'cancelled') {
+                info.el.style.opacity = '0.5'
+                info.el.style.textDecoration = 'line-through'
+                info.el.setAttribute('data-status', 'cancelled')
+              }
+            }}
           />
         </div>
       </div>
