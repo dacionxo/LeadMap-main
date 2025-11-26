@@ -120,54 +120,6 @@ export default function CreateEventModal({
     return `${year}-${month}-${day}T${hour}:${minute}`
   }
 
-  // Helper function to convert local datetime string to UTC ISO string
-  // Treats the input as being in the specified timezone
-  const convertLocalToUTC = (localDateTime: string, timezone: string): string => {
-    if (!localDateTime) return new Date().toISOString()
-    
-    // The datetime-local input gives us a string like "2024-01-15T14:30"
-    // We need to interpret this as being in the user's timezone, not the browser's local timezone
-    
-    // Create a date object from the input (this will be interpreted as local time by the browser)
-    const localDate = new Date(localDateTime)
-    
-    // Get what this time would be in UTC if interpreted as local time
-    const utcAsLocal = localDate.getTime()
-    
-    // Get what this same time string would be in the target timezone
-    // We'll create a date string with timezone info
-    const dateStr = localDateTime.replace('T', ' ')
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    })
-    
-    // Parse the date components
-    const parts = localDateTime.split('T')
-    const datePart = parts[0]
-    const timePart = parts[1]
-    
-    // Create a date string that represents this time in the target timezone
-    // Format: "YYYY-MM-DD HH:mm" and interpret it in the target timezone
-    const dateInTimezone = new Date(`${datePart}T${timePart}:00`)
-    
-    // Calculate offset between browser timezone and target timezone
-    const browserOffset = dateInTimezone.getTimezoneOffset() * 60000
-    const targetDateStr = new Date(dateInTimezone.toLocaleString('en-US', { timeZone: timezone }))
-    const targetOffset = targetDateStr.getTimezoneOffset() * 60000
-    const offsetDiff = browserOffset - targetOffset
-    
-    // Adjust the date
-    const utcDate = new Date(dateInTimezone.getTime() - offsetDiff)
-    
-    return utcDate.toISOString()
-  }
-
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/calendar/settings', {
