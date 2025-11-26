@@ -181,118 +181,67 @@ export async function GET(
 
     const fetchedListings: any[] = []
 
-    // Fetch listings - Apollo-grade multi-format ID matching
+    // Fetch listings - Apollo-style dual-key lookup (listing_id OR property_url)
+    // NOTE: listings table has NO 'id' column - only listing_id (TEXT PRIMARY KEY) and property_url (TEXT UNIQUE)
     if (listingItems.length > 0) {
-      // Get all item_id values from memberships (as TEXT)
-      const membershipListingIds = listingItems
+      // Extract all item_id values from memberships
+      const listingItemIds = listingItems
         .map(item => item.item_id)
         .filter(Boolean)
         .slice(0, 1000) // Limit to prevent query size issues
 
-      console.log('🔍 Fetching listings with item_ids:', membershipListingIds.slice(0, 5))
+      console.log('🔍 Fetching listings with item_ids:', listingItemIds.slice(0, 5))
 
-      // Separate by format type
-      const urlListingIds = membershipListingIds.filter(id => id && (id.startsWith('http') || id.startsWith('https')))
-      const numericListingIds = membershipListingIds
-        .map(id => {
-          // Try to parse as number
-          const num = Number(id)
-          return isNaN(num) ? null : num
-        })
-        .filter((id): id is number => id !== null)
-      const textListingIds = membershipListingIds.filter(id => id && !id.startsWith('http') && isNaN(Number(id)))
+      // Fetch by listing_id (primary key)
+      const { data: listingsA, error: errA } = await supabase
+        .from('listings')
+        .select('*')
+        .in('listing_id', listingItemIds)
 
-      // Track all fetched listings to avoid duplicates
-      const fetchedListingIds = new Set<string>()
-
-      // 1. Try by listing_id (TEXT match - most common)
-      if (membershipListingIds.length > 0) {
-        const { data: listingsById, error: listingsByIdError } = await supabase
-          .from('listings')
-          .select('*')
-          .in('listing_id', membershipListingIds)
-
-        if (!listingsByIdError && listingsById) {
-          listingsById.forEach(listing => {
-            const id = listing.listing_id
-            if (id && !fetchedListingIds.has(id)) {
-              fetchedListingIds.add(id)
-              fetchedListings.push(listing)
-            }
-          })
-          console.log(`✅ Found ${listingsById.length} listings by listing_id`)
-        } else if (listingsByIdError) {
-          console.error('❌ Error fetching by listing_id:', listingsByIdError)
-        }
+      if (errA) {
+        console.error('❌ Error fetching by listing_id:', errA)
+      } else if (listingsA) {
+        console.log(`✅ Found ${listingsA.length} listings by listing_id`)
       }
 
-      // 2. Try by id (UUID match - if item_id was stored as UUID)
-      if (textListingIds.length > 0) {
-        // Filter out URLs and try as UUIDs
-        const uuidIds = textListingIds.filter(id => {
-          // UUID format: 8-4-4-4-12 hex characters
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-          return uuidRegex.test(id)
-        })
+      // Fetch by property_url (fallback for URL-based item_ids)
+      const { data: listingsB, error: errB } = await supabase
+        .from('listings')
+        .select('*')
+        .in('property_url', listingItemIds)
 
-        if (uuidIds.length > 0) {
-          const { data: listingsByUuid, error: uuidError } = await supabase
-            .from('listings')
-            .select('*')
-            .in('id', uuidIds)
+      if (errB) {
+        console.error('❌ Error fetching by property_url:', errB)
+      } else if (listingsB) {
+        console.log(`✅ Found ${listingsB.length} listings by property_url`)
+      }
 
-          if (!uuidError && listingsByUuid) {
-            listingsByUuid.forEach(listing => {
-              const id = listing.listing_id || listing.id
-              if (id && !fetchedListingIds.has(String(id))) {
-                fetchedListingIds.add(String(id))
-                fetchedListings.push(listing)
-              }
-            })
-            console.log(`✅ Found ${listingsByUuid.length} listings by id (UUID)`)
+      // Merge results safely (remove duplicates by listing_id)
+      const listingMap = new Map<string, any>()
+      
+      // Add listings from first query (by listing_id)
+      if (listingsA) {
+        listingsA.forEach(listing => {
+          if (listing.listing_id) {
+            listingMap.set(listing.listing_id, listing)
           }
-        }
+        })
       }
 
-      // 3. Try by numeric id (if item_id is numeric string)
-      if (numericListingIds.length > 0) {
-        const { data: listingsByNumeric, error: numericError } = await supabase
-          .from('listings')
-          .select('*')
-          .in('id', numericListingIds)
-
-        if (!numericError && listingsByNumeric) {
-          listingsByNumeric.forEach(listing => {
-            const id = listing.listing_id || String(listing.id)
-            if (id && !fetchedListingIds.has(String(id))) {
-              fetchedListingIds.add(String(id))
-              fetchedListings.push(listing)
-            }
-          })
-          console.log(`✅ Found ${listingsByNumeric.length} listings by numeric id`)
-        }
+      // Add listings from second query (by property_url) - won't duplicate if listing_id matches
+      if (listingsB) {
+        listingsB.forEach(listing => {
+          if (listing.listing_id && !listingMap.has(listing.listing_id)) {
+            listingMap.set(listing.listing_id, listing)
+          }
+        })
       }
 
-      // 4. Try by property_url (for URL-based IDs)
-      if (urlListingIds.length > 0) {
-        const { data: listingsByUrl, error: urlError } = await supabase
-          .from('listings')
-          .select('*')
-          .in('property_url', urlListingIds)
+      // Convert map to array
+      const listings = Array.from(listingMap.values())
+      fetchedListings.push(...listings)
 
-        if (!urlError && listingsByUrl) {
-          listingsByUrl.forEach(listing => {
-            const id = listing.listing_id || listing.property_url
-            if (id && !fetchedListingIds.has(String(id))) {
-              fetchedListingIds.add(String(id))
-              fetchedListings.push(listing)
-            }
-          })
-          console.log(`✅ Found ${listingsByUrl.length} listings by property_url`)
-        }
-      }
-
-      console.log(`📊 Total listings fetched: ${fetchedListings.length} out of ${membershipListingIds.length} memberships`)
+      console.log(`📊 Total unique listings fetched: ${listings.length} out of ${listingItemIds.length} memberships`)
     }
 
     // Fetch contacts
