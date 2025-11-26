@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
-import { Plus, Search, Filter, LayoutGrid, Save, Calendar, Settings, MoreVertical, Upload } from 'lucide-react'
+import { Plus, Search, Filter, LayoutGrid, Save, Calendar, Settings, MoreVertical, Upload, BarChart3, Zap, Mail } from 'lucide-react'
+import OnboardingModal from '@/components/OnboardingModal'
 
 interface EmailSequence {
   id: string
@@ -319,6 +320,63 @@ export default function SequencesPage() {
           </div>
         </div>
       </div>
+
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        title="Email Sequences made easy"
+        description="Set up automated email sequences and track engagement for your entire outreach campaign with LeadMap Email Sequences. Create multi-step sequences that nurture leads and drive conversions."
+        features={[
+          {
+            icon: <BarChart3 className="w-5 h-5" />,
+            text: "Get actionable insights on opens, clicks, and replies to optimize your sequences"
+          },
+          {
+            icon: <Zap className="w-5 h-5" />,
+            text: "Use seamlessly with other LeadMap tools to automate your sales workflow"
+          },
+          {
+            icon: <Mail className="w-5 h-5" />,
+            text: "Automate follow-ups and sequence scheduling to reduce manual tasks"
+          }
+        ]}
+        illustration={
+          <div className="mt-8 flex flex-col items-center">
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-6 mb-4 relative">
+              <div className="bg-white rounded-full p-4">
+                <div className="text-center">
+                  <Mail className="w-8 h-8 text-green-600 mx-auto" />
+                  <div className="text-xs text-gray-600 mt-2">Sequences active</div>
+                </div>
+              </div>
+              {/* Decorative stars */}
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                <Zap className="w-4 h-4 text-yellow-800" />
+              </div>
+              <div className="absolute -bottom-2 -left-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 text-yellow-800" />
+              </div>
+            </div>
+
+            {/* Email metrics icons */}
+            <div className="flex items-center space-x-3 mt-4">
+              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                Opens
+              </div>
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                Clicks
+              </div>
+              <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                Replies
+              </div>
+            </div>
+          </div>
+        }
+        onBeginSetup={() => {
+          // You can add logic to open create sequence modal here
+          console.log('Begin sequence setup')
+        }}
+        storageKey="email-sequences-onboarding-seen"
+      />
     </DashboardLayout>
   )
 }

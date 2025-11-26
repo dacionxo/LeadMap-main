@@ -23,8 +23,12 @@ import {
   Info,
   Phone,
   Mail,
-  Linkedin
+  Linkedin,
+  BarChart3,
+  Zap,
+  CheckSquare
 } from 'lucide-react'
+import OnboardingModal from '@/components/OnboardingModal'
 
 interface Task {
   id: string
@@ -496,6 +500,63 @@ export default function TasksPage() {
             }}
           />
         )}
+
+        {/* Onboarding Modal */}
+        <OnboardingModal
+          title="Task management made easy"
+          description="Organize your workflow and track activities for your entire sales cycle with LeadMap Tasks. Create tasks for calls, emails, LinkedIn outreach, and more to stay on top of your pipeline."
+          features={[
+            {
+              icon: <BarChart3 className="w-5 h-5" />,
+              text: "Get actionable insights to prioritize and complete tasks efficiently"
+            },
+            {
+              icon: <Zap className="w-5 h-5" />,
+              text: "Use seamlessly with other LeadMap tools to simplify workflows"
+            },
+            {
+              icon: <CheckSquare className="w-5 h-5" />,
+              text: "Automate task creation and follow-ups to reduce manual work"
+            }
+          ]}
+          illustration={
+            <div className="mt-8 flex flex-col items-center">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-6 mb-4 relative">
+                <div className="bg-white rounded-full p-4">
+                  <div className="text-center">
+                    <CheckSquare className="w-8 h-8 text-green-600 mx-auto" />
+                    <div className="text-xs text-gray-600 mt-2">Tasks completed</div>
+                  </div>
+                </div>
+                {/* Decorative stars */}
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Flag className="w-4 h-4 text-yellow-800" />
+                </div>
+                <div className="absolute -bottom-2 -left-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-yellow-800" />
+                </div>
+              </div>
+
+              {/* Task type icons */}
+              <div className="flex items-center space-x-3 mt-4">
+                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                  <Linkedin className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+          }
+          onBeginSetup={() => {
+            resetForm()
+            setShowAddModal(true)
+          }}
+          storageKey="tasks-onboarding-seen"
+        />
       </div>
     </DashboardLayout>
   )
