@@ -303,6 +303,10 @@ export async function GET(
           contact_id: contact.id
         }))
         fetchedListings.push(...contactListings)
+        } else {
+          console.warn('⚠️ WARNING: No contacts found despite having item_ids. Check if item_id values match id (UUID) in contacts table.')
+          console.warn('Sample contact item_ids:', contactIds.slice(0, 3))
+        }
       }
     }
 
