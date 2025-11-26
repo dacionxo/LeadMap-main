@@ -77,8 +77,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             calendar.addEvent({
               id: fcEvent.id,
               title: fcEvent.title,
-              start: fcEvent.start,
-              end: fcEvent.end,
+              start: fcEvent.start || undefined,
+              end: fcEvent.end || undefined,
               allDay: fcEvent.allDay,
               backgroundColor: fcEvent.backgroundColor,
               borderColor: fcEvent.borderColor,
