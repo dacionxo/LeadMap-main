@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { DateTime } from 'luxon'
 
 export const runtime = 'nodejs'
 
@@ -122,8 +123,8 @@ export async function POST(request: NextRequest) {
       title,
       description,
       eventType,
-      startTime,
-      endTime,
+      start_local,
+      end_local,
       timezone,
       allDay,
       location,
@@ -156,9 +157,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
-    if (!title || !eventType || !startTime || !endTime) {
+    if (!title || !eventType || !start_local || !end_local) {
       return NextResponse.json(
-        { error: 'Missing required fields: title, eventType, startTime, endTime' },
+        { error: 'Missing required fields: title, eventType, start_local, end_local' },
+        { status: 400 }
+      )
+    }
+
+    // Convert local time to UTC using the provided timezone
+    // Frontend sends: { start_local: "2025-05-12T15:00", timezone: "America/Chicago" }
+    // Backend converts to UTC for storage
+    const userTimezone = timezone || 'UTC'
+    const startUtc = DateTime.fromISO(start_local, { zone: userTimezone })
+      .toUTC()
+      .toISO()
+    const endUtc = DateTime.fromISO(end_local, { zone: userTimezone })
+      .toUTC()
+      .toISO()
+
+    if (!startUtc || !endUtc) {
+      return NextResponse.json(
+        { error: 'Invalid date/time format' },
         { status: 400 }
       )
     }
@@ -181,17 +200,16 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Create event
-    // IMPORTANT: startTime and endTime should already be in UTC ISO format from the frontend
-    // The timezone field is stored for reference but events are always displayed in user's current timezone setting
+    // Create event - store times in UTC only
+    // The timezone field is not stored - events are always in UTC
+    // Frontend will display using user's current timezone setting
     const eventData = {
       user_id: user.id,
       title,
       description: description || null,
       event_type: eventType,
-      start_time: startTime, // Already in UTC (TIMESTAMPTZ)
-      end_time: endTime, // Already in UTC (TIMESTAMPTZ)
-      timezone: timezone || 'UTC', // Stored for reference, but display uses current user setting
+      start_time: startUtc,
+      end_time: endUtc,
       all_day: allDay || false,
       location: location || null,
       conferencing_link: conferencingLink || null,

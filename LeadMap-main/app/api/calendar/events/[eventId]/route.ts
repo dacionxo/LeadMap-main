@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { DateTime } from 'luxon'
 
 export const runtime = 'nodejs'
 
@@ -130,9 +131,34 @@ export async function PUT(
     if (body.title !== undefined) updateData.title = body.title
     if (body.description !== undefined) updateData.description = body.description
     if (body.eventType !== undefined) updateData.event_type = body.eventType
+    
+    // Convert local time to UTC if start_local/end_local are provided
+    if (body.start_local !== undefined || body.end_local !== undefined) {
+      const userTimezone = body.timezone || 'UTC'
+      
+      if (body.start_local !== undefined) {
+        const startUtc = DateTime.fromISO(body.start_local, { zone: userTimezone })
+          .toUTC()
+          .toISO()
+        if (startUtc) {
+          updateData.start_time = startUtc
+        }
+      }
+      
+      if (body.end_local !== undefined) {
+        const endUtc = DateTime.fromISO(body.end_local, { zone: userTimezone })
+          .toUTC()
+          .toISO()
+        if (endUtc) {
+          updateData.end_time = endUtc
+        }
+      }
+    }
+    
+    // Legacy support: if startTime/endTime are provided (already UTC), use them
     if (body.startTime !== undefined) updateData.start_time = body.startTime
     if (body.endTime !== undefined) updateData.end_time = body.endTime
-    if (body.timezone !== undefined) updateData.timezone = body.timezone
+    
     if (body.allDay !== undefined) updateData.all_day = body.allDay
     if (body.location !== undefined) updateData.location = body.location
     if (body.conferencingLink !== undefined) updateData.conferencing_link = body.conferencingLink

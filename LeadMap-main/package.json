@@ -12,9 +12,9 @@
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.15",
+    "@fullcalendar/list": "^6.1.15",
     "@fullcalendar/react": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
-    "@fullcalendar/list": "^6.1.15",
     "@googlemaps/js-api-loader": "^2.0.1",
     "@googlemaps/react-wrapper": "^1.2.0",
     "@stripe/stripe-js": "^2.4.0",
@@ -22,12 +22,14 @@
     "@supabase/auth-helpers-react": "^0.4.2",
     "@supabase/supabase-js": "^2.38.4",
     "@tanstack/react-virtual": "^3.13.12",
+    "bcryptjs": "^2.4.3",
     "clsx": "^2.0.0",
     "csv-parse": "^5.5.2",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
     "googleapis": "^144.0.0",
     "lucide-react": "^0.294.0",
+    "luxon": "^3.7.2",
     "mapbox-gl": "^3.16.0",
     "next": "^16.0.1",
     "node-fetch": "^3.3.2",
@@ -37,10 +39,10 @@
     "resend": "^3.2.0",
     "rrule": "^2.8.1",
     "stripe": "^14.9.0",
-    "tailwind-merge": "^2.0.0",
-    "bcryptjs": "^2.4.3"
+    "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -49,7 +51,6 @@
     "eslint-config-next": "16.0.1",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5",
-    "@types/bcryptjs": "^2.4.6"
+    "typescript": "^5"
   }
 }

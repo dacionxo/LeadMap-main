@@ -122,75 +122,51 @@ export default function CreateEventModal({
   }
 
   // Helper function to convert local datetime string to UTC ISO string
-  // World-class implementation: Treats input as being in the specified timezone, converts to UTC
-  // This matches Google Calendar's approach - events stored in UTC, displayed in user's timezone
+  // Treats the input as being in the specified timezone
   const convertLocalToUTC = (localDateTime: string, timezone: string): string => {
     if (!localDateTime) return new Date().toISOString()
     
-    // The datetime-local input gives us a string like "2024-01-15T14:30" (no timezone info)
-    // We need to interpret this as being in the user's selected timezone, then convert to UTC
+    // The datetime-local input gives us a string like "2024-01-15T14:30"
+    // We need to interpret this as being in the user's timezone, not the browser's local timezone
+    
+    // Create a date object from the input (this will be interpreted as local time by the browser)
+    const localDate = new Date(localDateTime)
+    
+    // Get what this time would be in UTC if interpreted as local time
+    const utcAsLocal = localDate.getTime()
+    
+    // Get what this same time string would be in the target timezone
+    // We'll create a date string with timezone info
+    const dateStr = localDateTime.replace('T', ' ')
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
     
     // Parse the date components
-    const [datePart, timePart] = localDateTime.split('T')
-    const [year, month, day] = datePart.split('-').map(Number)
-    const [hour, minute] = timePart.split(':').map(Number)
+    const parts = localDateTime.split('T')
+    const datePart = parts[0]
+    const timePart = parts[1]
     
-    // Method: Use iterative approach to find the correct UTC time
-    // We want: UTC time such that when displayed in target timezone = (year, month, day, hour, minute)
+    // Create a date string that represents this time in the target timezone
+    // Format: "YYYY-MM-DD HH:mm" and interpret it in the target timezone
+    const dateInTimezone = new Date(`${datePart}T${timePart}:00`)
     
-    // Start with an initial guess - create date as if input is in UTC
-    let guessUTC = new Date(Date.UTC(year, month - 1, day, hour, minute, 0))
+    // Calculate offset between browser timezone and target timezone
+    const browserOffset = dateInTimezone.getTimezoneOffset() * 60000
+    const targetDateStr = new Date(dateInTimezone.toLocaleString('en-US', { timeZone: timezone }))
+    const targetOffset = targetDateStr.getTimezoneOffset() * 60000
+    const offsetDiff = browserOffset - targetOffset
     
-    // Check what this displays as in the target timezone
-    let displayParts = guessUTC.toLocaleString('en-US', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).split(/[/,\s:]+/)
+    // Adjust the date
+    const utcDate = new Date(dateInTimezone.getTime() - offsetDiff)
     
-    let displayYear = parseInt(displayParts[2])
-    let displayMonth = parseInt(displayParts[0]) - 1
-    let displayDay = parseInt(displayParts[1])
-    let displayHour = parseInt(displayParts[3])
-    let displayMinute = parseInt(displayParts[4])
-    
-    // Calculate the difference
-    const targetMs = new Date(year, month - 1, day, hour, minute).getTime()
-    const displayMs = new Date(displayYear, displayMonth, displayDay, displayHour, displayMinute).getTime()
-    let diff = targetMs - displayMs
-    
-    // Adjust the UTC time
-    let adjustedUTC = guessUTC.getTime() - diff
-    
-    // Refine with one more iteration for accuracy
-    guessUTC = new Date(adjustedUTC)
-    displayParts = guessUTC.toLocaleString('en-US', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).split(/[/,\s:]+/)
-    
-    displayYear = parseInt(displayParts[2])
-    displayMonth = parseInt(displayParts[0]) - 1
-    displayDay = parseInt(displayParts[1])
-    displayHour = parseInt(displayParts[3])
-    displayMinute = parseInt(displayParts[4])
-    
-    const targetMs2 = new Date(year, month - 1, day, hour, minute).getTime()
-    const displayMs2 = new Date(displayYear, displayMonth, displayDay, displayHour, displayMinute).getTime()
-    diff = targetMs2 - displayMs2
-    
-    adjustedUTC = guessUTC.getTime() - diff
-    
-    return new Date(adjustedUTC).toISOString()
+    return utcDate.toISOString()
   }
 
   const fetchSettings = async () => {
@@ -263,11 +239,10 @@ export default function CreateEventModal({
     try {
       const timezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
       
-      // Convert local datetime input to UTC, treating the input as being in the specified timezone
-      // The datetime-local input gives us a date string without timezone info
-      // We need to interpret it as being in the user's timezone setting
-      const startTime = convertLocalToUTC(formData.startTime, timezone)
-      const endTime = convertLocalToUTC(formData.endTime, timezone)
+      // Send local time + timezone to backend - backend will convert to UTC
+      // Format: "2025-05-12T15:00" (datetime-local format)
+      const start_local = formData.startTime
+      const end_local = formData.endTime
 
       const url = isEditMode ? `/api/calendar/events/${eventId}` : '/api/calendar/events'
       const method = isEditMode ? 'PUT' : 'POST'
@@ -280,8 +255,8 @@ export default function CreateEventModal({
           title: formData.title,
           description: formData.description,
           eventType: formData.eventType,
-          startTime,
-          endTime,
+          start_local,
+          end_local,
           timezone,
           allDay: formData.allDay,
           location: formData.location,

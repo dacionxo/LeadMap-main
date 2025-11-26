@@ -167,15 +167,10 @@ export async function PATCH(request: NextRequest) {
 
       if (error) throw error
       settings = data
-
-      // If timezone changed, update existing events' timezone field
-      if (body.defaultTimezone !== undefined && body.defaultTimezone !== existing.default_timezone) {
-        await supabase
-          .from('calendar_events')
-          .update({ timezone: body.defaultTimezone })
-          .eq('user_id', user.id)
-          .is('timezone', null) // Only update events without explicit timezone
-      }
+      
+      // Note: We don't update events when timezone changes
+      // Events are stored in UTC, and timezone is purely a display setting
+      // FullCalendar will automatically re-render events in the new timezone
     } else {
       const { data, error } = await supabase
         .from('user_calendar_settings')
