@@ -224,13 +224,16 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       } else if (e.key === 'd' || e.key === 'D') {
         e.preventDefault()
         changeView('timeGridDay')
-      } else if (e.key === '/' || e.key === '?') {
+      } else if (e.key === '/' && !e.shiftKey) {
         e.preventDefault()
-        // Focus search or show help
-        const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement
-        if (searchInput) {
-          searchInput.focus()
+        // Focus calendar search input specifically
+        const calendarSearchInput = document.querySelector('.calendar-search-input') as HTMLInputElement
+        if (calendarSearchInput) {
+          calendarSearchInput.focus()
         }
+      } else if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault()
+        setShowHelp(true)
       }
     }
 
@@ -375,9 +378,10 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search events..."
-                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                  placeholder="Search calendar events..."
+                  className="calendar-search-input px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
                   autoFocus
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <button
                   onClick={() => setSearchQuery('')}
@@ -390,15 +394,22 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             ) : (
               <button
                 onClick={() => {
-                  const input = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement
+                  const input = document.querySelector('.calendar-search-input') as HTMLInputElement
                   if (input) {
                     input.focus()
                   } else {
+                    // If input doesn't exist yet, trigger it to show
                     setSearchQuery('')
+                    setTimeout(() => {
+                      const newInput = document.querySelector('.calendar-search-input') as HTMLInputElement
+                      if (newInput) {
+                        newInput.focus()
+                      }
+                    }, 0)
                   }
                 }}
                 className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                title="Search events (Press /)"
+                title="Search calendar events (Press /)"
               >
                 <Search className="w-4 h-4" />
               </button>
