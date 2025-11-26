@@ -50,34 +50,6 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     fetchSettings()
   }, [])
 
-  // Listen for settings updates
-  useEffect(() => {
-    const handleSettingsUpdate = async (event: CustomEvent) => {
-      const newSettings = event.detail
-      const oldTimezone = settings?.default_timezone
-      const newTimezone = newSettings?.default_timezone
-      
-      setSettings(newSettings)
-      
-      // If timezone changed, update FullCalendar and re-fetch events
-      if (newTimezone && newTimezone !== oldTimezone && calendarRef.current) {
-        const calendar = calendarRef.current.getApi()
-        
-        // Update FullCalendar's timezone
-        calendar.setOption('timeZone', newTimezone)
-        
-        // Re-fetch events to ensure they're properly formatted and displayed in new timezone
-        // This forces a complete re-render of all events with the new timezone conversion
-        await fetchEvents()
-      }
-    }
-
-    window.addEventListener('calendarSettingsUpdated', handleSettingsUpdate as EventListener)
-    return () => {
-      window.removeEventListener('calendarSettingsUpdated', handleSettingsUpdate as EventListener)
-    }
-  }, [settings?.default_timezone, fetchEvents])
-
   // Apply default view from settings on initial load
   useEffect(() => {
     if (settings?.default_view && calendarRef.current) {
