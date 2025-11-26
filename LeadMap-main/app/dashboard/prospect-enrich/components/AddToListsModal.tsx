@@ -154,7 +154,11 @@ export default function AddToListsModal({
         // Add new list to state
         setLists(prev => [data.list, ...prev])
         // Select it
-        setSelectedListIds(prev => new Set([...prev, data.list.id]))
+        setSelectedListIds(prev => {
+          const next = new Set(prev)
+          next.add(data.list.id)
+          return next
+        })
         // Add item to new list
         await toggleList(data.list.id)
         // Reset form
