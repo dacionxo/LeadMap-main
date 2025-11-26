@@ -392,11 +392,11 @@ export default function ListDetailPage() {
     }
 
     try {
-      // Get the list_item IDs for the selected listings
-      // We need to fetch list_items to get their IDs
+      // Get the list_membership IDs for the selected listings
+      // We need to fetch list_memberships to get their IDs
       const selectedListingIds = Array.from(selectedIds)
       const { data: listItems } = await client
-        .from('list_items')
+        .from('list_memberships')
         .select('id')
         .eq('list_id', listId)
         .in('item_id', selectedListingIds)

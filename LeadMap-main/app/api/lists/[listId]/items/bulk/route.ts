@@ -79,9 +79,9 @@ export async function POST(
     }
 
     if (action === 'remove') {
-      // Remove items from list
+      // Remove items from list (using list_memberships table)
       const { error: deleteError } = await supabase
-        .from('list_items')
+        .from('list_memberships')
         .delete()
         .eq('list_id', listId)
         .in('id', itemIds)

@@ -107,9 +107,9 @@ export async function GET(
     const listData = listExists
     console.log('✅ List found and verified:', { listId, listName: listData.name })
 
-    // Build query for list_items
+    // Build query for list_memberships (Apollo-grade table)
     let listItemsQuery = supabase
-      .from('list_items')
+      .from('list_memberships')
       .select('id, item_type, item_id, created_at', { count: 'exact' })
       .eq('list_id', listId)
 
