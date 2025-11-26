@@ -236,8 +236,15 @@ export async function GET(
           agent_name: contact.first_name && contact.last_name
             ? `${contact.first_name} ${contact.last_name}`
             : contact.first_name || contact.last_name || null,
+          first_name: contact.first_name || null,
+          last_name: contact.last_name || null,
           agent_email: contact.email || null,
+          email: contact.email || null,
           agent_phone: contact.phone || null,
+          phone: contact.phone || null,
+          company: contact.company || null,
+          job_title: contact.job_title || null,
+          title: contact.title || null,
           created_at: contact.created_at,
           item_type: 'contact',
           contact_id: contact.id

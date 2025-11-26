@@ -7,7 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import DashboardLayout from '../../components/DashboardLayout'
 import VirtualizedListingsTable from '../../prospect-enrich/components/VirtualizedListingsTable'
 import BulkActions from '../components/BulkActions'
-import { ArrowLeft, Download, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Download, Search, RefreshCw, ChevronLeft, ChevronRight, Users, Building2, Filter, Settings, Plus, MoreVertical, CheckCircle, Phone, Link2, MapPin } from 'lucide-react'
 
 interface List {
   id: string
@@ -605,25 +605,48 @@ export default function ListDetailPage() {
     )
   }
 
+  const listTypeLabel = list.type === 'people' ? 'Prospects' : 'Properties'
+  const listTypeIcon = list.type === 'people' ? Users : Building2
+  const ListIcon = listTypeIcon
+
   return (
     <DashboardLayout>
       <div style={{
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f4ff 100%)',
+        backgroundColor: '#ffffff',
         position: 'relative'
       }}>
         {/* Header */}
         <div style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.95) 100%)',
-          borderBottom: '1px solid rgba(99, 102, 241, 0.1)',
-          padding: '24px 32px',
-          boxShadow: '0 4px 12px -2px rgba(99, 102, 241, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05)',
-          backdropFilter: 'blur(10px)',
-          position: 'relative',
-          zIndex: 10
+          backgroundColor: '#ffffff',
+          borderBottom: '1px solid #e5e7eb',
+          padding: '24px 32px'
         }}>
+          {/* Breadcrumbs */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            fontSize: '14px',
+            color: '#6b7280',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}>
+            <span 
+              onClick={() => router.push('/dashboard/lists')}
+              style={{ cursor: 'pointer', color: '#6366f1' }}
+              onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+              onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+            >
+              Lists
+            </span>
+            <span style={{ color: '#9ca3af' }}>›</span>
+            <span style={{ color: '#111827', fontWeight: 500 }}>{list.name}</span>
+          </div>
+
+          {/* Title and Record Count */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -632,174 +655,248 @@ export default function ListDetailPage() {
             flexWrap: 'wrap',
             gap: '16px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <button
-                onClick={() => router.push('/dashboard/lists')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '8px',
-                  border: 'none',
-                  background: 'transparent',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  color: '#64748b',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f1f5f9'
-                  e.currentTarget.style.color = '#1e293b'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = '#64748b'
-                }}
-              >
-                <ArrowLeft size={20} />
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <h1 style={{
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                fontSize: '28px',
-                fontWeight: 700,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                margin: 0,
-                letterSpacing: '-0.02em'
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                fontSize: '24px',
+                fontWeight: 600,
+                color: '#111827',
+                margin: 0
               }}>
                 {list.name}
               </h1>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               <div style={{
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
                 fontSize: '14px',
-                color: '#64748b',
-                fontWeight: 500
+                color: '#6b7280',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
               }}>
-                {totalCount} {totalCount === 1 ? 'item' : 'items'}
+                <ListIcon size={16} />
+                <span>{listTypeLabel}</span>
               </div>
-              <button
-                onClick={fetchListData}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  background: '#ffffff',
-                  color: '#374151',
-                  border: '2px solid rgba(99, 102, 241, 0.2)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#6366f1'
-                  e.currentTarget.style.background = '#f8fafc'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.2)'
-                  e.currentTarget.style.background = '#ffffff'
-                }}
-                title="Refresh list data"
-              >
-                <RefreshCw size={16} />
-                Refresh
-              </button>
-              <button
-                onClick={handleExportCSV}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  background: '#ffffff',
-                  color: '#374151',
-                  border: '2px solid rgba(99, 102, 241, 0.2)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#6366f1'
-                  e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                  e.currentTarget.style.color = '#ffffff'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.25)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.2)'
-                  e.currentTarget.style.background = '#ffffff'
-                  e.currentTarget.style.color = '#374151'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
-                }}
-              >
-                <Download size={16} />
-                Export CSV
-              </button>
+              <div style={{
+                fontSize: '14px',
+                color: '#6b7280',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}>
+                {totalCount} {totalCount === 1 ? 'record' : 'records'}
+              </div>
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Action Bar - Apollo Style */}
           <div style={{
-            position: 'relative',
-            maxWidth: '600px'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap'
           }}>
-            <Search style={{
-              position: 'absolute',
-              left: '14px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '18px',
-              height: '18px',
-              color: '#9ca3af',
-              pointerEvents: 'none',
-              zIndex: 1
-            }} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by address, agent name, email, or listing ID..."
+            <button
               style={{
-                width: '100%',
-                paddingLeft: '42px',
-                paddingRight: '16px',
-                paddingTop: '10px',
-                paddingBottom: '10px',
-                border: '2px solid rgba(99, 102, 241, 0.2)',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%)',
-                color: '#111827',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
                 fontSize: '14px',
-                outline: 'none',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.1)'
+                fontWeight: 400,
+                color: '#374151',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
               }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#6366f1'
-                e.currentTarget.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.15), 0 8px 16px rgba(99, 102, 241, 0.2)'
-                e.currentTarget.style.transform = 'scale(1.01)'
+            >
+              Default view
+            </button>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 400,
+                color: '#374151',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
               }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.2)'
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(99, 102, 241, 0.1)'
-                e.currentTarget.style.transform = 'scale(1)'
+            >
+              <Filter size={14} />
+              Show Filters
+            </button>
+            <div style={{ position: 'relative', flex: 1, maxWidth: '300px' }}>
+              <Search style={{
+                position: 'absolute',
+                left: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '16px',
+                height: '16px',
+                color: '#9ca3af',
+                pointerEvents: 'none'
+              }} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search"
+                style={{
+                  width: '100%',
+                  paddingLeft: '36px',
+                  paddingRight: '12px',
+                  paddingTop: '6px',
+                  paddingBottom: '6px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}
+              />
+            </div>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 400,
+                color: '#374151',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
               }}
-            />
+            >
+              Import
+            </button>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: '#fbbf24',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#ffffff',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}
+            >
+              <Plus size={14} />
+              Add records to list
+            </button>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 400,
+                color: '#374151',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}
+            >
+              Research with AI
+            </button>
+            <button
+              style={{
+                padding: '6px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <MoreVertical size={16} color="#6b7280" />
+            </button>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 400,
+                color: '#374151',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}
+            >
+              Create workflow
+            </button>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 400,
+                color: '#374151',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}
+            >
+              Save as new view
+            </button>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 400,
+                color: '#374151',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}
+            >
+              Sort
+            </button>
+            <button
+              style={{
+                padding: '6px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Settings size={16} color="#6b7280" />
+            </button>
           </div>
         </div>
 
@@ -861,17 +958,377 @@ export default function ListDetailPage() {
                 {searchQuery ? 'Try adjusting your search terms' : 'Add items to this list to get started'}
               </div>
             </div>
-          ) : (
+          ) : list.type === 'people' ? (
+            /* People/Prospects Table - Apollo Style */
             <div style={{
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.95) 100%)',
-              borderRadius: '12px',
-              boxShadow: '0 4px 12px -2px rgba(99, 102, 241, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05)',
-              border: '1px solid rgba(99, 102, 241, 0.1)',
-              overflow: 'hidden',
-              height: '100%'
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}>
+              {/* Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', width: '40px' }}>
+                      <input type="checkbox" />
+                    </th>
+                    <th style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                    }}>
+                      NAME
+                    </th>
+                    <th style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                    }}>
+                      JOB TITLE
+                    </th>
+                    <th style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                    }}>
+                      COMPANY
+                    </th>
+                    <th style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                    }}>
+                      EMAILS
+                    </th>
+                    <th style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                    }}>
+                      PHONE NUMBERS
+                    </th>
+                    <th style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                    }}>
+                      ACTIONS
+                    </th>
+                    <th style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                    }}>
+                      LINKS
+                    </th>
+                    <th style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                    }}>
+                      LOCATION
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listings.map((listing: any) => {
+                    // Handle both contact and listing data
+                    const name = listing.agent_name || listing.first_name && listing.last_name 
+                      ? `${listing.first_name} ${listing.last_name}` 
+                      : listing.first_name || listing.last_name || 'Unknown'
+                    const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+                    const email = listing.agent_email || listing.email || null
+                    const phone = listing.agent_phone || listing.phone || null
+                    const company = listing.company || '—'
+                    const jobTitle = listing.job_title || listing.title || '—'
+                    const location = [listing.city, listing.state].filter(Boolean).join(', ') || '—'
+                    
+                    return (
+                      <tr
+                        key={listing.listing_id}
+                        style={{
+                          borderBottom: '1px solid #e5e7eb',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.15s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f9fafb'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#ffffff'
+                        }}
+                      >
+                        <td style={{ padding: '12px 16px' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(listing.listing_id)}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              handleSelect(listing.listing_id, e.target.checked)
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              backgroundColor: '#6366f1',
+                              color: '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                              flexShrink: 0
+                            }}>
+                              {initials}
+                            </div>
+                            <span style={{
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              color: '#111827',
+                              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                            }}>
+                              {name}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280' }}>
+                          {jobTitle}
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280' }}>
+                          {company}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {email ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '14px', color: '#111827' }}>{email}</span>
+                              <CheckCircle size={14} color="#10b981" />
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: '14px', color: '#9ca3af' }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {phone ? (
+                            <span style={{ fontSize: '14px', color: '#111827' }}>{phone}</span>
+                          ) : (
+                            <span style={{ fontSize: '14px', color: '#9ca3af' }}>Request phone number</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button
+                              style={{
+                                padding: '4px',
+                                border: 'none',
+                                background: 'transparent',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <CheckCircle size={16} color="#10b981" />
+                            </button>
+                            <button
+                              style={{
+                                padding: '4px',
+                                border: 'none',
+                                background: 'transparent',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Phone size={16} color="#6b7280" />
+                            </button>
+                            <button
+                              style={{
+                                padding: '4px',
+                                border: 'none',
+                                background: 'transparent',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <MoreVertical size={16} color="#6b7280" />
+                            </button>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <Link2 size={16} color="#6b7280" />
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280' }}>
+                          {location}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              
+              {/* Add Row Button */}
+              <div style={{
+                padding: '12px 16px',
+                borderTop: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb'
+              }}>
+                <button
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    backgroundColor: '#ffffff',
+                    border: '1px dashed #d1d5db',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }}
+                >
+                  <Plus size={14} />
+                  Add a row
+                </button>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  borderTop: '1px solid #e5e7eb',
+                  backgroundColor: '#ffffff'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      style={{
+                        padding: '6px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        backgroundColor: '#ffffff',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        opacity: currentPage === 1 ? 0.5 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <select
+                      value={currentPage}
+                      onChange={(e) => setCurrentPage(Number(e.target.value))}
+                      style={{
+                        padding: '6px 8px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }}
+                    >
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <option key={page} value={page}>{page}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        padding: '6px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        backgroundColor: '#ffffff',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        opacity: currentPage === totalPages ? 0.5 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }}>
+                    {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Properties Table - Keep existing but update styling */
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              overflow: 'hidden'
             }}>
               {/* Table Header */}
               <div 
@@ -881,8 +1338,8 @@ export default function ListDetailPage() {
                   width: 'max-content',
                   minWidth: '100%',
                   padding: '16px 18px',
-                  borderBottom: '2px solid rgba(99, 102, 241, 0.1)',
-                  background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.98) 0%, rgba(241, 245, 249, 0.95) 100%)',
+                  borderBottom: '1px solid #e5e7eb',
+                  backgroundColor: '#f9fafb',
                   position: 'sticky',
                   top: 0,
                   zIndex: 10,
