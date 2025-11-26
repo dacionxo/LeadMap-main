@@ -17,7 +17,13 @@ import {
   Edit,
   Trash2,
   MoreVertical,
-  Flag
+  Flag,
+  ChevronDown,
+  Settings,
+  Info,
+  Phone,
+  Mail,
+  Linkedin
 } from 'lucide-react'
 
 interface Task {
@@ -34,6 +40,8 @@ interface Task {
   updated_at: string
 }
 
+type TaskTypeFilter = 'all' | 'call' | 'email' | 'linkedin' | 'overdue'
+
 export default function TasksPage() {
   const { profile } = useApp()
   const router = useRouter()
@@ -42,9 +50,12 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [taskTypeFilter, setTaskTypeFilter] = useState<TaskTypeFilter>('all')
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high' | 'urgent'>('all')
+  const [showFilters, setShowFilters] = useState(false)
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0)
 
   // Form state
   const [formData, setFormData] = useState({
