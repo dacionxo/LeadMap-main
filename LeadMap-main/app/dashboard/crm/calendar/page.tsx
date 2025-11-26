@@ -206,19 +206,12 @@ export default function CalendarPage() {
               onDateSelect={handleOnboardingDateSelect}
               onConnectCalendar={handleConnectCalendar}
             />
-          ) : calendarType === 'native' ? (
-            // Show FullCalendar for native calendar type
-            <CalendarView
-              onEventClick={handleEventClick}
-              onDateSelect={handleDateSelect}
-            />
           ) : (
-            // Show external calendar integration view (or FullCalendar as fallback)
-            // For now, show FullCalendar for external calendars too
-            // You can create a separate component for external calendar integration later
+            // Show FullCalendar with provider-specific styling
             <CalendarView
               onEventClick={handleEventClick}
               onDateSelect={handleDateSelect}
+              calendarType={calendarType}
             />
           )}
         </div>

@@ -30,9 +30,10 @@ interface CalendarEvent {
 interface CalendarViewProps {
   onEventClick?: (event: CalendarEvent) => void
   onDateSelect?: (start: Date, end: Date) => void
+  calendarType?: string | null // 'native', 'google', 'microsoft365', 'outlook', 'exchange', or null
 }
 
-export default function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) {
+export default function CalendarView({ onEventClick, onDateSelect, calendarType }: CalendarViewProps) {
   const [events, setEvents] = useState<EventInput[]>([])
   const [allEvents, setAllEvents] = useState<EventInput[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,6 +94,80 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       setSettingsLoaded(true)
     }
   }
+
+  // Get font family based on calendar provider
+  const getCalendarFontFamily = (type: string | null) => {
+    switch (type) {
+      case 'google':
+        return "'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+      case 'microsoft365':
+      case 'outlook':
+        return "'Segoe UI', 'Segoe UI Web', -apple-system, BlinkMacSystemFont, sans-serif"
+      case 'exchange':
+        return "'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif"
+      default:
+        return "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif"
+    }
+  }
+
+  // Get theme colors based on calendar provider
+  const getCalendarTheme = (type: string | null) => {
+    switch (type) {
+      case 'google':
+        return {
+          primary: '#1a73e8',
+          primaryHover: '#1557b0',
+          todayBg: '#e8f0fe',
+          todayText: '#1a73e8',
+          headerBg: '#ffffff',
+          headerText: '#3c4043',
+          border: '#dadce0',
+          eventBorderRadius: '4px',
+          eventShadow: '0 1px 2px rgba(60, 64, 67, 0.3)',
+        }
+      case 'microsoft365':
+      case 'outlook':
+        return {
+          primary: '#0078d4',
+          primaryHover: '#106ebe',
+          todayBg: '#deecf9',
+          todayText: '#0078d4',
+          headerBg: '#faf9f8',
+          headerText: '#323130',
+          border: '#edebe9',
+          eventBorderRadius: '2px',
+          eventShadow: '0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.11)',
+        }
+      case 'exchange':
+        return {
+          primary: '#0078d4',
+          primaryHover: '#106ebe',
+          todayBg: '#deecf9',
+          todayText: '#0078d4',
+          headerBg: '#faf9f8',
+          headerText: '#323130',
+          border: '#edebe9',
+          eventBorderRadius: '2px',
+          eventShadow: '0 1.6px 3.6px rgba(0, 0, 0, 0.13)',
+        }
+      default: // native
+        return {
+          primary: '#3b82f6',
+          primaryHover: '#2563eb',
+          todayBg: '#eff6ff',
+          todayText: '#3b82f6',
+          headerBg: '#f9fafb',
+          headerText: '#374151',
+          border: '#e5e7eb',
+          eventBorderRadius: '4px',
+          eventShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+        }
+    }
+  }
+
+  // Get calendar type from settings if not passed as prop (computed in render)
+  const effectiveCalendarType = calendarType || settings?.calendar_type || 'native'
+  const theme = getCalendarTheme(effectiveCalendarType)
 
   // Format event for FullCalendar - uses user's timezone from settings
   const formatEventForCalendar = (event: any): EventInput => {
@@ -654,10 +729,10 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       </div>
 
       {/* Calendar Container */}
-      <div className="flex-1 overflow-auto p-6 bg-white dark:bg-gray-900">
+      <div className={`flex-1 overflow-auto p-6 bg-white dark:bg-gray-900 calendar-theme-${effectiveCalendarType}`}>
         <style jsx global>{`
           .fc {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+            font-family: ${getCalendarFontFamily(effectiveCalendarType)};
           }
 
           .fc-header-toolbar {
@@ -665,51 +740,51 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           }
 
           .fc-daygrid-day {
-            border-color: #e5e7eb;
+            border-color: ${theme.border};
             transition: background-color 0.2s;
           }
 
           .fc-daygrid-day:hover {
-            background-color: #f9fafb;
+            background-color: ${effectiveCalendarType === 'google' ? '#f8f9fa' : effectiveCalendarType === 'microsoft365' || effectiveCalendarType === 'outlook' ? '#f3f2f1' : '#f9fafb'};
           }
 
           .dark .fc-daygrid-day {
-            border-color: #374151;
+            border-color: ${effectiveCalendarType === 'google' ? '#5f6368' : '#374151'};
           }
 
           .dark .fc-daygrid-day:hover {
-            background-color: #1f2937;
+            background-color: ${effectiveCalendarType === 'google' ? '#202124' : '#1f2937'};
           }
 
           .fc-daygrid-day-number {
             padding: 8px;
-            color: #374151;
-            font-weight: 500;
+            color: ${theme.headerText};
+            font-weight: ${effectiveCalendarType === 'google' ? 400 : 500};
             font-size: 14px;
           }
 
           .dark .fc-daygrid-day-number {
-            color: #d1d5db;
+            color: ${effectiveCalendarType === 'google' ? '#e8eaed' : '#d1d5db'};
           }
 
           .fc-day-today {
-            background-color: #eff6ff !important;
+            background-color: ${theme.todayBg} !important;
           }
 
           .dark .fc-day-today {
-            background-color: #1e3a8a !important;
+            background-color: ${effectiveCalendarType === 'google' ? '#1e3a8a' : '#1e3a8a'} !important;
           }
 
           .fc-day-today .fc-daygrid-day-number {
-            background-color: #3b82f6;
+            background-color: ${theme.primary};
             color: white;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: ${effectiveCalendarType === 'google' ? '28px' : '32px'};
+            height: ${effectiveCalendarType === 'google' ? '28px' : '32px'};
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
+            font-weight: ${effectiveCalendarType === 'google' ? 500 : 600};
           }
 
           .fc-daygrid-day.fc-day-other {
@@ -718,36 +793,40 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
 
           .fc-col-header-cell {
             padding: 12px 8px;
-            background-color: #f9fafb;
-            border-color: #e5e7eb;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #6b7280;
+            background-color: ${theme.headerBg};
+            border-color: ${theme.border};
+            font-weight: ${effectiveCalendarType === 'google' ? 500 : 600};
+            font-size: ${effectiveCalendarType === 'google' ? '11px' : '12px'};
+            text-transform: ${effectiveCalendarType === 'google' ? 'none' : 'uppercase'};
+            letter-spacing: ${effectiveCalendarType === 'google' ? '0' : '0.05em'};
+            color: ${theme.headerText};
           }
 
           .dark .fc-col-header-cell {
-            background-color: #111827;
-            border-color: #374151;
-            color: #9ca3af;
+            background-color: ${effectiveCalendarType === 'google' ? '#202124' : '#111827'};
+            border-color: ${effectiveCalendarType === 'google' ? '#5f6368' : '#374151'};
+            color: ${effectiveCalendarType === 'google' ? '#9aa0a6' : '#9ca3af'};
           }
 
           .fc-event {
-            border-radius: 4px;
+            border-radius: ${theme.eventBorderRadius};
             border: none;
-            padding: 1px 4px;
-            font-size: 11px;
-            font-weight: 500;
+            padding: ${effectiveCalendarType === 'google' ? '2px 6px' : '1px 4px'};
+            font-size: ${effectiveCalendarType === 'google' ? '12px' : '11px'};
+            font-weight: ${effectiveCalendarType === 'google' ? 400 : 500};
             margin: 1px 0;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            box-shadow: ${theme.eventShadow};
           }
 
           .fc-event:hover {
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+            box-shadow: ${effectiveCalendarType === 'google' 
+              ? '0 2px 4px rgba(60, 64, 67, 0.4)' 
+              : effectiveCalendarType === 'microsoft365' || effectiveCalendarType === 'outlook'
+              ? '0 3.2px 7.2px rgba(0, 0, 0, 0.18), 0 0.6px 1.8px rgba(0, 0, 0, 0.13)'
+              : '0 2px 4px rgba(0, 0, 0, 0.15)'};
             z-index: 10;
           }
 
@@ -759,12 +838,12 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           }
 
           .fc-timegrid-slot {
-            border-color: #f3f4f6;
-            height: 48px;
+            border-color: ${theme.border};
+            height: ${effectiveCalendarType === 'google' ? '52px' : '48px'};
           }
 
           .dark .fc-timegrid-slot {
-            border-color: #374151;
+            border-color: ${effectiveCalendarType === 'google' ? '#5f6368' : '#374151'};
           }
 
           .fc-timegrid-now-indicator-line {
@@ -773,24 +852,24 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           }
 
           .fc-timegrid-col {
-            border-color: #e5e7eb;
+            border-color: ${theme.border};
           }
 
           .dark .fc-timegrid-col {
-            border-color: #374151;
+            border-color: ${effectiveCalendarType === 'google' ? '#5f6368' : '#374151'};
           }
 
           .fc-list-day-cushion {
-            background-color: #f9fafb;
+            background-color: ${theme.headerBg};
             padding: 8px 12px;
-            font-weight: 600;
-            font-size: 13px;
-            color: #374151;
+            font-weight: ${effectiveCalendarType === 'google' ? 500 : 600};
+            font-size: ${effectiveCalendarType === 'google' ? '14px' : '13px'};
+            color: ${theme.headerText};
           }
 
           .dark .fc-list-day-cushion {
-            background-color: #111827;
-            color: #d1d5db;
+            background-color: ${effectiveCalendarType === 'google' ? '#202124' : '#111827'};
+            color: ${effectiveCalendarType === 'google' ? '#e8eaed' : '#d1d5db'};
           }
 
           .fc-list-event {
