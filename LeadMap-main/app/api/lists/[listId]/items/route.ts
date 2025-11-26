@@ -108,6 +108,7 @@ export async function GET(
     console.log('✅ List found and verified:', { listId, listName: listData.name })
 
     // Build query for list_memberships (Apollo-grade table)
+    // Explicitly cast item_id to text to ensure consistency
     let listItemsQuery = supabase
       .from('list_memberships')
       .select('id, item_type, item_id, created_at', { count: 'exact' })
@@ -151,6 +152,7 @@ export async function GET(
     }
 
     if (!listItems || listItems.length === 0) {
+      console.log('⚠️ No list_memberships found for list:', listId)
       return NextResponse.json({
         listings: [],
         totalCount: totalCount || 0,
@@ -164,6 +166,13 @@ export async function GET(
         }
       })
     }
+
+    console.log(`✅ Found ${listItems.length} list_memberships for list ${listId}`)
+    console.log('📋 Sample memberships:', listItems.slice(0, 3).map((m: any) => ({ 
+      item_type: m.item_type, 
+      item_id: m.item_id,
+      item_id_type: typeof m.item_id 
+    })))
 
     // Separate items by type
     const listingItems = listItems.filter(item => item.item_type === 'listing')
