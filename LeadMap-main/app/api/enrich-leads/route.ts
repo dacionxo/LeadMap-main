@@ -33,7 +33,18 @@ export async function POST(request: NextRequest) {
 
     // Enrich each listing (using mock data for now - replace with actual API)
     const enrichedListings = await Promise.all(
-      listings.map(async (listing) => {
+      listings.map(async (listing: {
+        listing_id?: string
+        agent_email?: string | null
+        agent_phone?: string | null
+        agent_name?: string | null
+        street?: string | null
+        unit?: string | null
+        city?: string | null
+        state?: string | null
+        zip_code?: string | null
+        [key: string]: any
+      }) => {
         // In production, call actual enrichment API
         // const enriched = await callEnrichmentAPI(listing)
         
