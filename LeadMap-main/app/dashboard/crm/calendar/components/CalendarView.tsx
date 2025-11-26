@@ -59,15 +59,33 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       
       setSettings(newSettings)
       
-      // If timezone changed, update FullCalendar and refresh events
+      // If timezone changed, update FullCalendar and force re-render of events
       if (newTimezone && newTimezone !== oldTimezone && calendarRef.current) {
         const calendar = calendarRef.current.getApi()
         
-        // Update FullCalendar's timezone - this will automatically re-render events in new timezone
+        // Update FullCalendar's timezone
         calendar.setOption('timeZone', newTimezone)
         
-        // FullCalendar automatically re-renders when timeZone option changes
-        // No need to manually call render() or refetch events
+        // Force FullCalendar to re-render events by removing and re-adding them
+        // This ensures the timezone conversion is applied to all events
+        const currentEvents = calendar.getEvents()
+        calendar.removeAllEvents()
+        
+        // Re-add events - FullCalendar will now convert them using the new timezone
+        setTimeout(() => {
+          currentEvents.forEach((fcEvent) => {
+            calendar.addEvent({
+              id: fcEvent.id,
+              title: fcEvent.title,
+              start: fcEvent.start,
+              end: fcEvent.end,
+              allDay: fcEvent.allDay,
+              backgroundColor: fcEvent.backgroundColor,
+              borderColor: fcEvent.borderColor,
+              extendedProps: fcEvent.extendedProps,
+            })
+          })
+        }, 0)
       }
     }
 
@@ -151,17 +169,22 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
         }
         
         // Events are stored in UTC (TIMESTAMPTZ) in the database
-        // FullCalendar needs ISO strings - ensure they're properly formatted
-        // FullCalendar will automatically convert to the timezone specified in timeZone prop
+        // Ensure they're properly formatted as UTC ISO strings for FullCalendar
+        // FullCalendar will automatically convert them to the timezone specified in timeZone prop
         let startTime = event.start_time
         let endTime = event.end_time
         
-        // Ensure times are in ISO format (add 'Z' if missing to indicate UTC)
-        if (startTime && !startTime.endsWith('Z') && !startTime.includes('+') && !startTime.includes('-', 10)) {
-          startTime = startTime + 'Z'
+        // Ensure times are in ISO format with UTC indicator
+        // If the time doesn't have timezone info, assume it's UTC and add 'Z'
+        if (startTime && typeof startTime === 'string') {
+          if (!startTime.endsWith('Z') && !startTime.includes('+') && !startTime.includes('-', 10)) {
+            startTime = startTime + 'Z'
+          }
         }
-        if (endTime && !endTime.endsWith('Z') && !endTime.includes('+') && !endTime.includes('-', 10)) {
-          endTime = endTime + 'Z'
+        if (endTime && typeof endTime === 'string') {
+          if (!endTime.endsWith('Z') && !endTime.includes('+') && !endTime.includes('-', 10)) {
+            endTime = endTime + 'Z'
+          }
         }
         
         return {
