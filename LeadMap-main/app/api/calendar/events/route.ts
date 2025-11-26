@@ -169,6 +169,9 @@ export async function POST(request: NextRequest) {
     // Backend converts to UTC for storage
     const userTimezone = timezone || 'UTC'
     
+    let startUtc: string | null = null
+    let endUtc: string | null = null
+    
     try {
       const startDateTime = DateTime.fromISO(start_local, { zone: userTimezone })
       const endDateTime = DateTime.fromISO(end_local, { zone: userTimezone })
@@ -186,8 +189,8 @@ export async function POST(request: NextRequest) {
         )
       }
       
-      const startUtc = startDateTime.toUTC().toISO()
-      const endUtc = endDateTime.toUTC().toISO()
+      startUtc = startDateTime.toUTC().toISO()
+      endUtc = endDateTime.toUTC().toISO()
 
       if (!startUtc || !endUtc) {
         return NextResponse.json(
