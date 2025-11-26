@@ -191,8 +191,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             description: event.description,
             relatedType: event.related_type,
             relatedId: event.related_id,
-            status: event.status,
-            timezone: event.timezone || settings?.default_timezone,
+            status: event.status || 'confirmed',
+            timezone: event.timezone || settings?.default_timezone || 'UTC',
           },
         }
       })
