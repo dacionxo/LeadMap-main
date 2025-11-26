@@ -40,7 +40,9 @@ export async function POST(request: NextRequest) {
     if (emailDomain.includes('gmail.com') || emailDomain.includes('google.com') || emailDomain.includes('googlemail.com')) {
       provider = 'google'
       const clientId = process.env.GOOGLE_CLIENT_ID
-      const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/calendar/oauth/google/callback`
+      // Normalize URL to avoid double slashes
+      const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
+      const redirectUri = `${baseUrl}/api/calendar/oauth/google/callback`
       
       if (!clientId) {
         return NextResponse.json(
@@ -87,7 +89,9 @@ export async function POST(request: NextRequest) {
       }
 
       const clientId = process.env.MICROSOFT_CLIENT_ID
-      const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/calendar/oauth/microsoft/callback`
+      // Normalize URL to avoid double slashes
+      const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
+      const redirectUri = `${baseUrl}/api/calendar/oauth/microsoft/callback`
       
       if (!clientId) {
         return NextResponse.json(

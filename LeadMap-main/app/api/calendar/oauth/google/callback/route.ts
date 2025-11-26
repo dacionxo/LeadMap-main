@@ -58,7 +58,9 @@ export async function GET(request: NextRequest) {
 
     const clientId = process.env.GOOGLE_CLIENT_ID
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/calendar/oauth/google/callback`
+    // Normalize URL to avoid double slashes
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
+    const redirectUri = `${baseUrl}/api/calendar/oauth/google/callback`
 
     if (!clientId || !clientSecret) {
       return NextResponse.redirect(
