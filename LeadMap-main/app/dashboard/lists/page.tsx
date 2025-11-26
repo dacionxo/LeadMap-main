@@ -433,7 +433,7 @@ export default function ListsPage() {
                   }}
                 >
                   <Building2 size={18} />
-                  Create a company list
+                  Create a property list
                 </button>
               </div>
               <div style={{ marginTop: '24px' }}>
