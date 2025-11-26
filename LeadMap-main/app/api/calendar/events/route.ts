@@ -168,16 +168,40 @@ export async function POST(request: NextRequest) {
     // Frontend sends: { start_local: "2025-05-12T15:00", timezone: "America/Chicago" }
     // Backend converts to UTC for storage
     const userTimezone = timezone || 'UTC'
-    const startUtc = DateTime.fromISO(start_local, { zone: userTimezone })
-      .toUTC()
-      .toISO()
-    const endUtc = DateTime.fromISO(end_local, { zone: userTimezone })
-      .toUTC()
-      .toISO()
+    
+    try {
+      const startDateTime = DateTime.fromISO(start_local, { zone: userTimezone })
+      const endDateTime = DateTime.fromISO(end_local, { zone: userTimezone })
+      
+      if (!startDateTime.isValid || !endDateTime.isValid) {
+        return NextResponse.json(
+          { 
+            error: 'Invalid date/time format',
+            details: {
+              start_error: startDateTime.invalidReason,
+              end_error: endDateTime.invalidReason
+            }
+          },
+          { status: 400 }
+        )
+      }
+      
+      const startUtc = startDateTime.toUTC().toISO()
+      const endUtc = endDateTime.toUTC().toISO()
 
-    if (!startUtc || !endUtc) {
+      if (!startUtc || !endUtc) {
+        return NextResponse.json(
+          { error: 'Failed to convert date/time to UTC' },
+          { status: 400 }
+        )
+      }
+    } catch (error: any) {
+      console.error('Error converting timezone:', error)
       return NextResponse.json(
-        { error: 'Invalid date/time format' },
+        { 
+          error: 'Error converting timezone',
+          details: error.message 
+        },
         { status: 400 }
       )
     }

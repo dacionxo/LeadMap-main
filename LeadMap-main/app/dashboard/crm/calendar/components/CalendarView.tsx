@@ -150,13 +150,17 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           }
         }
         
-        // Events are stored in UTC (TIMESTAMPTZ), FullCalendar will display them in the timezone specified
-        // The timezone prop on FullCalendar handles the conversion
+        // Events are stored in UTC (TIMESTAMPTZ) in the database
+        // FullCalendar needs ISO strings with 'Z' suffix to properly recognize UTC
+        // Then it will convert to the timezone specified in the timeZone prop
+        const startTime = event.start_time ? (event.start_time.endsWith('Z') ? event.start_time : event.start_time + 'Z') : event.start_time
+        const endTime = event.end_time ? (event.end_time.endsWith('Z') ? event.end_time : event.end_time + 'Z') : event.end_time
+        
         return {
           id: event.id,
           title: event.title,
-          start: event.start_time,
-          end: event.end_time,
+          start: startTime,
+          end: endTime,
           allDay: event.all_day,
           backgroundColor: eventColor,
           borderColor: eventColor,
