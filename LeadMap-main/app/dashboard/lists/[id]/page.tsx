@@ -521,7 +521,7 @@ export default function ListDetailPage() {
       if (!sourceId || !listId) return
 
       const { error } = await client
-        .from('list_items')
+        .from('list_memberships')
         .delete()
         .eq('list_id', listId)
         .eq('item_type', 'listing')
