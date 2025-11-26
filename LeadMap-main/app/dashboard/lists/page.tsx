@@ -599,8 +599,18 @@ export default function ListsPage() {
                                   fontSize: '14px',
                                   fontWeight: 500,
                                   color: '#111827',
-                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                                }}>
+                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                                  cursor: 'pointer',
+                                  textDecoration: 'none',
+                                  transition: 'color 0.15s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.color = '#6366f1'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.color = '#111827'
+                                }}
+                                >
                                   {list.name}
                                 </span>
                               </div>
@@ -861,8 +871,18 @@ export default function ListsPage() {
                                   fontSize: '14px',
                                   fontWeight: 500,
                                   color: '#111827',
-                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                                }}>
+                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                                  cursor: 'pointer',
+                                  textDecoration: 'none',
+                                  transition: 'color 0.15s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.color = '#6366f1'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.color = '#111827'
+                                }}
+                                >
                                   {list.name}
                                 </span>
                               </div>
