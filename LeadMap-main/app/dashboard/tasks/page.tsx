@@ -72,7 +72,25 @@ export default function TasksPage() {
     if (profile?.id) {
       fetchTasks()
     }
-  }, [profile?.id, filter, priorityFilter])
+  }, [profile?.id, filter, priorityFilter, taskTypeFilter])
+
+  // Helper function to determine task type from title/description
+  const getTaskType = (task: Task): 'call' | 'email' | 'linkedin' | 'other' => {
+    const titleLower = task.title.toLowerCase()
+    const descLower = (task.description || '').toLowerCase()
+    const combined = `${titleLower} ${descLower}`
+    
+    if (combined.includes('call') || combined.includes('phone')) return 'call'
+    if (combined.includes('email') || combined.includes('mail')) return 'email'
+    if (combined.includes('linkedin') || combined.includes('linked in')) return 'linkedin'
+    return 'other'
+  }
+
+  // Check if task is overdue
+  const isOverdue = (task: Task): boolean => {
+    if (!task.due_date || task.status === 'completed') return false
+    return new Date(task.due_date) < new Date()
+  }
 
   const fetchTasks = async () => {
     try {
@@ -94,7 +112,23 @@ export default function TasksPage() {
       const { data, error } = await query
 
       if (error) throw error
-      setTasks(data || [])
+      
+      // Filter by task type on client side
+      let filteredData = data || []
+      if (taskTypeFilter === 'overdue') {
+        filteredData = filteredData.filter(isOverdue)
+      } else if (taskTypeFilter !== 'all') {
+        filteredData = filteredData.filter(task => getTaskType(task) === taskTypeFilter)
+      }
+      
+      setTasks(filteredData)
+      
+      // Update active filters count
+      let count = 0
+      if (filter !== 'all') count++
+      if (priorityFilter !== 'all') count++
+      if (taskTypeFilter !== 'all') count++
+      setActiveFiltersCount(count)
     } catch (error) {
       console.error('Error fetching tasks:', error)
     } finally {
@@ -224,6 +258,13 @@ export default function TasksPage() {
     return true
   })
 
+  // Count tasks by type
+  const getTaskCount = (type: TaskTypeFilter): number => {
+    if (type === 'all') return filteredTasks.length
+    if (type === 'overdue') return filteredTasks.filter(isOverdue).length
+    return filteredTasks.filter(task => getTaskType(task) === type).length
+  }
+
   const pendingTasks = filteredTasks.filter(t => t.status === 'pending' || t.status === 'in_progress')
   const completedTasks = filteredTasks.filter(t => t.status === 'completed')
 
@@ -232,118 +273,214 @@ export default function TasksPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Tasks</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Manage your tasks and stay organized
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tasks</h1>
           <button
             onClick={() => {
               resetForm()
               setShowAddModal(true)
             }}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+            className="flex items-center space-x-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors duration-200 font-medium"
           >
             <Plus className="w-4 h-4" />
-            <span>New Task</span>
+            <span>+ Create task</span>
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex-1 min-w-[200px]">
+        {/* Navigation Tabs */}
+        <div className="flex items-center space-x-1 border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setTaskTypeFilter('all')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskTypeFilter === 'all'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            All tasks {getTaskCount('all')}
+          </button>
+          <button
+            onClick={() => setTaskTypeFilter('call')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskTypeFilter === 'call'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            Call tasks {getTaskCount('call')}
+          </button>
+          <button
+            onClick={() => setTaskTypeFilter('email')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskTypeFilter === 'email'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            Email tasks {getTaskCount('email')}
+          </button>
+          <button
+            onClick={() => setTaskTypeFilter('linkedin')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskTypeFilter === 'linkedin'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            LinkedIn tasks {getTaskCount('linkedin')}
+          </button>
+          <button
+            onClick={() => setTaskTypeFilter('overdue')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskTypeFilter === 'overdue'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            Overdue tasks
+          </button>
+          <button className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center space-x-1">
+            <span>All your tasks</span>
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Filter/Search/Sort/View Options Bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              <Filter className="w-4 h-4" />
+              <span>Show Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+          </div>
+          <div className="flex items-center space-x-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search tasks..."
+                placeholder="Search tasks"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm"
+                className="pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm w-64"
               />
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
-              className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
+            <select className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm flex items-center">
+              <option>Sort</option>
             </select>
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value as any)}
-              className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm"
-            >
-              <option value="all">All Priorities</option>
-              <option value="urgent">Urgent</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
+            <button className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center space-x-2">
+              <Settings className="w-4 h-4" />
+              <span>View options</span>
+            </button>
           </div>
         </div>
+
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Status
+                </label>
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Priority
+                </label>
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tasks List */}
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           </div>
+        ) : filteredTasks.length === 0 ? (
+          <div className="text-center py-16">
+            {/* Empty State Illustration */}
+            <div className="mb-6 flex justify-center">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 max-w-md">
+                <div className="space-y-3 text-left">
+                  <div className="flex items-center space-x-3 p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                    <Circle className="w-5 h-5 text-gray-400" />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 dark:text-white">Email Chloe Kim</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">VP of Marketing</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">Outreach campaign</div>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded">High</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              You have no assigned tasks
+            </h3>
+            <a href="#" className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-center space-x-1">
+              <Info className="w-4 h-4" />
+              <span>Learn more about tasks</span>
+            </a>
+          </div>
         ) : (
           <div className="space-y-4">
-            {/* Pending Tasks */}
-            {pendingTasks.length > 0 && (
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Active Tasks ({pendingTasks.length})
-                </h2>
-                <div className="space-y-2">
-                  {pendingTasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onStatusChange={handleStatusChange}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      getPriorityColor={getPriorityColor}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            {filteredTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onStatusChange={handleStatusChange}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                getPriorityColor={getPriorityColor}
+              />
+            ))}
+          </div>
+        )}
 
-            {/* Completed Tasks */}
-            {completedTasks.length > 0 && (
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Completed ({completedTasks.length})
-                </h2>
-                <div className="space-y-2">
-                  {completedTasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onStatusChange={handleStatusChange}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      getPriorityColor={getPriorityColor}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {filteredTasks.length === 0 && (
-              <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p className="text-gray-600 dark:text-gray-400">No tasks found</p>
-              </div>
-            )}
+        {/* Bottom Action Buttons */}
+        {filteredTasks.length === 0 && !loading && (
+          <div className="flex items-center justify-center space-x-4 pt-8">
+            <button className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              View all team tasks
+            </button>
+            <button
+              onClick={() => {
+                resetForm()
+                setShowAddModal(true)
+              }}
+              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium"
+            >
+              New task
+            </button>
           </div>
         )}
 
