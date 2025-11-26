@@ -62,11 +62,10 @@ export default function CreateEventModal({
         const event = data.event
         
         // Get current timezone setting for proper display
+        // Events are stored in UTC, we display them in the user's current timezone
         const currentTimezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
-        const eventTimezone = event.timezone || currentTimezone
         
-        // Convert UTC times to the event's timezone for display in the form
-        // The times are stored in UTC, but we need to show them in the event's timezone
+        // Convert UTC times to current timezone for display in the form
         let startTime = ''
         let endTime = ''
         
@@ -75,9 +74,9 @@ export default function CreateEventModal({
           const startDate = new Date(event.start_time)
           const endDate = new Date(event.end_time)
           
-          // Format in the event's timezone (or current setting timezone)
-          startTime = formatDateInTimezone(startDate, eventTimezone)
-          endTime = formatDateInTimezone(endDate, eventTimezone)
+          // Format in the user's current timezone setting
+          startTime = formatDateInTimezone(startDate, currentTimezone)
+          endTime = formatDateInTimezone(endDate, currentTimezone)
         }
         
         setFormData({
