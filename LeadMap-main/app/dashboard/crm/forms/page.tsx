@@ -1,12 +1,54 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 import { ChevronDown } from 'lucide-react'
+import FormsOnboardingModal from './components/FormsOnboardingModal'
 
 export default function FormsPage() {
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    // Check if user has completed forms onboarding
+    const checkOnboardingStatus = async () => {
+      try {
+        const response = await fetch('/api/crm/forms/onboarding-status', { credentials: 'include' })
+        if (response.ok) {
+          const data = await response.json()
+          setShowOnboarding(!data.completed)
+        } else {
+          setShowOnboarding(true)
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error)
+        setShowOnboarding(true)
+      }
+    }
+    checkOnboardingStatus()
+  }, [])
+
+  const handleBeginSetup = async () => {
+    try {
+      const response = await fetch('/api/crm/forms/complete-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      })
+      if (response.ok) {
+        setShowOnboarding(false)
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+    }
+  }
+
+  const handleMaybeLater = () => {
+    setShowOnboarding(false)
+  }
+
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-[#f5f5f0] dark:bg-gray-900">
+      <div className="min-h-screen bg-[#f5f5f0] dark:bg-gray-900 pointer-events-none select-none">
         {/* Header */}
         <div className="px-6 py-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Forms</h1>
@@ -32,47 +74,61 @@ export default function FormsPage() {
                         type="email"
                         value="alex@comp"
                         readOnly
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Name"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Job title"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Company"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Industry"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Company size"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                   </div>
                   
-                  <button className="w-full mt-6 px-4 py-2 bg-[#f5f5f0] dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors font-medium">
+                  <button 
+                    disabled
+                    className="w-full mt-6 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed opacity-75 font-medium"
+                  >
                     Submit
                   </button>
                 </div>
@@ -96,39 +152,51 @@ export default function FormsPage() {
                         type="email"
                         value="alex@comp"
                         readOnly
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Name"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Job title"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Company"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div>
                       <input
                         type="text"
                         placeholder="Industry"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-not-allowed opacity-75"
                       />
                     </div>
                     <div className="relative">
-                      <select className="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none">
+                      <select 
+                        disabled
+                        className="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white appearance-none cursor-not-allowed opacity-75"
+                      >
                         <option>Purpose of the demo</option>
                       </select>
                       <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
@@ -137,12 +205,17 @@ export default function FormsPage() {
                       <textarea
                         placeholder="Any specific features you'd like to focus?"
                         rows={3}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 resize-none"
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 resize-none cursor-not-allowed opacity-75"
                       />
                     </div>
                   </div>
                   
-                  <button className="w-full mt-6 px-4 py-2 bg-[#f5f5f0] dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors font-medium">
+                  <button 
+                    disabled
+                    className="w-full mt-6 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed opacity-75 font-medium"
+                  >
                     Request a demo
                   </button>
                 </div>
@@ -162,20 +235,31 @@ export default function FormsPage() {
             </p>
             
             <div className="flex items-center justify-center gap-4">
-              <button className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium">
+              <button 
+                disabled
+                className="px-6 py-3 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed opacity-75 font-medium"
+              >
                 Learn more
               </button>
-              <button className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg transition-colors font-medium shadow-sm">
+              <button 
+                disabled
+                className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed opacity-75 font-medium shadow-sm"
+              >
                 Create form
               </button>
             </div>
           </div>
         </div>
 
-        {/* Scroll to top button */}
-        <button className="fixed bottom-6 right-6 w-10 h-10 bg-black dark:bg-gray-800 rounded-full flex items-center justify-center text-white hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors z-50">
-          <ChevronDown className="w-5 h-5 transform rotate-180" />
-        </button>
+        {/* Onboarding Modal */}
+        {showOnboarding && (
+          <FormsOnboardingModal
+            isOpen={showOnboarding}
+            onClose={handleMaybeLater}
+            onBeginSetup={handleBeginSetup}
+            onMaybeLater={handleMaybeLater}
+          />
+        )}
       </div>
     </DashboardLayout>
   )

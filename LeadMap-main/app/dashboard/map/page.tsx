@@ -12,13 +12,8 @@ import {
   Plus,
   Minus,
   RefreshCw,
-  Grid3x3,
-  Car,
-  Building2,
   Settings,
-  HelpCircle,
-  Sparkles,
-  ZoomIn
+  HelpCircle
 } from 'lucide-react'
 
 interface Listing {
@@ -60,14 +55,50 @@ export default function MapPage() {
   const fetchListings = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('listings')
-        .select('*')
-        .limit(1000)
-        .order('created_at', { ascending: false })
+      
+      // Fetch from all prospect tables (same as prospect-enrich page)
+      const tablesToFetch = [
+        'listings',
+        'expired_listings',
+        'probate_leads',
+        'fsbo_leads',
+        'frbo_leads',
+        'imports',
+        'trash',
+        'foreclosure_listings'
+      ]
 
-      if (error) throw error
-      setListings(data || [])
+      // Fetch in parallel with error handling
+      const promises = tablesToFetch.map(async (table) => {
+        try {
+          const result = await supabase
+            .from(table)
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(2000) // Increased limit for map view
+        
+          if (result.error) {
+            console.warn(`Error fetching from ${table}:`, result.error)
+            return []
+          }
+          return result.data || []
+        } catch (error) {
+          console.warn(`Exception fetching from ${table}:`, error)
+          return []
+        }
+      })
+
+      const results = await Promise.allSettled(promises)
+      
+      // Aggregate all successful results
+      const allListings: Listing[] = []
+      results.forEach((result) => {
+        if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+          allListings.push(...result.value)
+        }
+      })
+
+      setListings(allListings)
     } catch (error) {
       console.error('Error fetching listings:', error)
     } finally {
@@ -176,20 +207,8 @@ export default function MapPage() {
 
         {/* Main Content Area - Map and Sidebar */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Map Section */}
+          {/* Map Section - Enlarged */}
           <div className="flex-1 relative">
-            {/* Map Controls - Left Sidebar */}
-            <div className="absolute left-4 top-4 z-10 flex flex-col gap-2">
-              <button className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg flex items-center justify-center transition-colors">
-                <Grid3x3 className="w-5 h-5" />
-              </button>
-              <button className="w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-lg shadow-lg flex items-center justify-center transition-colors">
-                <Car className="w-5 h-5" />
-              </button>
-              <button className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg flex items-center justify-center transition-colors">
-                <Building2 className="w-5 h-5" />
-              </button>
-            </div>
 
             {/* Map Controls - Top Center */}
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
@@ -247,37 +266,37 @@ export default function MapPage() {
             </div>
           </div>
 
-          {/* Right Sidebar - Results */}
-          <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
-            <div className="flex-1 overflow-auto p-6">
+          {/* Right Sidebar - Results (Narrower for larger map) */}
+          <div className="w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+            <div className="flex-1 overflow-auto p-4">
               {leads.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     There are no properties to display. Try reloading the map, changing your filters/location, or zooming into a smaller area.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {leads.slice(0, 20).map((lead) => (
+                <div className="space-y-3">
+                  {leads.slice(0, 15).map((lead) => (
                     <div
                       key={lead.id}
-                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                      className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
                     >
                       {lead.primary_photo && (
                         <img
                           src={lead.primary_photo}
                           alt={lead.address}
-                          className="w-full h-32 object-cover rounded mb-2"
+                          className="w-full h-24 object-cover rounded mb-2"
                         />
                       )}
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1">
                         {lead.address || 'Address not available'}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                         {lead.city}, {lead.state} {lead.zip}
                       </p>
                       {lead.price && (
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">
+                        <p className="text-base font-bold text-gray-900 dark:text-white">
                           ${lead.price.toLocaleString()}
                         </p>
                       )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../components/DashboardLayout'
 import { 
   Plus, 
@@ -14,6 +14,7 @@ import {
   Settings,
   HelpCircle
 } from 'lucide-react'
+import WorkflowsOnboardingModal from './components/WorkflowsOnboardingModal'
 
 interface WorkflowTemplate {
   id: string
@@ -70,8 +71,47 @@ const workflowTemplates: WorkflowTemplate[] = [
 ]
 
 export default function WorkflowsPage() {
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
   const [activeTab, setActiveTab] = useState<'workflows' | 'templates'>('workflows')
   const [showFilters, setShowFilters] = useState(false)
+
+  useEffect(() => {
+    // Check if user has completed workflows onboarding
+    const checkOnboardingStatus = async () => {
+      try {
+        const response = await fetch('/api/tools/workflows/onboarding-status', { credentials: 'include' })
+        if (response.ok) {
+          const data = await response.json()
+          setShowOnboarding(!data.completed)
+        } else {
+          setShowOnboarding(true)
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error)
+        setShowOnboarding(true)
+      }
+    }
+    checkOnboardingStatus()
+  }, [])
+
+  const handleBeginSetup = async () => {
+    try {
+      const response = await fetch('/api/tools/workflows/complete-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      })
+      if (response.ok) {
+        setShowOnboarding(false)
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+    }
+  }
+
+  const handleMaybeLater = () => {
+    setShowOnboarding(false)
+  }
 
   return (
     <DashboardLayout>
@@ -231,6 +271,16 @@ export default function WorkflowsPage() {
             </div>
           </div>
         </div>
+
+        {/* Onboarding Modal */}
+        {showOnboarding && (
+          <WorkflowsOnboardingModal
+            isOpen={showOnboarding}
+            onClose={handleMaybeLater}
+            onBeginSetup={handleBeginSetup}
+            onMaybeLater={handleMaybeLater}
+          />
+        )}
       </div>
     </DashboardLayout>
   )

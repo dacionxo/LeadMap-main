@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 import { 
   Star, 
@@ -11,10 +11,50 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react'
+import AnalyticsOnboardingModal from './components/AnalyticsOnboardingModal'
 
 export default function AnalyticsPage() {
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'dashboards' | 'reports'>('overview')
   const [recentTab, setRecentTab] = useState<'dashboards' | 'reports' | 'goals'>('dashboards')
+
+  useEffect(() => {
+    // Check if user has completed analytics onboarding
+    const checkOnboardingStatus = async () => {
+      try {
+        const response = await fetch('/api/crm/analytics/onboarding-status', { credentials: 'include' })
+        if (response.ok) {
+          const data = await response.json()
+          setShowOnboarding(!data.completed)
+        } else {
+          setShowOnboarding(true)
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error)
+        setShowOnboarding(true)
+      }
+    }
+    checkOnboardingStatus()
+  }, [])
+
+  const handleBeginSetup = async () => {
+    try {
+      const response = await fetch('/api/crm/analytics/complete-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      })
+      if (response.ok) {
+        setShowOnboarding(false)
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+    }
+  }
+
+  const handleMaybeLater = () => {
+    setShowOnboarding(false)
+  }
 
   // Mock data for charts
   const emailData = [
@@ -58,14 +98,23 @@ export default function AnalyticsPage() {
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h1>
             <div className="flex items-center gap-3">
-              <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <button 
+                disabled
+                className="p-2 text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50"
+              >
                 <Star className="w-5 h-5" />
               </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <button 
+                disabled
+                className="p-2 text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50"
+              >
                 <ExternalLink className="w-5 h-5" />
               </button>
               <div className="relative">
-                <button className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg font-medium flex items-center gap-2">
+                <button 
+                  disabled
+                  className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg font-medium flex items-center gap-2 cursor-not-allowed opacity-75"
+                >
                   Create
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -74,11 +123,14 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+          <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 pointer-events-none select-none">
             <div className="p-6">
               {/* Dashboard Selector */}
               <div className="mb-6">
-                <select className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                <select 
+                  disabled
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed opacity-75"
+                >
                   <option>Select a dashboard</option>
                 </select>
               </div>
@@ -250,10 +302,16 @@ export default function AnalyticsPage() {
                   Take the guesswork out of sales. Use data-driven insights and reporting to understand your performance, identify the biggest bottlenecks in your funnel, and close more deals.
                 </p>
                 <div className="flex items-center justify-center gap-4">
-                  <button className="px-6 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium">
+                  <button 
+                    disabled
+                    className="px-6 py-3 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed opacity-75 font-medium"
+                  >
                     Learn more
                   </button>
-                  <button className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg transition-colors font-medium">
+                  <button 
+                    disabled
+                    className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed opacity-75 font-medium"
+                  >
                     Try Analytics now
                   </button>
                 </div>
@@ -263,37 +321,37 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Left Sidebar */}
-        <div className="w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className="w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col pointer-events-none">
           {/* Navigation Tabs */}
           <div className="border-b border-gray-200 dark:border-gray-700">
             <div className="flex">
               <button
-                onClick={() => setActiveTab('overview')}
-                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                disabled
+                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 ${
                   activeTab === 'overview'
                     ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                    : 'border-transparent text-gray-400 dark:text-gray-600'
+                } cursor-not-allowed opacity-75`}
               >
                 Overview
               </button>
               <button
-                onClick={() => setActiveTab('dashboards')}
-                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                disabled
+                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 ${
                   activeTab === 'dashboards'
                     ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                    : 'border-transparent text-gray-400 dark:text-gray-600'
+                } cursor-not-allowed opacity-75`}
               >
                 Dashboards
               </button>
               <button
-                onClick={() => setActiveTab('reports')}
-                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                disabled
+                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 ${
                   activeTab === 'reports'
                     ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                    : 'border-transparent text-gray-400 dark:text-gray-600'
+                } cursor-not-allowed opacity-75`}
               >
                 Reports
               </button>
@@ -302,15 +360,24 @@ export default function AnalyticsPage() {
 
           {/* Action Buttons */}
           <div className="p-4 space-y-2 border-b border-gray-200 dark:border-gray-700">
-            <button className="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2">
+            <button 
+              disabled
+              className="w-full px-4 py-2 text-left text-sm font-medium text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed opacity-75 flex items-center gap-2"
+            >
               <LayoutGrid className="w-4 h-4" />
               Create dashboard
             </button>
-            <button className="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2">
+            <button 
+              disabled
+              className="w-full px-4 py-2 text-left text-sm font-medium text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed opacity-75 flex items-center gap-2"
+            >
               <BarChart3 className="w-4 h-4" />
               Create report
             </button>
-            <button className="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2">
+            <button 
+              disabled
+              className="w-full px-4 py-2 text-left text-sm font-medium text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed opacity-75 flex items-center gap-2"
+            >
               <Trophy className="w-4 h-4" />
               Create goal
             </button>
@@ -321,32 +388,32 @@ export default function AnalyticsPage() {
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex gap-1 mb-4">
                 <button
-                  onClick={() => setRecentTab('dashboards')}
-                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  disabled
+                  className={`px-3 py-1 text-xs font-medium rounded ${
                     recentTab === 'dashboards'
                       ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
+                      : 'text-gray-400 dark:text-gray-600'
+                  } cursor-not-allowed opacity-75`}
                 >
                   Dashboards
                 </button>
                 <button
-                  onClick={() => setRecentTab('reports')}
-                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  disabled
+                  className={`px-3 py-1 text-xs font-medium rounded ${
                     recentTab === 'reports'
                       ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
+                      : 'text-gray-400 dark:text-gray-600'
+                  } cursor-not-allowed opacity-75`}
                 >
                   Reports
                 </button>
                 <button
-                  onClick={() => setRecentTab('goals')}
-                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  disabled
+                  className={`px-3 py-1 text-xs font-medium rounded ${
                     recentTab === 'goals'
                       ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
+                      : 'text-gray-400 dark:text-gray-600'
+                  } cursor-not-allowed opacity-75`}
                 >
                   Goals
                 </button>
@@ -357,7 +424,8 @@ export default function AnalyticsPage() {
               {recentItems.map((item, index) => (
                 <button
                   key={index}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
+                  disabled
+                  className="w-full px-3 py-2 text-left text-sm text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed opacity-75 flex items-center gap-2"
                 >
                   <LayoutGrid className="w-4 h-4 text-gray-400" />
                   <span className="flex-1">{item}</span>
@@ -367,6 +435,16 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </div>
+
+        {/* Onboarding Modal */}
+        {showOnboarding && (
+          <AnalyticsOnboardingModal
+            isOpen={showOnboarding}
+            onClose={handleMaybeLater}
+            onBeginSetup={handleBeginSetup}
+            onMaybeLater={handleMaybeLater}
+          />
+        )}
       </div>
     </DashboardLayout>
   )
