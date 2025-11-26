@@ -15,16 +15,23 @@ import {
   Settings,
   HelpCircle
 } from 'lucide-react'
+import MapsOnboardingModal from './components/MapsOnboardingModal'
 
 interface Listing {
   listing_id: string
   address?: string
+  street?: string
+  unit?: string
   city?: string
   state?: string
   zip?: string
+  zip_code?: string
   price?: number
+  list_price?: number
   latitude?: number
   longitude?: number
+  lat?: number
+  lng?: number
   property_type?: string
   beds?: number
   baths?: number
@@ -35,6 +42,7 @@ interface Listing {
   enrichment_confidence?: number | null
   primary_photo?: string
   url?: string
+  property_url?: string
 }
 
 export default function MapPage() {
@@ -45,12 +53,48 @@ export default function MapPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [location, setLocation] = useState('Pasadena')
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>(['Good For Wholesaling'])
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (profile?.id) {
       fetchListings()
+      checkOnboardingStatus()
     }
   }, [profile?.id])
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const response = await fetch('/api/maps/onboarding-status', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setShowOnboarding(!data.completed)
+      } else {
+        setShowOnboarding(true)
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error)
+      setShowOnboarding(true)
+    }
+  }
+
+  const handleBeginSetup = async () => {
+    try {
+      const response = await fetch('/api/maps/complete-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      })
+      if (response.ok) {
+        setShowOnboarding(false)
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+    }
+  }
+
+  const handleMaybeLater = () => {
+    setShowOnboarding(false)
+  }
 
   const fetchListings = async () => {
     try {
@@ -108,27 +152,56 @@ export default function MapPage() {
 
   // Convert listings to leads format for MapView
   const leads = useMemo(() => {
-    return listings.map(listing => ({
-      id: listing.listing_id,
-      address: listing.address || '',
-      city: listing.city || '',
-      state: listing.state || '',
-      zip: listing.zip || '',
-      price: listing.price || 0,
-      price_drop_percent: 0,
-      days_on_market: 0,
-      url: listing.url || '',
-      latitude: listing.latitude,
-      longitude: listing.longitude,
-      property_type: listing.property_type,
-      beds: listing.beds,
-      sqft: listing.sqft,
-      expired: listing.expired,
-      geo_source: listing.geo_source,
-      owner_email: listing.owner_email,
-      enrichment_confidence: listing.enrichment_confidence,
-      primary_photo: listing.primary_photo
-    }))
+    return listings.map(listing => {
+      // Build address from multiple possible fields
+      const hasValue = (val: any): boolean => val != null && String(val).trim().length > 0
+      
+      // Try address field first, then street, then build from parts
+      let address = listing.address || listing.street || ''
+      
+      // If no direct address field, try to build from parts
+      if (!address || address.trim() === '') {
+        const addressParts = [
+          listing.street,
+          listing.unit
+        ].filter(val => hasValue(val))
+          .map(val => String(val).trim())
+        
+        if (addressParts.length > 0) {
+          address = addressParts.join(' ')
+        }
+      }
+      
+      // Build full address string for display
+      const city = listing.city || ''
+      const state = listing.state || ''
+      const zip = listing.zip || listing.zip_code || ''
+      
+      // If we have city/state/zip but no street address, show location info
+      const locationInfo = [city, state, zip].filter(val => hasValue(val)).join(', ')
+      
+      return {
+        id: listing.listing_id,
+        address: address || (locationInfo ? `Property in ${locationInfo}` : 'Address not available'),
+        city: city,
+        state: state,
+        zip: zip,
+        price: listing.price || listing.list_price || 0,
+        price_drop_percent: 0,
+        days_on_market: 0,
+        url: listing.url || listing.property_url || '',
+        latitude: listing.latitude || listing.lat,
+        longitude: listing.longitude || listing.lng,
+        property_type: listing.property_type,
+        beds: listing.beds,
+        sqft: listing.sqft,
+        expired: listing.expired,
+        geo_source: listing.geo_source,
+        owner_email: listing.owner_email,
+        enrichment_confidence: listing.enrichment_confidence,
+        primary_photo: listing.primary_photo
+      }
+    })
   }, [listings])
 
   const propertyTypeOptions = [
@@ -290,7 +363,7 @@ export default function MapPage() {
                         />
                       )}
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1">
-                        {lead.address || 'Address not available'}
+                        {lead.address}
                       </h3>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                         {lead.city}, {lead.state} {lead.zip}
@@ -349,6 +422,16 @@ export default function MapPage() {
             </select>
           </div>
         </div>
+
+        {/* Onboarding Modal */}
+        {showOnboarding && (
+          <MapsOnboardingModal
+            isOpen={showOnboarding}
+            onClose={handleMaybeLater}
+            onBeginSetup={handleBeginSetup}
+            onMaybeLater={handleMaybeLater}
+          />
+        )}
       </div>
     </DashboardLayout>
   )
