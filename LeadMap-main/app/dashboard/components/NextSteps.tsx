@@ -26,13 +26,6 @@ const defaultSteps: NextStep[] = [
     description: 'Visualize your leads geographically to identify hot markets',
     href: '/dashboard/leads?view=map',
     completed: false
-  },
-  {
-    id: 'create-template',
-    title: 'Create your first email template',
-    description: 'Set up email templates for faster outreach to property owners',
-    href: '/dashboard/templates',
-    completed: false
   }
 ]
 

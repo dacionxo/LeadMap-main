@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useApp } from '@/app/providers'
 import { useEffect, useState } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
-import { Moon, Sun, Monitor } from 'lucide-react'
+import { Moon, Sun, Monitor, Globe, Zap, ArrowRight } from 'lucide-react'
 import CalendarSettings from './components/CalendarSettings'
 
 export default function SettingsPage() {
@@ -93,6 +93,60 @@ export default function SettingsPage() {
         {/* Calendar Settings */}
         <div className="bg-neutral-light dark:bg-neutral-dark rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <CalendarSettings />
+        </div>
+
+        {/* Integrations Section */}
+        <div className="bg-neutral-light dark:bg-neutral-dark rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Globe className="w-6 h-6 text-gray-900 dark:text-white" />
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Integrations</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Connect with external services and tools
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/dashboard/tools/integrations')}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            >
+              Manage Integrations
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Connect your CRM, email providers, and other tools to streamline your workflow.
+            </p>
+          </div>
+        </div>
+
+        {/* Webhooks Section */}
+        <div className="bg-neutral-light dark:bg-neutral-dark rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Zap className="w-6 h-6 text-gray-900 dark:text-white" />
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Webhooks</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Set up webhooks to receive leads from external systems
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/dashboard/tools/webhooks')}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            >
+              Manage Webhooks
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Configure webhook endpoints to receive real-time updates and data from external services.
+            </p>
+          </div>
         </div>
       </div>
     </DashboardLayout>

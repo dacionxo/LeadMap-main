@@ -4,11 +4,9 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { 
   Home, 
   LayoutDashboard,
-  Search,
   Users,
   Target,
   Zap,
-  Inbox,
   Sparkles,
   Clock,
   FileText,
@@ -43,7 +41,8 @@ interface NavSection {
 const navSections: NavSection[] = [
   {
     items: [
-      { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' }
+      { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+      { label: 'Maps', icon: MapPin, href: '/dashboard/map' }
     ]
   },
   {
@@ -64,13 +63,10 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Lists', icon: UserCircle, href: '/dashboard/lists' },
       { label: 'Deals', icon: Briefcase, href: '/dashboard/crm/deals' },
-      { label: 'Tasks', icon: CheckCircle2, href: '/dashboard/tasks' },
       { label: 'Campaigns', icon: Target, href: '/dashboard/crm/campaigns' },
       { label: 'Email Sequences', icon: Mail, href: '/dashboard/crm/sequences' },
-      { label: 'Templates', icon: FileText, href: '/dashboard/crm/templates' },
       { label: 'Calls & Activities', icon: Phone, href: '/dashboard/crm/activities' },
       { label: 'Calendar', icon: Calendar, href: '/dashboard/crm/calendar' },
-      { label: 'Inbound Leads', icon: Inbox, href: '/dashboard/crm/inbound' },
       { label: 'Forms', icon: FileText, href: '/dashboard/crm/forms' },
       { label: 'Analytics', icon: BarChart3, href: '/dashboard/crm/analytics' }
     ]
@@ -79,10 +75,7 @@ const navSections: NavSection[] = [
     title: 'TOOLS & AUTOMATION',
     items: [
       { label: 'Workflows', icon: Zap, href: '/dashboard/tools' },
-      { label: 'Enrichment', icon: Search, href: '/dashboard/enrichment' },
-      { label: 'Maps', icon: MapPin, href: '/dashboard/map' },
-      { label: 'Integrations', icon: Globe, href: '/dashboard/tools/integrations' },
-      { label: 'Webhooks', icon: Zap, href: '/dashboard/tools/webhooks' }
+      { label: 'Tasks', icon: CheckCircle2, href: '/dashboard/tasks' }
     ]
   }
 ]
