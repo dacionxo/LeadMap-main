@@ -59,33 +59,16 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       
       setSettings(newSettings)
       
-      // If timezone changed, update FullCalendar and force re-render of events
+      // If timezone changed, update FullCalendar and re-fetch events
       if (newTimezone && newTimezone !== oldTimezone && calendarRef.current) {
         const calendar = calendarRef.current.getApi()
         
         // Update FullCalendar's timezone
         calendar.setOption('timeZone', newTimezone)
         
-        // Force FullCalendar to re-render events by removing and re-adding them
-        // This ensures the timezone conversion is applied to all events
-        const currentEvents = calendar.getEvents()
-        calendar.removeAllEvents()
-        
-        // Re-add events - FullCalendar will now convert them using the new timezone
-        setTimeout(() => {
-          currentEvents.forEach((fcEvent) => {
-            calendar.addEvent({
-              id: fcEvent.id,
-              title: fcEvent.title,
-              start: fcEvent.start || undefined,
-              end: fcEvent.end || undefined,
-              allDay: fcEvent.allDay,
-              backgroundColor: fcEvent.backgroundColor,
-              borderColor: fcEvent.borderColor,
-              extendedProps: fcEvent.extendedProps,
-            })
-          })
-        }, 0)
+        // Re-fetch events to ensure they're properly formatted and displayed in new timezone
+        // This forces a complete re-render of all events with the new timezone conversion
+        fetchEvents()
       }
     }
 
