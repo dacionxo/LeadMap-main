@@ -49,23 +49,17 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 h-[calc(100vh-8rem)]">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Calendar</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Schedule property viewings, meetings, and follow-ups
-            </p>
-          </div>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Event</span>
-          </button>
-        </div>
-        
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        {/* Floating Action Button */}
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="fixed bottom-8 right-8 z-50 flex items-center justify-center w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
+          title="Create New Event"
+        >
+          <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+        </button>
+
+        {/* Calendar Container */}
         <div className="flex-1 min-h-0">
           <CalendarView
             onEventClick={handleEventClick}
