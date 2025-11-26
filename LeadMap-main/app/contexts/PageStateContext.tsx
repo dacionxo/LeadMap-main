@@ -289,13 +289,13 @@ export function PageStateProvider({ children }: { children: React.ReactNode }) {
       'add_to_pipeline': '/dashboard/crm/deals',
       'create_deal': '/dashboard/crm/deals',
       'send_email': '/dashboard/crm/sequences',
-      'make_call': '/dashboard/crm/activities',
+      'make_call': '/dashboard/crm/sequences',
       'view_details': context.sourcePage, // Stay on current page
       'export': context.sourcePage,
       'import': '/admin',
       'enrich': '/dashboard/prospect-enrich',
       'create_task': '/dashboard/tasks',
-      'create_campaign': '/dashboard/crm/campaigns',
+      'create_campaign': '/dashboard/crm/sequences',
       'add_to_sequence': '/dashboard/crm/sequences'
     }
     

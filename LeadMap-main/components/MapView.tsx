@@ -70,8 +70,22 @@ const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading }) => {
   const [useGoogleMaps, setUseGoogleMaps] = useState<boolean | null>(null);
   const [googleMapsFailed, setGoogleMapsFailed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [mapKey, setMapKey] = useState(0); // Key to force remount
+
+  // Reset state when isActive changes to true (component becomes active)
+  useEffect(() => {
+    if (isActive) {
+      // Reset state when map becomes active to ensure fresh initialization
+      setGoogleMapsFailed(false);
+      setUseGoogleMaps(null);
+      setMapKey(prev => prev + 1); // Force remount of map components
+    }
+  }, [isActive]);
 
   useEffect(() => {
+    // Only initialize if isActive is true
+    if (!isActive) return;
+
     // Check if Google Maps API key is available
     const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M';
     const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoiZGFjaW9ueG8iLCJhIjoiY21pZTF1cjQ5MDgnMDJrb2w5azk4NDB5MSJ9._yXKxm3HwER9J5GCigVr8A';
@@ -85,7 +99,7 @@ const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading }) => {
       // Default to Google Maps with hardcoded key
       setUseGoogleMaps(true);
     }
-  }, [googleMapsFailed]);
+  }, [googleMapsFailed, isActive]);
 
   // Handle Google Maps error and fallback to Mapbox
   const handleGoogleMapsError = () => {
@@ -211,23 +225,32 @@ const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading }) => {
     );
   }
 
+  // Don't render map if not active
+  if (!isActive) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-900">
+        <p className="text-gray-600 dark:text-gray-400">Map is not active</p>
+      </div>
+    );
+  }
+
   // Try Google Maps first (primary) - only if not failed
   if (useGoogleMaps && !googleMapsFailed) {
     return (
-      <>
-        <GoogleMapsViewEnhanced
-          isActive={isActive}
-          listings={listings}
-          loading={loading}
-          onError={handleGoogleMapsError}
-        />
-      </>
+      <GoogleMapsViewEnhanced
+        key={`google-${mapKey}`}
+        isActive={isActive}
+        listings={listings}
+        loading={loading}
+        onError={handleGoogleMapsError}
+      />
     );
   }
 
   // Fallback to Mapbox (automatically switches when Google Maps fails)
   return (
     <MapboxViewFallback
+      key={`mapbox-${mapKey}`}
       isActive={isActive}
       listings={listings}
       loading={loading}

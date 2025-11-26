@@ -80,7 +80,7 @@ export const ACTION_ROUTES: Record<ActionType, ActionRoute> = {
     minSelections: 1
   },
   'create_campaign': {
-    targetPage: '/dashboard/crm/campaigns',
+    targetPage: '/dashboard/crm/sequences',
     requiresSelection: true,
     minSelections: 1
   },

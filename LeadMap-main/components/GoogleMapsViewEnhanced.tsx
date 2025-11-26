@@ -85,7 +85,21 @@ const MapComponent: React.FC<{
   };
 
   useEffect(() => {
-    if (!mapRef.current || map) return;
+    if (!mapRef.current) return;
+    
+    // Clean up existing map if it exists (for remounting)
+    if (map) {
+      // Clear all markers
+      markers.forEach(marker => marker.setMap(null));
+      setMarkers([]);
+      // Close info window
+      if (infoWindow) {
+        infoWindow.close();
+      }
+      // Map instance will be cleaned up by React
+      setMap(null);
+      setInfoWindow(null);
+    }
 
     // Check if google.maps is available
     if (typeof window === 'undefined' || !window.google || !window.google.maps) {

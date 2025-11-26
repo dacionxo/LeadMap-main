@@ -5,7 +5,6 @@ import {
   Home, 
   LayoutDashboard,
   Users,
-  Target,
   Zap,
   Sparkles,
   Clock,
@@ -18,7 +17,6 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCircle,
-  Phone,
   Calendar,
   BarChart3,
   CheckCircle2
@@ -63,13 +61,19 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Lists', icon: UserCircle, href: '/dashboard/lists' },
       { label: 'Deals', icon: Briefcase, href: '/dashboard/crm/deals' },
-      { label: 'Campaigns', icon: Target, href: '/dashboard/crm/campaigns' },
       { label: 'Email Sequences', icon: Mail, href: '/dashboard/crm/sequences' },
-      { label: 'Calls & Activities', icon: Phone, href: '/dashboard/crm/activities' },
       { label: 'Calendar', icon: Calendar, href: '/dashboard/crm/calendar' },
       { label: 'Forms', icon: FileText, href: '/dashboard/crm/forms' },
       { label: 'Analytics', icon: BarChart3, href: '/dashboard/crm/analytics' }
     ]
+  },
+  {
+    title: 'MARKETING',
+    items: []
+  },
+  {
+    title: 'CONVERSATIONS',
+    items: []
   },
   {
     title: 'TOOLS & AUTOMATION',

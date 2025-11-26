@@ -136,9 +136,26 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({ isActive, listi
     `;
   };
 
-  // Initialize map
+  // Initialize map - re-initialize when isActive becomes true
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!isActive || !mapContainer.current) {
+      // Clean up if not active
+      if (map.current) {
+        markers.current.forEach(marker => marker.remove());
+        markers.current = [];
+        if (searchMarker.current) {
+          searchMarker.current.remove();
+          searchMarker.current = null;
+        }
+        map.current.remove();
+        map.current = null;
+        setMapLoaded(false);
+      }
+      return;
+    }
+
+    // If map already exists, don't re-initialize unless it was cleaned up
+    if (map.current) return;
 
     const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
     if (!MAPBOX_TOKEN) {
@@ -147,6 +164,14 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({ isActive, listi
     }
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    // Clear any existing markers before creating new map
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
+    if (searchMarker.current) {
+      searchMarker.current.remove();
+      searchMarker.current = null;
+    }
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -166,11 +191,14 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({ isActive, listi
         searchMarker.current = null;
       }
       if (map.current) {
+        markers.current.forEach(marker => marker.remove());
+        markers.current = [];
         map.current.remove();
         map.current = null;
+        setMapLoaded(false);
       }
     };
-  }, []);
+  }, [isActive]);
 
   // Search for addresses using Mapbox Geocoding API
   const searchAddress = async (query: string) => {
