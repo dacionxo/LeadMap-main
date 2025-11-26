@@ -35,7 +35,7 @@ export const ACTION_ROUTES: Record<ActionType, ActionRoute> = {
     minSelections: 1
   },
   'add_to_pipeline': {
-    targetPage: '/dashboard/crm/pipeline',
+    targetPage: '/dashboard/crm/deals',
     requiresSelection: true,
     minSelections: 1
   },

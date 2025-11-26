@@ -286,7 +286,7 @@ export function PageStateProvider({ children }: { children: React.ReactNode }) {
     const actionRoutes: Record<ActionType, string> = {
       'save_to_crm': '/dashboard/lists',
       'add_to_list': '/dashboard/lists',
-      'add_to_pipeline': '/dashboard/crm/pipeline',
+      'add_to_pipeline': '/dashboard/crm/deals',
       'create_deal': '/dashboard/crm/deals',
       'send_email': '/dashboard/crm/sequences',
       'make_call': '/dashboard/crm/activities',

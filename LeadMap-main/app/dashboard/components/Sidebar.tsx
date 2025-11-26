@@ -7,7 +7,6 @@ import {
   Search,
   Users,
   Target,
-  TrendingUp,
   Zap,
   Inbox,
   Sparkles,
@@ -64,7 +63,6 @@ const navSections: NavSection[] = [
     title: 'CUSTOMER RELATIONSHIP MANAGEMENT',
     items: [
       { label: 'Lists', icon: UserCircle, href: '/dashboard/lists' },
-      { label: 'Pipeline', icon: TrendingUp, href: '/dashboard/crm/pipeline' },
       { label: 'Deals', icon: Briefcase, href: '/dashboard/crm/deals' },
       { label: 'Tasks', icon: CheckCircle2, href: '/dashboard/tasks' },
       { label: 'Campaigns', icon: Target, href: '/dashboard/crm/campaigns' },
