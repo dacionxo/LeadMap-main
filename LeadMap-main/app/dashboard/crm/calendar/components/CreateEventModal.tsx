@@ -12,7 +12,33 @@ interface CreateEventModalProps {
   relatedId?: string
   defaultEventType?: string
   onSuccess?: () => void
-  eventId?: string // If provided, this is an edit operation
+  eventId?: string
+}
+
+// Simple timezone helper
+const getBrowserTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone
+
+// Convert UTC ISO string to datetime-local format in user's timezone
+// Used for displaying times when editing events
+const utcToLocalInput = (utcIso: string, timezone: string): string => {
+  if (!utcIso) return ''
+  const date = new Date(utcIso)
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  const parts = formatter.formatToParts(date)
+  const year = parts.find(p => p.type === 'year')?.value || ''
+  const month = parts.find(p => p.type === 'month')?.value || ''
+  const day = parts.find(p => p.type === 'day')?.value || ''
+  const hour = parts.find(p => p.type === 'hour')?.value || '00'
+  const minute = parts.find(p => p.type === 'minute')?.value || '00'
+  return `${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
 }
 
 export default function CreateEventModal({
@@ -32,8 +58,8 @@ export default function CreateEventModal({
     title: '',
     description: '',
     eventType: defaultEventType || 'call',
-    startTime: initialDate ? initialDate.toISOString().slice(0, 16) : '',
-    endTime: initialEndDate ? initialEndDate.toISOString().slice(0, 16) : '',
+    startTime: '',
+    endTime: '',
     allDay: false,
     location: '',
     conferencingLink: '',
@@ -42,15 +68,34 @@ export default function CreateEventModal({
   })
   const isEditMode = !!eventId
 
-  // Load settings and event data on mount
   useEffect(() => {
     if (isOpen) {
       fetchSettings()
       if (isEditMode && eventId) {
-        fetchEventData()
+        // Will fetch after settings load
       }
+    } else {
+      // Reset form when modal closes
+      setFormData({
+        title: '',
+        description: '',
+        eventType: defaultEventType || 'call',
+        startTime: '',
+        endTime: '',
+        allDay: false,
+        location: '',
+        conferencingLink: '',
+        notes: '',
+        reminderMinutes: [],
+      })
     }
-  }, [isOpen, eventId, isEditMode])
+  }, [isOpen, isEditMode, eventId, defaultEventType])
+
+  useEffect(() => {
+    if (isOpen && isEditMode && eventId && settings) {
+      fetchEventData()
+    }
+  }, [isOpen, isEditMode, eventId, settings])
 
   const fetchEventData = async () => {
     try {
@@ -60,23 +105,19 @@ export default function CreateEventModal({
       if (response.ok) {
         const data = await response.json()
         const event = data.event
+        const userTimezone = settings?.default_timezone || getBrowserTimezone()
         
-        // Get current timezone setting for proper display
-        // Events are stored in UTC, we display them in the user's current timezone
-        const currentTimezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
-        
-        // Convert UTC times to current timezone for display in the form
         let startTime = ''
         let endTime = ''
         
-        if (event.start_time && event.end_time) {
-          // Create date objects from UTC times
-          const startDate = new Date(event.start_time)
-          const endDate = new Date(event.end_time)
-          
-          // Format in the user's current timezone setting
-          startTime = formatDateInTimezone(startDate, currentTimezone)
-          endTime = formatDateInTimezone(endDate, currentTimezone)
+        if (event.all_day && event.start_date && event.end_date) {
+          // All-day: use dates with midnight times
+          startTime = `${event.start_date}T00:00`
+          endTime = `${event.end_date}T23:59`
+        } else if (event.start_time && event.end_time) {
+          // Timed: convert UTC to local
+          startTime = utcToLocalInput(event.start_time, userTimezone)
+          endTime = utcToLocalInput(event.end_time, userTimezone)
         }
         
         setFormData({
@@ -97,29 +138,6 @@ export default function CreateEventModal({
     }
   }
 
-  // Helper function to format date in specific timezone for datetime-local input
-  const formatDateInTimezone = (date: Date, timezone: string): string => {
-    // Use Intl.DateTimeFormat to get the date/time in the specified timezone
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    })
-    
-    const parts = formatter.formatToParts(date)
-    const year = parts.find(p => p.type === 'year')?.value
-    const month = parts.find(p => p.type === 'month')?.value
-    const day = parts.find(p => p.type === 'day')?.value
-    const hour = parts.find(p => p.type === 'hour')?.value
-    const minute = parts.find(p => p.type === 'minute')?.value
-    
-    return `${year}-${month}-${day}T${hour}:${minute}`
-  }
-
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/calendar/settings', {
@@ -128,18 +146,6 @@ export default function CreateEventModal({
       if (response.ok) {
         const data = await response.json()
         setSettings(data.settings)
-        // Apply default duration if no initial end date
-        if (!initialEndDate && data.settings?.default_event_duration_minutes) {
-          const duration = data.settings.default_event_duration_minutes
-          if (initialDate) {
-            const endDate = new Date(initialDate.getTime() + duration * 60 * 1000)
-            setFormData((prev) => ({
-              ...prev,
-              endTime: endDate.toISOString().slice(0, 16),
-            }))
-          }
-        }
-        // Apply default reminders
         if (data.settings?.default_reminders) {
           const reminders = data.settings.default_reminders.map((r: any) => r.minutes)
           setFormData((prev) => ({
@@ -153,17 +159,53 @@ export default function CreateEventModal({
     }
   }
 
+  // Helper to format Date objects in user's timezone
+  const formatDateToLocalInput = (date: Date, tz: string): string => {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    const parts = formatter.formatToParts(date)
+    const year = parts.find(p => p.type === 'year')?.value || ''
+    const month = parts.find(p => p.type === 'month')?.value || ''
+    const day = parts.find(p => p.type === 'day')?.value || ''
+    const hour = parts.find(p => p.type === 'hour')?.value || '00'
+    const minute = parts.find(p => p.type === 'minute')?.value || '00'
+    return `${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+  }
+
   useEffect(() => {
-    if (initialDate) {
+    if (initialDate && settings) {
       const defaultDuration = settings?.default_event_duration_minutes || 30
       const endDate = initialEndDate || new Date(initialDate.getTime() + defaultDuration * 60 * 1000)
+      const userTimezone = settings?.default_timezone || getBrowserTimezone()
+      
+      // Format Date objects directly in user's timezone (don't convert to UTC first)
+      // The Date object from FullCalendar is already timezone-aware
       setFormData((prev) => ({
         ...prev,
-        startTime: initialDate.toISOString().slice(0, 16),
-        endTime: endDate.toISOString().slice(0, 16),
+        startTime: formatDateToLocalInput(initialDate, userTimezone),
+        endTime: formatDateToLocalInput(endDate, userTimezone),
+      }))
+    } else if (!initialDate && settings && isOpen && !isEditMode) {
+      // When opening modal without initialDate, set current time in user's timezone
+      const userTimezone = settings?.default_timezone || getBrowserTimezone()
+      const now = new Date()
+      const defaultDuration = settings?.default_event_duration_minutes || 30
+      const endTime = new Date(now.getTime() + defaultDuration * 60 * 1000)
+      
+      setFormData((prev) => ({
+        ...prev,
+        startTime: formatDateToLocalInput(now, userTimezone),
+        endTime: formatDateToLocalInput(endTime, userTimezone),
       }))
     }
-  }, [initialDate, initialEndDate, settings])
+  }, [initialDate, initialEndDate, settings, isOpen, isEditMode])
 
   const eventTypes = [
     { value: 'call', label: 'Phone Call' },
@@ -188,15 +230,27 @@ export default function CreateEventModal({
     setLoading(true)
 
     try {
-      const timezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
-      
-      // Send local time + timezone to backend - backend will convert to UTC
-      // Format: "2025-05-12T15:00" (datetime-local format)
-      const start_local = formData.startTime
-      const end_local = formData.endTime
-
+      const userTimezone = settings?.default_timezone || getBrowserTimezone()
       const url = isEditMode ? `/api/calendar/events/${eventId}` : '/api/calendar/events'
       const method = isEditMode ? 'PUT' : 'POST'
+      
+      let startTime: string | null = null
+      let endTime: string | null = null
+      let startDate: string | null = null
+      let endDate: string | null = null
+      
+      if (formData.allDay) {
+        // All-day events: extract dates only (no timezone conversion)
+        startDate = formData.startTime.split('T')[0]
+        endDate = formData.endTime.split('T')[0]
+      } else {
+        // Timed events: Send times in user's timezone
+        // The backend will convert to UTC before saving
+        // Format: "YYYY-MM-DDTHH:MM" in user's timezone
+        // We'll send this along with the timezone, and backend converts to UTC
+        startTime = formData.startTime // Keep as datetime-local format
+        endTime = formData.endTime // Keep as datetime-local format
+      }
 
       const response = await fetch(url, {
         method,
@@ -206,9 +260,12 @@ export default function CreateEventModal({
           title: formData.title,
           description: formData.description,
           eventType: formData.eventType,
-          start_local,
-          end_local,
-          timezone,
+          startTime, // datetime-local format in user's timezone
+          endTime, // datetime-local format in user's timezone
+          startDate,
+          endDate,
+          timezone: userTimezone, // User's timezone - backend will use this to convert to UTC
+          eventTimezone: userTimezone,
           allDay: formData.allDay,
           location: formData.location,
           conferencingLink: formData.conferencingLink || null,
@@ -227,7 +284,6 @@ export default function CreateEventModal({
       if (onSuccess) onSuccess()
       onClose()
       
-      // Reset form
       setFormData({
         title: '',
         description: '',
@@ -264,7 +320,6 @@ export default function CreateEventModal({
         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{isEditMode ? 'Edit Event' : 'Create Event'}</h2>
           <button
@@ -275,9 +330,7 @@ export default function CreateEventModal({
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Title *
@@ -292,7 +345,6 @@ export default function CreateEventModal({
             />
           </div>
 
-          {/* Event Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Event Type *
@@ -311,7 +363,6 @@ export default function CreateEventModal({
             </select>
           </div>
 
-          {/* Date & Time */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -339,7 +390,6 @@ export default function CreateEventModal({
             </div>
           </div>
 
-          {/* All Day */}
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -353,7 +403,6 @@ export default function CreateEventModal({
             </label>
           </div>
 
-          {/* Location */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Location
@@ -367,7 +416,6 @@ export default function CreateEventModal({
             />
           </div>
 
-          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Description
@@ -381,7 +429,6 @@ export default function CreateEventModal({
             />
           </div>
 
-          {/* Reminders */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Reminders
@@ -403,7 +450,6 @@ export default function CreateEventModal({
             </div>
           </div>
 
-          {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Notes
@@ -417,7 +463,6 @@ export default function CreateEventModal({
             />
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"
@@ -439,4 +484,3 @@ export default function CreateEventModal({
     </div>
   )
 }
-

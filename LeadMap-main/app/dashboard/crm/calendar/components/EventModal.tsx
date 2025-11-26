@@ -16,7 +16,6 @@ interface EventModalProps {
       description?: string
       relatedType?: string
       relatedId?: string
-      timezone?: string
     }
   } | null
   onClose: () => void
@@ -25,57 +24,45 @@ interface EventModalProps {
 }
 
 export default function EventModal({ event, onClose, onEdit, onDelete }: EventModalProps) {
-  const [timezone, setTimezone] = useState<string>('UTC')
+  const [userTimezone, setUserTimezone] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Fetch current timezone setting
   useEffect(() => {
-    const fetchTimezone = async () => {
+    const fetchSettings = async () => {
       try {
         const response = await fetch('/api/calendar/settings', {
           credentials: 'include',
         })
         if (response.ok) {
           const data = await response.json()
-          setTimezone(data.settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone)
+          // Use user's selected timezone from settings, or fall back to browser timezone
+          const timezone = data.settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+          setUserTimezone(timezone)
+        } else {
+          // Fallback to browser timezone if settings fetch fails
+          setUserTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone)
         }
       } catch (error) {
-        console.error('Error fetching timezone:', error)
-        setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone)
+        console.error('Error fetching settings:', error)
+        // Fallback to browser timezone on error
+        setUserTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone)
       } finally {
         setLoading(false)
       }
     }
-
-    if (event) {
-      fetchTimezone()
-    }
-  }, [event])
-
-  // Listen for timezone updates
-  useEffect(() => {
-    const handleSettingsUpdate = (e: CustomEvent) => {
-      if (e.detail?.default_timezone) {
-        setTimezone(e.detail.default_timezone)
-      }
-    }
-
-    window.addEventListener('calendarSettingsUpdated', handleSettingsUpdate as EventListener)
-    return () => {
-      window.removeEventListener('calendarSettingsUpdated', handleSettingsUpdate as EventListener)
-    }
+    fetchSettings()
   }, [])
 
-  if (!event || loading) return null
-
-  // Always use current user's timezone setting for display
-  // Events are stored in UTC, we display them in the user's current timezone
-  const displayTimezone = timezone
+  // Don't render until we have both event and timezone
+  if (!event || loading || !userTimezone) return null
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return ''
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return dateString
+    
     return date.toLocaleString('en-US', {
-      timeZone: displayTimezone,
+      timeZone: userTimezone,
       weekday: 'short',
       year: 'numeric',
       month: 'short',
@@ -86,9 +73,12 @@ export default function EventModal({ event, onClose, onEdit, onDelete }: EventMo
   }
 
   const formatTime = (dateString: string) => {
+    if (!dateString) return ''
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return dateString
+    
     return date.toLocaleTimeString('en-US', {
-      timeZone: displayTimezone,
+      timeZone: userTimezone,
       hour: 'numeric',
       minute: '2-digit',
     })
@@ -141,6 +131,9 @@ export default function EventModal({ event, onClose, onEdit, onDelete }: EventMo
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-500" />
               <span className="text-sm font-medium text-gray-900 dark:text-white">Date & Time</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                ({userTimezone.replace(/_/g, ' ')})
+              </span>
             </div>
             <div className="pl-6 space-y-1">
               <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -151,9 +144,6 @@ export default function EventModal({ event, onClose, onEdit, onDelete }: EventMo
                   <Clock className="w-4 h-4" />
                   <span>
                     {formatTime(event.start)} - {formatTime(event.end)}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-500">
-                    ({displayTimezone})
                   </span>
                 </div>
               )}

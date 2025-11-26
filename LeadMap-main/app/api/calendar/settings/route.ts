@@ -67,6 +67,8 @@ export async function GET(request: NextRequest) {
         notifications_in_app: true,
         notifications_sms: false,
         notification_sound_enabled: true,
+        calendar_onboarding_complete: false, // New users start with onboarding incomplete
+        calendar_type: null, // No calendar type selected yet
       }
 
       const { data: newSettings, error: createError } = await supabase
@@ -155,6 +157,12 @@ export async function PATCH(request: NextRequest) {
     if (body.notificationsInApp !== undefined) updateData.notifications_in_app = body.notificationsInApp
     if (body.notificationsSms !== undefined) updateData.notifications_sms = body.notificationsSms
     if (body.notificationSoundEnabled !== undefined) updateData.notification_sound_enabled = body.notificationSoundEnabled
+    // Handle onboarding completion flag (can be passed as camelCase or snake_case)
+    if (body.calendarOnboardingComplete !== undefined) updateData.calendar_onboarding_complete = body.calendarOnboardingComplete
+    if (body.calendar_onboarding_complete !== undefined) updateData.calendar_onboarding_complete = body.calendar_onboarding_complete
+    // Handle calendar type (can be passed as camelCase or snake_case)
+    if (body.calendarType !== undefined) updateData.calendar_type = body.calendarType
+    if (body.calendar_type !== undefined) updateData.calendar_type = body.calendar_type
 
     let settings
     if (existing) {
@@ -167,10 +175,6 @@ export async function PATCH(request: NextRequest) {
 
       if (error) throw error
       settings = data
-      
-      // Note: We don't update events when timezone changes
-      // Events are stored in UTC, and timezone is purely a display setting
-      // FullCalendar will automatically re-render events in the new timezone
     } else {
       const { data, error } = await supabase
         .from('user_calendar_settings')

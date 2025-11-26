@@ -7,7 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import type { EventInput, DateSelectArg, EventClickArg, EventChangeArg } from '@fullcalendar/core'
-import { Plus, Settings, RefreshCw, ChevronLeft, ChevronRight, Search, HelpCircle, X } from 'lucide-react'
+import { Calendar, Plus, Settings, RefreshCw, ChevronLeft, ChevronRight, Search, HelpCircle, Grid3x3, Check, X } from 'lucide-react'
 import CalendarHelpModal from './CalendarHelpModal'
 
 interface CalendarEvent {
@@ -34,23 +34,34 @@ interface CalendarViewProps {
 
 export default function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) {
   const [events, setEvents] = useState<EventInput[]>([])
-  const [allEvents, setAllEvents] = useState<EventInput[]>([]) // Store all events for search
+  const [allEvents, setAllEvents] = useState<EventInput[]>([])
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState<any>(null)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'listWeek'>('dayGridMonth')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [searchQuery, setSearchQuery] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const calendarRef = useRef<FullCalendar>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Load settings on mount
   useEffect(() => {
     fetchSettings()
   }, [])
 
-  // Apply default view from settings on initial load
+  // Listen for settings updates
+  useEffect(() => {
+    const handleSettingsUpdate = (event: CustomEvent) => {
+      setSettings(event.detail)
+    }
+
+    window.addEventListener('calendarSettingsUpdated', handleSettingsUpdate as EventListener)
+    return () => {
+      window.removeEventListener('calendarSettingsUpdated', handleSettingsUpdate as EventListener)
+    }
+  }, [])
+
+  // Apply default view from settings
   useEffect(() => {
     if (settings?.default_view && calendarRef.current) {
       const viewMap: Record<string, 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'listWeek'> = {
@@ -78,26 +89,128 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       }
     } catch (error) {
       console.error('Error fetching settings:', error)
+    } finally {
+      setSettingsLoaded(true)
     }
   }
 
-  // Normalize incoming DB time strings into proper UTC ISO strings
-  const normalizeToISOString = (timeStr?: string | null): string | null => {
-    if (!timeStr) return null
+  // Format event for FullCalendar - uses user's timezone from settings
+  const formatEventForCalendar = (event: any): EventInput => {
+    // Get user's timezone from settings
+    const userTimezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
     
-    // If string already contains Z or a timezone offset (+/-HH:mm or +/-HHmm), let Date parse it
-    const tzMarker = /[Zz]|[+\-]\d{2}:\d{2}$|[+\-]\d{4}$/
-    
-    try {
-      if (tzMarker.test(timeStr)) {
-        return new Date(timeStr).toISOString()
+    // Apply color coding
+    let eventColor = event.color
+    if (!eventColor) {
+      if (settings?.color_code_by_event_type !== false) {
+        eventColor = getEventColor(event.event_type)
       } else {
-        // Assume stored-as-UTC without zone (e.g. "2025-05-12T15:00") — append 'Z'
-        return new Date(timeStr + 'Z').toISOString()
+        eventColor = settings?.default_calendar_color || '#3b82f6'
       }
-    } catch (err) {
-      console.warn('Failed to normalize time string', timeStr, err)
-      return timeStr
+    }
+
+    // Handle all-day events
+    if (event.all_day && event.start_date && event.end_date) {
+      // All-day: use dates, FullCalendar expects exclusive end date
+      const endDate = new Date(event.end_date)
+      endDate.setDate(endDate.getDate() + 1)
+      const endDateStr = endDate.toISOString().split('T')[0]
+      
+      return {
+        id: event.id,
+        title: event.title,
+        start: event.start_date,
+        end: endDateStr,
+        allDay: true,
+        backgroundColor: eventColor,
+        borderColor: eventColor,
+        extendedProps: {
+          eventType: event.event_type,
+          location: event.location,
+          description: event.description,
+          relatedType: event.related_type,
+          relatedId: event.related_id,
+          status: event.status,
+        },
+      }
+    }
+
+    // Timed events: Convert UTC to user's timezone BEFORE passing to FullCalendar
+    // This ensures FullCalendar NEVER sees UTC times - only times in user's timezone
+    let startTime = event.start_time || ''
+    let endTime = event.end_time || ''
+    
+    // Helper to convert UTC ISO string to user's timezone
+    // Returns an ISO string that represents the time in user's timezone
+    const convertUtcToUserTimezone = (utcIsoString: string, tz: string): string => {
+      if (!utcIsoString) return ''
+      
+      // Parse UTC time
+      const utcDate = new Date(utcIsoString)
+      if (isNaN(utcDate.getTime())) {
+        // If parsing fails, try to fix common issues
+        if (!utcIsoString.endsWith('Z') && !utcIsoString.match(/[+-]\d{2}:\d{2}$/)) {
+          // Assume UTC and add 'Z'
+          const fixed = utcIsoString + (utcIsoString.includes('.') ? '' : '.000') + 'Z'
+          const fixedDate = new Date(fixed)
+          if (!isNaN(fixedDate.getTime())) {
+            return convertUtcToUserTimezone(fixed, tz)
+          }
+        }
+        return utcIsoString
+      }
+      
+      // Get the time components in the user's timezone
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      })
+      
+      const parts = formatter.formatToParts(utcDate)
+      const year = parseInt(parts.find(p => p.type === 'year')?.value || '0')
+      const month = parseInt(parts.find(p => p.type === 'month')?.value || '1')
+      const day = parseInt(parts.find(p => p.type === 'day')?.value || '1')
+      const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0')
+      const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0')
+      const second = parseInt(parts.find(p => p.type === 'second')?.value || '0')
+      
+      // Create a Date object using these components (will be in browser's local time)
+      // This represents the same moment but interpreted in the user's timezone
+      const localDate = new Date(year, month - 1, day, hour, minute, second)
+      
+      // Return as ISO string - FullCalendar with timeZone='local' will display this correctly
+      // The ISO string represents the time in the user's timezone
+      return localDate.toISOString()
+    }
+    
+    // Convert both times from UTC to user's timezone
+    startTime = convertUtcToUserTimezone(startTime, userTimezone)
+    endTime = convertUtcToUserTimezone(endTime, userTimezone)
+    
+    return {
+      id: event.id,
+      title: event.title,
+      start: startTime,
+      end: endTime,
+      allDay: false,
+      backgroundColor: eventColor,
+      borderColor: eventColor,
+      extendedProps: {
+        eventType: event.event_type,
+        location: event.location,
+        description: event.description,
+        relatedType: event.related_type,
+        relatedId: event.related_id,
+        status: event.status,
+        // Store timezone info for reference
+        eventTimezone: event.event_timezone || userTimezone,
+      },
     }
   }
 
@@ -125,48 +238,15 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       // Filter events based on settings
       let filteredEvents = data.events || []
       
-      // Filter out declined events if setting is disabled
       if (settings?.show_declined_events === false) {
         filteredEvents = filteredEvents.filter((event: any) => event.status !== 'cancelled')
       }
       
-      const formattedEvents: EventInput[] = filteredEvents.map((event: any) => {
-        // Apply color coding based on settings
-        let eventColor = event.color
-        if (!eventColor) {
-          if (settings?.color_code_by_event_type !== false) {
-            // Use event type colors
-            eventColor = getEventColor(event.event_type)
-          } else {
-            // Use default calendar color
-            eventColor = settings?.default_calendar_color || '#3b82f6'
-          }
-        }
-        
-        // Events are stored in UTC (TIMESTAMPTZ) in the database
-        // Normalize to proper UTC ISO strings for FullCalendar
-        // FullCalendar will automatically convert them to the timezone specified in timeZone prop
-        const startISO = normalizeToISOString(event.start_time)
-        const endISO = normalizeToISOString(event.end_time)
-        
-        return {
-          id: event.id,
-          title: event.title,
-          start: startISO,
-          end: endISO,
-          allDay: event.all_day,
-          backgroundColor: eventColor,
-          borderColor: eventColor,
-          extendedProps: {
-            eventType: event.event_type,
-            location: event.location,
-            description: event.description,
-            relatedType: event.related_type,
-            relatedId: event.related_id,
-            status: event.status || 'confirmed',
-          },
-        }
-      })
+      // Format events using user's timezone from settings
+      // formatEventForCalendar uses settings?.default_timezone internally
+      const formattedEvents: EventInput[] = filteredEvents.map((event: any) => 
+        formatEventForCalendar(event)
+      )
 
       setAllEvents(formattedEvents)
       setEvents(formattedEvents)
@@ -175,7 +255,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     } finally {
       setLoading(false)
     }
-  }, [settings?.show_declined_events, settings?.color_code_by_event_type])
+  }, [settings?.show_declined_events, settings?.color_code_by_event_type, settings?.default_calendar_color, settings?.default_timezone])
 
   // Filter events based on search query
   useEffect(() => {
@@ -201,7 +281,6 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
 
     setEvents(filtered)
     
-    // Highlight matching events by navigating to first match
     if (filtered.length > 0 && calendarRef.current) {
       const firstEvent = filtered[0]
       if (firstEvent.start) {
@@ -212,113 +291,18 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
 
   useEffect(() => {
     fetchEvents()
-  }, [fetchEvents, view, settings?.show_declined_events, settings?.color_code_by_event_type])
+  }, [fetchEvents, view])
 
-  // Whenever the canonical allEvents changes or timezone changes, re-set events
-  // so FullCalendar re-renders using the current timeZone prop
-  useEffect(() => {
-    // Re-create object references so FullCalendar sees a new event source
-    // This ensures FullCalendar applies the current timeZone when rendering
-    setEvents(allEvents.map((e) => ({ ...e })))
-  }, [allEvents, settings?.default_timezone])
-
-  // Listen for settings updates (after fetchEvents is defined)
-  useEffect(() => {
-    const handleSettingsUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent
-      const newSettings = customEvent.detail
-      const oldTimezone = settings?.default_timezone
-      const newTimezone = newSettings?.default_timezone
-      
-      // Always update settings state
-      setSettings(newSettings)
-      
-      if (newTimezone && newTimezone !== oldTimezone) {
-        // Update FullCalendar option
-        const calendar = calendarRef.current?.getApi()
-        if (calendar) {
-          calendar.setOption('timeZone', newTimezone)
-        }
-        
-        // Force React -> FullCalendar to re-read our canonical events by
-        // refreshing the events prop reference from allEvents (which are UTC ISO)
-        // This triggers FullCalendar to redraw events in the new timezone.
-        setEvents((prev) => {
-          // re-create object references so FullCalendar sees a new event source
-          return allEvents.map((e) => ({ ...e }))
-        })
-      }
-    }
-
-    window.addEventListener('calendarSettingsUpdated', handleSettingsUpdate)
-    return () => {
-      window.removeEventListener('calendarSettingsUpdated', handleSettingsUpdate)
-    }
-  }, [settings?.default_timezone, allEvents])
-
-  // Refetch events when view changes
-  useEffect(() => {
-    if (calendarRef.current) {
-      fetchEvents()
-    }
-  }, [view])
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Don't handle shortcuts when typing in inputs
-      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
-        return
-      }
-
-      if (e.key === 't' || e.key === 'T') {
-        e.preventDefault()
-        goToToday()
-      } else if (e.key === 'ArrowLeft' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault()
-        navigateMonth('prev')
-      } else if (e.key === 'ArrowRight' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault()
-        navigateMonth('next')
-      } else if (e.key === 'm' || e.key === 'M') {
-        e.preventDefault()
-        changeView('dayGridMonth')
-      } else if (e.key === 'w' || e.key === 'W') {
-        e.preventDefault()
-        changeView('timeGridWeek')
-      } else if (e.key === 'd' || e.key === 'D') {
-        e.preventDefault()
-        changeView('timeGridDay')
-      } else if (e.key === '/' && !e.shiftKey) {
-        e.preventDefault()
-        // Show and focus calendar search input
-        setShowSearch(true)
-        setTimeout(() => {
-          searchInputRef.current?.focus()
-        }, 0)
-      } else if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
-        e.preventDefault()
-        setShowHelp(true)
-      } else if (e.key === 'Escape' && searchQuery) {
-        // Clear search on Escape
-        setSearchQuery('')
-        setShowSearch(false)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [])
 
   const getEventColor = (eventType?: string): string => {
     const colors: Record<string, string> = {
-      call: '#3b82f6', // Blue
-      visit: '#10b981', // Green
-      showing: '#f59e0b', // Amber
-      content: '#8b5cf6', // Purple
-      meeting: '#ec4899', // Pink
-      follow_up: '#6366f1', // Indigo
-      other: '#6b7280', // Gray
+      call: '#3b82f6',
+      visit: '#10b981',
+      showing: '#f59e0b',
+      content: '#8b5cf6',
+      meeting: '#ec4899',
+      follow_up: '#6366f1',
+      other: '#6b7280',
     }
     return colors[eventType || 'other'] || colors.other
   }
@@ -349,13 +333,39 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
   const handleEventChange = async (changeInfo: EventChangeArg) => {
     try {
       const event = changeInfo.event
+      const userTimezone = settings?.default_timezone || 'local'
+      
+      // Helper to format Date to datetime-local in user's timezone
+      const formatToLocalInput = (date: Date | null, tz: string): string => {
+        if (!date) return ''
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        })
+        const parts = formatter.formatToParts(date)
+        const year = parts.find(p => p.type === 'year')?.value || ''
+        const month = parts.find(p => p.type === 'month')?.value || ''
+        const day = parts.find(p => p.type === 'day')?.value || ''
+        const hour = parts.find(p => p.type === 'hour')?.value || '00'
+        const minute = parts.find(p => p.type === 'minute')?.value || '00'
+        return `${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+      }
+      
+      // FullCalendar provides times in the configured timezone
+      // Format as datetime-local in user's timezone for backend conversion
       const response = await fetch(`/api/calendar/events/${event.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          startTime: event.start?.toISOString(),
-          endTime: event.end?.toISOString(),
+          startTime: formatToLocalInput(event.start, userTimezone),
+          endTime: formatToLocalInput(event.end, userTimezone),
+          timezone: userTimezone, // Tell backend which timezone to use for conversion
         }),
       })
 
@@ -395,6 +405,80 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     }
   }
 
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs, textareas, or contenteditable elements
+      const target = e.target as HTMLElement
+      if (
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.isContentEditable ||
+        target.closest('input') ||
+        target.closest('textarea') ||
+        target.closest('[contenteditable="true"]')
+      ) {
+        return
+      }
+
+      // Today - T
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault()
+        e.stopPropagation()
+        goToToday()
+      } 
+      // Previous - ← (Left Arrow)
+      else if (e.key === 'ArrowLeft' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        e.stopPropagation()
+        navigateMonth('prev')
+      } 
+      // Next - → (Right Arrow)
+      else if (e.key === 'ArrowRight' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        e.stopPropagation()
+        navigateMonth('next')
+      } 
+      // Month View - M
+      else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault()
+        e.stopPropagation()
+        changeView('dayGridMonth')
+      } 
+      // Week View - W
+      else if (e.key === 'w' || e.key === 'W') {
+        e.preventDefault()
+        e.stopPropagation()
+        changeView('timeGridWeek')
+      } 
+      // Day View - D
+      else if (e.key === 'd' || e.key === 'D') {
+        e.preventDefault()
+        e.stopPropagation()
+        changeView('timeGridDay')
+      } 
+      // Search - /
+      else if (e.key === '/' && !e.shiftKey) {
+        e.preventDefault()
+        e.stopPropagation()
+        const calendarSearchInput = document.querySelector('.calendar-search-input') as HTMLInputElement
+        if (calendarSearchInput) {
+          calendarSearchInput.focus()
+          calendarSearchInput.select()
+        }
+      } 
+      // Help - ?
+      else if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault()
+        e.stopPropagation()
+        setShowHelp(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress, true) // Use capture phase
+    return () => window.removeEventListener('keydown', handleKeyPress, true)
+  }, [goToToday, navigateMonth, changeView]) // Add dependencies
+
   const getCurrentMonthYear = () => {
     if (calendarRef.current) {
       const api = calendarRef.current.getApi()
@@ -404,11 +488,22 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   }
 
+  // Get user timezone - use settings or browser default
+  const getUserTimezone = (): string => {
+    const tz = settings?.default_timezone
+    if (tz && typeof tz === 'string' && tz.length > 0) {
+      return tz
+    }
+    return Intl.DateTimeFormat().resolvedOptions().timeZone
+  }
+  
+  // Memoize timezone to detect changes
+  const currentTimezone = getUserTimezone()
+
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Modern Header - Matching Reference Image */}
+    <div className="flex flex-col h-full min-h-[800px] bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
-        {/* Left: Today & Navigation */}
         <div className="flex items-center gap-4">
           <button
             onClick={goToToday}
@@ -437,33 +532,22 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           </h2>
         </div>
 
-        {/* Right: Actions & View Selector */}
         <div className="flex items-center gap-2">
           {/* Search */}
           <div className="relative">
-            {showSearch || searchQuery ? (
+            {searchQuery ? (
               <div className="flex items-center gap-2">
                 <input
-                  ref={searchInputRef}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onBlur={() => {
-                    // Keep search open if there's a query
-                    if (!searchQuery.trim()) {
-                      setShowSearch(false)
-                    }
-                  }}
                   placeholder="Search calendar events..."
                   className="calendar-search-input px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
                   autoFocus
                   onClick={(e) => e.stopPropagation()}
                 />
                 <button
-                  onClick={() => {
-                    setSearchQuery('')
-                    setShowSearch(false)
-                  }}
+                  onClick={() => setSearchQuery('')}
                   className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   title="Clear search"
                 >
@@ -473,11 +557,18 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             ) : (
               <button
                 onClick={() => {
-                  setShowSearch(true)
-                  // Focus input after it renders
-                  setTimeout(() => {
-                    searchInputRef.current?.focus()
-                  }, 0)
+                  const input = document.querySelector('.calendar-search-input') as HTMLInputElement
+                  if (input) {
+                    input.focus()
+                  } else {
+                    setSearchQuery('')
+                    setTimeout(() => {
+                      const newInput = document.querySelector('.calendar-search-input') as HTMLInputElement
+                      if (newInput) {
+                        newInput.focus()
+                      }
+                    }, 0)
+                  }
                 }}
                 className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                 title="Search calendar events (Press /)"
@@ -487,7 +578,6 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             )}
           </div>
           
-          {/* Help */}
           <button
             onClick={() => setShowHelp(true)}
             className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
@@ -496,10 +586,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             <HelpCircle className="w-4 h-4" />
           </button>
           
-          {/* Settings */}
           <button
             onClick={() => {
-              // This will be handled by parent component
               if (typeof window !== 'undefined') {
                 window.dispatchEvent(new CustomEvent('openCalendarSettings'))
               }
@@ -554,8 +642,6 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             </button>
           </div>
 
-
-          {/* Refresh */}
           <button
             onClick={fetchEvents}
             disabled={loading}
@@ -570,7 +656,6 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       {/* Calendar Container */}
       <div className="flex-1 overflow-auto p-6 bg-white dark:bg-gray-900">
         <style jsx global>{`
-          /* FullCalendar Custom Styling - High-Tech Look */
           .fc {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
           }
@@ -741,7 +826,6 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             border: none;
           }
 
-          /* Smooth animations */
           .fc-daygrid-event {
             animation: fadeIn 0.3s ease-in;
             font-size: 11px;
@@ -766,12 +850,10 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             }
           }
 
-          /* Loading state */
           .fc-loading {
             opacity: 0.6;
           }
 
-          /* View Density - Compact */
           .fc-view-harness-compact .fc-daygrid-day {
             min-height: 60px;
           }
@@ -790,18 +872,15 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             height: 36px;
           }
 
-          /* View Density - Comfortable (default) */
           .fc-view-harness-comfortable .fc-daygrid-day {
             min-height: 100px;
           }
 
-          /* Color Coding - When disabled, all events use default color */
           [data-color-code="false"] .fc-event {
             background-color: var(--default-calendar-color, #3b82f6) !important;
             border-color: var(--default-calendar-color, #3b82f6) !important;
           }
 
-          /* Declined/Cancelled Events Styling */
           .fc-event[data-status="cancelled"] {
             opacity: 0.5;
             text-decoration: line-through;
@@ -809,7 +888,17 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
         `}</style>
         
         <div className={settings?.view_density === 'compact' ? 'fc-view-harness-compact' : 'fc-view-harness-comfortable'}>
+          {/* Wait for settings to load before rendering calendar with correct timezone */}
+          {!settingsLoaded ? (
+            <div className="flex items-center justify-center h-96">
+              <div className="flex flex-col items-center gap-2">
+                <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                <span className="text-sm text-gray-500">Loading calendar...</span>
+              </div>
+            </div>
+          ) : (
           <FullCalendar
+            key={`calendar-${currentTimezone}`}
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
             initialView={view}
@@ -823,7 +912,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             select={handleDateSelect}
             eventClick={handleEventClick}
             eventChange={handleEventChange}
-            height="auto"
+            height="100%"
+            contentHeight="auto"
             eventDisplay="block"
             eventTimeFormat={{
               hour: 'numeric',
@@ -836,7 +926,18 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             nowIndicator={true}
             locale="en"
             firstDay={0}
-            timeZone={settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+            // Set to 'local' since we've already converted times to user's timezone
+            // FullCalendar will display times as-is (already in user's timezone)
+            timeZone="local"
+            // List view configuration - ensures times display in user's timezone
+            listDayFormat={{ 
+              month: 'short', 
+              day: 'numeric', 
+              year: 'numeric' 
+            }}
+            listDaySideFormat={{ 
+              weekday: 'short' 
+            }}
             businessHours={{
               daysOfWeek: [1, 2, 3, 4, 5],
               startTime: '09:00',
@@ -850,14 +951,12 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
               setLoading(isLoading)
             }}
             eventDidMount={(info) => {
-              // Apply color coding based on settings
               if (settings?.color_code_by_event_type === false) {
                 const defaultColor = settings?.default_calendar_color || '#3b82f6'
                 info.event.setProp('backgroundColor', defaultColor)
                 info.event.setProp('borderColor', defaultColor)
               }
               
-              // Style declined/cancelled events
               if (info.event.extendedProps.status === 'cancelled') {
                 info.el.style.opacity = '0.5'
                 info.el.style.textDecoration = 'line-through'
@@ -865,10 +964,10 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
               }
             }}
           />
+          )}
         </div>
       </div>
 
-      {/* Help Modal */}
       <CalendarHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   )

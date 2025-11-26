@@ -18,24 +18,28 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=${encodeURIComponent(error)}`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=${encodeURIComponent(error)}`
       )
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=missing_params`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=missing_params`
       )
     }
 
-    // Decode state to get user ID
+    // Decode state to get user ID and email
     let userId: string
+    let email: string | undefined
+    let provider: string | undefined
     try {
       const decoded = JSON.parse(Buffer.from(state, 'base64').toString())
       userId = decoded.userId
+      email = decoded.email
+      provider = decoded.provider || 'google'
     } catch {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=invalid_state`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=invalid_state`
       )
     }
 
@@ -48,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     if (authError || !user || user.id !== userId) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=unauthorized`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=unauthorized`
       )
     }
 
@@ -58,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     if (!clientId || !clientSecret) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=not_configured`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=not_configured`
       )
     }
 
@@ -81,7 +85,7 @@ export async function GET(request: NextRequest) {
       const errorData = await tokenResponse.text()
       console.error('Token exchange failed:', errorData)
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=token_exchange_failed`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=token_exchange_failed`
       )
     }
 
@@ -97,7 +101,7 @@ export async function GET(request: NextRequest) {
 
     if (!userInfoResponse.ok) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=user_info_failed`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=user_info_failed`
       )
     }
 
@@ -126,7 +130,7 @@ export async function GET(request: NextRequest) {
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=db_error`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=db_error`
       )
     }
 
@@ -175,14 +179,41 @@ export async function GET(request: NextRequest) {
         .insert([connectionData])
     }
 
-    // Redirect to settings with success
+    // Update user calendar settings: mark onboarding complete and set calendar type
+    const { data: settings } = await supabase
+      .from('user_calendar_settings')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    const calendarType = 'google' // This is the Google OAuth callback
+    const settingsUpdate = {
+      calendar_onboarding_complete: true,
+      calendar_type: calendarType,
+    }
+
+    if (settings) {
+      await supabase
+        .from('user_calendar_settings')
+        .update(settingsUpdate)
+        .eq('id', settings.id)
+    } else {
+      await supabase
+        .from('user_calendar_settings')
+        .insert([{
+          user_id: user.id,
+          ...settingsUpdate,
+        }])
+    }
+
+    // Redirect to calendar page with success
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_connected=google`
+      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_connected=google`
     )
   } catch (error) {
     console.error('Error in Google OAuth callback:', error)
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?calendar_error=internal_error`
+      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=internal_error`
     )
   }
 }
