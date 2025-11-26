@@ -56,9 +56,12 @@ export default function CalendarPage() {
     }
   }
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+
   const handleEventEdit = (eventId: string) => {
-    // TODO: Implement edit functionality
-    console.log('Edit event:', eventId)
+    setEditingEventId(eventId)
+    setIsEditModalOpen(true)
   }
 
   return (
@@ -101,6 +104,19 @@ export default function CalendarPage() {
           }}
           initialDate={createModalDate}
           initialEndDate={createModalEndDate}
+          onSuccess={() => {
+            window.location.reload()
+          }}
+        />
+
+        {/* Edit Event Modal */}
+        <CreateEventModal
+          isOpen={isEditModalOpen}
+          eventId={editingEventId || undefined}
+          onClose={() => {
+            setIsEditModalOpen(false)
+            setEditingEventId(null)
+          }}
           onSuccess={() => {
             window.location.reload()
           }}

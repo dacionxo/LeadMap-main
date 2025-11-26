@@ -198,6 +198,13 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     fetchEvents()
   }, [fetchEvents, view, settings?.show_declined_events, settings?.color_code_by_event_type])
 
+  // Refetch events when view changes
+  useEffect(() => {
+    if (calendarRef.current) {
+      fetchEvents()
+    }
+  }, [view])
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -483,20 +490,6 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             </button>
           </div>
 
-          {/* Calendar Icon */}
-          <button className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors ml-2">
-            <Calendar className="w-4 h-4" />
-          </button>
-
-          {/* Check Icon */}
-          <button className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors">
-            <Check className="w-4 h-4" />
-          </button>
-
-          {/* Grid Icon */}
-          <button className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors">
-            <Grid3x3 className="w-4 h-4" />
-          </button>
 
           {/* Refresh */}
           <button
@@ -594,9 +587,10 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           .fc-event {
             border-radius: 4px;
             border: none;
-            padding: 2px 6px;
-            font-size: 12px;
+            padding: 1px 4px;
+            font-size: 11px;
             font-weight: 500;
+            margin: 1px 0;
             cursor: pointer;
             transition: all 0.2s;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -686,6 +680,15 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           /* Smooth animations */
           .fc-daygrid-event {
             animation: fadeIn 0.3s ease-in;
+            font-size: 11px;
+            padding: 1px 4px;
+            line-height: 1.2;
+          }
+
+          .fc-daygrid-event-dot {
+            width: 6px;
+            height: 6px;
+            margin-right: 4px;
           }
 
           @keyframes fadeIn {

@@ -12,6 +12,7 @@ interface CreateEventModalProps {
   relatedId?: string
   defaultEventType?: string
   onSuccess?: () => void
+  eventId?: string // If provided, this is an edit operation
 }
 
 export default function CreateEventModal({
@@ -23,6 +24,7 @@ export default function CreateEventModal({
   relatedId,
   defaultEventType,
   onSuccess,
+  eventId,
 }: CreateEventModalProps) {
   const [loading, setLoading] = useState(false)
   const [settings, setSettings] = useState<any>(null)
@@ -38,13 +40,43 @@ export default function CreateEventModal({
     notes: '',
     reminderMinutes: [] as number[],
   })
+  const isEditMode = !!eventId
 
-  // Load settings on mount
+  // Load settings and event data on mount
   useEffect(() => {
     if (isOpen) {
       fetchSettings()
+      if (isEditMode && eventId) {
+        fetchEventData()
+      }
     }
-  }, [isOpen])
+  }, [isOpen, eventId, isEditMode])
+
+  const fetchEventData = async () => {
+    try {
+      const response = await fetch(`/api/calendar/events/${eventId}`, {
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data = await response.json()
+        const event = data.event
+        setFormData({
+          title: event.title || '',
+          description: event.description || '',
+          eventType: event.event_type || 'call',
+          startTime: event.start_time ? new Date(event.start_time).toISOString().slice(0, 16) : '',
+          endTime: event.end_time ? new Date(event.end_time).toISOString().slice(0, 16) : '',
+          allDay: event.all_day || false,
+          location: event.location || '',
+          conferencingLink: event.conferencing_link || '',
+          notes: event.notes || '',
+          reminderMinutes: event.reminder_minutes || [],
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching event data:', error)
+    }
+  }
 
   const fetchSettings = async () => {
     try {
@@ -186,7 +218,7 @@ export default function CreateEventModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Create Event</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{isEditMode ? 'Edit Event' : 'Create Event'}</h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

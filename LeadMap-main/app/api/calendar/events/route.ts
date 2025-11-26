@@ -61,11 +61,12 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
-    // Build query
+    // Build query - exclude deleted events
     let query = supabase
       .from('calendar_events')
       .select('*')
       .eq('user_id', user.id)
+      .neq('status', 'cancelled') // Exclude cancelled/deleted events
       .order('start_time', { ascending: true })
 
     // Apply filters
