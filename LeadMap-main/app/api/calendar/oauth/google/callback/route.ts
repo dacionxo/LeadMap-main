@@ -208,6 +208,35 @@ export async function GET(request: NextRequest) {
         }])
     }
 
+    // Get the connection ID (either existing or newly created)
+    const { data: savedConnection } = await supabase
+      .from('calendar_connections')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('provider', 'google')
+      .eq('email', userEmail)
+      .single()
+
+    // Sync existing events from Google Calendar in the background
+    if (savedConnection?.id && access_token) {
+      // Don't await - let it run in the background
+      fetch(`${baseUrl}/api/calendar/sync/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          connectionId: savedConnection.id,
+          accessToken: access_token,
+          calendarId: calendarId,
+        }),
+      }).catch((error) => {
+        console.error('Error triggering Google Calendar sync:', error)
+        // Don't fail the OAuth flow if sync fails
+      })
+    }
+
     // Redirect to calendar page with success
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_connected=google`
