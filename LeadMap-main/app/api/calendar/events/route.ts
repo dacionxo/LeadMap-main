@@ -182,14 +182,16 @@ export async function POST(request: NextRequest) {
     })
 
     // Create event
+    // IMPORTANT: startTime and endTime should already be in UTC ISO format from the frontend
+    // The timezone field is stored for reference but events are always displayed in user's current timezone setting
     const eventData = {
       user_id: user.id,
       title,
       description: description || null,
       event_type: eventType,
-      start_time: startTime,
-      end_time: endTime,
-      timezone: timezone || 'UTC',
+      start_time: startTime, // Already in UTC (TIMESTAMPTZ)
+      end_time: endTime, // Already in UTC (TIMESTAMPTZ)
+      timezone: timezone || 'UTC', // Stored for reference, but display uses current user setting
       all_day: allDay || false,
       location: location || null,
       conferencing_link: conferencingLink || null,

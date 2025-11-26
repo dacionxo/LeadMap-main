@@ -167,7 +167,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             relatedType: event.related_type,
             relatedId: event.related_id,
             status: event.status || 'confirmed',
-            timezone: event.timezone || settings?.default_timezone || 'UTC',
+            // Don't pass timezone in extendedProps - events are always displayed in current user timezone
+            // The event.timezone field is only for reference, not for display
           },
         }
       })

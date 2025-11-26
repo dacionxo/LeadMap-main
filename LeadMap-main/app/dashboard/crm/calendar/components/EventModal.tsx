@@ -68,8 +68,9 @@ export default function EventModal({ event, onClose, onEdit, onDelete }: EventMo
 
   if (!event || loading) return null
 
-  // Use event's timezone if available, otherwise use current setting
-  const displayTimezone = event.extendedProps?.timezone || timezone
+  // Always use current user's timezone setting for display (not the event's original timezone)
+  // Events are stored in UTC, and we display them in the user's current timezone preference
+  const displayTimezone = timezone
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

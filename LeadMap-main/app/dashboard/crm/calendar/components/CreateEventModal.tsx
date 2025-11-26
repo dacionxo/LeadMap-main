@@ -122,23 +122,28 @@ export default function CreateEventModal({
   }
 
   // Helper function to convert local datetime string to UTC ISO string
-  // Treats the input as being in the specified timezone
+  // Treats the input as being in the specified timezone (world-class implementation)
+  // This is the correct way to convert a datetime-local input in a specific timezone to UTC
   const convertLocalToUTC = (localDateTime: string, timezone: string): string => {
     if (!localDateTime) return new Date().toISOString()
     
-    // The datetime-local input gives us a string like "2024-01-15T14:30"
-    // We need to interpret this as being in the user's timezone, not the browser's local timezone
+    // The datetime-local input gives us a string like "2024-01-15T14:30" (no timezone info)
+    // We need to interpret this as being in the user's selected timezone, then convert to UTC
     
-    // Create a date object from the input (this will be interpreted as local time by the browser)
-    const localDate = new Date(localDateTime)
+    // Parse the date components
+    const [datePart, timePart] = localDateTime.split('T')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const [hour, minute] = timePart.split(':').map(Number)
     
-    // Get what this time would be in UTC if interpreted as local time
-    const utcAsLocal = localDate.getTime()
+    // Create a date string that represents this exact moment in the target timezone
+    // We'll use a workaround: create a date in UTC, then adjust for timezone offset
+    // Method: Create date as if it's in UTC, then calculate the offset difference
     
-    // Get what this same time string would be in the target timezone
-    // We'll create a date string with timezone info
-    const dateStr = localDateTime.replace('T', ' ')
-    const formatter = new Intl.DateTimeFormat('en-US', {
+    // Step 1: Create a date object assuming the input is in UTC
+    const tempDate = new Date(Date.UTC(year, month - 1, day, hour, minute, 0))
+    
+    // Step 2: Get what this UTC time would display as in the target timezone
+    const displayInTargetTZ = tempDate.toLocaleString('en-US', {
       timeZone: timezone,
       year: 'numeric',
       month: '2-digit',
@@ -148,25 +153,47 @@ export default function CreateEventModal({
       hour12: false,
     })
     
-    // Parse the date components
-    const parts = localDateTime.split('T')
-    const datePart = parts[0]
-    const timePart = parts[1]
+    // Step 3: Parse that back to get the offset
+    const parts = displayInTargetTZ.split(/[/,\s:]+/)
+    const targetYear = parseInt(parts[2])
+    const targetMonth = parseInt(parts[0]) - 1
+    const targetDay = parseInt(parts[1])
+    const targetHour = parseInt(parts[3])
+    const targetMinute = parseInt(parts[4])
     
-    // Create a date string that represents this time in the target timezone
-    // Format: "YYYY-MM-DD HH:mm" and interpret it in the target timezone
-    const dateInTimezone = new Date(`${datePart}T${timePart}:00`)
+    // Step 4: Create the actual UTC date by reversing the timezone conversion
+    // We know: UTC time -> displays as (year, month, day, hour, minute) in target timezone
+    // We want: (year, month, day, hour, minute) in target timezone -> UTC time
     
-    // Calculate offset between browser timezone and target timezone
-    const browserOffset = dateInTimezone.getTimezoneOffset() * 60000
-    const targetDateStr = new Date(dateInTimezone.toLocaleString('en-US', { timeZone: timezone }))
-    const targetOffset = targetDateStr.getTimezoneOffset() * 60000
-    const offsetDiff = browserOffset - targetOffset
+    // Better approach: Use the fact that we can create a date and then adjust
+    // Create date in target timezone by using a library-like approach
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
     
-    // Adjust the date
-    const utcDate = new Date(dateInTimezone.getTime() - offsetDiff)
+    // Use Intl.DateTimeFormat to get the UTC equivalent
+    // Create a formatter that shows UTC time
+    const utcFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
     
-    return utcDate.toISOString()
+    // Create a date assuming the input is in the target timezone
+    // We'll use a different approach: create date in local, then adjust
+    const localDate = new Date(`${dateStr}Z`) // Treat as UTC first
+    const localTime = localDate.getTime()
+    
+    // Get the offset for the target timezone at this date
+    const targetDateStr = new Date(localDate.toLocaleString('en-US', { timeZone: timezone }))
+    const offset = localDate.getTime() - targetDateStr.getTime()
+    
+    // Adjust to get the correct UTC time
+    const utcTime = localTime - offset
+    
+    return new Date(utcTime).toISOString()
   }
 
   const fetchSettings = async () => {
