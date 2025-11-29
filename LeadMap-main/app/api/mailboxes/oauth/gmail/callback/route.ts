@@ -107,9 +107,8 @@ export async function GET(request: NextRequest) {
     // Calculate token expiration
     const expiresAt = new Date(Date.now() + (expires_in * 1000)).toISOString()
 
-    // Save mailbox to database
-    const cookieStore = await cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Save mailbox to database (reuse existing supabase client)
+    const supabase = supabaseAuth
     const { error: dbError } = await supabase
       .from('mailboxes')
       .upsert({
