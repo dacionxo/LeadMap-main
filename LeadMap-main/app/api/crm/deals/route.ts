@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch property addresses for deals with listing_id (batch fetch for better performance)
     const dealsWithListingIds = (deals || []).filter((deal: any) => deal.listing_id)
-    const uniqueListingIds = [...new Set(dealsWithListingIds.map((deal: any) => deal.listing_id))]
+    const uniqueListingIds = Array.from(new Set(dealsWithListingIds.map((deal: any) => deal.listing_id)))
     
     // Build a map of listing_id -> property_address
     const propertyAddressMap = new Map<string, string | null>()
