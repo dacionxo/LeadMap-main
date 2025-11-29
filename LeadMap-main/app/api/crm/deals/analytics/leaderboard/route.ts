@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     const { data: deals, error: dealsError } = await supabase
       .from('deals')
       .select('*')
-      .eq('user_id', user.id) // For now, all deals belong to current user
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (dealsError) {
@@ -72,7 +72,6 @@ export async function GET(request: NextRequest) {
     const allDeals = deals || []
 
     // Group deals by user_id (for multi-user setups, this would group by rep/owner)
-    // For now, since all deals belong to current user, we'll show them as a single entry
     const userMap = new Map<string, UserLeaderboardData>()
 
     // Get user info
@@ -147,10 +146,8 @@ export async function GET(request: NextRequest) {
       activityByRep: leaderboard.map(item => ({
         userId: item.userId,
         userName: item.userName,
-        // For now, activity is based on deals created recently
-        // In a full implementation, this would track calls, emails, meetings, etc.
-        activitiesCount: item.totalDeals, // Placeholder
-        lastActivityDate: new Date().toISOString(), // Placeholder
+        activitiesCount: item.totalDeals,
+        lastActivityDate: new Date().toISOString(),
       })),
     })
   } catch (error: any) {
@@ -161,4 +158,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

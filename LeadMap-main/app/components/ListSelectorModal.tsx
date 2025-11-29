@@ -479,10 +479,10 @@ export default function ListSelectorModal({
                     const isSelected = selectedListIds.has(list.id)
                     return (
                       <div
-                        key={list.id}
+                      key={list.id}
                         onClick={() => handleToggleList(list.id)}
-                        style={{
-                          padding: '16px',
+                      style={{
+                        padding: '16px',
                           border: isDark 
                             ? isSelected 
                               ? '2px solid #6366f1' 
@@ -490,44 +490,44 @@ export default function ListSelectorModal({
                             : isSelected
                               ? '2px solid #6366f1'
                               : '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          background: isDark
+                        borderRadius: '8px',
+                        background: isDark
                             ? isSelected
                               ? 'rgba(99, 102, 241, 0.15)'
-                              : 'rgba(30, 41, 59, 0.5)'
+                            : 'rgba(30, 41, 59, 0.5)'
                             : isSelected
                               ? '#f0f4ff'
-                              : '#ffffff',
-                          color: isDark ? '#e2e8f0' : '#1e293b',
+                            : '#ffffff',
+                        color: isDark ? '#e2e8f0' : '#1e293b',
                           cursor: 'pointer',
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                          transition: 'all 0.15s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                        onMouseEnter={(e) => {
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        transition: 'all 0.15s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                      onMouseEnter={(e) => {
                           e.currentTarget.style.background = isDark
                             ? 'rgba(99, 102, 241, 0.2)'
                             : '#f9fafb'
                           if (!isSelected) {
-                            e.currentTarget.style.borderColor = '#6366f1'
-                          }
-                        }}
-                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '#6366f1'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
                           e.currentTarget.style.background = isDark
                             ? isSelected
                               ? 'rgba(99, 102, 241, 0.15)'
                               : 'rgba(30, 41, 59, 0.5)'
                             : isSelected
                               ? '#f0f4ff'
-                              : '#ffffff'
+                            : '#ffffff'
                           if (!isSelected) {
                             e.currentTarget.style.borderColor = isDark ? 'rgba(99, 102, 241, 0.2)' : '#e2e8f0'
-                          }
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        }
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -540,27 +540,27 @@ export default function ListSelectorModal({
                               accentColor: '#6366f1'
                             }}
                           />
-                          {list.type === 'people' ? (
-                            <Users size={20} color={isDark ? '#818cf8' : '#6366f1'} />
-                          ) : (
-                            <Home size={20} color={isDark ? '#f472b6' : '#ec4899'} />
-                          )}
-                          <div>
-                            <div style={{
-                              fontSize: '16px',
-                              fontWeight: 600,
-                              marginBottom: '4px'
-                            }}>
-                              {list.name}
-                            </div>
-                            <div style={{
-                              fontSize: '12px',
-                              color: isDark ? '#64748b' : '#6b7280'
-                            }}>
-                              {list.count || 0} items
-                            </div>
+                        {list.type === 'people' ? (
+                          <Users size={20} color={isDark ? '#818cf8' : '#6366f1'} />
+                        ) : (
+                          <Home size={20} color={isDark ? '#f472b6' : '#ec4899'} />
+                        )}
+                        <div>
+                          <div style={{
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            marginBottom: '4px'
+                          }}>
+                            {list.name}
+                          </div>
+                          <div style={{
+                            fontSize: '12px',
+                            color: isDark ? '#64748b' : '#6b7280'
+                          }}>
+                            {list.count || 0} items
                           </div>
                         </div>
+                      </div>
                       </div>
                     )
                   })}
@@ -579,36 +579,36 @@ export default function ListSelectorModal({
         }}>
           {!showCreateForm && (
             <>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                style={{
+            <button
+              onClick={() => setShowCreateForm(true)}
+              style={{
                   padding: '12px 16px',
-                  border: '2px dashed rgba(99, 102, 241, 0.3)',
-                  borderRadius: '8px',
-                  background: 'transparent',
-                  color: isDark ? '#818cf8' : '#6366f1',
-                  cursor: 'pointer',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#6366f1'
-                  e.currentTarget.style.background = isDark
-                    ? 'rgba(99, 102, 241, 0.1)'
-                    : 'rgba(99, 102, 241, 0.05)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)'
-                  e.currentTarget.style.background = 'transparent'
-                }}
-              >
-                <Plus size={16} />
+                border: '2px dashed rgba(99, 102, 241, 0.3)',
+                borderRadius: '8px',
+                background: 'transparent',
+                color: isDark ? '#818cf8' : '#6366f1',
+                cursor: 'pointer',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                fontSize: '14px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#6366f1'
+                e.currentTarget.style.background = isDark
+                  ? 'rgba(99, 102, 241, 0.1)'
+                  : 'rgba(99, 102, 241, 0.05)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)'
+                e.currentTarget.style.background = 'transparent'
+              }}
+            >
+              <Plus size={16} />
                 Create New
               </button>
               <button
@@ -642,7 +642,7 @@ export default function ListSelectorModal({
                 ) : (
                   `Add to ${selectedListIds.size} List${selectedListIds.size !== 1 ? 's' : ''}`
                 )}
-              </button>
+            </button>
             </>
           )}
         </div>

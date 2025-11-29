@@ -3,12 +3,11 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
 /**
- * Email Template by ID
- * GET: Get template by ID
- * PUT: Update template (admin only)
- * DELETE: Delete template (admin only)
+ * Trigger Link API
+ * GET: Get trigger link by ID
+ * PUT: Update trigger link
+ * DELETE: Delete trigger link
  */
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -23,18 +22,19 @@ export async function GET(
     }
 
     const { data, error } = await supabase
-      .from('email_templates')
+      .from('trigger_links')
       .select('*')
       .eq('id', id)
+      .eq('user_id', user.id)
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Trigger link not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ template: data })
+    return NextResponse.json({ link: data })
   } catch (error) {
-    console.error('Get template error:', error)
+    console.error('Get trigger link error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -52,36 +52,64 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Allow all authenticated users to update templates
     const body = await request.json()
-    // Support both old format (title, body) and new format (name, subject, html)
-    const name = body.name || body.title
-    const bodyContent = body.html || body.body
-    const subject = body.subject
+    const { name, link_url, link_key, description } = body
 
-    // Allow users to update their own templates, not just admins
+    if (!name || !link_url || !link_key) {
+      return NextResponse.json({ error: 'Name, link URL, and link key are required' }, { status: 400 })
+    }
+
+    // Validate URL format
+    try {
+      new URL(link_url)
+    } catch {
+      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 })
+    }
+
+    // Validate link_key format
+    if (!/^[a-zA-Z0-9-]+$/.test(link_key)) {
+      return NextResponse.json({ error: 'Link key can only contain letters, numbers, and hyphens' }, { status: 400 })
+    }
+
+    // Check if link_key already exists for a different link
+    const { data: existingLink } = await supabase
+      .from('trigger_links')
+      .select('id')
+      .eq('link_key', link_key)
+      .neq('id', id)
+      .single()
+
+    if (existingLink) {
+      return NextResponse.json({ error: 'Link key already exists. Please choose a different one.' }, { status: 400 })
+    }
+
     const updateData: any = {
+      name,
+      link_url,
+      link_key,
+      description: description || null,
       updated_at: new Date().toISOString(),
     }
 
-    if (name !== undefined) updateData.title = name
-    if (bodyContent !== undefined) updateData.body = bodyContent
-    // Note: subject is not stored in the current schema, but we can add it if needed
-
     const { data, error } = await supabase
-      .from('email_templates')
+      .from('trigger_links')
       .update(updateData)
       .eq('id', id)
+      .eq('user_id', user.id)
       .select()
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to update template' }, { status: 500 })
+      console.error('Database error:', error)
+      if (error.code === '23505') { // Unique constraint violation
+        return NextResponse.json({ error: 'Link key already exists' }, { status: 400 })
+      }
+      return NextResponse.json({ error: 'Failed to update trigger link' }, { status: 500 })
     }
 
-    return NextResponse.json({ template: data })
+    return NextResponse.json({ link: data })
   } catch (error) {
-    console.error('Update template error:', error)
+    console.error('Update trigger link error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -99,20 +127,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Allow users to delete their own templates (or admins to delete any)
-    // For now, allow all authenticated users to delete templates
     const { error } = await supabase
-      .from('email_templates')
+      .from('trigger_links')
       .delete()
       .eq('id', id)
+      .eq('user_id', user.id)
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })
+      console.error('Database error:', error)
+      return NextResponse.json({ error: 'Failed to delete trigger link' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete template error:', error)
+    console.error('Delete trigger link error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

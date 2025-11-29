@@ -418,33 +418,33 @@ export default function ListsPage() {
                 <Upload size={16} />
                 Import CSV
               </button>
-              <button
-                onClick={() => handleCreateList('properties')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  backgroundColor: '#fbbf24',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f59e0b'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#fbbf24'
-                }}
-              >
-                <Plus size={16} />
-                Create a list
-              </button>
+            <button
+              onClick={() => handleCreateList('properties')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 18px',
+                backgroundColor: '#fbbf24',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 500,
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f59e0b'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#fbbf24'
+              }}
+            >
+              <Plus size={16} />
+              Create a list
+            </button>
             </div>
           </div>
 

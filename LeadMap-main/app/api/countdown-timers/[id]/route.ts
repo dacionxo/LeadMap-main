@@ -3,12 +3,11 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
 /**
- * Email Template by ID
- * GET: Get template by ID
- * PUT: Update template (admin only)
- * DELETE: Delete template (admin only)
+ * Countdown Timer API
+ * GET: Get timer by ID
+ * PUT: Update timer
+ * DELETE: Delete timer
  */
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -23,18 +22,19 @@ export async function GET(
     }
 
     const { data, error } = await supabase
-      .from('email_templates')
+      .from('countdown_timers')
       .select('*')
       .eq('id', id)
+      .eq('user_id', user.id)
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Timer not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ template: data })
+    return NextResponse.json({ timer: data })
   } catch (error) {
-    console.error('Get template error:', error)
+    console.error('Get timer error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -52,36 +52,39 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Allow all authenticated users to update templates
     const body = await request.json()
-    // Support both old format (title, body) and new format (name, subject, html)
-    const name = body.name || body.title
-    const bodyContent = body.html || body.body
-    const subject = body.subject
+    const { name, type, end_date, duration_seconds } = body
 
-    // Allow users to update their own templates, not just admins
     const updateData: any = {
+      name,
+      type,
       updated_at: new Date().toISOString(),
     }
 
-    if (name !== undefined) updateData.title = name
-    if (bodyContent !== undefined) updateData.body = bodyContent
-    // Note: subject is not stored in the current schema, but we can add it if needed
+    if (type === 'end_date') {
+      updateData.end_date = end_date
+      updateData.duration_seconds = null
+    } else {
+      updateData.duration_seconds = duration_seconds
+      updateData.end_date = null
+    }
 
     const { data, error } = await supabase
-      .from('email_templates')
+      .from('countdown_timers')
       .update(updateData)
       .eq('id', id)
+      .eq('user_id', user.id)
       .select()
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to update template' }, { status: 500 })
+      console.error('Database error:', error)
+      return NextResponse.json({ error: 'Failed to update timer' }, { status: 500 })
     }
 
-    return NextResponse.json({ template: data })
+    return NextResponse.json({ timer: data })
   } catch (error) {
-    console.error('Update template error:', error)
+    console.error('Update timer error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -99,20 +102,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Allow users to delete their own templates (or admins to delete any)
-    // For now, allow all authenticated users to delete templates
     const { error } = await supabase
-      .from('email_templates')
+      .from('countdown_timers')
       .delete()
       .eq('id', id)
+      .eq('user_id', user.id)
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })
+      console.error('Database error:', error)
+      return NextResponse.json({ error: 'Failed to delete timer' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete template error:', error)
+    console.error('Delete timer error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -3,9 +3,9 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
 /**
- * Email Templates CRUD API
- * GET: List all templates
- * POST: Create new template (admin only)
+ * Snippet Folders CRUD API
+ * GET: List all folders for the authenticated user
+ * POST: Create new folder
  */
 export async function GET(request: NextRequest) {
   try {
@@ -17,18 +17,19 @@ export async function GET(request: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from('email_templates')
+      .from('snippet_folders')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Database error:', error)
-      return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to fetch folders' }, { status: 500 })
     }
 
-    return NextResponse.json({ templates: data || [] })
+    return NextResponse.json({ folders: data || [] })
   } catch (error) {
-    console.error('Email templates error:', error)
+    console.error('Folders error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -42,37 +43,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Allow all authenticated users to create templates
     const body = await request.json()
-    // Support both old format (title, body, category) and new format (name, subject, html)
-    const title = body.title || body.name
-    const bodyContent = body.body || body.html
-    const category = body.category || 'general'
-    const subject = body.subject || title
+    const { name } = body
 
-    if (!title || !bodyContent) {
-      return NextResponse.json({ error: 'Name/title and html/body are required' }, { status: 400 })
+    if (!name || !name.trim()) {
+      return NextResponse.json(
+        { error: 'Folder name is required' },
+        { status: 400 }
+      )
     }
 
     const { data, error } = await supabase
-      .from('email_templates')
+      .from('snippet_folders')
       .insert({
-        title,
-        body: bodyContent,
-        category,
-        created_by: user.id
+        user_id: user.id,
+        name: name.trim(),
       })
       .select()
       .single()
 
     if (error) {
       console.error('Database error:', error)
-      return NextResponse.json({ error: 'Failed to create template' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create folder' }, { status: 500 })
     }
 
-    return NextResponse.json({ template: data })
+    return NextResponse.json({ folder: data }, { status: 201 })
   } catch (error) {
-    console.error('Create template error:', error)
+    console.error('Create folder error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -17,30 +17,35 @@ export default async function Home() {
     const cookieStore = await cookies()
     const supabase = createServerComponentClient({ cookies: () => cookieStore })
     
-    try {
-      // Use getSession instead of getUser to reduce API calls
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        redirect('/dashboard')
-      }
-    } catch (error: any) {
-      // Handle rate limit errors gracefully - just show landing page
-      if (error.message?.includes('rate limit') || error.message?.includes('Request rate limit')) {
+    // Use getSession instead of getUser to reduce API calls
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    // If there's a session, redirect immediately (this will throw NEXT_REDIRECT which is expected)
+    if (session?.user) {
+      redirect('/dashboard')
+    }
+    
+    // Handle session errors gracefully
+    if (sessionError) {
+      if (sessionError.message?.includes('rate limit') || sessionError.message?.includes('Request rate limit')) {
         console.warn('Supabase rate limit hit on home page, showing landing page')
-      } else if (error.message?.includes('Invalid API key') || error.message?.includes('supabaseUrl')) {
-        console.warn('Supabase configuration error, showing landing page:', error.message)
+      } else if (sessionError.message?.includes('Invalid API key') || sessionError.message?.includes('supabaseUrl')) {
+        console.warn('Supabase configuration error, showing landing page:', sessionError.message)
       } else {
-        console.error('Auth error on home page:', error)
+        console.warn('Auth error on home page:', sessionError.message)
       }
-      // Continue to show landing page even on error
     }
   } catch (error: any) {
+    // NEXT_REDIRECT is expected and should not be caught - rethrow it
+    if (error?.digest === 'NEXT_REDIRECT' || error?.message?.includes('NEXT_REDIRECT')) {
+      throw error
+    }
+    
     // If cookies() fails or any other error, just show landing page
     if (error.message?.includes('cookies') || error.message?.includes('CookieStore')) {
       console.warn('Cookie handling error, showing landing page:', error.message)
     } else {
-      console.error('Error in Home component:', error)
+      console.warn('Error in Home component:', error.message)
     }
   }
 

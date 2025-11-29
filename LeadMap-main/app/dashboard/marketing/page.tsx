@@ -1,7 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import DashboardLayout from '../components/DashboardLayout'
+import EmailMarketing from './components/EmailMarketing'
+import AdManagerContent from './components/AdManager'
+import CountdownTimersContent from './components/CountdownTimers'
+import Snippets from './components/Snippets'
+import TriggerLinksContent from './components/TriggerLinks'
 import { 
   Facebook, 
   Instagram, 
@@ -24,7 +30,7 @@ import {
   ArrowRight
 } from 'lucide-react'
 
-type MarketingTab = 'social-planner' | 'emails' | 'snippets' | 'countdown-timers' | 'trigger-links' | 'affiliate-manager' | 'brand-boards' | 'ad-manager'
+type MarketingTab = 'social-planner' | 'emails' | 'snippets' | 'countdown-timers' | 'trigger-links' | 'ad-manager'
 
 // Platform Icon Component with logo fallback
 function PlatformIcon({ logo, Icon, name, className }: { logo: string | null, Icon: any, name: string, className?: string }) {
@@ -45,52 +51,68 @@ function PlatformIcon({ logo, Icon, name, className }: { logo: string | null, Ic
 }
 
 export default function MarketingPage() {
-  const [activeTab, setActiveTab] = useState<MarketingTab>('social-planner')
+  return (
+    <DashboardLayout>
+      <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
+        <MarketingPageContent />
+      </Suspense>
+    </DashboardLayout>
+  )
+}
 
-  const tabs = [
+function MarketingPageContent() {
+  const [activeTab, setActiveTab] = useState<MarketingTab>('social-planner')
+  const searchParams = useSearchParams()
+
+  const tabs = useMemo(() => [
     { id: 'social-planner' as MarketingTab, label: 'Social Planner' },
     { id: 'emails' as MarketingTab, label: 'Emails' },
     { id: 'snippets' as MarketingTab, label: 'Snippets' },
     { id: 'countdown-timers' as MarketingTab, label: 'Countdown Timers' },
     { id: 'trigger-links' as MarketingTab, label: 'Trigger Links' },
-    { id: 'affiliate-manager' as MarketingTab, label: 'Affiliate Manager' },
-    { id: 'brand-boards' as MarketingTab, label: 'Brand Boards' },
     { id: 'ad-manager' as MarketingTab, label: 'Ad Manager' }
-  ]
+  ], [])
 
+  useEffect(() => {
+    // Check for tab query parameter and set active tab only if it's different from current
+    const tabParam = searchParams.get('tab')
+    if (tabParam) {
+      const validTab = tabs.find(tab => tab.id === tabParam)
+      if (validTab && tabParam !== activeTab) {
+        setActiveTab(tabParam as MarketingTab)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-1 overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Content based on active tab */}
-        {activeTab === 'social-planner' && <SocialPlannerContent />}
-        {activeTab === 'emails' && <div className="p-8 text-center text-gray-500">Emails feature coming soon...</div>}
-        {activeTab === 'snippets' && <div className="p-8 text-center text-gray-500">Snippets feature coming soon...</div>}
-        {activeTab === 'countdown-timers' && <div className="p-8 text-center text-gray-500">Countdown Timers feature coming soon...</div>}
-        {activeTab === 'trigger-links' && <div className="p-8 text-center text-gray-500">Trigger Links feature coming soon...</div>}
-        {activeTab === 'affiliate-manager' && <div className="p-8 text-center text-gray-500">Affiliate Manager feature coming soon...</div>}
-        {activeTab === 'brand-boards' && <div className="p-8 text-center text-gray-500">Brand Boards feature coming soon...</div>}
-        {activeTab === 'ad-manager' && <div className="p-8 text-center text-gray-500">Ad Manager feature coming soon...</div>}
+    <div className="space-y-6">
+      {/* Navigation Tabs */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="flex space-x-1 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </div>
-    </DashboardLayout>
+
+      {/* Content based on active tab */}
+      {activeTab === 'social-planner' && <SocialPlannerContent />}
+      {activeTab === 'emails' && <EmailMarketing />}
+      {activeTab === 'snippets' && <Snippets />}
+      {activeTab === 'countdown-timers' && <CountdownTimersContent />}
+      {activeTab === 'trigger-links' && <TriggerLinksContent />}
+      {activeTab === 'ad-manager' && <AdManagerContent />}
+    </div>
   )
 }
 

@@ -108,11 +108,11 @@ export async function POST(request: NextRequest) {
           })
         } else {
           // Only add if it doesn't exist
-          memberships.push({
-            list_id: listId,
-            item_type: item.itemType,
-            item_id: item.itemId,
-          })
+        memberships.push({
+          list_id: listId,
+          item_type: item.itemType,
+          item_id: item.itemId,
+        })
         }
       }
     }

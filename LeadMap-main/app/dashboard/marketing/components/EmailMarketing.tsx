@@ -1,0 +1,1834 @@
+'use client'
+
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { 
+  Mail, 
+  Plus, 
+  Send, 
+  Calendar, 
+  FileText, 
+  X, 
+  CheckCircle2, 
+  AlertCircle,
+  Settings,
+  Trash2,
+  RefreshCw,
+  BarChart3,
+  TrendingUp,
+  Eye,
+  MousePointerClick,
+  ShoppingCart,
+  Filter,
+  Download,
+  MoreVertical,
+  Clock
+} from 'lucide-react'
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from 'recharts'
+
+interface Mailbox {
+  id: string
+  provider: 'gmail' | 'outlook' | 'smtp'
+  email: string
+  display_name: string
+  active: boolean
+  daily_limit: number
+  hourly_limit: number
+}
+
+interface EmailTemplate {
+  id: string
+  name?: string
+  title?: string
+  subject?: string
+  body?: string
+  html?: string
+  category?: string
+  created_at?: string
+  updated_at?: string
+  created_by?: string
+}
+
+interface Email {
+  id: string
+  to_email: string
+  subject: string
+  status: 'queued' | 'sending' | 'sent' | 'failed'
+  sent_at: string | null
+  opened_at: string | null
+  clicked_at: string | null
+  error: string | null
+}
+
+interface EmailStats {
+  delivered: number
+  opened: number
+  clicked: number
+  ordered: number
+  bounced: number
+  unsubscribed: number
+  spamComplaints: number
+  openRate: number
+  clickRate: number
+}
+
+function EmailMarketingContent() {
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState<'statistics' | 'campaigns' | 'templates'>('statistics')
+  const [mailboxes, setMailboxes] = useState<Mailbox[]>([])
+  const [selectedMailbox, setSelectedMailbox] = useState<string | null>(null)
+  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [emails, setEmails] = useState<Email[]>([])
+  const [stats, setStats] = useState<EmailStats>({
+    delivered: 0,
+    opened: 0,
+    clicked: 0,
+    ordered: 0,
+    bounced: 0,
+    unsubscribed: 0,
+    spamComplaints: 0,
+    openRate: 0,
+    clickRate: 0,
+  })
+  const [loading, setLoading] = useState(true)
+  const [showConnectModal, setShowConnectModal] = useState(false)
+  const [showComposeModal, setShowComposeModal] = useState(false)
+  const [composeData, setComposeData] = useState({
+    to: '',
+    subject: '',
+    html: '',
+    templateId: '',
+  })
+
+  useEffect(() => {
+    // Check for OAuth success/error messages
+    const success = searchParams.get('success')
+    const error = searchParams.get('error')
+    
+    if (success) {
+      // Show success message
+      if (success === 'gmail_connected') {
+        alert('Gmail mailbox connected successfully!')
+      } else if (success === 'outlook_connected') {
+        alert('Outlook mailbox connected successfully!')
+      } else {
+        alert(`Success: ${success}`)
+      }
+      // Refresh mailboxes after successful connection
+      fetchMailboxes()
+    }
+    if (error) {
+      // Show error message
+      const errorMessages: Record<string, string> = {
+        'missing_params': 'OAuth callback missing required parameters',
+        'invalid_state': 'Invalid OAuth state. Please try again.',
+        'unauthorized': 'Unauthorized. Please log in again.',
+        'oauth_not_configured': 'OAuth is not configured. Please contact support.',
+        'token_exchange_failed': 'Failed to exchange OAuth token. Please try again.',
+        'failed_to_get_email': 'Failed to retrieve email address from provider.',
+        'database_error': 'Failed to save mailbox. Please try again.',
+        'internal_error': 'An internal error occurred. Please try again.',
+      }
+      const errorMessage = errorMessages[error] || `Error: ${error}`
+      alert(errorMessage)
+    }
+
+    fetchMailboxes()
+    fetchTemplates()
+    fetchEmails()
+    fetchStats()
+  }, [searchParams])
+
+  const fetchMailboxes = async () => {
+    try {
+      const response = await fetch('/api/mailboxes', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setMailboxes(data.mailboxes || [])
+        if (data.mailboxes && data.mailboxes.length > 0 && !selectedMailbox) {
+          setSelectedMailbox(data.mailboxes[0].id)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching mailboxes:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await fetch('/api/email-templates', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setTemplates(data.templates || [])
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error)
+    }
+  }
+
+  const fetchEmails = async () => {
+    if (!selectedMailbox) return
+    
+    try {
+      // TODO: Create API endpoint for fetching emails
+      // For now, using mock data structure
+      const response = await fetch(`/api/emails?mailboxId=${selectedMailbox}`, { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setEmails(data.emails || [])
+      }
+    } catch (error) {
+      console.error('Error fetching emails:', error)
+    }
+  }
+
+  const fetchStats = async () => {
+    try {
+      // TODO: Create API endpoint for email statistics
+      // For now, calculate from emails
+      const response = await fetch(`/api/emails/stats?mailboxId=${selectedMailbox || 'all'}`, { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data.stats || stats)
+      } else {
+        // Calculate from emails as fallback
+        const delivered = emails.filter(e => e.status === 'sent').length
+        const opened = emails.filter(e => e.opened_at).length
+        const clicked = emails.filter(e => e.clicked_at).length
+        setStats({
+          delivered,
+          opened,
+          clicked,
+          ordered: 0,
+          bounced: 0,
+          unsubscribed: 0,
+          spamComplaints: 0,
+          openRate: delivered > 0 ? (opened / delivered) * 100 : 0,
+          clickRate: delivered > 0 ? (clicked / delivered) * 100 : 0,
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    }
+  }
+
+  useEffect(() => {
+    if (selectedMailbox) {
+      fetchEmails()
+      fetchStats()
+    }
+  }, [selectedMailbox])
+
+  const handleConnectGmail = async () => {
+    try {
+      // Close modal before redirecting
+      setShowConnectModal(false)
+      
+      const response = await fetch('/api/mailboxes/oauth/gmail', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.authUrl) {
+          window.location.href = data.authUrl
+        } else {
+          alert(data.error || 'Failed to get Gmail OAuth URL')
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to connect Gmail' }))
+        alert(errorData.error || 'Failed to connect Gmail')
+      }
+    } catch (error) {
+      console.error('Error initiating Gmail OAuth:', error)
+      alert('Failed to connect Gmail. Please try again.')
+    }
+  }
+
+  const handleConnectOutlook = async () => {
+    try {
+      // Close modal before redirecting
+      setShowConnectModal(false)
+      
+      const response = await fetch('/api/mailboxes/oauth/outlook', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.authUrl) {
+          window.location.href = data.authUrl
+        } else {
+          alert(data.error || 'Failed to get Outlook OAuth URL')
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to connect Outlook' }))
+        alert(errorData.error || 'Failed to connect Outlook')
+      }
+    } catch (error) {
+      console.error('Error initiating Outlook OAuth:', error)
+      alert('Failed to connect Outlook. Please try again.')
+    }
+  }
+
+  const handleSendEmail = async () => {
+    if (!selectedMailbox || !composeData.to || !composeData.subject || !composeData.html) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          mailboxId: selectedMailbox,
+          to: composeData.to,
+          subject: composeData.subject,
+          html: composeData.html,
+          templateId: composeData.templateId || null,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        alert('Email sent successfully!')
+        setShowComposeModal(false)
+        setComposeData({ to: '', subject: '', html: '', templateId: '' })
+        fetchEmails()
+        fetchStats()
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to send email')
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
+      alert('Failed to send email')
+    }
+  }
+
+  const handleDeleteMailbox = async (mailboxId: string) => {
+    if (!confirm('Are you sure you want to disconnect this mailbox?')) return
+
+    try {
+      const response = await fetch(`/api/mailboxes/${mailboxId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        setMailboxes(mailboxes.filter(m => m.id !== mailboxId))
+        if (selectedMailbox === mailboxId) {
+          setSelectedMailbox(mailboxes.find(m => m.id !== mailboxId)?.id || null)
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting mailbox:', error)
+      alert('Failed to disconnect mailbox')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Email Marketing</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Manage your email campaigns and track performance
+          </p>
+        </div>
+        <button
+          onClick={() => window.location.href = '/dashboard/marketing/campaigns/new'}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Create Campaign
+        </button>
+      </div>
+
+      {/* Sample Data Banner */}
+      {emails.length === 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            You're viewing sample data. Create your own campaign to see real data.
+          </p>
+          <div className="flex gap-2">
+            <button className="px-3 py-1.5 text-sm text-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-700 rounded hover:bg-blue-100 dark:hover:bg-blue-900/40">
+              Clear Sample Data
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mailbox Selector */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-4">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Send from:
+          </label>
+          <button
+            onClick={() => setShowConnectModal(true)}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1"
+          >
+            <Plus className="w-4 h-4" />
+            Connect Mailbox
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {mailboxes.map((mailbox) => (
+            <div
+              key={mailbox.id}
+              className={`px-3 py-2 rounded-lg border flex items-center gap-2 cursor-pointer transition-colors ${
+                selectedMailbox === mailbox.id
+                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+              onClick={() => setSelectedMailbox(mailbox.id)}
+            >
+              <Mail className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {mailbox.display_name}
+              </span>
+              {mailbox.active ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-yellow-500" />
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteMailbox(mailbox.id)
+                }}
+                className="ml-2 text-gray-400 hover:text-red-500"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+          {mailboxes.length === 0 && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              No mailboxes connected. Click "Connect Mailbox" to get started.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="flex space-x-1">
+          {[
+            { id: 'statistics', label: 'Statistics' },
+            { id: 'campaigns', label: 'Campaigns' },
+            { id: 'templates', label: 'Templates' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'statistics' && (
+        <EmailStatistics stats={stats} emails={emails} />
+      )}
+      {activeTab === 'campaigns' && (
+        <EmailCampaigns emails={emails} />
+      )}
+      {activeTab === 'templates' && (
+        <EmailTemplates templates={templates} />
+      )}
+
+      {/* Connect Mailbox Modal */}
+      {showConnectModal && (
+        <ConnectMailboxModal
+          onClose={() => setShowConnectModal(false)}
+          onConnectGmail={handleConnectGmail}
+          onConnectOutlook={handleConnectOutlook}
+        />
+      )}
+
+      {/* Compose Email Modal */}
+      {showComposeModal && (
+        <ComposeEmailModal
+          onClose={() => setShowComposeModal(false)}
+          onSend={handleSendEmail}
+          templates={templates}
+          composeData={composeData}
+          setComposeData={setComposeData}
+        />
+      )}
+    </div>
+  )
+}
+
+export default function EmailMarketing() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    }>
+      <EmailMarketingContent />
+    </Suspense>
+  )
+}
+
+// Statistics Component
+function EmailStatistics({ stats, emails }: { stats: EmailStats; emails: Email[] }) {
+  const [topEmailsMetric, setTopEmailsMetric] = useState<'openRate' | 'clickRate'>('openRate')
+  const [openRateMetric, setOpenRateMetric] = useState<'openRate' | 'unsubscribed' | 'clickRate' | 'emailsSent' | 'spamComplaints'>('openRate')
+
+  // Prepare chart data
+  const engagementData = [
+    {
+      type: 'Delivered',
+      count: stats.delivered,
+      percentage: 100,
+      emailCampaign: Math.floor(stats.delivered * 0.6),
+      workflowCampaign: Math.floor(stats.delivered * 0.3),
+      bulkActionCampaign: Math.floor(stats.delivered * 0.1),
+    },
+    {
+      type: 'Opened',
+      count: stats.opened,
+      percentage: stats.openRate,
+      emailCampaign: Math.floor(stats.opened * 0.6),
+      workflowCampaign: Math.floor(stats.opened * 0.3),
+      bulkActionCampaign: Math.floor(stats.opened * 0.1),
+    },
+    {
+      type: 'Clicked',
+      count: stats.clicked,
+      percentage: stats.clickRate,
+      emailCampaign: Math.floor(stats.clicked * 0.6),
+      workflowCampaign: Math.floor(stats.clicked * 0.3),
+      bulkActionCampaign: Math.floor(stats.clicked * 0.1),
+    },
+    {
+      type: 'Ordered',
+      count: stats.ordered,
+      percentage: stats.delivered > 0 ? (stats.ordered / stats.delivered) * 100 : 0,
+      emailCampaign: Math.floor(stats.ordered * 0.6),
+      workflowCampaign: Math.floor(stats.ordered * 0.3),
+      bulkActionCampaign: Math.floor(stats.ordered * 0.1),
+    },
+  ]
+
+  // Generate dynamic data based on selected metric
+  const getOpenRateChartData = () => {
+    const baseData = [
+      { date: '11/23', all: 12.5, email: 13.2, workflow: 11.8, bulk: 10.5 },
+      { date: '11/24', all: 13.1, email: 13.9, workflow: 12.2, bulk: 11.0 },
+      { date: '11/25', all: 14.2, email: 15.0, workflow: 13.1, bulk: 12.1 },
+      { date: '11/26', all: 13.8, email: 14.5, workflow: 12.9, bulk: 11.8 },
+      { date: '11/27', all: 14.5, email: 15.2, workflow: 13.5, bulk: 12.5 },
+      { date: '11/28', all: 15.1, email: 16.0, workflow: 14.0, bulk: 13.0 },
+    ]
+
+    switch (openRateMetric) {
+      case 'unsubscribed':
+        return baseData.map(d => ({
+          ...d,
+          all: d.all * 0.05,
+          email: d.email * 0.05,
+          workflow: d.workflow * 0.05,
+          bulk: d.bulk * 0.05,
+        }))
+      case 'clickRate':
+        return baseData.map(d => ({
+          ...d,
+          all: d.all * 0.3,
+          email: d.email * 0.3,
+          workflow: d.workflow * 0.3,
+          bulk: d.bulk * 0.3,
+        }))
+      case 'emailsSent':
+        return baseData.map(d => ({
+          ...d,
+          all: 5000 + Math.random() * 1000,
+          email: 3000 + Math.random() * 500,
+          workflow: 1500 + Math.random() * 300,
+          bulk: 500 + Math.random() * 200,
+        }))
+      case 'spamComplaints':
+        return baseData.map(d => ({
+          ...d,
+          all: d.all * 0.01,
+          email: d.email * 0.01,
+          workflow: d.workflow * 0.01,
+          bulk: d.bulk * 0.01,
+        }))
+      default:
+        return baseData
+    }
+  }
+
+  const openRateData = getOpenRateChartData()
+
+  const getMetricLabel = () => {
+    switch (openRateMetric) {
+      case 'unsubscribed':
+        return 'Unsubscribed'
+      case 'clickRate':
+        return 'Click Rate'
+      case 'emailsSent':
+        return 'Emails Sent'
+      case 'spamComplaints':
+        return 'Spam Complaints'
+      default:
+        return 'Open Rate'
+    }
+  }
+
+  const getMetricValue = () => {
+    switch (openRateMetric) {
+      case 'unsubscribed':
+        return stats.unsubscribed
+      case 'clickRate':
+        return stats.clickRate
+      case 'emailsSent':
+        return stats.delivered
+      case 'spamComplaints':
+        return stats.spamComplaints
+      default:
+        return stats.openRate
+    }
+  }
+
+  const getMetricDescription = () => {
+    switch (openRateMetric) {
+      case 'unsubscribed':
+        return `Total Unsubscribed: ${stats.unsubscribed.toLocaleString()} | Total Delivery: ${stats.delivered.toLocaleString()}`
+      case 'clickRate':
+        return `Total Clicked: ${stats.clicked.toLocaleString()} | Total Delivery: ${stats.delivered.toLocaleString()}`
+      case 'emailsSent':
+        return `Total Sent: ${stats.delivered.toLocaleString()} | Total Delivery: ${stats.delivered.toLocaleString()}`
+      case 'spamComplaints':
+        return `Total Complaints: ${stats.spamComplaints.toLocaleString()} | Total Delivery: ${stats.delivered.toLocaleString()}`
+      default:
+        return `Total Opened: ${stats.opened.toLocaleString()} | Total Delivery: ${stats.delivered.toLocaleString()}`
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Campaign and Date Filter */}
+      <div className="flex items-center gap-4">
+        <select className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm">
+          <option>All Campaigns</option>
+        </select>
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            defaultValue="2025-11-23"
+            className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
+          />
+          <span className="text-sm text-gray-500">to</span>
+          <input
+            type="date"
+            defaultValue="2025-11-29"
+            className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
+          />
+        </div>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          Showing results for: Nov 23 - Nov 29
+        </span>
+      </div>
+
+      {/* Engagement Summary */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Engagement Summary</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Summary of how recipients interact with your emails, like opening them, clicking links, and placing orders.
+          </p>
+        </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={engagementData} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis type="number" />
+            <YAxis dataKey="type" type="category" width={100} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="emailCampaign" stackId="a" fill="#3b82f6" name="Email Campaign" />
+            <Bar dataKey="workflowCampaign" stackId="a" fill="#8b5cf6" name="Workflow Campaign" />
+            <Bar dataKey="bulkActionCampaign" stackId="a" fill="#06b6d4" name="Bulk Action Campaign" />
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="mt-4 flex justify-end gap-4 text-sm">
+          {engagementData.map((item) => (
+            <div key={item.type} className="text-right">
+              <div className="font-semibold text-gray-900 dark:text-white">{item.type} {item.percentage.toFixed(0)}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Performance Analysis */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Performance Analysis</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Track campaign performance trends for a metric over time.
+          </p>
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Email Delivered</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.delivered.toLocaleString()}</div>
+          </div>
+          <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Bounced</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.bounced.toLocaleString()}</div>
+          </div>
+          <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Unsubscribed</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.unsubscribed.toLocaleString()}</div>
+          </div>
+          <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Spam Complaints</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.spamComplaints.toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Open Rate Chart */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{getMetricLabel()} (for All Campaigns)</h2>
+            <div className="mt-2">
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                {openRateMetric === 'emailsSent' 
+                  ? getMetricValue().toLocaleString()
+                  : `${getMetricValue().toFixed(2)}${openRateMetric === 'emailsSent' ? '' : '%'}`}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {getMetricDescription()}
+              </div>
+            </div>
+          </div>
+          <select 
+            value={openRateMetric}
+            onChange={(e) => setOpenRateMetric(e.target.value as any)}
+            className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
+          >
+            <option value="openRate">Open Rate</option>
+            <option value="unsubscribed">Unsubscribed</option>
+            <option value="clickRate">Click Rate</option>
+            <option value="emailsSent">Emails Sent</option>
+            <option value="spamComplaints">Spam Complaints</option>
+          </select>
+        </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={openRateData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="all" stroke="#1e40af" name="All Campaigns" />
+            <Line type="monotone" dataKey="email" stroke="#3b82f6" name="Email Campaign" />
+            <Line type="monotone" dataKey="workflow" stroke="#8b5cf6" name="Workflow Campaign" />
+            <Line type="monotone" dataKey="bulk" stroke="#06b6d4" name="Bulk Action Campaign" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Top Performing Emails */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top performing emails</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              List of top performing emails based on opened.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select 
+              value={topEmailsMetric}
+              onChange={(e) => setTopEmailsMetric(e.target.value as any)}
+              className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
+            >
+              <option value="openRate">Open Rate</option>
+              <option value="clickRate">Click Rate</option>
+            </select>
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <input type="checkbox" className="rounded" />
+              Show statistics in numbers
+            </label>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Title</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Execution Date</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Delivered</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Open Rate</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Click Rate</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {emails.slice(0, 10).map((email) => (
+                <tr key={email.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50">
+                  <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{email.subject}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                    {email.sent_at ? new Date(email.sent_at).toLocaleString() : '-'}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">-</td>
+                  <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">
+                    {topEmailsMetric === 'openRate' 
+                      ? (email.opened_at ? '17.00%' : '-')
+                      : (email.clicked_at ? '13.00%' : '-')}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">
+                    {topEmailsMetric === 'clickRate'
+                      ? (email.opened_at ? '17.00%' : '-')
+                      : (email.clicked_at ? '13.00%' : '-')}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">Email Campaign</td>
+                </tr>
+              ))}
+              {emails.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                    No emails sent yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Campaigns Component
+function EmailCampaigns({ emails }: { emails: Email[] }) {
+  const [activeCampaignType, setActiveCampaignType] = useState<'email' | 'workflow' | 'bulk'>('email')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  const campaignTypes = [
+    { id: 'email' as const, label: 'Email Campaigns' },
+    { id: 'workflow' as const, label: 'Workflow Campaigns' },
+    { id: 'bulk' as const, label: 'Bulk Action Campaigns' },
+  ]
+
+  // Mock campaigns data - replace with actual API call
+  const campaigns: Array<{
+    id: string
+    title: string
+    type: string
+    lastUpdated: string
+    executionDate: string | null
+    status: 'draft' | 'scheduled' | 'sending' | 'completed' | 'paused'
+  }> = []
+
+  const filteredCampaigns = campaigns.filter(campaign => {
+    if (activeCampaignType === 'email' && campaign.type !== 'Email Campaign') return false
+    if (activeCampaignType === 'workflow' && campaign.type !== 'Workflow Campaign') return false
+    if (activeCampaignType === 'bulk' && campaign.type !== 'Bulk Action Campaign') return false
+    if (searchQuery && !campaign.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
+    return true
+  })
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">Campaigns</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Create and manage campaigns for all of your emails
+        </p>
+      </div>
+
+      <div className="flex gap-6">
+        {/* Left Sidebar - Campaign Types */}
+        <div className="w-64 flex-shrink-0">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2">
+            {campaignTypes.map((type) => (
+              <button
+                key={type.id}
+                onClick={() => setActiveCampaignType(type.id)}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeCampaignType === type.id
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 space-y-4">
+          {/* Action Buttons and Search Bar */}
+          <div className="space-y-3">
+            {/* Top Action Buttons */}
+            <div className="flex items-center justify-end gap-2">
+              <button className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Create Folder
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                New
+              </button>
+              <button className="p-2 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Search and Filter Bar */}
+            <div className="flex items-center gap-2">
+              <button className="p-2 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                <Clock className="w-4 h-4" />
+              </button>
+              <button className="p-2 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                <BarChart3 className="w-4 h-4" />
+              </button>
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Search Campaign Name"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+              <button className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Campaigns Table */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            {filteredCampaigns.length > 0 ? (
+              <>
+                {/* Table Header */}
+                <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                  <div className="col-span-4">Title</div>
+                  <div className="col-span-2">Type</div>
+                  <div className="col-span-2">Last Updated</div>
+                  <div className="col-span-2">Execution Date</div>
+                  <div className="col-span-2">Status</div>
+                </div>
+
+                {/* Table Rows */}
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredCampaigns.map((campaign) => (
+                    <div
+                      key={campaign.id}
+                      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer"
+                    >
+                      <div className="col-span-4 text-sm font-medium text-gray-900 dark:text-white">
+                        {campaign.title}
+                      </div>
+                      <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                        {campaign.type}
+                      </div>
+                      <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(campaign.lastUpdated).toLocaleDateString()}
+                      </div>
+                      <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                        {campaign.executionDate ? new Date(campaign.executionDate).toLocaleDateString() : '-'}
+                      </div>
+                      <div className="col-span-2">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            campaign.status === 'completed'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                              : campaign.status === 'sending'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                              : campaign.status === 'scheduled'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                              : campaign.status === 'paused'
+                              ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          }`}
+                        >
+                          {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              /* Empty State */
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                  <Mail className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">No Campaigns</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Create New Campaign</p>
+                <button
+                  onClick={() => window.location.href = '/dashboard/marketing/campaigns/new'}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
+                >
+                  <Plus className="w-5 h-5" />
+                  Create Campaign
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Create Campaign - Navigate to builder */}
+      {showCreateModal && (
+        <CreateCampaignModal
+          onClose={() => setShowCreateModal(false)}
+          campaignType={activeCampaignType}
+          onNavigateToBuilder={() => {
+            setShowCreateModal(false)
+            window.location.href = '/dashboard/marketing/campaigns/new'
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Create Campaign Modal
+function CreateCampaignModal({
+  onClose,
+  campaignType,
+  onNavigateToBuilder,
+}: {
+  onClose: () => void
+  campaignType: 'email' | 'workflow' | 'bulk'
+  onNavigateToBuilder: () => void
+}) {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    scheduledAt: '',
+  })
+
+  const handleCreate = () => {
+    // Navigate to campaign builder
+    onNavigateToBuilder()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Create {campaignType === 'email' ? 'Email' : campaignType === 'workflow' ? 'Workflow' : 'Bulk Action'} Campaign
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Campaign Name
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                placeholder="Enter campaign name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                placeholder="Enter campaign description"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Schedule (Optional)
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.scheduledAt}
+                onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Create Campaign
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Templates Component
+function EmailTemplates({ templates }: { templates: EmailTemplate[] }) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+
+  const filteredTemplates = templates.filter(template => {
+    const name = (template.name || template.title || '').toLowerCase()
+    const subject = (template.subject || '').toLowerCase()
+    const query = searchQuery.toLowerCase()
+    return name.includes(query) || subject.includes(query)
+  })
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (!confirm('Are you sure you want to delete this template?')) return
+
+    try {
+      const response = await fetch(`/api/email-templates/${templateId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        // Refresh templates list
+        window.location.reload()
+      } else {
+        alert('Failed to delete template')
+      }
+    } catch (error) {
+      console.error('Error deleting template:', error)
+      alert('Failed to delete template')
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">Email Templates</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Create and manage templates for all of your emails
+        </p>
+      </div>
+
+      {/* Action Buttons and Search Bar */}
+      <div className="flex items-center justify-end gap-2">
+        <button className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+          <FileText className="w-4 h-4" />
+          Create Folder
+        </button>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          New
+        </button>
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search Email Templates"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <button className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+          <Filter className="w-4 h-4" />
+          Filters
+        </button>
+      </div>
+
+      {/* Templates Table */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        {filteredTemplates.length > 0 ? (
+          <>
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              <div className="col-span-1">Home</div>
+              <div className="col-span-4">Title</div>
+              <div className="col-span-2">Type</div>
+              <div className="col-span-2">Updated On</div>
+              <div className="col-span-2">Updated By</div>
+              <div className="col-span-1">Actions</div>
+            </div>
+
+            {/* Table Rows */}
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredTemplates.map((template) => (
+                <div
+                  key={template.id}
+                  className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+                >
+                  <div className="col-span-1 flex items-center">
+                    <input type="checkbox" className="rounded" />
+                  </div>
+                  <div 
+                    className="col-span-4 text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                    onClick={() => {
+                      setSelectedTemplate(template)
+                      setShowEditModal(true)
+                    }}
+                  >
+                    {template.name || template.title || 'Untitled Template'}
+                  </div>
+                  <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                    Email Template
+                  </div>
+                  <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                    {template.updated_at 
+                      ? new Date(template.updated_at).toLocaleDateString()
+                      : template.created_at
+                      ? new Date(template.created_at).toLocaleDateString()
+                      : new Date().toLocaleDateString()}
+                  </div>
+                  <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                    You
+                  </div>
+                  <div className="col-span-1 flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedTemplate(template)
+                        setShowEditModal(true)
+                      }}
+                      className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                      title="Edit"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      className="text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          /* Empty State */
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+              <Mail className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">No Templates</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Create new Template</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
+            >
+              <Plus className="w-5 h-5" />
+              Create Template
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Create Template Modal */}
+      {showCreateModal && (
+        <CreateTemplateModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
+
+      {/* Edit Template Modal */}
+      {showEditModal && selectedTemplate && (
+        <EditTemplateModal
+          template={selectedTemplate}
+          onClose={() => {
+            setShowEditModal(false)
+            setSelectedTemplate(null)
+          }}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
+    </div>
+  )
+}
+
+// Create Template Modal
+function CreateTemplateModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [formData, setFormData] = useState({
+    name: '',
+    subject: '',
+    html: '',
+  })
+
+  const handleCreate = async () => {
+    if (!formData.name || !formData.subject || !formData.html) {
+      alert('Please fill in all fields')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/email-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        onSuccess()
+        onClose()
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to create template')
+      }
+    } catch (error) {
+      console.error('Error creating template:', error)
+      alert('Failed to create template')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Create Email Template</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Template Name
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                placeholder="Enter template name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Subject
+              </label>
+              <input
+                type="text"
+                value={formData.subject}
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                placeholder="Email subject"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                HTML Content
+              </label>
+              <textarea
+                value={formData.html}
+                onChange={(e) => setFormData({ ...formData, html: e.target.value })}
+                rows={10}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 font-mono text-sm"
+                placeholder="<p>Email content...</p>"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Create Template
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Edit Template Modal
+function EditTemplateModal({
+  template,
+  onClose,
+  onSuccess,
+}: {
+  template: EmailTemplate
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [formData, setFormData] = useState({
+    name: template.name || template.title || '',
+    subject: template.subject || '',
+    html: template.html || template.body || '',
+  })
+
+  const handleUpdate = async () => {
+    if (!formData.name || !formData.subject || !formData.html) {
+      alert('Please fill in all fields')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/email-templates/${template.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        onSuccess()
+        onClose()
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to update template')
+      }
+    } catch (error) {
+      console.error('Error updating template:', error)
+      alert('Failed to update template')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Edit Email Template</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Template Name
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                placeholder="Enter template name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Subject
+              </label>
+              <input
+                type="text"
+                value={formData.subject}
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                placeholder="Email subject"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                HTML Content
+              </label>
+              <textarea
+                value={formData.html}
+                onChange={(e) => setFormData({ ...formData, html: e.target.value })}
+                rows={10}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 font-mono text-sm"
+                placeholder="<p>Email content...</p>"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Update Template
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Connect Mailbox Modal
+function ConnectMailboxModal({
+  onClose,
+  onConnectGmail,
+  onConnectOutlook,
+}: {
+  onClose: () => void
+  onConnectGmail: () => void
+  onConnectOutlook: () => void
+}) {
+  const [showSMTP, setShowSMTP] = useState(false)
+  const [smtpData, setSmtpData] = useState({
+    email: '',
+    smtp_host: '',
+    smtp_port: '',
+    smtp_username: '',
+    smtp_password: '',
+    from_name: '',
+  })
+
+  const handleSMTPConnect = async () => {
+    // TODO: Implement SMTP connection
+    alert('SMTP connection coming soon')
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Connect Mailbox</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {!showSMTP ? (
+            <div className="space-y-3">
+              <button
+                onClick={onConnectGmail}
+                className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center gap-3"
+              >
+                <Mail className="w-5 h-5 text-red-500" />
+                <div className="text-left">
+                  <div className="font-medium text-gray-900 dark:text-white">Connect Gmail</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Use your Gmail account</div>
+                </div>
+              </button>
+
+              <button
+                onClick={onConnectOutlook}
+                className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center gap-3"
+              >
+                <Mail className="w-5 h-5 text-blue-500" />
+                <div className="text-left">
+                  <div className="font-medium text-gray-900 dark:text-white">Connect Outlook</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Use your Outlook/Microsoft 365 account</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setShowSMTP(true)}
+                className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center gap-3"
+              >
+                <Settings className="w-5 h-5 text-gray-500" />
+                <div className="text-left">
+                  <div className="font-medium text-gray-900 dark:text-white">Custom SMTP</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Configure SMTP server</div>
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={smtpData.email}
+                  onChange={(e) => setSmtpData({ ...smtpData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  SMTP Host
+                </label>
+                <input
+                  type="text"
+                  value={smtpData.smtp_host}
+                  onChange={(e) => setSmtpData({ ...smtpData, smtp_host: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                  placeholder="smtp.example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  SMTP Port
+                </label>
+                <input
+                  type="number"
+                  value={smtpData.smtp_port}
+                  onChange={(e) => setSmtpData({ ...smtpData, smtp_port: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                  placeholder="587"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={smtpData.smtp_username}
+                  onChange={(e) => setSmtpData({ ...smtpData, smtp_username: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={smtpData.smtp_password}
+                  onChange={(e) => setSmtpData({ ...smtpData, smtp_password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowSMTP(false)}
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleSMTPConnect}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Connect
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Compose Email Modal
+function ComposeEmailModal({
+  onClose,
+  onSend,
+  templates,
+  composeData,
+  setComposeData,
+}: {
+  onClose: () => void
+  onSend: () => void
+  templates: EmailTemplate[]
+  composeData: any
+  setComposeData: (data: any) => void
+}) {
+  const handleTemplateSelect = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId)
+    if (template) {
+      setComposeData({
+        ...composeData,
+        templateId,
+        subject: template.subject,
+        html: template.html,
+      })
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Compose Email</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                To
+              </label>
+              <input
+                type="email"
+                value={composeData.to}
+                onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                placeholder="recipient@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Template
+              </label>
+              <select
+                value={composeData.templateId}
+                onChange={(e) => handleTemplateSelect(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+              >
+                <option value="">Select a template...</option>
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Subject
+              </label>
+              <input
+                type="text"
+                value={composeData.subject}
+                onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900"
+                placeholder="Email subject"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Body (HTML)
+              </label>
+              <textarea
+                value={composeData.html}
+                onChange={(e) => setComposeData({ ...composeData, html: e.target.value })}
+                rows={10}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 font-mono text-sm"
+                placeholder="<p>Email content...</p>"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onSend}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+              >
+                <Send className="w-4 h-4" />
+                Send Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+

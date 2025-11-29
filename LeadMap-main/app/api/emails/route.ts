@@ -3,8 +3,8 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
 /**
- * Contacts API
- * GET: List user's contacts
+ * Emails API
+ * GET: List user's emails (optionally filtered by mailbox)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -16,36 +16,36 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
-    const limit = parseInt(searchParams.get('limit') || '1000')
+    const mailboxId = searchParams.get('mailboxId')
+    const status = searchParams.get('status')
+    const limit = parseInt(searchParams.get('limit') || '100')
 
     let query = supabase
-      .from('contacts')
-      .select('id, email, first_name, last_name, name, created_at')
+      .from('emails')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    if (search) {
-      query = query.or(`email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,name.ilike.%${search}%`)
+    if (mailboxId) {
+      query = query.eq('mailbox_id', mailboxId)
+    }
+
+    if (status) {
+      query = query.eq('status', status)
     }
 
     const { data, error } = await query
 
     if (error) {
       console.error('Database error:', error)
-      return NextResponse.json({ error: 'Failed to fetch contacts' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to fetch emails' }, { status: 500 })
     }
 
-    // Format contacts with a name field
-    const formattedContacts = (data || []).map((contact: any) => ({
-      ...contact,
-      name: contact.name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.email,
-    }))
-
-    return NextResponse.json({ contacts: formattedContacts })
+    return NextResponse.json({ emails: data || [] })
   } catch (error) {
-    console.error('Contacts GET error:', error)
+    console.error('Emails GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+

@@ -72,7 +72,6 @@ const navSections: NavSection[] = [
     title: 'MARKETING',
     items: [
       { label: 'Social Planner', icon: Megaphone, href: '/dashboard/marketing' },
-      { label: 'Emails', icon: Mail, href: '/dashboard/crm/emails' },
       { label: 'Email Sequences', icon: Mail, href: '/dashboard/crm/sequences' },
       { label: 'Conversations', icon: MessageCircle, href: '/dashboard/conversations' }
     ]

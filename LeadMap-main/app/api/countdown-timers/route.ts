@@ -3,9 +3,9 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
 /**
- * Email Templates CRUD API
- * GET: List all templates
- * POST: Create new template (admin only)
+ * Countdown Timers API
+ * GET: List user's countdown timers
+ * POST: Create new countdown timer
  */
 export async function GET(request: NextRequest) {
   try {
@@ -17,18 +17,19 @@ export async function GET(request: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from('email_templates')
+      .from('countdown_timers')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Database error:', error)
-      return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to fetch timers' }, { status: 500 })
     }
 
-    return NextResponse.json({ templates: data || [] })
+    return NextResponse.json({ timers: data || [] })
   } catch (error) {
-    console.error('Email templates error:', error)
+    console.error('Countdown timers GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -42,37 +43,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Allow all authenticated users to create templates
     const body = await request.json()
-    // Support both old format (title, body, category) and new format (name, subject, html)
-    const title = body.title || body.name
-    const bodyContent = body.body || body.html
-    const category = body.category || 'general'
-    const subject = body.subject || title
+    const { name, type, end_date, duration_seconds } = body
 
-    if (!title || !bodyContent) {
-      return NextResponse.json({ error: 'Name/title and html/body are required' }, { status: 400 })
+    if (!name || !type) {
+      return NextResponse.json({ error: 'Name and type are required' }, { status: 400 })
+    }
+
+    if (type === 'end_date' && !end_date) {
+      return NextResponse.json({ error: 'End date is required for end_date type' }, { status: 400 })
+    }
+
+    if (type === 'duration' && !duration_seconds) {
+      return NextResponse.json({ error: 'Duration is required for duration type' }, { status: 400 })
     }
 
     const { data, error } = await supabase
-      .from('email_templates')
+      .from('countdown_timers')
       .insert({
-        title,
-        body: bodyContent,
-        category,
-        created_by: user.id
+        user_id: user.id,
+        name,
+        type,
+        end_date: type === 'end_date' ? end_date : null,
+        duration_seconds: type === 'duration' ? duration_seconds : null,
       })
       .select()
       .single()
 
     if (error) {
       console.error('Database error:', error)
-      return NextResponse.json({ error: 'Failed to create template' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create timer' }, { status: 500 })
     }
 
-    return NextResponse.json({ template: data })
+    return NextResponse.json({ timer: data })
   } catch (error) {
-    console.error('Create template error:', error)
+    console.error('Countdown timers POST error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
