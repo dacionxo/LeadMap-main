@@ -26,6 +26,24 @@ import {
 
 type MarketingTab = 'social-planner' | 'emails' | 'snippets' | 'countdown-timers' | 'trigger-links' | 'affiliate-manager' | 'brand-boards' | 'ad-manager'
 
+// Platform Icon Component with logo fallback
+function PlatformIcon({ logo, Icon, name, className }: { logo: string | null, Icon: any, name: string, className?: string }) {
+  const [logoError, setLogoError] = useState(false)
+  
+  if (logo && !logoError) {
+    return (
+      <img 
+        src={logo} 
+        alt={name}
+        className={className || "w-5 h-5 object-contain filter brightness-0 invert"}
+        onError={() => setLogoError(true)}
+      />
+    )
+  }
+  
+  return <Icon className={className || "w-4 h-4"} />
+}
+
 export default function MarketingPage() {
   const [activeTab, setActiveTab] = useState<MarketingTab>('social-planner')
 
@@ -80,16 +98,76 @@ function SocialPlannerContent() {
   const [connectedAccounts, setConnectedAccounts] = useState<string[]>([])
 
   const socialPlatforms = [
-    { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'bg-blue-600' },
-    { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'bg-gradient-to-br from-purple-600 to-pink-600' },
-    { id: 'threads', name: 'Threads', icon: Twitter, color: 'bg-black' },
-    { id: 'gbp', name: 'GBP', icon: ImageIcon, color: 'bg-blue-500' },
-    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700' },
-    { id: 'tiktok', name: 'TikTok', icon: Youtube, color: 'bg-black' },
-    { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'bg-red-600' },
-    { id: 'pinterest', name: 'Pinterest', icon: ImageIcon, color: 'bg-red-500' },
-    { id: 'community', name: 'Community', icon: MessageCircle, color: 'bg-gray-600' },
-    { id: 'bluesky', name: 'Bluesky', icon: Twitter, color: 'bg-blue-500' }
+    { 
+      id: 'facebook', 
+      name: 'Facebook', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg',
+      icon: Facebook, 
+      color: 'bg-blue-600' 
+    },
+    { 
+      id: 'instagram', 
+      name: 'Instagram', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg',
+      icon: Instagram, 
+      color: 'bg-gradient-to-br from-purple-600 to-pink-600' 
+    },
+    { 
+      id: 'threads', 
+      name: 'Threads', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/threads.svg',
+      icon: Twitter, 
+      color: 'bg-black' 
+    },
+    { 
+      id: 'gbp', 
+      name: 'GBP', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/google.svg',
+      icon: ImageIcon, 
+      color: 'bg-blue-500' 
+    },
+    { 
+      id: 'linkedin', 
+      name: 'LinkedIn', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg',
+      icon: Linkedin, 
+      color: 'bg-blue-700' 
+    },
+    { 
+      id: 'tiktok', 
+      name: 'TikTok', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg',
+      icon: Youtube, 
+      color: 'bg-black' 
+    },
+    { 
+      id: 'youtube', 
+      name: 'YouTube', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg',
+      icon: Youtube, 
+      color: 'bg-red-600' 
+    },
+    { 
+      id: 'pinterest', 
+      name: 'Pinterest', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/pinterest.svg',
+      icon: ImageIcon, 
+      color: 'bg-red-500' 
+    },
+    { 
+      id: 'community', 
+      name: 'Community', 
+      logo: null,
+      icon: MessageCircle, 
+      color: 'bg-gray-600' 
+    },
+    { 
+      id: 'bluesky', 
+      name: 'Bluesky', 
+      logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/bluesky.svg',
+      icon: Twitter, 
+      color: 'bg-blue-500' 
+    }
   ]
 
   const toggleAccount = (accountId: string) => {
@@ -134,8 +212,12 @@ function SocialPlannerContent() {
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded flex items-center justify-center mb-2 ${platform.color} text-white`}>
-                      <Icon className="w-4 h-4" />
+                    <div className={`w-8 h-8 rounded flex items-center justify-center mb-2 ${platform.color} text-white overflow-hidden`}>
+                      <PlatformIcon 
+                        logo={platform.logo} 
+                        Icon={Icon} 
+                        name={platform.name}
+                      />
                     </div>
                     <span className="text-xs text-gray-600 dark:text-gray-400 text-center">{platform.name}</span>
                   </button>
