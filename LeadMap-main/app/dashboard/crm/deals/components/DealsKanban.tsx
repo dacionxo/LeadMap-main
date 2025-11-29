@@ -330,7 +330,7 @@ export default function DealsKanban({
                     {/* Title */}
                     {editingField?.dealId === deal.id && editingField?.field === 'title' ? (
                       <input
-                        ref={editInputRef}
+                        ref={editInputRef as React.RefObject<HTMLInputElement>}
                         type="text"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
@@ -370,7 +370,7 @@ export default function DealsKanban({
                         <span className="text-gray-500 dark:text-gray-400 font-medium">DEAL AMOUNT</span>
                         {editingField?.dealId === deal.id && editingField?.field === 'value' ? (
                           <input
-                            ref={editInputRef}
+                            ref={editInputRef as React.RefObject<HTMLInputElement>}
                             type="number"
                             step="0.01"
                             value={editValue}
@@ -404,7 +404,7 @@ export default function DealsKanban({
                         <span className="text-gray-500 dark:text-gray-400 font-medium">STAGE</span>
                         {editingField?.dealId === deal.id && editingField?.field === 'stage' ? (
                           <select
-                            ref={editInputRef}
+                            ref={editInputRef as React.RefObject<HTMLSelectElement>}
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             onBlur={() => saveEdit(deal.id, 'stage')}
@@ -471,7 +471,7 @@ export default function DealsKanban({
                         </span>
                         {editingField?.dealId === deal.id && editingField?.field === 'expected_close_date' ? (
                           <input
-                            ref={editInputRef}
+                            ref={editInputRef as React.RefObject<HTMLInputElement>}
                             type="date"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}

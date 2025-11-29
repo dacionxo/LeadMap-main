@@ -8,7 +8,8 @@ import { cookies } from 'next/headers'
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
@@ -191,7 +192,8 @@ async function sendViaGmail(mailbox: any, to: string, subject: string, html: str
       accessToken = refreshed.access_token
       
       // Update mailbox with new token
-      const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
+      const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
       await supabase
         .from('mailboxes')
         .update({
@@ -261,7 +263,8 @@ async function sendViaOutlook(mailbox: any, to: string, subject: string, html: s
       accessToken = refreshed.access_token
       
       // Update mailbox with new token
-      const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
+      const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
       await supabase
         .from('mailboxes')
         .update({

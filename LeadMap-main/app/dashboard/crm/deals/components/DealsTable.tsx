@@ -325,7 +325,7 @@ export default function DealsTable({
                   <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     {editingField?.dealId === deal.id && editingField?.field === 'title' ? (
                       <input
-                        ref={editInputRef}
+                        ref={editInputRef as React.RefObject<HTMLInputElement>}
                         type="text"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
@@ -362,7 +362,7 @@ export default function DealsTable({
                   <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     {editingField?.dealId === deal.id && editingField?.field === 'value' ? (
                       <input
-                        ref={editInputRef}
+                        ref={editInputRef as React.RefObject<HTMLInputElement>}
                         type="number"
                         step="0.01"
                         value={editValue}
@@ -394,7 +394,7 @@ export default function DealsTable({
                   <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     {editingField?.dealId === deal.id && editingField?.field === 'stage' ? (
                       <select
-                        ref={editInputRef}
+                        ref={editInputRef as React.RefObject<HTMLSelectElement>}
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         onBlur={() => saveEdit(deal.id, 'stage')}
@@ -450,7 +450,7 @@ export default function DealsTable({
                   <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     {editingField?.dealId === deal.id && editingField?.field === 'expected_close_date' ? (
                       <input
-                        ref={editInputRef}
+                        ref={editInputRef as React.RefObject<HTMLInputElement>}
                         type="date"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}

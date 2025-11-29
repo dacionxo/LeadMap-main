@@ -109,7 +109,8 @@ export async function GET(request: NextRequest) {
     const expiresAt = new Date(Date.now() + (expires_in * 1000)).toISOString()
 
     // Save mailbox to database
-    const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const { error: dbError } = await supabase
       .from('mailboxes')
       .upsert({
