@@ -729,7 +729,7 @@ function EmailStatistics({ stats, emails }: { stats: EmailStats; emails: Email[]
               <div className="text-3xl font-bold text-gray-900 dark:text-white">
                 {openRateMetric === 'emailsSent' 
                   ? getMetricValue().toLocaleString()
-                  : `${getMetricValue().toFixed(2)}${openRateMetric === 'emailsSent' ? '' : '%'}`}
+                  : `${getMetricValue().toFixed(2)}%`}
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 {getMetricDescription()}
