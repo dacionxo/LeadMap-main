@@ -91,7 +91,7 @@ export default function DealDetailView({
     }).format(value)
   }
 
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: string | null | undefined) => {
     if (!date) return 'N/A'
     return new Date(date).toLocaleDateString('en-US', {
       month: 'long',
