@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     // Verify all lists exist and belong to user
     const { data: lists, error: listsError } = await supabase
       .from('lists')
-      .select('id, user_id')
+      .select('id, user_id, name')
       .in('id', listIds)
       .eq('user_id', user.id)
 
