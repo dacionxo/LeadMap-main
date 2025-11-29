@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import DashboardLayout from '../components/DashboardLayout'
 import { Plus, Search, Users, Building2, Filter, Settings, Download, MoreVertical, Info, Trash2, Edit, X, Upload } from 'lucide-react'
+import ImportListModal from './components/ImportListModal'
 
 interface List {
   id: string
@@ -31,6 +32,7 @@ export default function ListsPage() {
   const [editListName, setEditListName] = useState('')
   const [editListType, setEditListType] = useState<'people' | 'properties'>('properties')
   const [updating, setUpdating] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
 
   useEffect(() => {
     fetchLists()
@@ -386,33 +388,64 @@ export default function ListsPage() {
               My lists
             </h1>
 
-            <button
-              onClick={() => handleCreateList('properties')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 18px',
-                backgroundColor: '#fbbf24',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 500,
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f59e0b'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#fbbf24'
-              }}
-            >
-              <Plus size={16} />
-              Create a list
-            </button>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <button
+                onClick={() => setShowImportModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  backgroundColor: '#ffffff',
+                  color: '#374151',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f9fafb'
+                  e.currentTarget.style.borderColor = '#6366f1'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ffffff'
+                  e.currentTarget.style.borderColor = '#d1d5db'
+                }}
+              >
+                <Upload size={16} />
+                Import CSV
+              </button>
+              <button
+                onClick={() => handleCreateList('properties')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  backgroundColor: '#fbbf24',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f59e0b'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fbbf24'
+                }}
+              >
+                <Plus size={16} />
+                Create a list
+              </button>
+            </div>
           </div>
 
           {/* Search and Filters */}
@@ -1736,6 +1769,16 @@ export default function ListsPage() {
           </div>
         )}
       </div>
+
+      {/* Import List Modal */}
+      <ImportListModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={(count) => {
+          setShowImportModal(false)
+          fetchLists()
+        }}
+      />
     </DashboardLayout>
   )
 }

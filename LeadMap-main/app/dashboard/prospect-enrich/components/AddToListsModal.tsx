@@ -118,6 +118,8 @@ export default function AddToListsModal({
           body: JSON.stringify({ itemId, itemType }),
         })
 
+        const data = await response.json()
+
         if (!response.ok) {
           // Revert on error
           setSelectedListIds(prev => {
@@ -125,7 +127,15 @@ export default function AddToListsModal({
             next.delete(listId)
             return next
           })
-          throw new Error('Failed to add to list')
+          // Show specific error message for duplicates
+          if (response.status === 409 || data.error?.includes('already')) {
+            alert(data.error || data.message || 'This item is already in the list')
+          } else {
+            throw new Error(data.error || 'Failed to add to list')
+          }
+        } else if (data.isNew === false) {
+          // Item was already in list - show info message
+          alert(data.message || 'This item is already in the list')
         }
       }
     } catch (error) {

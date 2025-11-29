@@ -66,11 +66,11 @@ export default function ContactsPage() {
         return
       }
 
-      // Fetch counts for each list
+      // Fetch counts for each list from list_memberships table
       const listsWithCounts = await Promise.all(
         (listsData || []).map(async (list) => {
           const { count, error: countError } = await supabase
-            .from('list_items')
+            .from('list_memberships')
             .select('*', { count: 'exact', head: true })
             .eq('list_id', list.id)
 

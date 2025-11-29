@@ -20,7 +20,8 @@ import {
   Calendar,
   BarChart3,
   CheckCircle2,
-  Megaphone
+  Megaphone,
+  MessageCircle
 } from 'lucide-react'
 import { useApp } from '@/app/providers'
 import { useSidebar } from './SidebarContext'
@@ -62,7 +63,6 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Lists', icon: UserCircle, href: '/dashboard/lists' },
       { label: 'Deals', icon: Briefcase, href: '/dashboard/crm/deals' },
-      { label: 'Email Sequences', icon: Mail, href: '/dashboard/crm/sequences' },
       { label: 'Calendar', icon: Calendar, href: '/dashboard/crm/calendar' },
       { label: 'Forms', icon: FileText, href: '/dashboard/crm/forms' },
       { label: 'Analytics', icon: BarChart3, href: '/dashboard/crm/analytics' }
@@ -71,12 +71,11 @@ const navSections: NavSection[] = [
   {
     title: 'MARKETING',
     items: [
-      { label: 'Social Planner', icon: Megaphone, href: '/dashboard/marketing' }
+      { label: 'Social Planner', icon: Megaphone, href: '/dashboard/marketing' },
+      { label: 'Emails', icon: Mail, href: '/dashboard/crm/emails' },
+      { label: 'Email Sequences', icon: Mail, href: '/dashboard/crm/sequences' },
+      { label: 'Conversations', icon: MessageCircle, href: '/dashboard/conversations' }
     ]
-  },
-  {
-    title: 'CONVERSATIONS',
-    items: []
   },
   {
     title: 'TOOLS & AUTOMATION',

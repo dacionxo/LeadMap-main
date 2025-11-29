@@ -302,13 +302,52 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Map property addresses back to deals
-    const dealsWithProperties = (deals || []).map((deal: any) => {
-      if (!deal.listing_id) {
-        return { ...deal, property_address: null }
+    // Fetch owner information from users table for all deals with owner_id
+    const dealsWithOwnerIds = (deals || []).filter((deal: any) => deal.owner_id)
+    const uniqueOwnerIds = Array.from(new Set(dealsWithOwnerIds.map((deal: any) => deal.owner_id)))
+    const ownerMap = new Map<string, { id: string; name: string; email: string }>()
+    
+    if (uniqueOwnerIds.length > 0) {
+      const { data: owners } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .in('id', uniqueOwnerIds)
+      
+      if (owners) {
+        owners.forEach((owner: any) => {
+          ownerMap.set(owner.id, {
+            id: owner.id,
+            name: owner.name,
+            email: owner.email
+          })
+        })
       }
-      const address = propertyAddressMap.get(deal.listing_id) || null
-      return { ...deal, property_address: address }
+    }
+
+    // Map property addresses and owner information back to deals
+    const dealsWithProperties = (deals || []).map((deal: any) => {
+      const result: any = { ...deal }
+      
+      // Add property address if listing_id exists
+      if (deal.listing_id) {
+        result.property_address = propertyAddressMap.get(deal.listing_id) || null
+      } else {
+        result.property_address = null
+      }
+      
+      // Add owner information if owner_id exists
+      if (deal.owner_id) {
+        const owner = ownerMap.get(deal.owner_id)
+        if (owner) {
+          result.owner = {
+            id: owner.id,
+            name: owner.name,
+            email: owner.email
+          }
+        }
+      }
+      
+      return result
     })
 
     return NextResponse.json({

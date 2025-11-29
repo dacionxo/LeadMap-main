@@ -49,9 +49,9 @@ export async function verifyListItems(
       created_at: list.created_at
     }
 
-    // 2. Fetch all list_items
+    // 2. Fetch all list memberships from list_memberships table
     const { data: listItems, error: itemsError } = await supabase
-      .from('list_items')
+      .from('list_memberships')
       .select('*')
       .eq('list_id', listId)
       .order('created_at', { ascending: false })

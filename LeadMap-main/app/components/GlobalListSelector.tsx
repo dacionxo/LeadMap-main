@@ -20,7 +20,7 @@ export default function GlobalListSelector() {
   const isDark = resolvedTheme === 'dark'
   const supabase = createClientComponentClient()
 
-  const handleSelectList = useCallback(async (listId: string, listName: string) => {
+  const handleSelectList = useCallback(async (listIds: string[], listNames: string[]) => {
     if (!listSelectorContext || !profile?.id) return
 
     try {
@@ -28,6 +28,10 @@ export default function GlobalListSelector() {
       
       if (listingIds.length === 0) {
         throw new Error('No items to add')
+      }
+
+      if (listIds.length === 0) {
+        throw new Error('Please select at least one list')
       }
 
       // Use the new API endpoint for bulk add (Apollo-grade)
@@ -54,7 +58,7 @@ export default function GlobalListSelector() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          listIds: [listId],
+          listIds: listIds,
           items: items
         })
       })
@@ -62,19 +66,33 @@ export default function GlobalListSelector() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to add items to list')
+        // Handle duplicate errors with better messaging
+        if (data.error && data.error.includes('already')) {
+          throw new Error(data.error)
+        }
+        throw new Error(data.error || 'Failed to add items to lists')
       }
 
       // Clear selection after successful add
       clearSelection()
 
-      // Show success message (you can replace this with a toast notification)
+      // Show success message with details about duplicates
       if (typeof window !== 'undefined') {
         const count = listingIds.length
-        alert(`Successfully added ${count} item${count > 1 ? 's' : ''} to "${listName}"`)
+        let message = `Successfully added ${data.added || count} item${data.added !== 1 ? 's' : ''} to ${listIds.length} list${listIds.length !== 1 ? 's' : ''}`
+        
+        if (data.duplicates && data.duplicates > 0) {
+          message += `. ${data.duplicates} item${data.duplicates !== 1 ? 's were' : ' was'} already in the list${listIds.length !== 1 ? 's' : ''}`
+        }
+        
+        alert(message)
       }
     } catch (error: any) {
       console.error('Error in handleSelectList:', error)
+      // Show error message to user
+      if (typeof window !== 'undefined') {
+        alert(error.message || 'Failed to add items to lists')
+      }
       throw error
     }
   }, [listSelectorContext, profile?.id, supabase, clearSelection])

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { X, Plus, Users, Home, Search, Loader2 } from 'lucide-react'
+import { X, Plus, Users, Home, Search, Loader2, CheckSquare, Square } from 'lucide-react'
 import { useApp } from '@/app/providers'
 
 interface List {
@@ -17,7 +17,7 @@ interface List {
 interface ListSelectorModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (listId: string, listName: string) => Promise<void>
+  onSelect: (listIds: string[], listNames: string[]) => Promise<void>
   onCreateNew: (name: string) => Promise<string>
   listingIds?: string[]
   isDark?: boolean
@@ -42,6 +42,8 @@ export default function ListSelectorModal({
   const [creating, setCreating] = useState(false)
   const [addingToList, setAddingToList] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set())
+  const [adding, setAdding] = useState(false)
 
   // Fetch user's lists
   const fetchLists = useCallback(async () => {
@@ -67,12 +69,12 @@ export default function ListSelectorModal({
         return
       }
 
-      // Fetch counts for each list
+      // Fetch counts for each list from list_memberships table
       const listsWithCounts = await Promise.all(
         (listsData || []).map(async (list) => {
           try {
             const { count } = await supabase
-              .from('list_items')
+              .from('list_memberships')
               .select('*', { count: 'exact', head: true })
               .eq('list_id', list.id)
 
@@ -105,6 +107,8 @@ export default function ListSelectorModal({
       setNewListName('')
       setNewListType('properties')
       setSearchQuery('')
+      setSelectedListIds(new Set())
+      setError(null)
     }
   }, [isOpen, profile?.id, fetchLists])
 
@@ -142,17 +146,39 @@ export default function ListSelectorModal({
     }
   }
 
-  const handleSelectList = async (listId: string, listName: string) => {
+  const handleToggleList = (listId: string) => {
+    setSelectedListIds(prev => {
+      const next = new Set(prev)
+      if (next.has(listId)) {
+        next.delete(listId)
+      } else {
+        next.add(listId)
+      }
+      return next
+    })
+  }
+
+  const handleAddToSelectedLists = async () => {
+    if (selectedListIds.size === 0) {
+      setError('Please select at least one list')
+      return
+    }
+
     try {
-      setAddingToList(listId)
+      setAdding(true)
       setError(null)
-      await onSelect(listId, listName)
+      
+      const selectedLists = lists.filter(l => selectedListIds.has(l.id))
+      const listIds = Array.from(selectedListIds)
+      const listNames = selectedLists.map(l => l.name)
+      
+      await onSelect(listIds, listNames)
       onClose()
     } catch (err: any) {
-      console.error('Error adding to list:', err)
-      setError(err.message || 'Failed to add to list')
+      console.error('Error adding to lists:', err)
+      setError(err.message || 'Failed to add to lists')
     } finally {
-      setAddingToList(null)
+      setAdding(false)
     }
   }
 
@@ -223,7 +249,7 @@ export default function ListSelectorModal({
             color: isDark ? '#e2e8f0' : '#1e293b',
             margin: 0
           }}>
-            Select a List
+            Add to Lists {selectedListIds.size > 0 && `(${selectedListIds.size} selected)`}
           </h2>
           <button
             onClick={onClose}
@@ -449,84 +475,95 @@ export default function ListSelectorModal({
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {filteredLists.map((list) => (
-                    <button
-                      key={list.id}
-                      onClick={() => handleSelectList(list.id, list.name)}
-                      disabled={addingToList === list.id}
-                      style={{
-                        padding: '16px',
-                        border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        background: isDark
-                          ? addingToList === list.id
-                            ? 'rgba(99, 102, 241, 0.2)'
-                            : 'rgba(30, 41, 59, 0.5)'
-                          : addingToList === list.id
-                            ? '#f3f4f6'
-                            : '#ffffff',
-                        color: isDark ? '#e2e8f0' : '#1e293b',
-                        cursor: addingToList === list.id ? 'wait' : 'pointer',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        textAlign: 'left',
-                        transition: 'all 0.15s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        opacity: addingToList === list.id ? 0.7 : 1
-                      }}
-                      onMouseEnter={(e) => {
-                        if (addingToList !== list.id) {
+                  {filteredLists.map((list) => {
+                    const isSelected = selectedListIds.has(list.id)
+                    return (
+                      <div
+                        key={list.id}
+                        onClick={() => handleToggleList(list.id)}
+                        style={{
+                          padding: '16px',
+                          border: isDark 
+                            ? isSelected 
+                              ? '2px solid #6366f1' 
+                              : '1px solid rgba(99, 102, 241, 0.2)'
+                            : isSelected
+                              ? '2px solid #6366f1'
+                              : '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          background: isDark
+                            ? isSelected
+                              ? 'rgba(99, 102, 241, 0.15)'
+                              : 'rgba(30, 41, 59, 0.5)'
+                            : isSelected
+                              ? '#f0f4ff'
+                              : '#ffffff',
+                          color: isDark ? '#e2e8f0' : '#1e293b',
+                          cursor: 'pointer',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                          transition: 'all 0.15s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                        onMouseEnter={(e) => {
                           e.currentTarget.style.background = isDark
-                            ? 'rgba(99, 102, 241, 0.15)'
+                            ? 'rgba(99, 102, 241, 0.2)'
                             : '#f9fafb'
-                          e.currentTarget.style.borderColor = '#6366f1'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (addingToList !== list.id) {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = '#6366f1'
+                          }
+                        }}
+                        onMouseLeave={(e) => {
                           e.currentTarget.style.background = isDark
-                            ? 'rgba(30, 41, 59, 0.5)'
-                            : '#ffffff'
-                          e.currentTarget.style.borderColor = isDark
-                            ? 'rgba(99, 102, 241, 0.2)'
-                            : '#e2e8f0'
-                        }
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {list.type === 'people' ? (
-                          <Users size={20} color={isDark ? '#818cf8' : '#6366f1'} />
-                        ) : (
-                          <Home size={20} color={isDark ? '#f472b6' : '#ec4899'} />
-                        )}
-                        <div>
-                          <div style={{
-                            fontSize: '16px',
-                            fontWeight: 600,
-                            marginBottom: '4px'
-                          }}>
-                            {list.name}
-                          </div>
-                          <div style={{
-                            fontSize: '12px',
-                            color: isDark ? '#64748b' : '#6b7280'
-                          }}>
-                            {list.count || 0} items
+                            ? isSelected
+                              ? 'rgba(99, 102, 241, 0.15)'
+                              : 'rgba(30, 41, 59, 0.5)'
+                            : isSelected
+                              ? '#f0f4ff'
+                              : '#ffffff'
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = isDark ? 'rgba(99, 102, 241, 0.2)' : '#e2e8f0'
+                          }
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleList(list.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              cursor: 'pointer',
+                              accentColor: '#6366f1'
+                            }}
+                          />
+                          {list.type === 'people' ? (
+                            <Users size={20} color={isDark ? '#818cf8' : '#6366f1'} />
+                          ) : (
+                            <Home size={20} color={isDark ? '#f472b6' : '#ec4899'} />
+                          )}
+                          <div>
+                            <div style={{
+                              fontSize: '16px',
+                              fontWeight: 600,
+                              marginBottom: '4px'
+                            }}>
+                              {list.name}
+                            </div>
+                            <div style={{
+                              fontSize: '12px',
+                              color: isDark ? '#64748b' : '#6b7280'
+                            }}>
+                              {list.count || 0} items
+                            </div>
                           </div>
                         </div>
                       </div>
-                      {addingToList === list.id && (
-                        <Loader2 
-                          size={20} 
-                          style={{ 
-                            animation: 'spin 1s linear infinite',
-                            transformOrigin: 'center'
-                          }} 
-                        />
-                      )}
-                    </button>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </>
@@ -541,39 +578,72 @@ export default function ListSelectorModal({
           gap: '8px'
         }}>
           {!showCreateForm && (
-            <button
-              onClick={() => setShowCreateForm(true)}
-              style={{
-                flex: 1,
-                padding: '12px',
-                border: '2px dashed rgba(99, 102, 241, 0.3)',
-                borderRadius: '8px',
-                background: 'transparent',
-                color: isDark ? '#818cf8' : '#6366f1',
-                cursor: 'pointer',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '14px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#6366f1'
-                e.currentTarget.style.background = isDark
-                  ? 'rgba(99, 102, 241, 0.1)'
-                  : 'rgba(99, 102, 241, 0.05)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)'
-                e.currentTarget.style.background = 'transparent'
-              }}
-            >
-              <Plus size={16} />
-              Create New List
-            </button>
+            <>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                style={{
+                  padding: '12px 16px',
+                  border: '2px dashed rgba(99, 102, 241, 0.3)',
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  color: isDark ? '#818cf8' : '#6366f1',
+                  cursor: 'pointer',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#6366f1'
+                  e.currentTarget.style.background = isDark
+                    ? 'rgba(99, 102, 241, 0.1)'
+                    : 'rgba(99, 102, 241, 0.05)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)'
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <Plus size={16} />
+                Create New
+              </button>
+              <button
+                onClick={handleAddToSelectedLists}
+                disabled={adding || selectedListIds.size === 0}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: adding || selectedListIds.size === 0
+                    ? '#9ca3af'
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: '#ffffff',
+                  cursor: adding || selectedListIds.size === 0 ? 'not-allowed' : 'pointer',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  opacity: adding || selectedListIds.size === 0 ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {adding ? (
+                  <>
+                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                    Adding...
+                  </>
+                ) : (
+                  `Add to ${selectedListIds.size} List${selectedListIds.size !== 1 ? 's' : ''}`
+                )}
+              </button>
+            </>
           )}
         </div>
       </div>

@@ -60,9 +60,9 @@ export default function ListsTable({ lists, onRefresh, supabase }: ListsTablePro
 
   const handleExportCSV = async (listId: string, listName: string) => {
     try {
-      // Fetch list items first
+      // Fetch list items first from list_memberships table
       const { data: listItems, error: itemsError } = await supabase
-        .from('list_items')
+        .from('list_memberships')
         .select('*')
         .eq('list_id', listId)
 

@@ -15,7 +15,6 @@ import {
   X, 
   Trophy, 
   DollarSign, 
-  ChevronDown,
   Table2,
   Kanban,
   Building2,
@@ -38,6 +37,10 @@ import DealFormModal from './components/DealFormModal'
 import DealDetailView from './components/DealDetailView'
 import DealsFilterSidebar from './components/DealsFilterSidebar'
 import ViewOptionsModal from './components/ViewOptionsModal'
+import ViewsDropdown, { getViewName } from './components/ViewsDropdown'
+import SaveViewSidebar from './components/SaveViewSidebar'
+import ImportDealsModal from './components/ImportDealsModal'
+import DealsAnalytics from './components/DealsAnalytics'
 
 interface Deal {
   id: string
@@ -112,6 +115,11 @@ export default function DealsPage() {
   const [showFilters, setShowFilters] = useState(true)
   const [apolloFilters, setApolloFilters] = useState<Record<string, any>>({})
   const [showViewOptions, setShowViewOptions] = useState(false)
+  const [showSaveViewSidebar, setShowSaveViewSidebar] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [selectedViewId, setSelectedViewId] = useState<string>('all-deals')
+  const [customViews, setCustomViews] = useState<any[]>([])
+  const [viewsLoading, setViewsLoading] = useState(false)
   const [groupBy, setGroupBy] = useState<string | null>(null)
   const [visibleTableFields, setVisibleTableFields] = useState<string[]>(['title', 'value', 'stage', 'probability', 'expected_close_date', 'contact', 'owner', 'pipeline'])
 
@@ -153,6 +161,7 @@ export default function DealsPage() {
       fetchProperties()
       fetchUsers()
       fetchDeals()
+      fetchViews()
     }
   }, [showOnboarding, searchQuery, selectedPipeline, selectedStage, sortBy, sortOrder, apolloFilters])
 
@@ -243,6 +252,21 @@ export default function DealsPage() {
       }
     } catch (error) {
       console.error('Error fetching users:', error)
+    }
+  }
+
+  const fetchViews = async () => {
+    try {
+      setViewsLoading(true)
+      const response = await fetch('/api/crm/deals/views?includeSystem=true', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setCustomViews(data.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching views:', error)
+    } finally {
+      setViewsLoading(false)
     }
   }
 
@@ -419,7 +443,10 @@ export default function DealsPage() {
 
               {/* Right: Action Buttons */}
               <div className="flex items-center gap-3">
-                <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                >
                   Import CSV
                 </button>
                 <button
@@ -466,11 +493,20 @@ export default function DealsPage() {
 
           {/* Main Content Area with Sidebar */}
           <div className="flex-1 flex overflow-hidden bg-gray-50 dark:bg-gray-900">
-            {/* Left Sidebar - Apollo Filter Sidebar */}
-            {showFilters && (
-              <DealsFilterSidebar
-                filters={apolloFilters}
-                onFiltersChange={setApolloFilters}
+            {activeTab === 'analytics' ? (
+              <div className="flex-1 overflow-y-auto w-full">
+                <DealsAnalytics 
+                  timeframe="30d"
+                  onTimeframeChange={(tf) => console.log('Timeframe changed:', tf)}
+                />
+              </div>
+            ) : (
+              <>
+                {/* Left Sidebar - Apollo Filter Sidebar */}
+                {showFilters && (
+                  <DealsFilterSidebar
+                    filters={apolloFilters}
+                    onFiltersChange={setApolloFilters}
                 totalCount={deals.length}
                 isCollapsed={false}
                 onToggleCollapse={() => setShowFilters(false)}
@@ -504,14 +540,35 @@ export default function DealsPage() {
                   </div>
 
                   {/* Deal View Selector */}
-                  <div className="relative">
-                    <select
-                      className="appearance-none pl-8 pr-10 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option>All deals</option>
-                    </select>
-                    <LayoutGrid className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
+                  <ViewsDropdown
+                    selectedViewId={selectedViewId}
+                    onSelectView={(viewId) => {
+                      setSelectedViewId(viewId)
+                      
+                      // Find the selected view to get its layout
+                      const allViews = customViews.length > 0 
+                        ? [...customViews]
+                        : []
+                      const selectedView = allViews.find(v => v.id === viewId) ||
+                        (viewId === 'board-view' ? { type: 'board' } : { type: 'table' })
+                      
+                      // If board view is selected, switch to kanban mode
+                      if (viewId === 'board-view' || selectedView.type === 'board') {
+                        setViewMode('kanban')
+                      } else {
+                        setViewMode('table')
+                      }
+                      
+                      // Apply view filters if any
+                      if (selectedView && selectedView.filters) {
+                        // TODO: Apply view filters
+                        console.log('Applying view filters:', selectedView.filters)
+                      }
+                    }}
+                    onCreateNewView={() => setShowSaveViewSidebar(true)}
+                    views={customViews}
+                    loading={viewsLoading}
+                  />
 
                   {/* Show Filters Button */}
                   {!showFilters && (
@@ -560,7 +617,10 @@ export default function DealsPage() {
                     <Table2 className="w-4 h-4" />
                   </button>
                 </div>
-                <button className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2">
+                <button
+                  onClick={() => setShowSaveViewSidebar(true)}
+                  className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                >
                   <Save className="w-4 h-4" />
                   Save as new view
                 </button>
@@ -660,27 +720,29 @@ export default function DealsPage() {
                     )}
                   </div>
                 )}
+                </div>
               </div>
-            </div>
 
-            {/* Right Sidebar - Deal Form */}
-            {showDealForm && (
-              <div className="flex-[1] border-l border-gray-200 dark:border-gray-700">
-                <DealFormModal
-                  isOpen={showDealForm}
-                  onClose={() => {
-                    setShowDealForm(false)
-                    setEditingDeal(null)
-                    setInitialStage(undefined)
-                  }}
-                  onSave={editingDeal ? (data) => handleUpdateDeal(editingDeal.id, data) : handleCreateDeal}
-                  deal={editingDeal}
-                  properties={properties}
-                  pipelines={pipelines}
-                  users={users}
-                  initialStage={initialStage}
-                />
-              </div>
+              {/* Right Sidebar - Deal Form */}
+              {showDealForm && (
+                <div className="flex-[1] border-l border-gray-200 dark:border-gray-700">
+                  <DealFormModal
+                    isOpen={showDealForm}
+                    onClose={() => {
+                      setShowDealForm(false)
+                      setEditingDeal(null)
+                      setInitialStage(undefined)
+                    }}
+                    onSave={editingDeal ? (data) => handleUpdateDeal(editingDeal.id, data) : handleCreateDeal}
+                    deal={editingDeal}
+                    properties={properties}
+                    pipelines={pipelines}
+                    users={users}
+                    initialStage={initialStage}
+                  />
+                </div>
+              )}
+              </>
             )}
           </div>
         </div>
@@ -721,6 +783,41 @@ export default function DealsPage() {
         onFiltersClick={() => {
           setShowFilters(true)
           setShowViewOptions(false)
+        }}
+      />
+
+      {/* Save View Sidebar */}
+      <SaveViewSidebar
+        isOpen={showSaveViewSidebar}
+        onClose={() => setShowSaveViewSidebar(false)}
+        viewMode={viewMode}
+        groupBy={groupBy}
+        visibleFieldsCount={visibleTableFields.length}
+        appliedFiltersCount={appliedFiltersCount}
+        currentViewName={getViewName(selectedViewId, customViews)}
+        onSave={async (viewData) => {
+          // View is already saved by SaveViewSidebar, just refresh the list
+          await fetchViews()
+          // Optionally select the newly created view
+          if (viewData?.id) {
+            setSelectedViewId(viewData.id)
+            if (viewData.layout === 'kanban' || viewData.type === 'board') {
+              setViewMode('kanban')
+            } else {
+              setViewMode('table')
+            }
+          }
+        }}
+      />
+
+      {/* Import Deals Modal */}
+      <ImportDealsModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={(count) => {
+          // Refresh deals list after import
+          fetchDeals()
+          setShowImportModal(false)
         }}
       />
     </DashboardLayout>

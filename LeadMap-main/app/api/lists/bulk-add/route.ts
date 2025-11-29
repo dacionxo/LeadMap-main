@@ -78,48 +78,86 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Build bulk insert array
+    // Build bulk insert array and check for duplicates first
     const memberships = []
+    const duplicateInfo: Array<{ listId: string; itemId: string; listName: string }> = []
+    
+    // Get list names for better error messages
+    const listNamesMap = new Map(lists.map(l => [l.id, l.name || 'Unknown']))
+    
     for (const listId of listIds) {
       for (const item of items) {
         if (!item.itemId || !item.itemType) continue
         if (!['listing', 'contact', 'company'].includes(item.itemType)) continue
 
-        memberships.push({
-          list_id: listId,
-          item_type: item.itemType,
-          item_id: item.itemId,
-        })
+        // Check if this membership already exists
+        const { data: existing } = await supabase
+          .from('list_memberships')
+          .select('id')
+          .eq('list_id', listId)
+          .eq('item_type', item.itemType)
+          .eq('item_id', item.itemId)
+          .single()
+
+        if (existing) {
+          // Track duplicate for reporting
+          duplicateInfo.push({
+            listId,
+            itemId: item.itemId,
+            listName: listNamesMap.get(listId) || 'Unknown'
+          })
+        } else {
+          // Only add if it doesn't exist
+          memberships.push({
+            list_id: listId,
+            item_type: item.itemType,
+            item_id: item.itemId,
+          })
+        }
       }
     }
 
     if (memberships.length === 0) {
-      return NextResponse.json(
-        { error: 'No valid memberships to create' },
-        { status: 400 }
-      )
+      // All items were duplicates
+      return NextResponse.json({
+        success: false,
+        error: 'All items are already in the selected list(s)',
+        duplicates: duplicateInfo.length,
+        total: items.length * listIds.length,
+        duplicateDetails: duplicateInfo,
+      }, { status: 400 })
     }
 
-    // Bulk insert (conflicts are ignored - duplicates are fine)
+    // Insert only new memberships
     const { data: inserted, error: insertError } = await supabase
       .from('list_memberships')
       .insert(memberships)
       .select()
 
-    // Even if there are duplicates, we consider it success
-    if (insertError && !insertError.message?.includes('duplicate')) {
+    if (insertError) {
       console.error('Error bulk adding:', insertError)
       return NextResponse.json(
-        { error: 'Failed to add items to lists' },
+        { error: 'Failed to add items to lists', details: insertError.message },
         { status: 500 }
       )
     }
 
+    const addedCount = inserted?.length || 0
+    const duplicateCount = duplicateInfo.length
+
+    // Build response message
+    let message = `Successfully added ${addedCount} item(s) to ${listIds.length} list(s)`
+    if (duplicateCount > 0) {
+      message += `. ${duplicateCount} item(s) were already in the list(s)`
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Added ${items.length} item(s) to ${listIds.length} list(s)`,
-      added: inserted?.length || 0,
-      total: memberships.length,
+      message,
+      added: addedCount,
+      duplicates: duplicateCount,
+      total: items.length * listIds.length,
+      duplicateDetails: duplicateInfo.length > 0 ? duplicateInfo : undefined,
     })
   } catch (error: any) {
     console.error('API Error bulk adding:', error)

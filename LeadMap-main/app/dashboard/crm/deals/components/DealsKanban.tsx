@@ -54,13 +54,20 @@ export default function DealsKanban({
   const [editValue, setEditValue] = useState<string>('')
   const editInputRef = useRef<HTMLInputElement>(null)
 
-  // Format relative time (e.g., "53 minutes ago", "1 day ago")
-  const formatRelativeTime = (dateString: string | null | undefined): string => {
+  // Format date - show date format for future dates, relative time for past dates
+  const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A'
     const date = new Date(dateString)
     const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffSecs = Math.floor(diffMs / 1000)
+    const diffMs = date.getTime() - now.getTime()
+    
+    // If future date, show in date format
+    if (diffMs > 0) {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    }
+    
+    // If past date, show relative time
+    const diffSecs = Math.floor(Math.abs(diffMs) / 1000)
     const diffMins = Math.floor(diffSecs / 60)
     const diffHours = Math.floor(diffMins / 60)
     const diffDays = Math.floor(diffHours / 24)
@@ -217,6 +224,9 @@ export default function DealsKanban({
       }
     } else if (field === 'value') {
       setEditValue(currentValue?.toString() || '')
+    } else if (field === 'stage') {
+      // For stage, use the normalized database value
+      setEditValue(currentValue?.toString() || 'new')
     } else {
       setEditValue(currentValue?.toString() || '')
     }
@@ -237,6 +247,9 @@ export default function DealsKanban({
       }
     } else if (field === 'title') {
       updateValue = editValue || ''
+    } else if (field === 'stage') {
+      // Normalize stage to database value
+      updateValue = normalizeStage(editValue)
     }
 
     try {
@@ -259,7 +272,11 @@ export default function DealsKanban({
   useEffect(() => {
     if (editingField && editInputRef.current) {
       editInputRef.current.focus()
-      editInputRef.current.select()
+      // Only select text for text/number inputs, not for select dropdowns or date inputs
+      if (editInputRef.current instanceof HTMLInputElement && editInputRef.current.type !== 'date') {
+        editInputRef.current.select()
+      }
+      // For select elements, just focus (no select method available)
     }
   }, [editingField])
 
@@ -304,10 +321,10 @@ export default function DealsKanban({
                 const ownerInitials = getOwnerInitials(deal)
 
                 return (
-                  <div
-                    key={deal.id}
-                    draggable
-                    onDragStart={() => handleDragStart(deal)}
+                <div
+                  key={deal.id}
+                  draggable
+                  onDragStart={() => handleDragStart(deal)}
                     className="bg-white dark:bg-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600"
                   >
                     {/* Title */}
@@ -385,13 +402,41 @@ export default function DealsKanban({
                       {/* STAGE */}
                       <div className="flex items-center justify-between">
                         <span className="text-gray-500 dark:text-gray-400 font-medium">STAGE</span>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStageBadgeColor(
-                            deal.stage
-                          )}`}
-                        >
-                          {getStageDisplayName(deal.stage)}
-                        </span>
+                        {editingField?.dealId === deal.id && editingField?.field === 'stage' ? (
+                          <select
+                            ref={editInputRef}
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={() => saveEdit(deal.id, 'stage')}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === 'Escape') {
+                                e.currentTarget.blur()
+                              }
+                            }}
+                            className="px-2 py-1 text-xs font-medium rounded-full border border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <option value="new">Lead</option>
+                            <option value="contacted">Sales Qualified</option>
+                            <option value="qualified">Meeting Booked</option>
+                            <option value="proposal">Contract Sent</option>
+                            <option value="negotiation">Negotiation</option>
+                            <option value="closed_won">Closed Won</option>
+                            <option value="closed_lost">Closed Lost</option>
+                          </select>
+                        ) : (
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 ${getStageBadgeColor(
+                              deal.stage
+                            )}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              startEditing(deal.id, 'stage', deal.stage)
+                            }}
+                          >
+                            {getStageDisplayName(deal.stage)}
+                      </span>
+                        )}
                       </div>
 
                       {/* PIPELINE */}
@@ -403,8 +448,8 @@ export default function DealsKanban({
                           </span>
                         ) : (
                           <span className="text-gray-400">—</span>
-                        )}
-                      </div>
+                    )}
+                  </div>
 
                       {/* OWNER */}
                       <div className="flex items-center justify-between">
@@ -449,7 +494,7 @@ export default function DealsKanban({
                               startEditing(deal.id, 'expected_close_date', deal.expected_close_date)
                             }}
                           >
-                            {deal.expected_close_date ? formatRelativeTime(deal.expected_close_date) : '—'}
+                            {deal.expected_close_date ? formatDate(deal.expected_close_date) : '—'}
                           </span>
                         )}
                       </div>
@@ -479,7 +524,7 @@ export default function DealsKanban({
                   <option>Calculate</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
+                </div>
             </div>
           </div>
         )

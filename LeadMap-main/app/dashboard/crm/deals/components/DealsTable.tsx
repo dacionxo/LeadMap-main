@@ -62,13 +62,20 @@ export default function DealsTable({
   const [editValue, setEditValue] = useState<string>('')
   const editInputRef = useRef<HTMLInputElement>(null)
 
-  // Format relative time (e.g., "6 seconds ago", "24 hours ago")
-  const formatRelativeTime = (dateString: string | null | undefined): string => {
-    if (!dateString) return 'N/A'
+  // Format date - show date format for future dates, relative time for past dates
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return '—'
     const date = new Date(dateString)
     const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffSecs = Math.floor(diffMs / 1000)
+    const diffMs = date.getTime() - now.getTime()
+    
+    // If future date, show in date format
+    if (diffMs > 0) {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    }
+    
+    // If past date, show relative time
+    const diffSecs = Math.floor(Math.abs(diffMs) / 1000)
     const diffMins = Math.floor(diffSecs / 60)
     const diffHours = Math.floor(diffMins / 60)
     const diffDays = Math.floor(diffHours / 24)
@@ -195,6 +202,9 @@ export default function DealsTable({
       }
     } else if (field === 'value') {
       setEditValue(currentValue?.toString() || '')
+    } else if (field === 'stage') {
+      // For stage, use the normalized database value
+      setEditValue(currentValue?.toString() || 'new')
     } else {
       setEditValue(currentValue?.toString() || '')
     }
@@ -213,6 +223,9 @@ export default function DealsTable({
       } else {
         updateValue = null
       }
+    } else if (field === 'stage') {
+      // Stage value should already be normalized from dropdown, but ensure it's correct
+      updateValue = editValue || 'new'
     }
 
     try {
@@ -235,7 +248,11 @@ export default function DealsTable({
   useEffect(() => {
     if (editingField && editInputRef.current) {
       editInputRef.current.focus()
-      editInputRef.current.select()
+      // Only select text for text/number inputs, not for select dropdowns or date inputs
+      if (editInputRef.current instanceof HTMLInputElement && editInputRef.current.type !== 'date') {
+        editInputRef.current.select()
+      }
+      // For select elements, just focus (no select method available)
     }
   }, [editingField])
 
@@ -374,12 +391,40 @@ export default function DealsTable({
                     )}
                   </td>
                   {/* Stage */}
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStageColor(deal.stage)}`}
-                    >
-                      {getStageDisplayName(deal.stage)}
-                    </span>
+                  <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    {editingField?.dealId === deal.id && editingField?.field === 'stage' ? (
+                      <select
+                        ref={editInputRef}
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={() => saveEdit(deal.id, 'stage')}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === 'Escape') {
+                            e.currentTarget.blur()
+                          }
+                        }}
+                        className="px-2 py-1 text-xs font-medium rounded-full border border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <option value="new">Lead</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="proposal">Proposal</option>
+                        <option value="negotiation">Negotiation</option>
+                        <option value="closed_won">Closed Won</option>
+                        <option value="closed_lost">Closed Lost</option>
+                      </select>
+                    ) : (
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 ${getStageColor(deal.stage)}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          startEditing(deal.id, 'stage', deal.stage)
+                        }}
+                      >
+                        {getStageDisplayName(deal.stage)}
+                      </span>
+                    )}
                   </td>
                   {/* Pipeline */}
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -428,7 +473,7 @@ export default function DealsTable({
                           startEditing(deal.id, 'expected_close_date', deal.expected_close_date)
                         }}
                       >
-                        {deal.expected_close_date ? formatRelativeTime(deal.expected_close_date) : '—'}
+                        {deal.expected_close_date ? formatDate(deal.expected_close_date) : '—'}
                       </div>
                     )}
                   </td>

@@ -89,7 +89,27 @@ export async function POST(
       )
     }
 
-    // Add membership (with conflict handling - ignores duplicates)
+    // Check if item already exists
+    const { data: existing } = await supabase
+      .from('list_memberships')
+      .select('*')
+      .eq('list_id', listId)
+      .eq('item_type', itemType)
+      .eq('item_id', itemId)
+      .single()
+
+    if (existing) {
+      // Item already in list - return clear error message
+      return NextResponse.json({
+        success: false,
+        error: `This item is already in the list "${list.name}"`,
+        message: `This item is already in the list "${list.name}"`,
+        membership: existing,
+        isNew: false,
+      }, { status: 409 }) // 409 Conflict status code
+    }
+
+    // Insert new membership
     const { data: membership, error: insertError } = await supabase
       .from('list_memberships')
       .insert({
@@ -100,12 +120,11 @@ export async function POST(
       .select()
       .single()
 
-    // If duplicate, that's fine - return success
+    // Handle duplicate key error gracefully (race condition)
     if (insertError) {
-      // Check if it's a duplicate key error
       if (insertError.code === '23505' || insertError.message?.includes('duplicate')) {
-        // Item already in list - return success
-        const { data: existing } = await supabase
+        // Item was added by another request - fetch and return it
+        const { data: existingAfterConflict } = await supabase
           .from('list_memberships')
           .select('*')
           .eq('list_id', listId)
@@ -116,7 +135,8 @@ export async function POST(
         return NextResponse.json({
           success: true,
           message: 'Item already in list',
-          membership: existing,
+          membership: existingAfterConflict,
+          isNew: false,
         })
       }
 
@@ -131,6 +151,7 @@ export async function POST(
       success: true,
       message: 'Item added to list',
       membership,
+      isNew: true,
     })
   } catch (error: any) {
     console.error('API Error adding to list:', error)

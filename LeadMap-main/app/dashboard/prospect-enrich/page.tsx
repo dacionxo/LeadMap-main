@@ -10,6 +10,7 @@ import MapView from '@/components/MapView'
 import EmailTemplateModal from '@/components/EmailTemplateModal'
 import SaveButton from './components/AddToCrmButton'
 import { add_to_list } from './utils/listUtils'
+import { normalizeListingIdentifier } from '@/app/dashboard/lists/utils/identifierUtils'
 import ProspectInsights from './components/ProspectInsights'
 import ApolloFilterSidebar from './components/ApolloFilterSidebar'
 import ApolloActionBar from './components/ApolloActionBar'
@@ -225,13 +226,19 @@ function ProspectEnrichInner() {
         return
       }
 
-      // Prepare items for bulk add
+      // Prepare items for bulk add with normalization
       const items = selectedListings
         .map(listing => {
           const itemId = listing.listing_id || listing.property_url
           if (!itemId) return null
+          // Normalize the identifier for consistency
+          const normalizedId = normalizeListingIdentifier(itemId)
+          if (!normalizedId) {
+            console.warn(`⚠️ Skipping invalid listing ID: ${itemId}`)
+            return null
+          }
           return {
-            itemId: itemId,
+            itemId: normalizedId,
             itemType: 'listing' as const
           }
         })
@@ -419,9 +426,9 @@ function ProspectEnrichInner() {
         
         if (userLists && userLists.length > 0) {
           const listIds = userLists.map(l => l.id)
-          // Then get all list items that are listings
+          // Then get all list items that are listings from list_memberships table
           const { data: items } = await supabase
-            .from('list_items')
+            .from('list_memberships')
             .select('item_id')
             .eq('item_type', 'listing')
             .in('list_id', listIds)
