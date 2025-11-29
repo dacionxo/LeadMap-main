@@ -164,8 +164,8 @@ export default function VirtualizedListingsTable({
   showPagination = true,
   category
 }: VirtualizedListingsTableProps) {
-  // Use provided columns or default - ensure stability
-  const columns = providedColumns || DEFAULT_COLUMNS
+  // Use provided columns or default - ensure stability and mutability
+  const columns = providedColumns || [...DEFAULT_COLUMNS]
   // ==========================================================================
   // State Management
   // ==========================================================================
