@@ -35,6 +35,7 @@ import DealsKanban from './components/DealsKanban'
 import DealsTable from './components/DealsTable'
 import DealFormModal from './components/DealFormModal'
 import DealDetailView from './components/DealDetailView'
+import DealsFilterSidebar from './components/DealsFilterSidebar'
 
 interface Deal {
   id: string
@@ -91,6 +92,7 @@ export default function DealsPage() {
   const [sortBy, setSortBy] = useState('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [showFilters, setShowFilters] = useState(true)
+  const [apolloFilters, setApolloFilters] = useState<Record<string, any>>({})
 
   useEffect(() => {
     // Check if user has completed deals onboarding
@@ -117,7 +119,7 @@ export default function DealsPage() {
       fetchContacts()
       fetchDeals()
     }
-  }, [showOnboarding, searchQuery, selectedPipeline, selectedStage, sortBy, sortOrder])
+  }, [showOnboarding, searchQuery, selectedPipeline, selectedStage, sortBy, sortOrder, apolloFilters])
 
   const fetchDeals = async () => {
     try {
@@ -131,6 +133,18 @@ export default function DealsPage() {
       if (searchQuery) params.append('search', searchQuery)
       if (selectedPipeline) params.append('pipeline', selectedPipeline)
       if (selectedStage) params.append('stage', selectedStage)
+      
+      // Add Apollo filters
+      if (apolloFilters.pipeline && Array.isArray(apolloFilters.pipeline)) {
+        apolloFilters.pipeline.forEach((pid: string) => params.append('pipeline', pid))
+      }
+      if (apolloFilters.stage && Array.isArray(apolloFilters.stage)) {
+        apolloFilters.stage.forEach((stage: string) => params.append('stage', stage))
+      }
+      if (apolloFilters.value) {
+        if (apolloFilters.value.min) params.append('minValue', apolloFilters.value.min.toString())
+        if (apolloFilters.value.max) params.append('maxValue', apolloFilters.value.max.toString())
+      }
 
       const response = await fetch(`/api/crm/deals?${params}`, { credentials: 'include' })
       if (response.ok) {
@@ -315,25 +329,6 @@ export default function DealsPage() {
     setShowOnboarding(false)
   }
 
-  const filterOptions = [
-    { label: 'Company', icon: Building2 },
-    { label: 'Owner', icon: User },
-    { label: 'Stage', icon: Gauge },
-    { label: 'Closed Date', icon: Calendar },
-    { label: 'Created Date', icon: Calendar },
-    { label: 'Stage Updated At', icon: Calendar },
-    { label: 'Next Step Updated At', icon: Calendar },
-    { label: 'Amount', icon: DollarSign },
-    { label: 'Custom Fields', icon: FileText },
-    { label: 'Account Lists', icon: FileText },
-    { label: 'Location', icon: MapPin },
-    { label: '# Employees', icon: Users },
-    { label: 'Industry & Keywords', icon: Briefcase },
-    { label: 'Funding', icon: Eye },
-    { label: 'Technologies', icon: Lightbulb },
-    { label: 'Deal CSV Import', icon: FileSpreadsheet },
-    { label: 'Workflows', icon: Zap },
-  ]
 
   return (
     <DashboardLayout>
@@ -401,103 +396,44 @@ export default function DealsPage() {
 
           {/* Main Content Area with Sidebar */}
           <div className="flex-1 flex overflow-hidden bg-gray-50 dark:bg-gray-900">
-            {/* Left Sidebar - Filters */}
+            {/* Left Sidebar - Apollo Filter Sidebar */}
             {showFilters && (
-              <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-                <div className="p-4 space-y-3">
-                  {/* Top Controls */}
-                  <div className="relative">
-                    <select
-                      value={selectedPipeline}
-                      onChange={(e) => setSelectedPipeline(e.target.value)}
-                      className="w-full appearance-none pl-8 pr-10 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">All Pipelines</option>
-                      {pipelines.map((pipeline) => (
-                        <option key={pipeline.id} value={pipeline.id}>
-                          {pipeline.name}
-                        </option>
-                      ))}
-                    </select>
-                    <Layers3 className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-
-                  <div className="relative">
-                    <select
-                      value={selectedStage}
-                      onChange={(e) => setSelectedStage(e.target.value)}
-                      className="w-full appearance-none pl-8 pr-10 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">All deals</option>
-                      {getDefaultStages().map((stage) => (
-                        <option key={stage} value={stage}>
-                          {stage}
-                        </option>
-                      ))}
-                    </select>
-                    <LayoutGrid className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-
-                  <button
-                    onClick={() => setShowFilters(false)}
-                    className="w-full px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
-                  >
-                    <Filter className="w-4 h-4" />
-                    Hide Filters
-                  </button>
-
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search deals"
-                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  {/* Filter Options List */}
-                  <div className="space-y-1 pt-2">
-                    {filterOptions.map((option) => {
-                      const Icon = option.icon
-                      return (
-                        <button
-                          key={option.label}
-                          className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Icon className="w-4 h-4" />
-                            <span>{option.label}</span>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-gray-400" />
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  {/* Clear Filters */}
-                  <button className="w-full mt-4 px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                    Clear filters
-                  </button>
-                </div>
-              </div>
+              <DealsFilterSidebar
+                filters={apolloFilters}
+                onFiltersChange={setApolloFilters}
+                totalCount={deals.length}
+                isCollapsed={false}
+                onToggleCollapse={() => setShowFilters(false)}
+                deals={deals}
+                pipelines={pipelines}
+                isDark={false}
+              />
             )}
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Right Side Actions Bar */}
-              <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-end gap-3">
-                {!showFilters && (
-                  <button
-                    onClick={() => setShowFilters(true)}
-                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
-                  >
-                    <Filter className="w-4 h-4" />
-                    Show Filters
-                  </button>
-                )}
+              <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between">
+                {/* Left: Show Filters Button */}
+                <div>
+                  {!showFilters && (
+                    <button
+                      onClick={() => setShowFilters(true)}
+                      className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                    >
+                      <Filter className="w-4 h-4" />
+                      Show Filters
+                      {Object.keys(apolloFilters).length > 0 && (
+                        <span className="ml-1 px-1.5 py-0.5 text-xs font-semibold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
+                          {Object.keys(apolloFilters).length}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </div>
+                
+                {/* Right: View Controls */}
+                <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('kanban')}
