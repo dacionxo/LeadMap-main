@@ -72,6 +72,7 @@ interface Email {
   html?: string
   body?: string
   status: 'queued' | 'sending' | 'sent' | 'failed' | 'received'
+  direction?: 'sent' | 'received'
   sent_at: string | null
   opened_at: string | null
   clicked_at: string | null
