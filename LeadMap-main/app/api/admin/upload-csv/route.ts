@@ -5,7 +5,8 @@ import { parse } from 'csv-parse/sync'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()

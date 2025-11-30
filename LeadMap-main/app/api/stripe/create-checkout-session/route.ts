@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 })
     }
 
-    const supabase = createRouteHandlerClient({ cookies: async () => await cookies() })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     // Get current user (if authenticated)
     const { data: { user } } = await supabase.auth.getUser()

@@ -74,8 +74,7 @@ async function runCronJob(request: NextRequest) {
       .from('emails')
       .select(`
         *,
-        mailbox:mailboxes(*),
-        campaign:campaigns(status, user_id)
+        mailbox:mailboxes(*)
       `)
       .eq('status', 'queued')
       .eq('direction', 'sent') // Only process sent emails, not received
