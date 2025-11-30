@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
+export const runtime = 'nodejs'
+
 /**
  * GET /api/unibox/threads/[id]
  * Get detailed thread information including all messages
@@ -12,7 +14,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({
+      cookies: () => cookieStore,
+    })
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -145,7 +150,10 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({
+      cookies: () => cookieStore,
+    })
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()

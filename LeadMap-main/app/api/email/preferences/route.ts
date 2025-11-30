@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
+export const runtime = 'nodejs'
+
 /**
  * GET /api/email/preferences
  * Get user's email marketing preferences
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({
+      cookies: () => cookieStore,
+    })
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -63,7 +68,10 @@ export async function GET(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({
+      cookies: () => cookieStore,
+    })
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -32,18 +32,12 @@ async function runCronJob(request: NextRequest) {
     const cronSecret = request.headers.get('x-vercel-cron-secret')
     const serviceKey = request.headers.get('x-service-key')
     
-    // Ensure CRON_SECRET is configured
-    const expectedCronSecret = process.env.CRON_SECRET
-    if (!expectedCronSecret) {
-      console.error('CRON_SECRET environment variable is not set')
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
-    
-    // Strict authentication check - reject if no auth headers or invalid values
+    // Authentication check - allow CRON_SECRET or CALENDAR_SERVICE_KEY (same pattern as other cron routes)
     const isValidRequest = 
-      (cronSecret && cronSecret === expectedCronSecret) ||
-      (serviceKey && serviceKey === process.env.CALENDAR_SERVICE_KEY) ||
-      (authHeader && (authHeader === `Bearer ${expectedCronSecret}` || authHeader === `Bearer ${process.env.CALENDAR_SERVICE_KEY}`))
+      cronSecret === process.env.CRON_SECRET ||
+      serviceKey === process.env.CALENDAR_SERVICE_KEY ||
+      authHeader === `Bearer ${process.env.CALENDAR_SERVICE_KEY}` ||
+      (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`)
 
     if (!isValidRequest) {
       console.warn('Unauthorized cron request attempt', {

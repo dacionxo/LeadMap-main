@@ -4,6 +4,8 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { sendViaMailbox } from '@/lib/email/sendViaMailbox'
 
+export const runtime = 'nodejs'
+
 /**
  * POST /api/unibox/threads/[id]/forward
  * Forward a thread or specific message
@@ -14,7 +16,10 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({
+      cookies: () => cookieStore,
+    })
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
