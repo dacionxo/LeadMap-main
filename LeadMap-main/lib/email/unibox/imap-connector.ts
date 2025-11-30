@@ -126,6 +126,7 @@ function parseIMAPMessage(rawMessage: any, mailboxEmail: string): {
  */
 async function fetchIMAPMessages(
   config: IMAPConfig,
+  mailboxEmail: string,
   options: {
     since?: Date
     maxMessages?: number
@@ -328,7 +329,7 @@ export async function syncIMAPMessages(
   try {
     // Fetch messages from IMAP
     const sinceDate = options.since ? new Date(options.since) : undefined
-    const fetchedMessages = await fetchIMAPMessages(config, {
+    const fetchedMessages = await fetchIMAPMessages(config, mailboxEmail, {
       since: sinceDate,
       maxMessages: options.maxMessages || 100
     })
