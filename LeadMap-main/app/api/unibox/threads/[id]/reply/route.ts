@@ -186,9 +186,9 @@ export async function POST(
     if (outboundMessage) {
       const allParticipants = [
         { type: 'from', email: fullMailbox.data.email, name: fullMailbox.data.display_name },
-        ...to.map(email => ({ type: 'to' as const, email, name: '' })),
-        ...finalCc.map(email => ({ type: 'cc' as const, email, name: '' })),
-        ...finalBcc.map(email => ({ type: 'bcc' as const, email, name: '' }))
+        ...to.map((email: string) => ({ type: 'to' as const, email, name: '' })),
+        ...finalCc.map((email: string) => ({ type: 'cc' as const, email, name: '' })),
+        ...finalBcc.map((email: string) => ({ type: 'bcc' as const, email, name: '' }))
       ]
 
       for (const participant of allParticipants) {
