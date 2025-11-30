@@ -218,17 +218,17 @@ async function fetchIMAPMessages(
 
           let processedCount = 0
 
-          fetch.on('message', (msg, seqno) => {
+          fetch.on('message', (msg: any, seqno: number) => {
             let uid: number | null = null
             let buffer = Buffer.alloc(0)
 
-            msg.on('body', (stream, info) => {
-              stream.on('data', (chunk) => {
+            msg.on('body', (stream: any, info: any) => {
+              stream.on('data', (chunk: Buffer) => {
                 buffer = Buffer.concat([buffer, chunk])
               })
             })
 
-            msg.once('attributes', (attrs) => {
+            msg.once('attributes', (attrs: any) => {
               uid = attrs.uid || null
             })
 
