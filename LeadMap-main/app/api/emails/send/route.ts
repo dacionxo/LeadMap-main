@@ -110,11 +110,15 @@ export async function POST(request: NextRequest) {
       .eq('status', 'sent')
       .not('sent_at', 'is', null)
 
-    const hourlyCount = recentEmails?.filter(e => 
+    interface EmailWithSentAt {
+      sent_at: string | null
+    }
+
+    const hourlyCount = recentEmails?.filter((e: EmailWithSentAt) => 
       e.sent_at && new Date(e.sent_at) >= oneHourAgo
     ).length || 0
 
-    const dailyCount = recentEmails?.filter(e => 
+    const dailyCount = recentEmails?.filter((e: EmailWithSentAt) => 
       e.sent_at && new Date(e.sent_at) >= oneDayAgo
     ).length || 0
 
