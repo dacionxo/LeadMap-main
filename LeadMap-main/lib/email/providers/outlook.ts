@@ -204,7 +204,7 @@ export async function refreshOutlookToken(mailbox: Mailbox): Promise<{ success: 
       body: new URLSearchParams({
         client_id: clientId,
         client_secret: clientSecret,
-        refresh_token: mailbox.refresh_token,
+        refresh_token: decryptedMailbox.refresh_token!, // Already validated above
         grant_type: 'refresh_token',
         scope: 'https://graph.microsoft.com/Mail.Send offline_access'
       })
