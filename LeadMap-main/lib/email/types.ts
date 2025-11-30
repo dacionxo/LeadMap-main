@@ -44,3 +44,21 @@ export interface SendResult {
   error?: string
 }
 
+export type EmailProviderType = 'resend' | 'sendgrid' | 'mailgun' | 'ses' | 'smtp' | 'generic'
+
+export interface ProviderConfig {
+  type: EmailProviderType
+  apiKey?: string
+  secretKey?: string
+  region?: string
+  domain?: string
+  host?: string
+  port?: number
+  username?: string
+  password?: string
+  fromEmail?: string
+  sandboxMode?: boolean
+  sandboxDomain?: string
+  trackingDomain?: string
+}
+
