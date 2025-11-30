@@ -105,7 +105,7 @@ export async function POST(
     }
 
     // Merge with provided cc/bcc
-    const finalCc = [...new Set([...replyCc, ...cc])]
+    const finalCc = Array.from(new Set([...replyCc, ...cc]))
     const finalBcc = bcc
 
     // Build subject (add Re: if not already present)
