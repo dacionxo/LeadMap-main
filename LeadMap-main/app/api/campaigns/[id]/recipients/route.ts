@@ -8,6 +8,10 @@ import { cookies } from 'next/headers'
  * POST: Add recipients to a campaign
  */
 
+interface ExistingRecipient {
+  email: string
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -162,7 +166,7 @@ export async function POST(
       .select('email')
       .eq('campaign_id', id)
 
-    const existingEmails = new Set((existingRecipients || []).map(r => r.email.toLowerCase()))
+    const existingEmails = new Set((existingRecipients || []).map((r: ExistingRecipient) => r.email.toLowerCase()))
 
     // Prepare inserts
     const recipientInserts: any[] = []
