@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { recordRepliedEvent } from './event-tracking'
 
 /**
  * Check if an inbound email is a reply to a sent email
@@ -45,6 +46,29 @@ export async function detectAndLinkReply(
             .eq('id', sentEmail.campaign_recipient_id)
         }
 
+        // Get user_id and mailbox_id from the sent email for event tracking
+        const { data: emailData } = await supabase
+          .from('emails')
+          .select('user_id, mailbox_id, campaign_id')
+          .eq('id', sentEmail.id)
+          .single()
+
+        // Record 'replied' event in unified email_events table
+        if (emailData?.user_id && sentEmail.to_email) {
+          await recordRepliedEvent({
+            userId: emailData.user_id,
+            emailId: sentEmail.id,
+            mailboxId: emailData.mailbox_id || undefined,
+            campaignId: emailData.campaign_id || undefined,
+            campaignRecipientId: sentEmail.campaign_recipient_id || undefined,
+            recipientEmail: sentEmail.to_email,
+            replyMessageId: inboundEmail.messageId || ''
+          }).catch(err => {
+            console.warn('Failed to record replied event:', err)
+            // Don't fail reply detection if event tracking fails
+          })
+        }
+
         return {
           isReply: true,
           sentEmailId: sentEmail.id,
@@ -75,6 +99,26 @@ export async function detectAndLinkReply(
                 status: 'completed'
               })
               .eq('id', sentEmail.campaign_recipient_id)
+          }
+
+          // Get user_id and mailbox_id from the sent email for event tracking
+          const { data: emailData } = await supabase
+            .from('emails')
+            .select('user_id, mailbox_id, campaign_id, to_email')
+            .eq('id', sentEmail.id)
+            .single()
+
+          // Record 'replied' event
+          if (emailData?.user_id && emailData?.to_email) {
+            await recordRepliedEvent({
+              userId: emailData.user_id,
+              emailId: sentEmail.id,
+              mailboxId: emailData.mailbox_id || undefined,
+              campaignId: emailData.campaign_id || undefined,
+              campaignRecipientId: sentEmail.campaign_recipient_id || undefined,
+              recipientEmail: emailData.to_email,
+              replyMessageId: inboundEmail.messageId || ''
+            }).catch(() => {})
           }
 
           return {
@@ -116,6 +160,26 @@ export async function detectAndLinkReply(
                   status: 'completed'
                 })
                 .eq('id', sentEmail.campaign_recipient_id)
+            }
+
+            // Get user_id and mailbox_id for event tracking
+            const { data: emailData } = await supabase
+              .from('emails')
+              .select('user_id, mailbox_id, campaign_id')
+              .eq('id', sentEmail.id)
+              .single()
+
+            // Record 'replied' event
+            if (emailData?.user_id && sentEmail.to_email) {
+              await recordRepliedEvent({
+                userId: emailData.user_id,
+                emailId: sentEmail.id,
+                mailboxId: emailData.mailbox_id || undefined,
+                campaignId: emailData.campaign_id || undefined,
+                campaignRecipientId: sentEmail.campaign_recipient_id || undefined,
+                recipientEmail: sentEmail.to_email,
+                replyMessageId: inboundEmail.messageId || ''
+              }).catch(() => {})
             }
 
             return {

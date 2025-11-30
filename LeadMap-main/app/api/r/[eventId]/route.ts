@@ -46,25 +46,24 @@ export async function GET(
 
     // Try to find tracking link by eventId
     // Option 1: Look in tracking_links table if it exists
-    const { data: trackingLink } = await supabase
+    const { data: trackingLink, error: trackingError } = await supabase
       .from('email_tracking_links')
       .select('*')
       .eq('event_id', eventId)
       .single()
-      .catch(() => ({ data: null }))
 
     if (trackingLink) {
       const { url, email_id, campaign_recipient_id, campaign_id } = trackingLink
       
-      // Record click event
-      await recordClickEvent(
+      // Record click event (fire and forget - don't block redirect)
+      recordClickEvent(
         supabase,
         url,
         email_id,
         campaign_recipient_id,
         campaign_id,
         request
-      ).catch(() => {})
+      ).catch(() => {}) // Handle promise rejection if needed
 
       return NextResponse.redirect(url)
     }
@@ -77,15 +76,15 @@ export async function GET(
       if (parts.length >= 4) {
         const [emailId, recipientId, campaignId, url] = parts
         
-        // Record click event
-        await recordClickEvent(
+        // Record click event (fire and forget - don't block redirect)
+        recordClickEvent(
           supabase,
           url,
           emailId || null,
           recipientId || null,
           campaignId || null,
           request
-        ).catch(() => {})
+        ).catch(() => {}) // Handle promise rejection if needed
 
         return NextResponse.redirect(url)
       }
@@ -123,7 +122,6 @@ async function recordClickEvent(
       .select('user_id, mailbox_id, to_email, campaign_step_id, contact_id')
       .eq('id', emailId)
       .single()
-      .catch(() => ({ data: null }))
     
     if (data) {
       recipientEmail = data.to_email
@@ -140,7 +138,6 @@ async function recordClickEvent(
       .select('email, campaign:campaigns(user_id, mailbox_id), campaign_step_id, contact_id')
       .eq('id', recipientId)
       .single()
-      .catch(() => ({ data: null }))
     
     if (data) {
       recipientEmail = data.email
@@ -175,7 +172,8 @@ async function recordClickEvent(
       p_ip_address: ipAddress,
       p_user_agent: userAgent,
       p_clicked_url: url
-    }).catch(() => {})
+    })
+    // Ignore errors for click tracking - don't block redirect
 
     // Also update legacy tables for backwards compatibility
     if (emailId) {
@@ -183,7 +181,7 @@ async function recordClickEvent(
         .from('emails')
         .update({ clicked_at: new Date().toISOString() })
         .eq('id', emailId)
-        .catch(() => {})
+      // Ignore errors
     }
 
     if (recipientId) {
@@ -191,7 +189,7 @@ async function recordClickEvent(
         .from('campaign_recipients')
         .update({ clicked: true, clicked_at: new Date().toISOString() })
         .eq('id', recipientId)
-        .catch(() => {})
+      // Ignore errors
     }
   }
 }

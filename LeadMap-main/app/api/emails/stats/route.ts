@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
         eventsQuery = eventsQuery.lte('event_timestamp', endDate)
       }
 
-      const { data: events } = await eventsQuery.catch(() => ({ data: null }))
+      const { data: events } = await eventsQuery
 
       if (events) {
         // Count unique emails by event type
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
               mailboxEventsQuery = mailboxEventsQuery.lte('event_timestamp', endDate)
             }
 
-            const { data: mailboxEvents } = await mailboxEventsQuery.catch(() => ({ data: null }))
+            const { data: mailboxEvents } = await mailboxEventsQuery
 
             if (mailboxEvents) {
               const delivered = new Set(
