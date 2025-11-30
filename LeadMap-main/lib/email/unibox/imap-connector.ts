@@ -441,9 +441,9 @@ export async function syncIMAPMessages(
         // Insert participants
         const participants = [
           { type: 'from' as const, email: parsed.from.email, name: parsed.from.name },
-          ...parsed.to.map(p => ({ type: 'to' as const, email: p.email, name: p.name })),
-          ...parsed.cc.map(p => ({ type: 'cc' as const, email: p.email, name: p.name })),
-          ...parsed.bcc.map(p => ({ type: 'bcc' as const, email: p.email, name: p.name }))
+          ...parsed.to.map((p: { email: string; name: string }) => ({ type: 'to' as const, email: p.email, name: p.name })),
+          ...parsed.cc.map((p: { email: string; name: string }) => ({ type: 'cc' as const, email: p.email, name: p.name })),
+          ...parsed.bcc.map((p: { email: string; name: string }) => ({ type: 'bcc' as const, email: p.email, name: p.name }))
         ]
 
         for (const participant of participants) {
