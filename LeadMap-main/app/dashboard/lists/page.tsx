@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import DashboardLayout from '../components/DashboardLayout'
-import { Plus, Search, Users, Building2, Filter, Settings, Download, MoreVertical, Info, Trash2, Edit, X, Upload } from 'lucide-react'
+import { Plus, Search, Users, Building2, Filter, Settings, Download, MoreVertical, Info, Trash2, Edit, X, Upload, ChevronDown } from 'lucide-react'
 import ImportListModal from './components/ImportListModal'
 
 interface List {
@@ -33,6 +33,9 @@ export default function ListsPage() {
   const [editListType, setEditListType] = useState<'people' | 'properties'>('properties')
   const [updating, setUpdating] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [showViewOptions, setShowViewOptions] = useState(false)
+  const [groupBy, setGroupBy] = useState('type')
+  const viewOptionsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchLists()
@@ -44,15 +47,18 @@ export default function ListsPage() {
       if (openMenuId) {
         setOpenMenuId(null)
       }
+      if (viewOptionsRef.current && !viewOptionsRef.current.contains(event.target as Node)) {
+        setShowViewOptions(false)
+      }
     }
 
-    if (openMenuId) {
+    if (openMenuId || showViewOptions) {
       document.addEventListener('click', handleClickOutside)
       return () => {
         document.removeEventListener('click', handleClickOutside)
       }
     }
-  }, [openMenuId])
+  }, [openMenuId, showViewOptions])
 
   async function fetchLists() {
     try {
@@ -530,20 +536,201 @@ export default function ListsPage() {
                 <option value="created">Created</option>
               </select>
 
-              <button
-                style={{
-                  padding: '8px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <Settings size={16} />
-              </button>
+              <div style={{ position: 'relative' }} ref={viewOptionsRef}>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setShowViewOptions(!showViewOptions)
+                  }}
+                  style={{
+                    padding: '8px',
+                    backgroundColor: showViewOptions ? '#f3f4f6' : '#ffffff',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'background-color 0.15s'
+                  }}
+                  title="View options"
+                >
+                  <Settings size={16} />
+                </button>
+                
+                {showViewOptions && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: '100%',
+                      marginTop: '8px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                      zIndex: 1000,
+                      width: '320px',
+                      minWidth: '280px',
+                      padding: 0,
+                      overflow: 'hidden'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '16px 20px',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}>
+                      <h3 style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#111827',
+                        margin: 0,
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }}>
+                        View options
+                      </h3>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setShowViewOptions(false)
+                        }}
+                        style={{
+                          padding: '4px',
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '4px',
+                          color: '#6b7280'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f3f4f6'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                    
+                    {/* Content */}
+                    <div style={{
+                      padding: '20px'
+                    }}>
+                      {/* Group by section */}
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '13px',
+                          fontWeight: 400,
+                          color: '#6b7280',
+                          marginBottom: '8px',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                        }}>
+                          Group by
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 12px',
+                            border: '1px solid #3b82f6',
+                            borderRadius: '6px',
+                            backgroundColor: '#ffffff',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                          }}>
+                            <div style={{
+                              width: '16px',
+                              height: '16px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}>
+                              <div style={{
+                                width: '12px',
+                                height: '12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2px'
+                              }}>
+                                <div style={{
+                                  width: '100%',
+                                  height: '2px',
+                                  backgroundColor: '#6b7280',
+                                  borderRadius: '1px'
+                                }} />
+                                <div style={{
+                                  width: '80%',
+                                  height: '2px',
+                                  backgroundColor: '#6b7280',
+                                  borderRadius: '1px'
+                                }} />
+                                <div style={{
+                                  width: '60%',
+                                  height: '2px',
+                                  backgroundColor: '#6b7280',
+                                  borderRadius: '1px'
+                                }} />
+                              </div>
+                            </div>
+                            <span style={{
+                              flex: 1,
+                              color: '#374151',
+                              fontSize: '14px'
+                            }}>
+                              Group By
+                            </span>
+                            <select
+                              value={groupBy}
+                              onChange={(e) => setGroupBy(e.target.value)}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                opacity: 0,
+                                cursor: 'pointer',
+                                fontSize: '14px'
+                              }}
+                            >
+                              <option value="none">None</option>
+                              <option value="type">Type</option>
+                              <option value="created_at">Created Date</option>
+                              <option value="updated_at">Last Modified</option>
+                            </select>
+                            <span style={{
+                              color: '#374151',
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              marginLeft: 'auto'
+                            }}>
+                              {groupBy === 'type' ? 'Type' : 
+                               groupBy === 'created_at' ? 'Created Date' :
+                               groupBy === 'updated_at' ? 'Last Modified' : 'None'}
+                            </span>
+                            <ChevronDown size={16} color="#6b7280" style={{ flexShrink: 0 }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

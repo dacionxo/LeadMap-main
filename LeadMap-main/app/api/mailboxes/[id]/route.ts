@@ -4,8 +4,79 @@ import { cookies } from 'next/headers'
 
 /**
  * Mailbox API
+ * PATCH: Update mailbox settings
  * DELETE: Delete a mailbox
  */
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Verify the mailbox belongs to the user
+    const { data: existingMailbox, error: fetchError } = await supabase
+      .from('mailboxes')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (fetchError || !existingMailbox) {
+      return NextResponse.json({ error: 'Mailbox not found' }, { status: 404 })
+    }
+
+    const body = await request.json()
+    const updates: any = {}
+
+    // Allowed fields to update
+    if (body.displayName !== undefined) updates.display_name = body.displayName
+    if (body.fromName !== undefined) updates.from_name = body.fromName
+    if (body.fromEmail !== undefined) updates.from_email = body.fromEmail
+    if (body.dailyLimit !== undefined) updates.daily_limit = body.dailyLimit
+    if (body.hourlyLimit !== undefined) updates.hourly_limit = body.hourlyLimit
+    if (body.active !== undefined) updates.active = body.active
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+    }
+
+    const { data: mailbox, error: updateError } = await supabase
+      .from('mailboxes')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error('Database error:', updateError)
+      return NextResponse.json({ error: 'Failed to update mailbox' }, { status: 500 })
+    }
+
+    // Return sanitized data
+    const sanitized = {
+      ...mailbox,
+      access_token: mailbox.access_token ? '***' : null,
+      refresh_token: mailbox.refresh_token ? '***' : null,
+      smtp_password: mailbox.smtp_password ? '***' : null,
+    }
+
+    return NextResponse.json({ mailbox: sanitized })
+  } catch (error) {
+    console.error('Mailbox PATCH error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

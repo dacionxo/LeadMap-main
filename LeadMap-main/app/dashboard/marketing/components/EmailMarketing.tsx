@@ -65,12 +65,20 @@ interface EmailTemplate {
 interface Email {
   id: string
   to_email: string
+  from_email?: string
+  from_name?: string
   subject: string
-  status: 'queued' | 'sending' | 'sent' | 'failed'
+  html?: string
+  body?: string
+  status: 'queued' | 'sending' | 'sent' | 'failed' | 'received'
   sent_at: string | null
   opened_at: string | null
   clicked_at: string | null
   error: string | null
+  received_at?: string | null
+  thread_id?: string | null
+  is_read?: boolean
+  is_starred?: boolean
 }
 
 interface EmailStats {
@@ -87,7 +95,7 @@ interface EmailStats {
 
 function EmailMarketingContent() {
   const searchParams = useSearchParams()
-  const [activeTab, setActiveTab] = useState<'statistics' | 'campaigns' | 'templates'>('statistics')
+  const [activeTab, setActiveTab] = useState<'campaigns' | 'unibox' | 'templates' | 'analytics'>('campaigns')
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([])
   const [selectedMailbox, setSelectedMailbox] = useState<string | null>(null)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
@@ -106,6 +114,7 @@ function EmailMarketingContent() {
   const [loading, setLoading] = useState(true)
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [showComposeModal, setShowComposeModal] = useState(false)
+  const [hasDismissedSampleDataBanner, setHasDismissedSampleDataBanner] = useState(false)
   const [composeData, setComposeData] = useState({
     to: '',
     subject: '',
@@ -150,7 +159,47 @@ function EmailMarketingContent() {
     fetchTemplates()
     fetchEmails()
     fetchStats()
+    fetchEmailPreferences()
   }, [searchParams])
+
+  const fetchEmailPreferences = async () => {
+    try {
+      const response = await fetch('/api/email/preferences', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setHasDismissedSampleDataBanner(data.preferences?.has_dismissed_sample_data_banner || false)
+      }
+    } catch (error) {
+      console.error('Error fetching email preferences:', error)
+    }
+  }
+
+  const handleClearSampleData = async () => {
+    try {
+      const response = await fetch('/api/email/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          has_dismissed_sample_data_banner: true,
+        }),
+      })
+
+      if (response.ok) {
+        setHasDismissedSampleDataBanner(true)
+      } else {
+        const error = await response.json()
+        if (response.status === 503 && error.message) {
+          alert(`Database setup required: ${error.message}\n\nPlease run the SQL schema in Supabase SQL Editor.`)
+        } else {
+          alert(error.error || error.message || 'Failed to dismiss banner')
+        }
+      }
+    } catch (error) {
+      console.error('Error clearing sample data banner:', error)
+      alert('Failed to dismiss banner. Please try again.')
+    }
+  }
 
   const fetchMailboxes = async () => {
     try {
@@ -185,9 +234,8 @@ function EmailMarketingContent() {
     if (!selectedMailbox) return
     
     try {
-      // TODO: Create API endpoint for fetching emails
-      // For now, using mock data structure
-      const response = await fetch(`/api/emails?mailboxId=${selectedMailbox}`, { credentials: 'include' })
+      // Fetch sent emails only (not received emails)
+      const response = await fetch(`/api/emails?mailboxId=${selectedMailbox}&direction=sent`, { credentials: 'include' })
       if (response.ok) {
         const data = await response.json()
         setEmails(data.emails || [])
@@ -366,79 +414,30 @@ function EmailMarketingContent() {
       </div>
 
       {/* Sample Data Banner */}
-      {emails.length === 0 && (
+      {emails.length === 0 && !hasDismissedSampleDataBanner && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-center justify-between">
           <p className="text-sm text-blue-800 dark:text-blue-200">
             You're viewing sample data. Create your own campaign to see real data.
           </p>
           <div className="flex gap-2">
-            <button className="px-3 py-1.5 text-sm text-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-700 rounded hover:bg-blue-100 dark:hover:bg-blue-900/40">
+            <button 
+              onClick={handleClearSampleData}
+              className="px-3 py-1.5 text-sm text-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-700 rounded hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+            >
               Clear Sample Data
             </button>
           </div>
         </div>
       )}
 
-      {/* Mailbox Selector */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-4">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Send from:
-          </label>
-          <button
-            onClick={() => setShowConnectModal(true)}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1"
-          >
-            <Plus className="w-4 h-4" />
-            Connect Mailbox
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {mailboxes.map((mailbox) => (
-            <div
-              key={mailbox.id}
-              className={`px-3 py-2 rounded-lg border flex items-center gap-2 cursor-pointer transition-colors ${
-                selectedMailbox === mailbox.id
-                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-              onClick={() => setSelectedMailbox(mailbox.id)}
-            >
-              <Mail className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {mailbox.display_name}
-              </span>
-              {mailbox.active ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-yellow-500" />
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleDeleteMailbox(mailbox.id)
-                }}
-                className="ml-2 text-gray-400 hover:text-red-500"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          {mailboxes.length === 0 && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              No mailboxes connected. Click "Connect Mailbox" to get started.
-            </p>
-          )}
-        </div>
-      </div>
-
       {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="flex space-x-1">
           {[
-            { id: 'statistics', label: 'Statistics' },
             { id: 'campaigns', label: 'Campaigns' },
+            { id: 'unibox', label: 'Unibox' },
             { id: 'templates', label: 'Templates' },
+            { id: 'analytics', label: 'Analytics' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -456,14 +455,17 @@ function EmailMarketingContent() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'statistics' && (
-        <EmailStatistics stats={stats} emails={emails} />
-      )}
       {activeTab === 'campaigns' && (
         <EmailCampaigns emails={emails} />
       )}
+      {activeTab === 'unibox' && (
+        <Unibox emails={emails} mailboxes={mailboxes} />
+      )}
       {activeTab === 'templates' && (
         <EmailTemplates templates={templates} />
+      )}
+      {activeTab === 'analytics' && (
+        <EmailStatistics stats={stats} emails={emails} />
       )}
 
       {/* Connect Mailbox Modal */}
@@ -1827,6 +1829,302 @@ function ComposeEmailModal({
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// Email Accounts Component
+function EmailAccounts({
+  mailboxes,
+  selectedMailbox,
+  setSelectedMailbox,
+  onConnectMailbox,
+  onDeleteMailbox,
+}: {
+  mailboxes: Mailbox[]
+  selectedMailbox: string | null
+  setSelectedMailbox: (id: string | null) => void
+  onConnectMailbox: () => void
+  onDeleteMailbox: (id: string) => void
+}) {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">Email Accounts</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Manage your connected email accounts and mailboxes
+        </p>
+      </div>
+
+      {/* Mailbox Selector */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Connected Mailboxes:
+          </label>
+          <button
+            onClick={onConnectMailbox}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Connect Mailbox
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {mailboxes.map((mailbox) => (
+            <div
+              key={mailbox.id}
+              className={`px-4 py-3 rounded-lg border flex items-center gap-3 cursor-pointer transition-colors ${
+                selectedMailbox === mailbox.id
+                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+              onClick={() => setSelectedMailbox(mailbox.id)}
+            >
+              <Mail className="w-5 h-5 text-gray-500" />
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  {mailbox.display_name || mailbox.email}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {mailbox.provider.charAt(0).toUpperCase() + mailbox.provider.slice(1)}
+                </div>
+              </div>
+              {mailbox.active ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-yellow-500" />
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDeleteMailbox(mailbox.id)
+                }}
+                className="ml-2 text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+          {mailboxes.length === 0 && (
+            <div className="w-full text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+              <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                No mailboxes connected. Click "Connect Mailbox" to get started.
+              </p>
+              <button
+                onClick={onConnectMailbox}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                Connect Your First Mailbox
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Unibox Component (Unified Inbox)
+function Unibox({ emails, mailboxes }: { emails: Email[]; mailboxes: Mailbox[] }) {
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null)
+  const [receivedEmails, setReceivedEmails] = useState<Email[]>([])
+  const [loadingReceived, setLoadingReceived] = useState(true)
+
+  // Fetch received emails on mount
+  useEffect(() => {
+    fetchReceivedEmails()
+  }, [])
+
+  const fetchReceivedEmails = async () => {
+    try {
+      setLoadingReceived(true)
+      const response = await fetch('/api/emails/received?limit=100', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setReceivedEmails(data.emails || [])
+      } else {
+        console.error('Error fetching received emails')
+        setReceivedEmails([])
+      }
+    } catch (error) {
+      console.error('Error fetching received emails:', error)
+      setReceivedEmails([])
+    } finally {
+      setLoadingReceived(false)
+    }
+  }
+
+  // Format date for display (matches "Saturday, Nov 29, 2025 at 9:46 pm")
+  const formatEmailDate = (dateString: string | null) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const dayName = days[date.getDay()]
+    const month = months[date.getMonth()]
+    const day = date.getDate()
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes()
+    const ampm = hours >= 12 ? 'pm' : 'am'
+    const displayHours = hours % 12 || 12
+    const displayMinutes = minutes.toString().padStart(2, '0')
+    
+    return `${dayName}, ${month} ${day}, ${year} at ${displayHours}:${displayMinutes} ${ampm}`
+  }
+
+  // Show demo email if no emails exist (matches Instantly demo)
+  const demoEmail: Email = {
+    id: 'demo',
+    from_email: 'support@instantly.ai',
+    from_name: 'Instantly',
+    to_email: 'Dacion Zxz <dacionproductions@gmail.com>',
+    subject: 'Instantly Demo Email 🚀',
+    html: `<p>This is a demo email just to show you how incoming replies will appear in the Unibox. 🚀</p>
+<p>Feel free to click around, explore all the options, and get a feel for how easy it is to manage your sales conversations here.</p>
+<p>When real replies from your outreach campaigns start rolling in, they'll show up just like this - ready for you to review, reply, or take action.</p>
+<p>To start getting replies, you need to first make sure you <a href="/dashboard/settings" style="color: #2563eb; text-decoration: underline;">connect an account</a> and <a href="/dashboard/email/campaigns/new" style="color: #2563eb; text-decoration: underline;">launch a campaign</a>. If you need help with anything, contact our support team by clicking the chat bubble icon in the bottom right corner of your screen.</p>
+<p>All the best,</p>
+<p>Instantly</p>`,
+    status: 'sent',
+    sent_at: new Date().toISOString(),
+    opened_at: null,
+    clicked_at: null,
+    error: null,
+    received_at: new Date('2025-11-29T21:46:00').toISOString(),
+  }
+
+  // Only use received emails (not sent emails)
+  // Show demo email if no received emails exist (and we're not loading)
+  const displayEmails = !loadingReceived && receivedEmails.length > 0 ? receivedEmails : (!loadingReceived ? [demoEmail] : [])
+  const activeEmail = selectedEmail || displayEmails[0]
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">Unibox</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Unified inbox for all your email conversations
+        </p>
+      </div>
+
+      {/* Email View */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        {loadingReceived ? (
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : displayEmails.length > 0 ? (
+          <div className="flex h-[calc(100vh-300px)]">
+            {/* Email List Sidebar */}
+            {displayEmails.length > 1 && (
+              <div className="w-64 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+                {displayEmails.map((email) => (
+                  <div
+                    key={email.id}
+                    onClick={() => setSelectedEmail(email)}
+                    className={`p-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer transition-colors ${
+                      activeEmail.id === email.id
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-l-blue-600'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-900/50'
+                    }`}
+                  >
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                      {email.subject || 'No Subject'}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 truncate">
+                      {email.from_name || email.from_email || email.to_email}
+                    </div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">
+                      {email.received_at 
+                        ? formatEmailDate(email.received_at)
+                        : email.sent_at
+                        ? formatEmailDate(email.sent_at)
+                        : 'No date'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Email Content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6">
+                {/* Email Header */}
+                <div className="mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        {activeEmail.subject || 'No Subject'}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          <span className="font-medium">{activeEmail.from_name || 'Unknown'}</span>
+                          {activeEmail.from_email && (
+                            <span className="text-gray-500 dark:text-gray-400">
+                              {' '}&lt;{activeEmail.from_email}&gt;
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <span>to</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {activeEmail.to_email.includes('<') 
+                            ? activeEmail.to_email 
+                            : activeEmail.to_email}
+                        </span>
+                        <button
+                          className="ml-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                          title="Reply"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {activeEmail.received_at 
+                        ? formatEmailDate(activeEmail.received_at)
+                        : activeEmail.sent_at
+                        ? formatEmailDate(activeEmail.sent_at)
+                        : ''}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Email Body */}
+                <div className="text-gray-900 dark:text-gray-100 leading-relaxed space-y-4">
+                  {activeEmail.html ? (
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: activeEmail.html }}
+                      className="[&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:text-blue-600 [&_a]:underline [&_a:hover]:text-blue-700"
+                    />
+                  ) : activeEmail.body ? (
+                    <div className="whitespace-pre-wrap">
+                      {activeEmail.body}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400 italic">No content</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              No emails in your inbox yet. Send your first email to get started.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

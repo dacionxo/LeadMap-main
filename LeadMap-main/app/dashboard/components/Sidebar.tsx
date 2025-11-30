@@ -70,7 +70,9 @@ const navSections: NavSection[] = [
     title: 'MARKETING',
     items: [
       { label: 'Social Planner', icon: Megaphone, href: '/dashboard/marketing' },
-      { label: 'Email Sequences', icon: Mail, href: '/dashboard/crm/sequences' },
+      { label: 'Email Campaigns', icon: Mail, href: '/dashboard/email/campaigns' },
+      { label: 'Compose Email', icon: Mail, href: '/dashboard/email/compose' },
+      { label: 'Mailboxes', icon: Mail, href: '/dashboard/email/mailboxes' },
       { label: 'Conversations', icon: MessageCircle, href: '/dashboard/conversations' }
     ]
   },

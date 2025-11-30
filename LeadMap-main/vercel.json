@@ -39,6 +39,14 @@
     {
       "path": "/api/cron/prospect-enrich",
       "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/cron/process-emails",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/gmail-watch-renewal",
+      "schedule": "0 3 * * *"
     }
   ]
 }
