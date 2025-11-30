@@ -60,9 +60,18 @@ export async function GET(
       .select('status, sent_at')
       .eq('campaign_id', id)
 
-    const totalSent = emails?.filter(e => e.status === 'sent').length || 0
-    const totalFailed = emails?.filter(e => e.status === 'failed').length || 0
-    const totalQueued = emails?.filter(e => e.status === 'queued' || e.status === 'sending').length || 0
+    interface EmailStat {
+      status: string
+      sent_at: string | null
+    }
+
+    interface RecipientStat {
+      status: string
+    }
+
+    const totalSent = emails?.filter((e: EmailStat) => e.status === 'sent').length || 0
+    const totalFailed = emails?.filter((e: EmailStat) => e.status === 'failed').length || 0
+    const totalQueued = emails?.filter((e: EmailStat) => e.status === 'queued' || e.status === 'sending').length || 0
 
     return NextResponse.json({
       campaign: {
@@ -75,10 +84,10 @@ export async function GET(
           total_sent: totalSent,
           total_failed: totalFailed,
           total_queued: totalQueued,
-          completed: recipients?.filter(r => r.status === 'completed').length || 0,
-          pending: recipients?.filter(r => r.status === 'pending' || r.status === 'queued').length || 0,
-          bounced: recipients?.filter(r => r.status === 'bounced').length || 0,
-          unsubscribed: recipients?.filter(r => r.status === 'unsubscribed').length || 0
+          completed: recipients?.filter((r: RecipientStat) => r.status === 'completed').length || 0,
+          pending: recipients?.filter((r: RecipientStat) => r.status === 'pending' || r.status === 'queued').length || 0,
+          bounced: recipients?.filter((r: RecipientStat) => r.status === 'bounced').length || 0,
+          unsubscribed: recipients?.filter((r: RecipientStat) => r.status === 'unsubscribed').length || 0
         }
       }
     })
