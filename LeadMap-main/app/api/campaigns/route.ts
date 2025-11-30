@@ -313,17 +313,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create campaign steps' }, { status: 500 })
     }
 
-    // Create campaign recipients from allRecipients (includes list-based and manual)
-    const recipientInserts = allRecipients.map((recipient: any) => ({
-      campaign_id: campaign.id,
-      contact_id: recipient.contactId || null,
-      listing_id: recipient.listingId || null,
-      email: recipient.email,
-      first_name: recipient.firstName || null,
-      last_name: recipient.lastName || null,
-      company: recipient.company || null,
-      status: 'pending'
-    }))
+    // Dedupe check and create campaign recipients
+    const { checkCampaignDedupe, generateDedupeHash } = await import('@/lib/email/campaigns/dedupe')
+    const recipientInserts = []
+    const skippedRecipients = []
+
+    for (const recipient of allRecipients) {
+      // Check for duplicates
+      const dedupeCheck = await checkCampaignDedupe(
+        recipient.email,
+        campaign.id,
+        user.id,
+        supabase
+      )
+
+      if (!dedupeCheck.allowed) {
+        skippedRecipients.push({
+          email: recipient.email,
+          reason: dedupeCheck.reason
+        })
+        continue
+      }
+
+      // Generate dedupe hash
+      const dedupeHash = generateDedupeHash(recipient.email, campaign.send_strategy)
+
+      recipientInserts.push({
+        campaign_id: campaign.id,
+        contact_id: recipient.contactId || null,
+        listing_id: recipient.listingId || null,
+        email: recipient.email.toLowerCase(),
+        first_name: recipient.firstName || null,
+        last_name: recipient.lastName || null,
+        company: recipient.company || null,
+        status: 'pending',
+        dedupe_hash: dedupeHash,
+        metadata: recipient.metadata || null
+      })
+    }
 
     const { error: recipientsError } = await supabase
       .from('campaign_recipients')

@@ -198,8 +198,19 @@ LeadMap/
 │   ├── api/               # API routes
 │   │   ├── auth/          # Authentication callbacks
 │   │   ├── stripe/        # Stripe integration
-│   │   └── admin/         # Admin CSV upload
+│   │   ├── admin/         # Admin CSV upload
+│   │   ├── campaigns/     # Campaign management APIs
+│   │   ├── emails/        # Email sending & tracking
+│   │   ├── mailboxes/     # Mailbox management
+│   │   └── cron/          # Background job processors
 │   ├── dashboard/         # Main dashboard
+│   │   ├── email/         # Email features
+│   │   │   ├── campaigns/ # Campaign pages (list, detail, create)
+│   │   │   ├── compose/    # Email composer
+│   │   │   └── mailboxes/ # Mailbox management
+│   │   ├── marketing/     # Marketing tools
+│   │   │   └── campaigns/ # Marketing campaign pages
+│   │   └── crm/           # CRM features
 │   ├── pricing/           # Pricing page
 │   └── admin/             # Admin panel
 ├── components/            # React components
@@ -210,9 +221,17 @@ LeadMap/
 │   └── AdminPanel.tsx     # CSV upload interface
 ├── lib/                   # Utilities
 │   ├── supabase.ts        # Supabase client
-│   └── stripe.ts          # Stripe configuration
+│   ├── stripe.ts          # Stripe configuration
+│   ├── email/             # Email system
+│   │   ├── providers/     # Email provider abstractions
+│   │   └── campaigns/     # Campaign utilities (dedupe, warmup, throttle)
+│   └── api.ts             # API client functions
 ├── types/                 # TypeScript definitions
 └── supabase/              # Database schema
+    ├── campaigns_complete_schema.sql  # Campaigns & sequences
+    ├── email_settings_schema.sql      # Email settings
+    ├── email_provider_credentials_schema.sql  # Provider credentials
+    └── email_tracking_schema.sql      # Open/click tracking
 ```
 
 ## Features Overview
@@ -265,6 +284,15 @@ LeadMap/
 - `GET /api/emails/settings` - Get email settings (from name, reply-to, footer)
 - `PUT /api/emails/settings` - Update email settings
 - `GET /api/mailboxes/[id]/health` - Check mailbox connection health
+
+### Campaigns & Sequences
+- `GET /api/campaigns` - List all campaigns
+- `POST /api/campaigns` - Create new campaign
+- `GET /api/campaigns/[id]` - Get campaign details
+- `PATCH /api/campaigns/[id]` - Update campaign
+- `POST /api/campaigns/[id]/pause` - Pause a running campaign
+- `POST /api/campaigns/[id]/resume` - Resume a paused campaign
+- `GET /api/campaigns/[id]/report` - Get campaign statistics and reports
 
 ### Probate Leads
 - `GET /api/probate-leads` - List probate leads (filterable by state)
