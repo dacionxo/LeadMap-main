@@ -138,13 +138,6 @@ async function runCronJob(request: NextRequest) {
   }
 }
 
-// Helper function to decrypt (should use your encryption utility)
-function decrypt(encrypted: string): string {
-  // This should use your actual decryption function
-  // For now, return as-is (credentials should be encrypted in production)
-  return encrypted
-}
-
 // Vercel Cron calls with GET, but we also support POST for manual triggers
 export async function GET(request: NextRequest) {
   return runCronJob(request)
