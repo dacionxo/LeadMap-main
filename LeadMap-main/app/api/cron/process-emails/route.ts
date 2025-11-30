@@ -25,15 +25,6 @@ import { decryptMailboxTokens, encryptMailboxTokens } from '@/lib/email/encrypti
  * );
  */
 
-// Vercel Cron calls with GET, but we also support POST for manual triggers
-export async function GET(request: NextRequest) {
-  return runCronJob(request)
-}
-
-export async function POST(request: NextRequest) {
-  return runCronJob(request)
-}
-
 async function runCronJob(request: NextRequest) {
   try {
     // Verify cron secret or service key (same pattern as other cron jobs)
@@ -643,5 +634,14 @@ async function scheduleNextStep(
   } catch (error) {
     console.error('Error scheduling next step:', error)
   }
+}
+
+// Vercel Cron calls with GET, but we also support POST for manual triggers
+export async function GET(request: NextRequest) {
+  return runCronJob(request)
+}
+
+export async function POST(request: NextRequest) {
+  return runCronJob(request)
 }
 
