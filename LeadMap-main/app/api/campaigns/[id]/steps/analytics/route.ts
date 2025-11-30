@@ -7,6 +7,12 @@ import { cookies } from 'next/headers'
  * GET: Get analytics aggregated per step
  */
 
+interface CampaignStep {
+  id: string
+  step_number: number
+  subject: string
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -54,7 +60,7 @@ export async function GET(
     }
 
     // Get emails for each step
-    const stepIds = steps.map(s => s.id)
+    const stepIds = steps.map((s: CampaignStep) => s.id)
     let emailsQuery = supabase
       .from('emails')
       .select('id, campaign_step_id, to_email, sent_at, opened_at, clicked_at, status')
@@ -76,7 +82,7 @@ export async function GET(
     }
 
     // Aggregate metrics per step
-    const stepAnalytics = steps.map((step: any) => {
+    const stepAnalytics = steps.map((step: CampaignStep) => {
       const stepEmails = emails?.filter((e: any) => e.campaign_step_id === step.id) || []
       const sent = stepEmails.filter((e: any) => e.status === 'sent' && e.sent_at).length
       const delivered = sent // Assuming sent means delivered
