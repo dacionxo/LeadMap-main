@@ -31,6 +31,11 @@ export interface EmailPayload {
   html: string
   fromName?: string
   fromEmail?: string
+  cc?: string
+  bcc?: string
+  replyTo?: string  // Message-ID to reply to
+  references?: string  // Space-separated Message-IDs for threading
+  inReplyTo?: string  // Message-ID this is replying to
 }
 
 export interface SendResult {

@@ -39,7 +39,13 @@ export async function gmailSend(mailbox: Mailbox, email: EmailPayload): Promise<
     const fromName = email.fromName || mailbox.from_name || mailbox.display_name || mailbox.email
     const from = `${fromName} <${fromEmail}>`
 
-    const message = createGmailMimeMessage(from, email.to, email.subject, email.html)
+    const message = createGmailMimeMessage(from, email.to, email.subject, email.html, {
+      cc: email.cc,
+      bcc: email.bcc,
+      replyTo: email.replyTo,
+      inReplyTo: email.inReplyTo,
+      references: email.references
+    })
 
     // Send via Gmail API
     const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
@@ -142,14 +148,50 @@ async function refreshGmailToken(mailbox: Mailbox): Promise<{ success: boolean; 
   }
 }
 
-function createGmailMimeMessage(from: string, to: string, subject: string, html: string): string {
+function createGmailMimeMessage(
+  from: string, 
+  to: string, 
+  subject: string, 
+  html: string,
+  options?: {
+    cc?: string
+    bcc?: string
+    replyTo?: string
+    inReplyTo?: string
+    references?: string
+  }
+): string {
   // Create a proper MIME message
   const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36)}`
   
-  const mimeMessage = [
+  const headers: string[] = [
     `From: ${from}`,
-    `To: ${to}`,
-    `Subject: ${subject}`,
+    `To: ${to}`
+  ]
+
+  if (options?.cc) {
+    headers.push(`Cc: ${options.cc}`)
+  }
+
+  if (options?.bcc) {
+    headers.push(`Bcc: ${options.bcc}`)
+  }
+
+  headers.push(`Subject: ${subject}`)
+
+  if (options?.replyTo) {
+    headers.push(`Reply-To: ${options.replyTo}`)
+  }
+
+  if (options?.inReplyTo) {
+    headers.push(`In-Reply-To: ${options.inReplyTo}`)
+  }
+
+  if (options?.references) {
+    headers.push(`References: ${options.references}`)
+  }
+
+  headers.push(
     `MIME-Version: 1.0`,
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
     ``,
@@ -159,7 +201,9 @@ function createGmailMimeMessage(from: string, to: string, subject: string, html:
     ``,
     Buffer.from(html).toString('base64'),
     `--${boundary}--`
-  ].join('\r\n')
+  )
+  
+  const mimeMessage = headers.join('\r\n')
 
   // Base64URL encode the message
   return Buffer.from(mimeMessage)
