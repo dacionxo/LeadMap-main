@@ -233,7 +233,8 @@ async function fetchIMAPMessages(
             })
 
             msg.once('end', () => {
-              if (uid === null) {
+              const messageUid = uid
+              if (messageUid === null) {
                 processedCount++
                 if (processedCount === uids.length) {
                   imap.end()
@@ -256,7 +257,7 @@ async function fetchIMAPMessages(
 
                 if (parsed) {
                   messages.push({
-                    uid,
+                    uid: messageUid,
                     raw: parsed,
                     parsed: parseIMAPMessage(parsed, mailboxEmail)
                   })
