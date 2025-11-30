@@ -33,37 +33,48 @@ export async function GET(request: NextRequest) {
 
     // Record click event
     if (emailId || recipientId) {
-      await supabase
-        .from('email_clicks')
-        .insert({
-          email_id: emailId || null,
-          campaign_recipient_id: recipientId || null,
-          campaign_id: campaignId || null,
-          clicked_url: url,
-          clicked_at: new Date().toISOString(),
-          ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
-          user_agent: request.headers.get('user-agent') || null
-        })
-        .catch(err => {
+      try {
+        const { error } = await supabase
+          .from('email_clicks')
+          .insert({
+            email_id: emailId || null,
+            campaign_recipient_id: recipientId || null,
+            campaign_id: campaignId || null,
+            clicked_url: url,
+            clicked_at: new Date().toISOString(),
+            ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
+            user_agent: request.headers.get('user-agent') || null
+          })
+        if (error) {
           // Log but don't fail if table doesn't exist yet
-          console.warn('Failed to log click:', err)
-        })
+          console.warn('Failed to log click:', error)
+        }
+      } catch (err) {
+        // Log but don't fail if table doesn't exist yet
+        console.warn('Failed to log click:', err)
+      }
 
       // Update email/campaign recipient if applicable
       if (emailId) {
-        await supabase
-          .from('emails')
-          .update({ clicked_at: new Date().toISOString() })
-          .eq('id', emailId)
-          .catch(() => {}) // Ignore errors
+        try {
+          await supabase
+            .from('emails')
+            .update({ clicked_at: new Date().toISOString() })
+            .eq('id', emailId)
+        } catch {
+          // Ignore errors
+        }
       }
 
       if (recipientId) {
-        await supabase
-          .from('campaign_recipients')
-          .update({ clicked: true, clicked_at: new Date().toISOString() })
-          .eq('id', recipientId)
-          .catch(() => {}) // Ignore errors
+        try {
+          await supabase
+            .from('campaign_recipients')
+            .update({ clicked: true, clicked_at: new Date().toISOString() })
+            .eq('id', recipientId)
+        } catch {
+          // Ignore errors
+        }
       }
     }
 
