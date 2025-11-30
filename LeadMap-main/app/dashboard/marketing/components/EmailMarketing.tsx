@@ -22,7 +22,8 @@ import {
   Filter,
   Download,
   MoreVertical,
-  Clock
+  Clock,
+  Info
 } from 'lucide-react'
 import {
   BarChart,
@@ -534,6 +535,49 @@ export default function EmailMarketing() {
 function EmailStatistics({ stats, emails }: { stats: EmailStats; emails: Email[] }) {
   const [topEmailsMetric, setTopEmailsMetric] = useState<'openRate' | 'clickRate'>('openRate')
   const [openRateMetric, setOpenRateMetric] = useState<'openRate' | 'unsubscribed' | 'clickRate' | 'emailsSent' | 'spamComplaints'>('openRate')
+  const [timeseriesData, setTimeseriesData] = useState<any[]>([])
+  const [timeseriesTotals, setTimeseriesTotals] = useState<any>({})
+  const [timeseriesRates, setTimeseriesRates] = useState<any>({})
+  const [loadingTimeseries, setLoadingTimeseries] = useState(false)
+  const [selectedMetrics, setSelectedMetrics] = useState({
+    sent: true,
+    totalOpens: true,
+    uniqueOpens: true,
+    totalReplies: true,
+    totalClicks: false,
+    uniqueClicks: false,
+  })
+
+  // Fetch timeseries data
+  useEffect(() => {
+    const fetchTimeseries = async () => {
+      setLoadingTimeseries(true)
+      try {
+        // Get last 7 days
+        const endDate = new Date()
+        const startDate = new Date()
+        startDate.setDate(startDate.getDate() - 7)
+        
+        const response = await fetch(
+          `/api/email/analytics/timeseries?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+          { credentials: 'include' }
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+          setTimeseriesData(data.timeseries || [])
+          setTimeseriesTotals(data.totals || {})
+          setTimeseriesRates(data.rates || {})
+        }
+      } catch (error) {
+        console.error('Error fetching timeseries:', error)
+      } finally {
+        setLoadingTimeseries(false)
+      }
+    }
+    
+    fetchTimeseries()
+  }, [])
 
   // Prepare chart data
   const engagementData = [
@@ -667,8 +711,242 @@ function EmailStatistics({ stats, emails }: { stats: EmailStats; emails: Email[]
     }
   }
 
+  // Format chart data for the line graph
+  const chartData = timeseriesData.map((day) => {
+    const date = new Date(day.date)
+    const dayMonth = `${String(date.getDate()).padStart(2, '0')} ${date.toLocaleString('default', { month: 'short' })}`
+    
+    return {
+      date: dayMonth,
+      sent: selectedMetrics.sent ? day.sent : null,
+      totalOpens: selectedMetrics.totalOpens ? day.opened : null,
+      uniqueOpens: selectedMetrics.uniqueOpens ? day.opened : null, // Using opened as unique for now
+      totalReplies: selectedMetrics.totalReplies ? day.replied : null,
+      totalClicks: selectedMetrics.totalClicks ? day.clicked : null,
+      uniqueClicks: selectedMetrics.uniqueClicks ? day.clicked : null, // Using clicked as unique for now
+    }
+  })
+
+  // Calculate opportunities (replies that could lead to sales)
+  const opportunitiesCount = timeseriesTotals.replied || 0
+  const opportunitiesValue = 0 // TODO: Calculate from actual opportunities/revenue
+
   return (
     <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {/* Total sent - Orange */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total sent</span>
+            <Info className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-white">
+            {timeseriesTotals.sent?.toLocaleString() || stats.delivered.toLocaleString() || '0'}
+          </div>
+        </div>
+
+        {/* Open rate - Blue */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Open rate</span>
+            <Info className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-white">
+            {timeseriesRates.openRate?.toFixed(1) || stats.openRate.toFixed(1) || '0.0'}%
+          </div>
+        </div>
+
+        {/* Click rate - Black */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-gray-900 dark:bg-gray-100"></div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Click rate</span>
+            <Info className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-white">
+            {timeseriesRates.clickRate?.toFixed(1) || stats.clickRate.toFixed(1) || '0.0'}%
+          </div>
+        </div>
+
+        {/* Reply rate - Purple */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Reply rate</span>
+            <Info className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-white">
+            {timeseriesRates.replyRate?.toFixed(1) || '0.0'}%
+          </div>
+        </div>
+
+        {/* Opportunities - Green */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Opportunities</span>
+            <Info className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-white">
+            {opportunitiesCount} | ${opportunitiesValue.toLocaleString()}
+          </div>
+        </div>
+      </div>
+
+      {/* Graph with Legend */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        {/* Legend */}
+        <div className="mb-4 flex flex-wrap items-center gap-4">
+          <button
+            onClick={() => setSelectedMetrics({ ...selectedMetrics, sent: !selectedMetrics.sent })}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span className={`text-sm ${selectedMetrics.sent ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+              Sent
+            </span>
+          </button>
+          <button
+            onClick={() => setSelectedMetrics({ ...selectedMetrics, totalOpens: !selectedMetrics.totalOpens })}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <span className={`text-sm ${selectedMetrics.totalOpens ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+              Total opens
+            </span>
+          </button>
+          <button
+            onClick={() => setSelectedMetrics({ ...selectedMetrics, uniqueOpens: !selectedMetrics.uniqueOpens })}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+            <span className={`text-sm ${selectedMetrics.uniqueOpens ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+              Unique opens
+            </span>
+          </button>
+          <button
+            onClick={() => setSelectedMetrics({ ...selectedMetrics, totalReplies: !selectedMetrics.totalReplies })}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="w-3 h-3 rounded-full bg-teal-500"></div>
+            <span className={`text-sm ${selectedMetrics.totalReplies ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+              Total replies
+            </span>
+          </button>
+          <button
+            onClick={() => setSelectedMetrics({ ...selectedMetrics, totalClicks: !selectedMetrics.totalClicks })}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+            <span className={`text-sm ${selectedMetrics.totalClicks ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+              Total clicks
+            </span>
+          </button>
+          <button
+            onClick={() => setSelectedMetrics({ ...selectedMetrics, uniqueClicks: !selectedMetrics.uniqueClicks })}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+            <span className={`text-sm ${selectedMetrics.uniqueClicks ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+              Unique clicks
+            </span>
+          </button>
+        </div>
+
+        {/* Line Chart */}
+        {loadingTimeseries ? (
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData.length > 0 ? chartData : [{ date: 'No data', sent: 0 }]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="date" 
+                stroke="#6b7280"
+                style={{ fontSize: '12px' }}
+              />
+              <YAxis 
+                stroke="#6b7280"
+                style={{ fontSize: '12px' }}
+                domain={[0, 'auto']}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white', 
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px'
+                }}
+              />
+              {selectedMetrics.sent && (
+                <Line 
+                  type="monotone" 
+                  dataKey="sent" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2}
+                  dot={false}
+                  name="Sent"
+                />
+              )}
+              {selectedMetrics.totalOpens && (
+                <Line 
+                  type="monotone" 
+                  dataKey="totalOpens" 
+                  stroke="#eab308" 
+                  strokeWidth={2}
+                  dot={false}
+                  name="Total opens"
+                />
+              )}
+              {selectedMetrics.uniqueOpens && (
+                <Line 
+                  type="monotone" 
+                  dataKey="uniqueOpens" 
+                  stroke="#4ade80" 
+                  strokeWidth={2}
+                  dot={false}
+                  name="Unique opens"
+                />
+              )}
+              {selectedMetrics.totalReplies && (
+                <Line 
+                  type="monotone" 
+                  dataKey="totalReplies" 
+                  stroke="#14b8a6" 
+                  strokeWidth={2}
+                  dot={false}
+                  name="Total replies"
+                />
+              )}
+              {selectedMetrics.totalClicks && (
+                <Line 
+                  type="monotone" 
+                  dataKey="totalClicks" 
+                  stroke="#9ca3af" 
+                  strokeWidth={2}
+                  dot={false}
+                  name="Total clicks"
+                />
+              )}
+              {selectedMetrics.uniqueClicks && (
+                <Line 
+                  type="monotone" 
+                  dataKey="uniqueClicks" 
+                  stroke="#9ca3af" 
+                  strokeWidth={2}
+                  dot={false}
+                  name="Unique clicks"
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
       {/* Campaign and Date Filter */}
       <div className="flex items-center gap-4">
         <select className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm">
