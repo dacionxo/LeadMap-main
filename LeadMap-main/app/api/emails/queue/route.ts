@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Verify mailbox belongs to user
     const { data: mailbox, error: mailboxError } = await supabaseAdmin
       .from('mailboxes')
-      .select('id, user_id, from_name, from_email, email')
+      .select('id, user_id, from_name, from_email, email, display_name')
       .eq('id', mailboxId)
       .eq('user_id', user.id)
       .single()
