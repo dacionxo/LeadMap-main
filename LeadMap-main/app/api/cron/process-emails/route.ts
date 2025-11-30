@@ -124,7 +124,8 @@ export async function POST(request: NextRequest) {
     const results: any[] = []
 
     // Process each mailbox
-    for (const [mailboxId, emails] of emailsByMailbox.entries()) {
+    const mailboxEntries = Array.from(emailsByMailbox.entries())
+    for (const [mailboxId, emails] of mailboxEntries) {
       const mailbox = emails[0].mailbox as Mailbox
 
       // Count emails sent in last hour and day for this mailbox (only sent emails)
