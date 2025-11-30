@@ -4,8 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { ProviderConfig } from './index'
-import { resendSend, sendgridSend, mailgunSend, sesSend } from './index'
+import { ProviderConfig } from '../types'
 
 export interface HealthCheckResult {
   healthy: boolean
