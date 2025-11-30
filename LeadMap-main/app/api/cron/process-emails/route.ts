@@ -94,12 +94,29 @@ async function runCronJob(request: NextRequest) {
       })
     }
 
+    // Fetch campaigns for emails that have campaign_id
+    const campaignIds = [...new Set(queuedEmails.map((e: any) => e.campaign_id).filter(Boolean))]
+    const campaignsMap = new Map<string, any>()
+    
+    if (campaignIds.length > 0) {
+      const { data: campaigns } = await supabase
+        .from('campaigns')
+        .select('id, status, user_id')
+        .in('id', campaignIds)
+      
+      if (campaigns) {
+        campaigns.forEach((campaign: any) => {
+          campaignsMap.set(campaign.id, campaign)
+        })
+      }
+    }
+
     // Filter out emails where:
     // 1. Mailbox is not active
     // 2. Campaign is paused or cancelled
     const validEmails = queuedEmails.filter((email: any) => {
       const mailbox = email.mailbox
-      const campaign = email.campaign
+      const campaign = email.campaign_id ? campaignsMap.get(email.campaign_id) : null
 
       if (!mailbox || !mailbox.active) {
         return false
@@ -409,7 +426,8 @@ async function runCronJob(request: NextRequest) {
 
             // Record 'sent' event in unified email_events table
             // Get user_id from email or campaign
-            const userId = email.user_id || email.campaign?.user_id
+            const campaign = email.campaign_id ? campaignsMap.get(email.campaign_id) : null
+            const userId = email.user_id || campaign?.user_id
             if (userId) {
               await recordSentEvent({
                 userId: userId,
@@ -477,7 +495,8 @@ async function runCronJob(request: NextRequest) {
 
             // Record 'failed' event in unified email_events table
             // Get user_id from email or campaign
-            const userId = email.user_id || email.campaign?.user_id
+            const campaignForFailure = email.campaign_id ? campaignsMap.get(email.campaign_id) : null
+            const userId = email.user_id || campaignForFailure?.user_id
             if (userId) {
               await recordFailedEvent({
                 userId: userId,
