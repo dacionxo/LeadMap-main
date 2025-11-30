@@ -172,7 +172,7 @@ export async function POST(
     const recipientInserts: any[] = []
     const skippedRecipients: any[] = []
 
-    for (const recipient of uniqueRecipients.values()) {
+    for (const recipient of Array.from(uniqueRecipients.values())) {
       const email = recipient.email.toLowerCase()
       
       // Skip if already exists
