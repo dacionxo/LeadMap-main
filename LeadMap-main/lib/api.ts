@@ -108,3 +108,68 @@ export function renderTemplate(body: string, lead: Partial<Listing>): string {
     .replace(/\{\{days_on_market\}\}/g, lead.days_on_market?.toString() || '0')
 }
 
+/**
+ * Email Sending API
+ */
+export interface SendEmailRequest {
+  mailboxId: string
+  to: string
+  subject: string
+  html: string
+  scheduleAt?: string
+  type?: 'transactional' | 'campaign'
+}
+
+export interface SendEmailResponse {
+  success: boolean
+  email?: {
+    id: string
+    status: string
+    sent_at?: string
+    provider_message_id?: string
+  }
+  error?: string
+  message?: string
+}
+
+export const sendEmail = (request: SendEmailRequest) =>
+  authedFetch('/api/emails/send', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  }).then(r => r.json()) as Promise<SendEmailResponse>
+
+export const queueEmail = (request: SendEmailRequest) =>
+  authedFetch('/api/emails/queue', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  }).then(r => r.json()) as Promise<SendEmailResponse>
+
+/**
+ * Email Settings API
+ */
+export interface EmailSettings {
+  from_name: string
+  reply_to: string
+  default_footer: string
+}
+
+export const getEmailSettings = () =>
+  authedFetch('/api/emails/settings').then(r => r.json()) as Promise<{ settings: EmailSettings }>
+
+export const updateEmailSettings = (settings: Partial<EmailSettings>) =>
+  authedFetch('/api/emails/settings', {
+    method: 'PUT',
+    body: JSON.stringify(settings),
+  }).then(r => r.json())
+
+/**
+ * Mailbox Health Check API
+ */
+export const checkMailboxHealth = (mailboxId: string) =>
+  authedFetch(`/api/mailboxes/${mailboxId}/health`).then(r => r.json()) as Promise<{
+    healthy: boolean
+    status: string
+    last_checked?: string
+    error?: string
+  }>
+

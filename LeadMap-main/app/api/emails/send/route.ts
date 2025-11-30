@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     const limitCheck = await checkMailboxLimits(mailbox, {
       hourly: hourlyCount,
       daily: dailyCount
-    })
+    }, supabaseAdmin)
 
     if (!limitCheck.allowed) {
       return NextResponse.json({

@@ -80,39 +80,138 @@ export async function sendViaMailbox(
 }
 
 /**
- * Check mailbox rate limits
+ * Check mailbox rate limits (per-mailbox and per-domain)
  * Returns whether sending is allowed and how many can be sent
  */
 export async function checkMailboxLimits(
   mailbox: Mailbox,
-  sentCounts: { hourly: number; daily: number }
+  sentCounts: { hourly: number; daily: number },
+  supabase?: any
 ): Promise<{ allowed: boolean; reason?: string; remainingHourly?: number; remainingDaily?: number }> {
   const { hourly, daily } = sentCounts
 
-  // Check hourly limit
-  if (hourly >= mailbox.hourly_limit) {
-    return {
-      allowed: false,
-      reason: `Hourly limit of ${mailbox.hourly_limit} emails reached`,
-      remainingHourly: 0,
-      remainingDaily: Math.max(0, mailbox.daily_limit - daily)
+  // Get rate limit configuration from database if available
+  let rateLimits = {
+    hourly_limit: mailbox.hourly_limit || 100,
+    daily_limit: mailbox.daily_limit || 1000,
+    domain_hourly_limit: 500,
+    domain_daily_limit: 5000
+  }
+
+  if (supabase) {
+    try {
+      const { data: limitConfig } = await supabase
+        .from('mailbox_rate_limits')
+        .select('*')
+        .eq('mailbox_id', mailbox.id)
+        .single()
+
+      if (limitConfig) {
+        rateLimits = {
+          hourly_limit: limitConfig.hourly_limit,
+          daily_limit: limitConfig.daily_limit,
+          domain_hourly_limit: limitConfig.domain_hourly_limit,
+          domain_daily_limit: limitConfig.domain_daily_limit
+        }
+
+        // Update current counts
+        await supabase
+          .from('mailbox_rate_limits')
+          .update({
+            current_hourly_count: hourly,
+            current_daily_count: daily,
+            updated_at: new Date().toISOString()
+          })
+          .eq('mailbox_id', mailbox.id)
+      }
+    } catch (error) {
+      console.warn('Failed to fetch rate limits from database:', error)
     }
   }
 
-  // Check daily limit
-  if (daily >= mailbox.daily_limit) {
+  // Check per-mailbox hourly limit
+  if (hourly >= rateLimits.hourly_limit) {
     return {
       allowed: false,
-      reason: `Daily limit of ${mailbox.daily_limit} emails reached`,
-      remainingHourly: Math.max(0, mailbox.hourly_limit - hourly),
+      reason: `Hourly limit of ${rateLimits.hourly_limit} emails reached for this mailbox`,
+      remainingHourly: 0,
+      remainingDaily: Math.max(0, rateLimits.daily_limit - daily)
+    }
+  }
+
+  // Check per-mailbox daily limit
+  if (daily >= rateLimits.daily_limit) {
+    return {
+      allowed: false,
+      reason: `Daily limit of ${rateLimits.daily_limit} emails reached for this mailbox`,
+      remainingHourly: Math.max(0, rateLimits.hourly_limit - hourly),
       remainingDaily: 0
+    }
+  }
+
+  // Check per-domain limits if supabase is available
+  if (supabase && mailbox.email) {
+    const domain = mailbox.email.split('@')[1]
+    if (domain) {
+      try {
+        // Get all mailboxes for this domain
+        const { data: domainMailboxes } = await supabase
+          .from('mailboxes')
+          .select('id')
+          .like('email', `%@${domain}`)
+
+        if (domainMailboxes && domainMailboxes.length > 0) {
+          const mailboxIds = domainMailboxes.map((m: any) => m.id)
+          
+          // Count total emails sent from this domain in last hour/day
+          const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
+          const { data: domainEmails } = await supabase
+            .from('emails')
+            .select('sent_at')
+            .in('mailbox_id', mailboxIds)
+            .eq('status', 'sent')
+            .not('sent_at', 'is', null)
+
+          const domainHourly = domainEmails?.filter((e: any) => 
+            e.sent_at && new Date(e.sent_at) >= new Date(oneHourAgo)
+          ).length || 0
+
+          const domainDaily = domainEmails?.filter((e: any) => 
+            e.sent_at && new Date(e.sent_at) >= new Date(oneDayAgo)
+          ).length || 0
+
+          // Check domain limits
+          if (domainHourly >= rateLimits.domain_hourly_limit) {
+            return {
+              allowed: false,
+              reason: `Domain hourly limit of ${rateLimits.domain_hourly_limit} emails reached`,
+              remainingHourly: 0,
+              remainingDaily: Math.max(0, rateLimits.domain_daily_limit - domainDaily)
+            }
+          }
+
+          if (domainDaily >= rateLimits.domain_daily_limit) {
+            return {
+              allowed: false,
+              reason: `Domain daily limit of ${rateLimits.domain_daily_limit} emails reached`,
+              remainingHourly: Math.max(0, rateLimits.domain_hourly_limit - domainHourly),
+              remainingDaily: 0
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to check domain limits:', error)
+        // Continue with mailbox-level checks only
+      }
     }
   }
 
   return {
     allowed: true,
-    remainingHourly: mailbox.hourly_limit - hourly,
-    remainingDaily: mailbox.daily_limit - daily
+    remainingHourly: rateLimits.hourly_limit - hourly,
+    remainingDaily: rateLimits.daily_limit - daily
   }
 }
 

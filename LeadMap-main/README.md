@@ -67,6 +67,30 @@ NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID=price_starter_monthly
 NEXT_PUBLIC_STRIPE_PRO_PRICE_ID=price_pro_monthly
 STRIPE_STARTER_PRICE_ID=price_starter_monthly
 STRIPE_PRO_PRICE_ID=price_pro_monthly
+
+# Email Provider Configuration (for transactional emails)
+# Choose one or more providers:
+# Resend (Recommended)
+RESEND_API_KEY=re_xxxxxxxxxxxxx
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+
+# SendGrid (Alternative)
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxx
+SENDGRID_FROM_EMAIL=noreply@yourdomain.com
+
+# Mailgun (Alternative)
+MAILGUN_API_KEY=xxxxxxxxxxxxx
+MAILGUN_DOMAIN=yourdomain.com
+
+# Generic Email Service (Alternative)
+EMAIL_SERVICE_URL=https://api.example.com/send
+EMAIL_SERVICE_API_KEY=your_api_key
+EMAIL_FROM=noreply@yourdomain.com
+
+# Email Settings
+EMAIL_DEFAULT_FROM_NAME=Your Company Name
+EMAIL_DEFAULT_REPLY_TO=support@yourdomain.com
+EMAIL_DEFAULT_FOOTER=<p>© 2024 Your Company. All rights reserved.</p>
 ```
 
 ### 3. Database Setup
@@ -208,6 +232,11 @@ LeadMap/
 - `GET /api/email-templates/[id]` - Get template by ID
 - `PUT /api/email-templates/[id]` - Update template (admin only)
 - `DELETE /api/email-templates/[id]` - Delete template (admin only)
+- `POST /api/emails/send` - Send email via mailbox (transactional or campaign)
+- `POST /api/emails/queue` - Queue email for background processing
+- `GET /api/emails/settings` - Get email settings (from name, reply-to, footer)
+- `PUT /api/emails/settings` - Update email settings
+- `GET /api/mailboxes/[id]/health` - Check mailbox connection health
 
 ### Probate Leads
 - `GET /api/probate-leads` - List probate leads (filterable by state)
