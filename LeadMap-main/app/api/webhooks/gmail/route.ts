@@ -38,7 +38,16 @@ export async function GET(request: NextRequest) {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const topicName = process.env.GMAIL_PUBSUB_TOPIC_NAME
 
-  const health = {
+  const health: {
+    status: string
+    timestamp: string
+    checks: {
+      supabase: boolean
+      pubsub_topic: boolean
+      pubsub_verification: boolean
+      expired_watches?: number | string
+    }
+  } = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     checks: {
