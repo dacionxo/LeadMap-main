@@ -558,14 +558,6 @@ export default function PricingPage() {
               </nav>
             </div>
 
-            {/* Resources Column */}
-            <div className="flex flex-col gap-4">
-              <h4 className="text-sm font-heading font-semibold text-black uppercase tracking-wider">Resources</h4>
-              <nav className="flex flex-col gap-3">
-                {/* Resources links will be added here as pages are created */}
-              </nav>
-            </div>
-
             {/* Company Column */}
             <div className="flex flex-col gap-4">
               <h4 className="text-sm font-heading font-semibold text-black uppercase tracking-wider">Company</h4>

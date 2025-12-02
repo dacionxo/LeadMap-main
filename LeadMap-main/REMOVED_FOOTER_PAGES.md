@@ -131,14 +131,31 @@ The footer structure follows this pattern:
 </div>
 ```
 
+### Step 4: Restore Resources Column (If Needed)
+
+If you want to restore the Resources column, add it back between the Product and Company columns:
+
+```tsx
+{/* Resources Column */}
+<div className="flex flex-col gap-4">
+  <h4 className="text-sm font-heading font-semibold text-black uppercase tracking-wider">Resources</h4>
+  <nav className="flex flex-col gap-3">
+    <a href="/blog" className="text-sm font-light text-black hover:text-black transition-colors">Blog</a>
+    <a href="/guides" className="text-sm font-light text-black hover:text-black transition-colors">Guides</a>
+    {/* Add other resource links as pages are created */}
+  </nav>
+</div>
+```
+
 ## 📝 Current Footer Structure
 
 ### Product Column (Currently Active)
 - Dashboard (`/dashboard`)
 - Pricing (`/pricing`)
 
-### Resources Column (Currently Empty)
-- *All links removed - ready for future pages*
+### Resources Column (Removed)
+- **Status**: Entire column has been removed from the footer
+- **Note**: The Resources column and all its links (Blog, Guides, Case Studies, Help Center, Documentation) have been completely removed from the footer. When ready to add resources back, the entire column can be restored.
 
 ### Company Column (Currently Active)
 - Contact (`/contact`)
@@ -171,6 +188,6 @@ When creating new pages, maintain consistency with existing pages:
 
 - All removed pages were removed from both `LandingPage.tsx` and `PricingPage.tsx` footers
 - The "About" link in the main navigation header was replaced with "Contact"
-- The Resources column header remains but the navigation is empty with a comment indicating where links will be added
+- **The Resources column has been completely removed** from the footer (not just emptied). When ready to add resources back, restore the entire column structure.
 - Keep the footer structure consistent across all pages that use it
 
