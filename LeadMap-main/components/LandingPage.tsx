@@ -47,8 +47,15 @@ export default function LandingPage() {
   // Feature tab state (no carousel/locking)
   const featuresSectionRef2 = useRef<HTMLDivElement>(null)
   
-  // Animation state - initialize hero as visible
-  const [isVisible, setIsVisible] = useState<Record<string, boolean>>({ hero: true, 'hero-title': true })
+  // Animation state - initialize hero and benefits as visible
+  const [isVisible, setIsVisible] = useState<Record<string, boolean>>({ 
+    hero: true, 
+    'hero-title': true,
+    'benefits': true,
+    'benefit-1': true,
+    'benefit-2': true,
+    'benefit-3': true
+  })
   const heroRef = useRef<HTMLDivElement>(null)
   const benefitsRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
@@ -1088,25 +1095,52 @@ export default function LandingPage() {
                     Join over 1,000 real estate professionals using NextDeal
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all">
-                    {/* Company Logos - Placeholder for now */}
-                    <div className="h-8 w-24 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo 1</span>
-                    </div>
-                    <div className="h-8 w-24 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo 2</span>
-                    </div>
-                    <div className="h-8 w-24 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo 3</span>
-                    </div>
-                    <div className="h-8 w-24 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo 4</span>
-                    </div>
-                    <div className="h-8 w-24 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo 5</span>
-                    </div>
-                    <div className="h-8 w-24 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo 6</span>
-                    </div>
+                    {/* Company Logos */}
+                    <img 
+                      src="/company-logos/brookfield-logo.png" 
+                      alt="Brookfield" 
+                      className="h-10 w-auto object-contain max-w-[150px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    <img 
+                      src="/company-logos/firstservice-logo.png" 
+                      alt="FirstService" 
+                      className="h-10 w-auto object-contain max-w-[150px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    <img 
+                      src="/company-logos/maple-leaf-logo.png" 
+                      alt="Company Logo" 
+                      className="h-10 w-auto object-contain max-w-[150px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    <img 
+                      src="/company-logos/abstract-logo.png" 
+                      alt="Company Logo" 
+                      className="h-10 w-auto object-contain max-w-[150px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    <img 
+                      src="/company-logos/mattamy-homes-logo.png" 
+                      alt="Mattamy Homes Wildflowers" 
+                      className="h-10 w-auto object-contain max-w-[150px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
                   </div>
                 </div>
                 {/* Customer Review Quote - Apollo.io Style */}
@@ -1122,15 +1156,21 @@ export default function LandingPage() {
                     <div className="max-w-64 pl-3">
                       <div className="flex flex-col items-start">
                         <p className="antialiased desktop-xl:text-[14px] desktop-xl:leading-[120%] tablet:text-[12px] tablet:leading-[120%] text-[10px] leading-[120%] uppercase font-sans text-gray-600 dark:text-gray-400">
-                          John Froning
+                          Tanza James
                         </p>
                         <p className="antialiased desktop-xl:text-[14px] desktop-xl:leading-[120%] tablet:text-[12px] tablet:leading-[120%] text-[10px] leading-[120%] uppercase font-sans text-gray-600 dark:text-gray-400 mb-4 max-w-48">
                           Real Estate Broker
                         </p>
-                        {/* Referral Logo/Image - Placeholder for company logo */}
-                        <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                          <span className="text-xs text-gray-500">Company</span>
-                        </div>
+                        {/* Company Logo */}
+                        <img 
+                          src="/company-logos/Royal LePage.png" 
+                          alt="Royal LePage" 
+                          className="h-6 w-auto object-contain max-w-[120px]"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -1167,10 +1207,16 @@ export default function LandingPage() {
                     <p className="antialiased desktop-xl:text-[18px] desktop-xl:leading-[110%] text-[16px] leading-[110%] font-sans text-gray-600 dark:text-gray-400 desktop-s:max-w-32 desktop:max-w-[116px] desktop-xl:max-w-40">
                       75% increase in closed deals
                     </p>
-                    {/* Company/Partner Logo - Placeholder */}
-                    <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo</span>
-                    </div>
+                    {/* Company Logo */}
+                    <img 
+                      src="/company-logos/Homeward.png" 
+                      alt="Homeward" 
+                      className="h-4 w-auto object-contain max-w-[80px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
                   </div>
                   <h1 className="antialiased desktop-xl:text-[64px] desktop-xl:tracking-[-1.28px] desktop-xl:leading-[90%] desktop:text-[56px] desktop:tracking-[-1.12px] desktop:leading-[90%] desktop-s:text-[48px] desktop-s:tracking-[-0.96px] desktop-s:leading-[90%] tablet:text-[40px] tablet:tracking-[-0.8px] tablet:leading-[90%] text-[32px] tracking-[-0.64px] leading-[90%] font-heading font-normal text-gray-900 dark:text-gray-100">
                     75%
@@ -1191,10 +1237,16 @@ export default function LandingPage() {
                     <p className="antialiased desktop-xl:text-[18px] desktop-xl:leading-[110%] text-[16px] leading-[110%] font-sans text-gray-600 dark:text-gray-400 desktop-s:max-w-32 desktop:max-w-[116px] desktop-xl:max-w-40">
                       2X agent efficiency
                     </p>
-                    {/* Company/Partner Logo - Placeholder */}
-                    <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo</span>
-                    </div>
+                    {/* Company Logo */}
+                    <img 
+                      src="/company-logos/Royal LePage.png" 
+                      alt="Royal LePage" 
+                      className="h-4 w-auto object-contain max-w-[80px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
                   </div>
                   <h1 className="antialiased desktop-xl:text-[64px] desktop-xl:tracking-[-1.28px] desktop-xl:leading-[90%] desktop:text-[56px] desktop:tracking-[-1.12px] desktop:leading-[90%] desktop-s:text-[48px] desktop-s:tracking-[-0.96px] desktop-s:leading-[90%] tablet:text-[40px] tablet:tracking-[-0.8px] tablet:leading-[90%] text-[32px] tracking-[-0.64px] leading-[90%] font-heading font-normal text-gray-900 dark:text-gray-100">
                     2X
@@ -1215,10 +1267,16 @@ export default function LandingPage() {
                     <p className="antialiased desktop-xl:text-[18px] desktop-xl:leading-[110%] text-[16px] leading-[110%] font-sans text-gray-600 dark:text-gray-400 desktop-s:max-w-32 desktop:max-w-[116px] desktop-xl:max-w-40">
                       50% lower prospecting costs
                     </p>
-                    {/* Company/Partner Logo - Placeholder */}
-                    <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Logo</span>
-                    </div>
+                    {/* Company Logo */}
+                    <img 
+                      src="/company-logos/brookfield-logo.png" 
+                      alt="Brookfield" 
+                      className="h-4 w-auto object-contain max-w-[80px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
                   </div>
                   <h1 className="antialiased desktop-xl:text-[64px] desktop-xl:tracking-[-1.28px] desktop-xl:leading-[90%] desktop:text-[56px] desktop:tracking-[-1.12px] desktop:leading-[90%] desktop-s:text-[48px] desktop-s:tracking-[-0.96px] desktop-s:leading-[90%] tablet:text-[40px] tablet:tracking-[-0.8px] tablet:leading-[90%] text-[32px] tracking-[-0.64px] leading-[90%] font-heading font-normal text-gray-900 dark:text-gray-100">
                     50%

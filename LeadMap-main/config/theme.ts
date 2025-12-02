@@ -221,7 +221,7 @@ export const CONTENT = {
   customerCount: '1,000',
   testimonial: {
     quote: '"Every agent is more productive with NextDeal. We closed 75% more deals while cutting prospecting time in half."',
-    author: 'John Froning',
+    author: 'Tanza James',
     role: 'Real Estate Broker',
   },
   benefits: [
