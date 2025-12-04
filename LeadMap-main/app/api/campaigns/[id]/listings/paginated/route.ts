@@ -124,7 +124,7 @@ export async function GET(
     // STEP 2: Fetch full listing data from source tables
     // ============================================================================
     
-    const listingIds = campaignListings.map(row => row.listing_id).filter(Boolean)
+    const listingIds = campaignListings.map((row: any) => row.listing_id).filter(Boolean)
     
     // Query all possible listing tables
     const listingTables = [
