@@ -31,6 +31,9 @@ interface Listing {
   active?: boolean
   last_scraped_at?: string | null
   created_at?: string
+  time_listed?: string | null
+  year_built?: number | null
+  text?: string | null
   lat?: number | null
   lng?: number | null
 }
