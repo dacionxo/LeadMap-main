@@ -56,7 +56,7 @@ export default function CrossChannelReporting() {
       }).catch(() => ({ ok: false })) // Gracefully handle if social API doesn't exist
 
       const emailData = emailResponse.ok ? await emailResponse.json() : null
-      const socialData = socialResponse.ok ? await socialResponse.json() : null
+      const socialData = socialResponse.ok && 'json' in socialResponse ? await socialResponse.json() : null
 
       // Fetch timeseries data
       const timeseriesResponse = await fetch(`/api/email/analytics/timeseries?period=${period}`, {
