@@ -393,7 +393,7 @@ export default function AddLeadsModal({ campaignId, onClose, onSuccess }: AddLea
         // (e.g., contact has listing_id but listing found by property_url, or vice versa)
         if (!listing) {
           // Check if source_id matches any listing's listing_id or property_url
-          for (const [listingId, listItem] of listingsByIdMap.entries()) {
+          for (const [listingId, listItem] of Array.from(listingsByIdMap.entries())) {
             if (listingId === sourceId || listingId === normalizedSourceId ||
                 listItem.property_url === sourceId || 
                 (listItem.property_url && listItem.property_url.toLowerCase().trim() === normalizedSourceId)) {
@@ -403,7 +403,7 @@ export default function AddLeadsModal({ campaignId, onClose, onSuccess }: AddLea
           }
           // Also check by URL map
           if (!listing) {
-            for (const [url, listItem] of listingsByUrlMap.entries()) {
+            for (const [url, listItem] of Array.from(listingsByUrlMap.entries())) {
               if (url === sourceId || url === normalizedSourceId ||
                   listItem.listing_id === sourceId) {
                 listing = listItem
