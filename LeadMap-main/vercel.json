@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd LeadMap-main && npm run build",
-  "outputDirectory": "LeadMap-main/.next",
-  "installCommand": "cd LeadMap-main && npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
   "framework": "nextjs",
   "crons": [
     {
