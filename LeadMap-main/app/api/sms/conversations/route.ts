@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     // Get message counts and last message for each conversation
     const conversationsWithDetails = await Promise.all(
-      (conversations || []).map(async (convo) => {
+      (conversations || []).map(async (convo: { id: string; [key: string]: any }) => {
         // Get message count
         const { count: messageCount } = await supabase
           .from('sms_messages')
