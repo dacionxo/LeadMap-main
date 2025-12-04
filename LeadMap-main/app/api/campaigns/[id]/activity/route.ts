@@ -51,7 +51,7 @@ export async function GET(
     }
 
     // Get email events
-    const emailIds = emails.map(e => e.id)
+    const emailIds = emails.map((e: { id: string }) => e.id)
     let eventsQuery = supabase
       .from('email_events')
       .select(`
