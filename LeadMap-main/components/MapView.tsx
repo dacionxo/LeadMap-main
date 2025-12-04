@@ -86,30 +86,42 @@ const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading }) => {
     // Only initialize if isActive is true
     if (!isActive) return;
 
-    // Check if Google Maps API key is available
+    // Google Maps is PRIMARY - always try it first
+    // Only use Mapbox as fallback if Google Maps explicitly fails
     const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M';
-    const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoiZGFjaW9ueG8iLCJhIjoiY21pZTF1cjQ5MDgnMDJrb2w5azk4NDB5MSJ9._yXKxm3HwER9J5GCigVr8A';
     
-    // Prefer Google Maps if API key is available, but only if it hasn't failed
-    if (googleMapsApiKey && !googleMapsFailed) {
+    // Always prefer Google Maps unless it has already failed
+    if (!googleMapsFailed) {
+      // Google Maps is primary - use it by default
       setUseGoogleMaps(true);
-    } else if (mapboxToken) {
-      setUseGoogleMaps(false);
     } else {
-      // Default to Google Maps with hardcoded key
-      setUseGoogleMaps(true);
+      // Google Maps has failed, fallback to Mapbox
+      const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+      if (mapboxToken) {
+        console.log('Using Mapbox as fallback (Google Maps failed)');
+        setUseGoogleMaps(false);
+      } else {
+        // No Mapbox token either, but still try Google Maps (might recover)
+        console.warn('No Mapbox token available, attempting Google Maps despite previous failure');
+        setUseGoogleMaps(true);
+        setGoogleMapsFailed(false); // Reset failure state to retry
+      }
     }
   }, [googleMapsFailed, isActive]);
 
   // Handle Google Maps error and fallback to Mapbox
   const handleGoogleMapsError = () => {
-    console.log('Google Maps failed to load, switching to Mapbox fallback');
+    console.warn('Google Maps failed to load, switching to Mapbox fallback');
     setGoogleMapsFailed(true);
-    setUseGoogleMaps(false);
     
-    const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoiZGFjaW9ueG8iLCJhIjoiY21pZTF1cjQ5MDgnMDJrb2w5azk4NDB5MSJ9._yXKxm3HwER9J5GCigVr8A';
-    if (!mapboxToken) {
-      console.error('Mapbox token also not available');
+    const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    if (mapboxToken) {
+      setUseGoogleMaps(false);
+      console.log('Switched to Mapbox fallback');
+    } else {
+      console.error('Google Maps failed and Mapbox token not available - no map provider available');
+      // Keep trying Google Maps even if it failed (might be temporary)
+      setUseGoogleMaps(true);
     }
   };
 
@@ -234,7 +246,8 @@ const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading }) => {
     );
   }
 
-  // Try Google Maps first (primary) - only if not failed
+  // PRIMARY: Try Google Maps first (with Street View support)
+  // Only use Mapbox if Google Maps has explicitly failed
   if (useGoogleMaps && !googleMapsFailed) {
     return (
       <GoogleMapsViewEnhanced
@@ -247,14 +260,45 @@ const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading }) => {
     );
   }
 
-  // Fallback to Mapbox (automatically switches when Google Maps fails)
+  // FALLBACK: Use Mapbox only when Google Maps has failed
+  if (!useGoogleMaps || googleMapsFailed) {
+    const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    if (mapboxToken) {
+      return (
+        <MapboxViewFallback
+          key={`mapbox-${mapKey}`}
+          isActive={isActive}
+          listings={listings}
+          loading={loading}
+        />
+      );
+    } else {
+      // No Mapbox token - show error message
+      return (
+        <div className="flex items-center justify-center h-96 bg-yellow-50 rounded-lg">
+          <div className="text-center">
+            <div className="text-yellow-600 text-6xl mb-4">⚠️</div>
+            <h3 className="text-lg font-semibold text-yellow-800 mb-2">Map Unavailable</h3>
+            <p className="text-yellow-600 mb-4">
+              Google Maps failed to load and Mapbox is not configured.
+            </p>
+            <p className="text-sm text-yellow-500">
+              Please check your Google Maps API key configuration.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Default fallback (shouldn't reach here)
   return (
-    <MapboxViewFallback
-      key={`mapbox-${mapKey}`}
-      isActive={isActive}
-      listings={listings}
-      loading={loading}
-    />
+    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Initializing map...</p>
+      </div>
+    </div>
   );
 };
 
