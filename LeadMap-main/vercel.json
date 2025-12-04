@@ -1,4 +1,8 @@
 {
+  "buildCommand": "cd LeadMap-main && npm run build",
+  "outputDirectory": "LeadMap-main/.next",
+  "installCommand": "cd LeadMap-main && npm install",
+  "framework": "nextjs",
   "crons": [
     {
       "path": "/api/sms/drip/run",
