@@ -101,12 +101,12 @@ export async function POST(
       // Use default settings if fetch fails
       emailSettings = {
         from_name: 'LeadMap',
-        reply_to: null,
+        reply_to: undefined,
         default_footer_html: '',
         unsubscribe_footer_html: '',
-        physical_address: null,
-        transactional_provider: null,
-        transactional_from_email: null
+        physical_address: undefined,
+        transactional_provider: undefined,
+        transactional_from_email: undefined
       }
     }
 

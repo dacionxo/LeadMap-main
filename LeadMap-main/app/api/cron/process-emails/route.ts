@@ -411,10 +411,10 @@ async function runCronJob(request: NextRequest) {
               console.warn('Error fetching email settings, using defaults:', error)
               emailSettings = {
                 from_name: 'LeadMap',
-                reply_to: null,
+                reply_to: undefined,
                 default_footer_html: '',
                 unsubscribe_footer_html: '',
-                physical_address: null
+                physical_address: undefined
               }
             }
             const unsubscribeUrl = getUnsubscribeUrl(email.user_id, email.campaign_recipient_id || undefined)
