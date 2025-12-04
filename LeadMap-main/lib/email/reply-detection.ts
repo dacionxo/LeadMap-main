@@ -49,25 +49,25 @@ export async function detectAndLinkReply(
 
       if (sentEmail) {
         // Get campaign settings for stop_on_auto_reply and stop_company_on_reply
-        const { data: emailData } = await supabase
+        const { data: emailDataForSettings } = await supabase
           .from('emails')
           .select('campaign_id, to_email, subject, html')
           .eq('id', sentEmail.id)
           .single()
 
         // Check if this is an auto-reply
-        const isAutoReply = emailData ? isAutoReplyEmail(
-          emailData.subject || '',
-          emailData.html || ''
+        const isAutoReply = emailDataForSettings ? isAutoReplyEmail(
+          emailDataForSettings.subject || '',
+          emailDataForSettings.html || ''
         ) : false
 
         // Get campaign settings
         let campaignSettings: any = null
-        if (emailData?.campaign_id) {
+        if (emailDataForSettings?.campaign_id) {
           const { data: campaign } = await supabase
             .from('campaigns')
             .select('stop_on_auto_reply, stop_company_on_reply')
-            .eq('id', emailData.campaign_id)
+            .eq('id', emailDataForSettings.campaign_id)
             .single()
           campaignSettings = campaign
         }
@@ -104,7 +104,7 @@ export async function detectAndLinkReply(
             .eq('id', sentEmail.campaign_recipient_id)
 
           // Check stop_company_on_reply setting
-          if (campaignSettings?.stop_company_on_reply && emailData?.to_email) {
+          if (campaignSettings?.stop_company_on_reply && emailDataForSettings?.to_email) {
             // Get recipient's company
             const { data: recipient } = await supabase
               .from('campaign_recipients')
@@ -120,7 +120,7 @@ export async function detectAndLinkReply(
                   status: 'stopped',
                   stopped_reason: 'company_replied'
                 })
-                .eq('campaign_id', emailData.campaign_id)
+                .eq('campaign_id', emailDataForSettings.campaign_id)
                 .eq('company', recipient.company)
                 .neq('id', sentEmail.campaign_recipient_id) // Don't update the one that replied
             }
@@ -128,19 +128,19 @@ export async function detectAndLinkReply(
         }
 
         // Get user_id and mailbox_id from the sent email for event tracking
-        const { data: emailData } = await supabase
+        const { data: emailDataForTracking } = await supabase
           .from('emails')
           .select('user_id, mailbox_id, campaign_id')
           .eq('id', sentEmail.id)
           .single()
 
         // Record 'replied' event in unified email_events table
-        if (emailData?.user_id && sentEmail.to_email) {
+        if (emailDataForTracking?.user_id && sentEmail.to_email) {
           await recordRepliedEvent({
-            userId: emailData.user_id,
+            userId: emailDataForTracking.user_id,
             emailId: sentEmail.id,
-            mailboxId: emailData.mailbox_id || undefined,
-            campaignId: emailData.campaign_id || undefined,
+            mailboxId: emailDataForTracking.mailbox_id || undefined,
+            campaignId: emailDataForTracking.campaign_id || undefined,
             campaignRecipientId: sentEmail.campaign_recipient_id || undefined,
             recipientEmail: sentEmail.to_email,
             replyMessageId: inboundEmail.messageId || ''
@@ -173,25 +173,25 @@ export async function detectAndLinkReply(
 
         if (sentEmail) {
           // Get email data for auto-reply detection and campaign settings
-          const { data: emailData } = await supabase
+          const { data: emailDataForSettings } = await supabase
             .from('emails')
             .select('campaign_id, to_email, subject, html')
             .eq('id', sentEmail.id)
             .single()
 
           // Check if this is an auto-reply
-          const isAutoReply = emailData ? isAutoReplyEmail(
-            emailData.subject || '',
-            emailData.html || ''
+          const isAutoReply = emailDataForSettings ? isAutoReplyEmail(
+            emailDataForSettings.subject || '',
+            emailDataForSettings.html || ''
           ) : false
 
           // Get campaign settings
           let campaignSettings: any = null
-          if (emailData?.campaign_id) {
+          if (emailDataForSettings?.campaign_id) {
             const { data: campaign } = await supabase
               .from('campaigns')
               .select('stop_on_auto_reply, stop_company_on_reply')
-              .eq('id', emailData.campaign_id)
+              .eq('id', emailDataForSettings.campaign_id)
               .single()
             campaignSettings = campaign
           }
@@ -227,7 +227,7 @@ export async function detectAndLinkReply(
               .eq('id', sentEmail.campaign_recipient_id)
 
             // Check stop_company_on_reply setting
-            if (campaignSettings?.stop_company_on_reply && emailData?.to_email) {
+            if (campaignSettings?.stop_company_on_reply && emailDataForSettings?.to_email) {
               // Get recipient's company
               const { data: recipient } = await supabase
                 .from('campaign_recipients')
@@ -243,7 +243,7 @@ export async function detectAndLinkReply(
                     status: 'stopped',
                     stopped_reason: 'company_replied'
                   })
-                  .eq('campaign_id', emailData.campaign_id)
+                  .eq('campaign_id', emailDataForSettings.campaign_id)
                   .eq('company', recipient.company)
                   .neq('id', sentEmail.campaign_recipient_id) // Don't update the one that replied
               }
@@ -312,19 +312,19 @@ export async function detectAndLinkReply(
             }
 
             // Get user_id and mailbox_id for event tracking
-            const { data: emailData } = await supabase
+            const { data: emailDataForTracking } = await supabase
               .from('emails')
               .select('user_id, mailbox_id, campaign_id')
               .eq('id', sentEmail.id)
               .single()
 
             // Record 'replied' event
-            if (emailData?.user_id && sentEmail.to_email) {
+            if (emailDataForTracking?.user_id && sentEmail.to_email) {
               await recordRepliedEvent({
-                userId: emailData.user_id,
+                userId: emailDataForTracking.user_id,
                 emailId: sentEmail.id,
-                mailboxId: emailData.mailbox_id || undefined,
-                campaignId: emailData.campaign_id || undefined,
+                mailboxId: emailDataForTracking.mailbox_id || undefined,
+                campaignId: emailDataForTracking.campaign_id || undefined,
                 campaignRecipientId: sentEmail.campaign_recipient_id || undefined,
                 recipientEmail: sentEmail.to_email,
                 replyMessageId: inboundEmail.messageId || ''
