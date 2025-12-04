@@ -819,7 +819,7 @@ async function scheduleNextStep(
 ) {
   try {
     // Get campaign to check campaign-level stop_on_reply
-    const { data: campaign } = await supabase
+    const { data: campaignForReplyCheck } = await supabase
       .from('campaigns')
       .select('stop_on_reply')
       .eq('id', campaignId)
@@ -846,7 +846,7 @@ async function scheduleNextStep(
     // Check if recipient has replied
     if (recipientCheck.replied) {
       // Check if we should stop (campaign-level setting takes precedence, then step-level)
-      const campaignStopOnReply = campaign?.stop_on_reply !== false // Default to true if not set
+      const campaignStopOnReply = campaignForReplyCheck?.stop_on_reply !== false // Default to true if not set
       const stepStopOnReply = currentStep.stop_on_reply !== false // Default to true if not set
       
       // If either campaign or step has stop_on_reply enabled, don't schedule next step
@@ -899,11 +899,11 @@ async function scheduleNextStep(
     const scheduledAt = new Date(Date.now() + totalDelayMs)
 
     // Get campaign mailbox
-    const campaign = recipientInfo.campaign as any
+    const campaignMailbox = recipientInfo.campaign as any
     const { data: mailbox } = await supabase
       .from('mailboxes')
       .select('id')
-      .eq('id', campaign.mailbox_id)
+      .eq('id', campaignMailbox.mailbox_id)
       .single()
 
     if (!mailbox) return
@@ -1112,7 +1112,7 @@ async function scheduleNextStep(
       .from('emails')
       .insert({
         user_id: campaignData.user_id,
-        mailbox_id: campaign.mailbox_id,
+        mailbox_id: campaignMailbox.mailbox_id,
         campaign_id: campaignId,
         campaign_step_id: nextStep.id,
         campaign_recipient_id: recipientId,
