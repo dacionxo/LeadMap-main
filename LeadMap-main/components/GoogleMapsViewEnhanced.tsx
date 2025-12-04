@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Wrapper, Status } from '@googlemaps/react-wrapper';
 
 // Extend window type for Google Maps
@@ -340,13 +340,13 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
   const searchMarkerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
 
-  // Callback when map is ready
-  const handleMapReady = (map: google.maps.Map) => {
+  // Callback when map is ready - memoized to prevent re-renders
+  const handleMapReady = useCallback((map: google.maps.Map) => {
     mapInstanceRef.current = map;
-  };
+  }, []);
 
-  // Handle Street View click - opens Street View for the selected location
-  const handleStreetViewClick = (lat: number, lng: number, address: string) => {
+  // Handle Street View click - opens Street View for the selected location - memoized
+  const handleStreetViewClick = useCallback((lat: number, lng: number, address: string) => {
     if (!mapInstanceRef.current) return
 
     try {
