@@ -74,12 +74,12 @@ export async function getUserEmailSettings(
   // Merge user settings with global defaults
   return {
     from_name: userSettings?.from_name || globalSettings?.from_name || 'LeadMap',
-    reply_to: userSettings?.reply_to || globalSettings?.reply_to || null,
+    reply_to: userSettings?.reply_to || globalSettings?.reply_to || undefined,
     default_footer_html: userSettings?.default_footer_html || globalSettings?.default_footer_html || '',
     unsubscribe_footer_html: userSettings?.unsubscribe_footer_html || globalSettings?.unsubscribe_footer_html || '',
-    physical_address: userSettings?.physical_address || globalSettings?.physical_address || null,
-    transactional_provider: userSettings?.transactional_provider || globalSettings?.transactional_provider || null,
-    transactional_from_email: userSettings?.transactional_from_email || globalSettings?.transactional_from_email || null
+    physical_address: userSettings?.physical_address || globalSettings?.physical_address || undefined,
+    transactional_provider: userSettings?.transactional_provider || globalSettings?.transactional_provider || undefined,
+    transactional_from_email: userSettings?.transactional_from_email || globalSettings?.transactional_from_email || undefined
   }
 }
 
