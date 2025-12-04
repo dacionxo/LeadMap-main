@@ -835,16 +835,16 @@ async function scheduleNextStep(
     if (!currentStep) return
 
     // Check if recipient has replied
-    const { data: recipient } = await supabase
+    const { data: recipientCheck } = await supabase
       .from('campaign_recipients')
       .select('replied, status')
       .eq('id', recipientId)
       .single()
 
-    if (!recipient) return
+    if (!recipientCheck) return
 
     // Check if recipient has replied
-    if (recipient.replied) {
+    if (recipientCheck.replied) {
       // Check if we should stop (campaign-level setting takes precedence, then step-level)
       const campaignStopOnReply = campaign?.stop_on_reply !== false // Default to true if not set
       const stepStopOnReply = currentStep.stop_on_reply !== false // Default to true if not set
@@ -883,13 +883,13 @@ async function scheduleNextStep(
     }
 
     // Get recipient info
-    const { data: recipient } = await supabase
+    const { data: recipientInfo } = await supabase
       .from('campaign_recipients')
       .select('email, first_name, last_name, campaign:campaigns(mailbox_id, timezone)')
       .eq('id', recipientId)
       .single()
 
-    if (!recipient) return
+    if (!recipientInfo) return
 
     // Calculate scheduled time using both delay_days and delay_hours
     // Use delay_days from the current step (the step that was just sent)
@@ -899,7 +899,7 @@ async function scheduleNextStep(
     const scheduledAt = new Date(Date.now() + totalDelayMs)
 
     // Get campaign mailbox
-    const campaign = recipient.campaign as any
+    const campaign = recipientInfo.campaign as any
     const { data: mailbox } = await supabase
       .from('mailboxes')
       .select('id')
@@ -1063,9 +1063,9 @@ async function scheduleNextStep(
 
     // Substitute template variables
     const recipientData = {
-      email: recipient.email,
-      firstName: recipient.first_name,
-      lastName: recipient.last_name,
+      email: recipientInfo.email,
+      firstName: recipientInfo.first_name,
+      lastName: recipientInfo.last_name,
     }
     const variables = extractRecipientVariables(recipientData)
     const processedSubject = substituteTemplateVariables(emailSubject, variables)
@@ -1116,7 +1116,7 @@ async function scheduleNextStep(
         campaign_id: campaignId,
         campaign_step_id: nextStep.id,
         campaign_recipient_id: recipientId,
-        to_email: recipient.email,
+        to_email: recipientInfo.email,
         subject: processedSubject,
         html: processedHtml,
         status: 'queued',
