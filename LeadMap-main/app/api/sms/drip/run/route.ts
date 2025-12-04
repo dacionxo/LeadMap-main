@@ -99,8 +99,8 @@ export async function POST(req: NextRequest) {
           const minute = localNow.getMinutes()
           const currentTimeMinutes = hour * 60 + minute
 
-          const [qsHour, qsMin] = stepRow.quiet_hours_start.split(':').map(n => parseInt(n, 10))
-          const [qeHour, qeMin] = stepRow.quiet_hours_end.split(':').map(n => parseInt(n, 10))
+          const [qsHour, qsMin] = stepRow.quiet_hours_start.split(':').map((n: string) => parseInt(n, 10))
+          const [qeHour, qeMin] = stepRow.quiet_hours_end.split(':').map((n: string) => parseInt(n, 10))
           const quietStartMinutes = qsHour * 60 + (qsMin || 0)
           const quietEndMinutes = qeHour * 60 + (qeMin || 0)
 
