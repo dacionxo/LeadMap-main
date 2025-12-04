@@ -123,6 +123,12 @@ const MapComponent: React.FC<{
       const mapInstance = new google.maps.Map(mapRef.current, {
         center: { lat: 28.5383, lng: -81.3792 },
         zoom: 10,
+        streetViewControl: true, // Enable Street View Pegman control
+        mapTypeControl: true,
+        fullscreenControl: true,
+        zoomControl: true,
+        rotateControl: true,
+        scaleControl: true,
         styles: [
           {
             featureType: 'poi',
@@ -131,6 +137,24 @@ const MapComponent: React.FC<{
           }
         ]
       });
+
+      // Handle map resize when container becomes visible
+      const handleResize = () => {
+        if (mapInstance) {
+          google.maps.event.trigger(mapInstance, 'resize')
+        }
+      }
+
+      // Use ResizeObserver to detect when container becomes visible
+      if (mapRef.current) {
+        const resizeObserver = new ResizeObserver(() => {
+          handleResize()
+        })
+        resizeObserver.observe(mapRef.current)
+        
+        // Also listen for window resize
+        window.addEventListener('resize', handleResize)
+      }
 
       // Check if map instance is valid
       if (!mapInstance) {
@@ -332,14 +356,39 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
     mapInstanceRef.current = map;
   };
 
-  // Handle Street View click
+  // Handle Street View click - opens Street View for the selected location
   const handleStreetViewClick = (lat: number, lng: number, address: string) => {
-    const streetViewApiKey = process.env.NEXT_PUBLIC_GOOGLE_STREET_VIEW_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBkD3srgAqEHFM4DbU-dv6Zc4EEoB5yhBU';
-    const encodedLocation = encodeURIComponent(`${lat},${lng}`);
-    const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodedLocation}&heading=0&pitch=0&fov=90`;
-    
-    // Open Street View in new tab
-    window.open(url, '_blank');
+    if (!mapInstanceRef.current) return
+
+    try {
+      // Get the Street View service
+      const panorama = mapInstanceRef.current.getStreetView()
+      
+      // Set position and make visible
+      panorama.setPosition({ lat, lng })
+      panorama.setPov({ heading: 0, pitch: 0 })
+      panorama.setVisible(true)
+      
+      // Link the map and Street View
+      mapInstanceRef.current.setStreetView(panorama)
+      
+      // Listen for status changes
+      google.maps.event.addListenerOnce(panorama, 'status_changed', () => {
+        const status = panorama.getStatus()
+        if (status !== 'OK') {
+          // If Street View is not available, open in new tab as fallback
+          const encodedLocation = encodeURIComponent(`${lat},${lng}`)
+          const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodedLocation}&heading=0&pitch=0&fov=90`
+          window.open(url, '_blank')
+        }
+      })
+    } catch (error) {
+      console.error('Error opening Street View:', error)
+      // Fallback: open in new tab
+      const encodedLocation = encodeURIComponent(`${lat},${lng}`)
+      const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodedLocation}&heading=0&pitch=0&fov=90`
+      window.open(url, '_blank')
+    }
   };
 
   // Search for addresses using Google Places API

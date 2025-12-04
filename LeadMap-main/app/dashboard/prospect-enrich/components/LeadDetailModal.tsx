@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { 
   X, ChevronLeft, ChevronRight, MapPin, User, Tag, List, Workflow,
   Camera, Star, Mail, Phone, Info, Activity, ChevronDown, Home, Check
@@ -10,6 +10,7 @@ import ListsManager from './ListsManager'
 import TagsInput from './TagsInput'
 import PipelineDropdown from './PipelineDropdown'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { geocodeAddress, buildAddressString } from '@/lib/utils/geocoding'
 
 type TabType = 'info' | 'comps' | 'mail' | 'activity'
 
@@ -718,7 +719,7 @@ export default function LeadDetailModal({
               overflow: 'hidden'
             }}
           >
-            {/* Google Street View Image */}
+            {/* Google Street View Interactive */}
             <div
               style={{
                 minHeight: '400px',
@@ -727,7 +728,7 @@ export default function LeadDetailModal({
                 overflow: 'hidden'
               }}
             >
-              {listing && <MapPreview listing={listing} />}
+              {listing && <StreetViewPanorama listing={listing} />}
             </div>
 
             {/* Property Valuation Section */}
@@ -1360,193 +1361,222 @@ export default function LeadDetailModal({
   )
 }
 
-// MapPreview component - uses Google Street View (like DealMachine)
-function MapPreview({ listing }: { listing: Listing | null }) {
-  const [imageError, setImageError] = useState(false)
-  const [imageLoading, setImageLoading] = useState(true)
-  
-  // Use Street View API key if available, otherwise fall back to general Google Maps API key
-  const streetViewApiKey = process.env.NEXT_PUBLIC_GOOGLE_STREET_VIEW_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBkD3srgAqEHFM4DbU-dv6Zc4EEoB5yhBU'
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M'
-  
-  // Reset state when listing changes
+// Interactive Street View Panorama component
+function StreetViewPanorama({ listing }: { listing: Listing | null }) {
+  const panoramaRef = useRef<HTMLDivElement>(null)
+  const panoramaInstanceRef = useRef<google.maps.StreetViewPanorama | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
+
   useEffect(() => {
-    setImageError(false)
-    setImageLoading(true)
-  }, [listing?.listing_id])
-  
-  // Build address string for Street View - use robust checking
-  const hasValue = (val: any): boolean => val != null && String(val).trim().length > 0
-  
-  const addressParts = [
-    listing?.street,
-    listing?.city,
-    listing?.state,
-    listing?.zip_code
-  ]
-    .filter(val => hasValue(val))
-    .map(val => String(val).trim())
-  
-  // Check other JSONB if direct fields are empty
-  if (addressParts.length === 0 && listing?.other) {
-    const other = listing.other as any
-    const otherParts = [
-      other.address,
-      other.street_address,
-      other.full_address,
-      other.city,
-      other.state,
-      other.zip,
-      other.zip_code,
-      other.postal_code
-    ]
-      .filter(val => hasValue(val))
-      .map(val => String(val).trim())
+    if (!listing || !panoramaRef.current) return
+
+    // Check if Google Maps is loaded
+    if (typeof window === 'undefined' || !window.google?.maps) {
+      setError('Google Maps API not loaded')
+      setIsLoading(false)
+      return
+    }
+
+    const initializeStreetView = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        // Get coordinates - prefer lat/lng from listing, otherwise geocode address
+        let position: { lat: number; lng: number } | null = null
+
+        if (listing.lat && listing.lng) {
+          position = {
+            lat: Number(listing.lat),
+            lng: Number(listing.lng)
+          }
+        } else {
+          // Geocode address
+          const address = buildAddressString(listing)
+          if (address) {
+            try {
+              const result = await geocodeAddress(address)
+              position = { lat: result.lat, lng: result.lng }
+            } catch (geocodeError) {
+              console.warn('Geocoding failed:', geocodeError)
+              setError('Could not find location for this address')
+              setIsLoading(false)
+              return
+            }
+          }
+        }
+
+        if (!position) {
+          setError('No location data available')
+          setIsLoading(false)
+          return
+        }
+
+        // Create or update Street View panorama
+        if (!panoramaInstanceRef.current) {
+          panoramaInstanceRef.current = new google.maps.StreetViewPanorama(panoramaRef.current, {
+            position,
+            pov: { heading: 0, pitch: 0 },
+            zoom: 1,
+            addressControl: true,
+            zoomControl: true,
+            fullscreenControl: true,
+            panControl: true,
+            linksControl: true,
+            enableCloseButton: false
+          })
+
+          // Listen for panorama status changes
+          google.maps.event.addListener(panoramaInstanceRef.current, 'status_changed', () => {
+            const status = panoramaInstanceRef.current?.getStatus()
+            if (status === 'OK') {
+              setIsLoading(false)
+              setError(null)
+            } else if (status === 'ZERO_RESULTS') {
+              setError('Street View is not available for this location')
+              setIsLoading(false)
+            } else {
+              setError('Street View could not be loaded')
+              setIsLoading(false)
+            }
+          })
+
+          setIsInitialized(true)
+        } else {
+          // Update position if panorama already exists
+          panoramaInstanceRef.current.setPosition(position)
+          setIsLoading(false)
+        }
+      } catch (err) {
+        console.error('Error initializing Street View:', err)
+        setError('Failed to load Street View')
+        setIsLoading(false)
+      }
+    }
+
+    // Small delay to ensure container is visible
+    const timer = setTimeout(() => {
+      initializeStreetView()
+    }, 100)
+
+    return () => {
+      clearTimeout(timer)
+      if (panoramaInstanceRef.current) {
+        google.maps.event.clearInstanceListeners(panoramaInstanceRef.current)
+      }
+    }
+  }, [listing?.listing_id, listing?.lat, listing?.lng, listing?.street, listing?.city, listing?.state, listing?.zip_code])
+
+  // Fallback to static image if Street View fails
+  if (error && listing) {
+    const lat = listing.lat ? Number(listing.lat) : null
+    const lng = listing.lng ? Number(listing.lng) : null
+    const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M'
     
-    if (otherParts.length > 0) {
-      addressParts.push(...otherParts)
+    if (lat && lng && googleMapsApiKey) {
+      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=640x480&markers=color:red%7C${lat},${lng}&key=${googleMapsApiKey}`
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <img
+            src={staticMapUrl}
+            alt="Property location"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '10px',
+            right: '10px',
+            background: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            textAlign: 'center'
+          }}>
+            {error}
+          </div>
+        </div>
+      )
     }
   }
-  
-  const address = addressParts.join(', ')
 
-  // Get coordinates if available
-  const lat = listing?.lat ? Number(listing.lat) : null
-  const lng = listing?.lng ? Number(listing.lng) : null
-
-  // Try to use Google Street View if we have an address/coordinates and API key
-  if (streetViewApiKey && (address || (lat && lng))) {
-    // Prefer coordinates if available, otherwise use address
-    const location = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address)
-    const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x480&location=${location}&key=${streetViewApiKey}&fov=90&heading=0&pitch=0`
-    
-    return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        {imageLoading && (
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Loading state */}
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#f3f4f6',
+          zIndex: 1
+        }}>
           <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#f3f4f6',
-            zIndex: 1
+            textAlign: 'center',
+            color: '#6b7280',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
           }}>
             <div style={{
-              textAlign: 'center',
-              color: '#6b7280',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-            }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                border: '3px solid #e5e7eb',
-                borderTop: '3px solid #3b82f6',
-                borderRadius: '50%',
-                margin: '0 auto 12px',
-                animation: 'spin 1s linear infinite'
-              }}></div>
-              <div>Loading Street View...</div>
-            </div>
+              width: '40px',
+              height: '40px',
+              border: '3px solid #e5e7eb',
+              borderTop: '3px solid #3b82f6',
+              borderRadius: '50%',
+              margin: '0 auto 12px',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <div>Loading Street View...</div>
           </div>
-        )}
-        <img
-          src={streetViewUrl}
-          alt="Property Street View"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            display: imageError ? 'none' : 'block'
-          }}
-          onLoad={() => {
-            setImageLoading(false)
-            setImageError(false)
-          }}
-          onError={(e) => {
-            setImageLoading(false)
-            setImageError(true)
-            // Fallback to static map if street view fails
-            if (lat && lng && googleMapsApiKey) {
-              const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=640x480&markers=color:red%7C${lat},${lng}&key=${googleMapsApiKey}`
-              e.currentTarget.src = staticMapUrl
-              e.currentTarget.style.display = 'block'
-            }
-          }}
-        />
-        {imageError && !lat && !lng && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#f3f4f6',
-            color: '#6b7280',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            fontSize: '14px',
-            textAlign: 'center',
-            padding: '20px'
-          }}>
-            Street View not available for this location
-          </div>
-        )}
-      </div>
-    )
-  }
+        </div>
+      )}
 
-  // Fallback to property photos
-  if (listing?.photos_json && Array.isArray(listing.photos_json) && listing.photos_json.length > 0) {
-    return (
-      <img
-        src={listing.photos_json[0]}
-        alt="Property photo"
+      {/* Error state */}
+      {error && !isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#f3f4f6',
+          color: '#6b7280',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontSize: '14px',
+          textAlign: 'center',
+          padding: '20px',
+          zIndex: 1
+        }}>
+          <div>
+            <MapPin size={48} style={{ marginBottom: '12px', opacity: 0.5 }} />
+            <div>{error}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Street View container */}
+      <div
+        ref={panoramaRef}
         style={{
           width: '100%',
           height: '100%',
-          objectFit: 'cover'
+          minHeight: '400px'
         }}
       />
-    )
-  }
-
-  if (listing?.photos) {
-    return (
-      <img
-        src={listing.photos}
-        alt="Property photo"
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover'
-        }}
-      />
-    )
-  }
-
-  // No map or photo available
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        color: '#9ca3af',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        fontSize: '14px',
-        gap: '8px'
-      }}
-    >
-      <MapPin size={48} />
-      <span>No map or photo available</span>
     </div>
   )
 }
