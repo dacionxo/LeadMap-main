@@ -1668,8 +1668,8 @@ function ProspectEnrichInner() {
           onSaveSearch={() => alert('Save search functionality coming soon')}
           onCreateWorkflow={() => alert('Create workflow functionality coming soon')}
           onRunAIPrompt={() => {
-            setViewTypeSelector('database_analytics')
-            setActiveView('insights')
+            // AI Insights functionality - can be implemented as a modal or separate view
+            alert('AI Insights functionality coming soon')
           }}
           isDark={isDark}
         />
