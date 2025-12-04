@@ -127,7 +127,7 @@ export async function POST(
       return NextResponse.json({ error: 'One or more mailboxes not found or do not belong to user' }, { status: 404 })
     }
 
-    const inactiveMailboxes = mailboxes.filter(m => !m.active)
+    const inactiveMailboxes = mailboxes.filter((m: any) => !m.active)
     if (inactiveMailboxes.length > 0) {
       return NextResponse.json({ error: 'One or more mailboxes are not active' }, { status: 400 })
     }
