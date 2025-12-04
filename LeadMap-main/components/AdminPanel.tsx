@@ -595,6 +595,7 @@ export default function AdminPanel() {
                 )}
               </button>
             </div>
+            </div>
           </div>
         )}
 
