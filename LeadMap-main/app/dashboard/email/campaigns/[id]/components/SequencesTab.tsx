@@ -571,19 +571,23 @@ export default function SequencesTabContent({ campaignId, campaignStatus }: Sequ
         return
       }
 
+      // Store variants in a variable to ensure TypeScript knows it's defined
+      const variants = step.variants
+      const variantsCount = variants.length
+
       // Prepare distributions
-      const distributions = step.variants.map((variant, index) => {
+      const distributions = variants.map((variant, index) => {
         if (distributionMethod === 'equal') {
           return {
             variant_id: variant.id,
-            send_percentage: Math.floor(100 / step.variants.length),
+            send_percentage: Math.floor(100 / variantsCount),
             weight: 1
           }
         } else {
           // For percentage, use equal split by default (user can customize later)
           return {
             variant_id: variant.id,
-            send_percentage: Math.floor(100 / step.variants.length),
+            send_percentage: Math.floor(100 / variantsCount),
             weight: 1
           }
         }
