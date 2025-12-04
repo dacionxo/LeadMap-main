@@ -378,7 +378,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
       const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodedLocation}&heading=0&pitch=0&fov=90`
       window.open(url, '_blank')
     }
-  };
+  }, []);
 
   // Search for addresses using Google Places API
   const searchAddress = async (query: string) => {
