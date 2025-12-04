@@ -126,6 +126,11 @@ interface CampaignRecipient {
   first_name: string | null
   last_name: string | null
   company: string | null
+  address: string | null
+  address_street: string | null
+  address_city: string | null
+  address_state: string | null
+  address_zip: string | null
   status: string
   last_sent_at: string | null
   replied: boolean
