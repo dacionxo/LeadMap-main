@@ -190,7 +190,7 @@ function ProspectEnrichInner() {
       { key: 'high_value' as FilterType, label: 'High Value', count: counts.high_value || 0 },
       { key: 'price_drop' as FilterType, label: 'Price Drops', count: counts.price_drop || 0 },
       { key: 'new_listings' as FilterType, label: 'New Listings', count: counts.new_listings || 0 }
-    ]
+  ]
   }, [filterCounts])
 
   const handleEnrich = async (listingId: string) => {
@@ -760,7 +760,7 @@ function ProspectEnrichInner() {
         prev.forEach(f => {
           if (['high_value', 'price_drop', 'new_listings'].includes(f)) {
             newSet.add(f)
-          }
+      }
         })
         return newSet
       })
