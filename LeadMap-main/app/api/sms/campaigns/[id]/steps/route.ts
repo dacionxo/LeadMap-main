@@ -11,9 +11,10 @@ import { cookies } from 'next/headers'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -26,7 +27,7 @@ export async function GET(
     const { data: campaign } = await supabase
       .from('sms_campaigns')
       .select('id')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
@@ -37,7 +38,7 @@ export async function GET(
     const { data: steps, error } = await supabase
       .from('sms_campaign_steps')
       .select('*')
-      .eq('campaign_id', params.id)
+      .eq('campaign_id', id)
       .order('step_order', { ascending: true })
 
     if (error) {
@@ -54,9 +55,10 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -69,7 +71,7 @@ export async function POST(
     const { data: campaign } = await supabase
       .from('sms_campaigns')
       .select('id')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
@@ -99,7 +101,7 @@ export async function POST(
     const { data: step, error } = await supabase
       .from('sms_campaign_steps')
       .insert({
-        campaign_id: params.id,
+        campaign_id: id,
         step_order: parseInt(step_order, 10),
         delay_minutes: parseInt(delay_minutes, 10),
         template_body: template_body.trim(),
