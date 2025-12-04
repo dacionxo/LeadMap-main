@@ -5,6 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { encrypt, decrypt } from '../encryption'
+import type { ProviderConfig } from './index'
 
 export interface ProviderCredential {
   id: string
@@ -221,5 +222,87 @@ export async function verifyProviderCredentials(
   // Implementation depends on provider type
   // For now, return success if credentials exist
   return { valid: true }
+}
+
+/**
+ * Convert ProviderCredential to ProviderConfig for use with sendEmailViaProvider
+ * This enables multi-tenant support by using user-specific credentials instead of env vars
+ */
+export function credentialToProviderConfig(credential: ProviderCredential): ProviderConfig {
+  if (!credential || !credential.provider_type) {
+    throw new Error('Invalid credential: provider_type is required')
+  }
+
+  const baseConfig: ProviderConfig = {
+    type: credential.provider_type,
+    fromEmail: credential.from_email,
+    sandboxMode: credential.sandbox_mode,
+    trackingDomain: credential.tracking_domain
+  }
+
+  switch (credential.provider_type) {
+    case 'resend':
+      if (!credential.api_key) {
+        throw new Error('Resend API key is required')
+      }
+      return {
+        ...baseConfig,
+        apiKey: credential.api_key
+      }
+    
+    case 'sendgrid':
+      if (!credential.api_key) {
+        throw new Error('SendGrid API key is required')
+      }
+      return {
+        ...baseConfig,
+        apiKey: credential.api_key
+      }
+    
+    case 'mailgun':
+      if (!credential.api_key || !credential.domain) {
+        throw new Error('Mailgun API key and domain are required')
+      }
+      return {
+        ...baseConfig,
+        apiKey: credential.api_key,
+        domain: credential.domain
+      }
+    
+    case 'ses':
+      if (!credential.api_key || !credential.secret_key) {
+        throw new Error('AWS SES API key and secret key are required')
+      }
+      return {
+        ...baseConfig,
+        apiKey: credential.api_key,
+        secretKey: credential.secret_key,
+        region: credential.region || 'us-east-1'
+      }
+    
+    case 'smtp':
+      if (!credential.host || !credential.port || !credential.username || !credential.password) {
+        throw new Error('SMTP host, port, username, and password are required')
+      }
+      return {
+        ...baseConfig,
+        host: credential.host,
+        port: credential.port,
+        username: credential.username,
+        password: credential.password
+      }
+    
+    case 'generic':
+      if (!credential.api_key) {
+        throw new Error('Generic provider API key is required')
+      }
+      return {
+        ...baseConfig,
+        apiKey: credential.api_key
+      }
+    
+    default:
+      throw new Error(`Unsupported provider type: ${credential.provider_type}`)
+  }
 }
 

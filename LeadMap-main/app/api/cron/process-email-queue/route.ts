@@ -51,7 +51,7 @@ async function runCronJob(request: NextRequest) {
       .or(`scheduled_at.is.null,scheduled_at.lte.${now.toISOString()}`)
       .order('priority', { ascending: false }) // Higher priority first
       .order('created_at', { ascending: true }) // Then FIFO
-      .limit(50) // Process up to 50 emails per run
+      .limit(parseInt(process.env.EMAIL_QUEUE_BATCH_SIZE || '200')) // Process up to 200 emails per run (configurable via env)
 
     if (fetchError) {
       console.error('Error fetching queued emails:', fetchError)
@@ -158,14 +158,14 @@ async function runCronJob(request: NextRequest) {
           continue
         }
 
-        // Send email
+        // Send email (pass supabase for transactional providers)
         const sendResult = await sendViaMailbox(mailbox, {
           to: email.to_email,
           subject: email.subject,
           html: email.html,
           fromName: email.from_name,
           fromEmail: email.from_email
-        })
+        }, supabase)
 
         if (sendResult.success) {
           // Create email record

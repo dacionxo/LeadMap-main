@@ -2,17 +2,25 @@
  * Send Email Via Mailbox
  * Routes emails to the appropriate provider based on mailbox configuration
  * Includes retry logic with exponential backoff for transient failures
+ * Supports both OAuth mailboxes (Gmail/Outlook) and transactional providers (Resend/SendGrid/etc)
  */
 
 import { Mailbox, EmailPayload, SendResult } from './types'
 import { gmailSend } from './providers/gmail'
 import { outlookSend } from './providers/outlook'
 import { smtpSend } from './providers/smtp'
+import { sendEmailViaProvider } from './providers/index'
+import { getUserProviderCredentials, credentialToProviderConfig } from './providers/credentials'
 import { retryWithBackoff, isPermanentFailure } from './retry'
+import { createClient } from '@supabase/supabase-js'
+
+// Transactional providers that use email_provider_credentials
+const TRANSACTIONAL_PROVIDERS = ['resend', 'sendgrid', 'mailgun', 'ses', 'generic'] as const
 
 export async function sendViaMailbox(
   mailbox: Mailbox,
-  email: EmailPayload
+  email: EmailPayload,
+  supabase?: any
 ): Promise<SendResult> {
   try {
     // Validate mailbox is active
@@ -29,21 +37,80 @@ export async function sendViaMailbox(
         // Route to appropriate provider
         let sendResult: SendResult
 
-        switch (mailbox.provider) {
-          case 'gmail':
-            sendResult = await gmailSend(mailbox, email)
-            break
+        // Check if this is a transactional provider (uses email_provider_credentials)
+        if (TRANSACTIONAL_PROVIDERS.includes(mailbox.provider as any)) {
+          // For transactional providers, get user credentials and use sendEmailViaProvider
+          if (!supabase) {
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+            const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+            if (!supabaseUrl || !supabaseServiceKey) {
+              throw new Error('Supabase configuration missing for transactional provider')
+            }
+
+            supabase = createClient(supabaseUrl, supabaseServiceKey, {
+              auth: { autoRefreshToken: false, persistSession: false }
+            })
+          }
+
+          // Get user's credentials for this provider type
+          let credentials
+          try {
+            credentials = await getUserProviderCredentials(
+              mailbox.user_id,
+              mailbox.provider,
+              supabase
+            )
+          } catch (error: any) {
+            throw new Error(
+              `Failed to fetch credentials for provider ${mailbox.provider}: ${error.message || 'Unknown error'}`
+            )
+          }
+
+          if (!credentials || credentials.length === 0) {
+            throw new Error(
+              `No active credentials found for provider ${mailbox.provider}. Please configure your ${mailbox.provider} credentials.`
+            )
+          }
+
+          // Use the first active credential (or could select by provider_name if needed)
+          const credential = credentials[0]
           
-          case 'outlook':
-            sendResult = await outlookSend(mailbox, email)
-            break
-          
-          case 'smtp':
-            sendResult = await smtpSend(mailbox, email)
-            break
-          
-          default:
-            throw new Error(`Unsupported provider: ${mailbox.provider}`)
+          // Convert to ProviderConfig
+          let providerConfig
+          try {
+            providerConfig = credentialToProviderConfig(credential)
+          } catch (error: any) {
+            throw new Error(
+              `Invalid credentials for provider ${mailbox.provider}: ${error.message || 'Unknown error'}`
+            )
+          }
+
+          // Use sendEmailViaProvider with user's credentials (no env fallback)
+          sendResult = await sendEmailViaProvider({
+            providerConfig,
+            ...email,
+            fromEmail: email.fromEmail || providerConfig.fromEmail || mailbox.from_email || mailbox.email,
+            fromName: email.fromName || mailbox.from_name || mailbox.display_name
+          })
+        } else {
+          // OAuth-based providers (Gmail/Outlook) or SMTP mailboxes
+          switch (mailbox.provider) {
+            case 'gmail':
+              sendResult = await gmailSend(mailbox, email)
+              break
+            
+            case 'outlook':
+              sendResult = await outlookSend(mailbox, email)
+              break
+            
+            case 'smtp':
+              sendResult = await smtpSend(mailbox, email)
+              break
+            
+            default:
+              throw new Error(`Unsupported provider: ${mailbox.provider}`)
+          }
         }
 
         // If send failed with permanent error, don't retry

@@ -156,17 +156,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create email record' }, { status: 500 })
     }
 
-    // Send email
+    // Send email (pass supabaseAdmin for transactional providers)
     const fromName = mailbox.from_name || mailbox.display_name
     const fromEmail = mailbox.from_email || mailbox.email
 
-    const sendResult = await sendViaMailbox(mailbox, {
-      to,
-      subject,
-      html,
-      fromName,
-      fromEmail
-    })
+    let sendResult
+    try {
+      sendResult = await sendViaMailbox(mailbox, {
+        to,
+        subject,
+        html,
+        fromName,
+        fromEmail
+      }, supabaseAdmin)
+    } catch (error: any) {
+      console.error('Error sending email via mailbox:', error)
+      return NextResponse.json({ 
+        error: error.message || 'Failed to send email',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }, { status: 500 })
+    }
 
     // Update email record with result
     if (sendResult.success) {
@@ -218,8 +227,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Email send error:', error)
+    // Always return JSON, never HTML - this prevents the "<!DOCTYPE" error
     return NextResponse.json({
-      error: error.message || 'Internal server error'
+      error: error.message || 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 })
   }
 }

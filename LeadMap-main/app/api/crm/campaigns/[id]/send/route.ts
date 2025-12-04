@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { sendViaMailbox } from '@/lib/email/sendViaMailbox'
 import { Mailbox, EmailPayload } from '@/lib/email/types'
+import { getUserEmailSettings, appendComplianceFooter, getUnsubscribeUrl } from '@/lib/email/email-settings'
 
 /**
  * Send Campaign API
@@ -91,17 +92,50 @@ export async function POST(
       return NextResponse.json({ error: 'Mailbox not found or inactive' }, { status: 404 })
     }
 
+    // Get user's email settings for branding/compliance (with fallback on error)
+    let emailSettings
+    try {
+      emailSettings = await getUserEmailSettings(user.id, supabaseAdmin)
+    } catch (error) {
+      console.warn('Error fetching email settings, using defaults:', error)
+      // Use default settings if fetch fails
+      emailSettings = {
+        from_name: 'LeadMap',
+        reply_to: null,
+        default_footer_html: '',
+        unsubscribe_footer_html: '',
+        physical_address: null,
+        transactional_provider: null,
+        transactional_from_email: null
+      }
+    }
+
     // Send emails to all recipients using consolidated sendViaMailbox
     const emailPromises = contacts.map(async (contact: { id: string; email: string }) => {
+      // Append compliance footer (unsubscribe + physical address)
+      const unsubscribeUrl = getUnsubscribeUrl(user.id, contact.id)
+      let htmlContent = campaign.html_content || ''
+      htmlContent = appendComplianceFooter(htmlContent, emailSettings, unsubscribeUrl)
+
       const emailPayload: EmailPayload = {
         to: contact.email,
         subject: campaign.subject,
-        html: campaign.html_content || '',
-        fromName: campaign.sender_name,
+        html: htmlContent,
+        fromName: campaign.sender_name || emailSettings.from_name,
         fromEmail: campaign.sender_email
       }
 
-      const sendResult = await sendViaMailbox(mailbox as Mailbox, emailPayload)
+      let sendResult
+      try {
+        sendResult = await sendViaMailbox(mailbox as Mailbox, emailPayload, supabaseAdmin)
+      } catch (error: any) {
+        console.error(`Error sending email to ${contact.email}:`, error)
+        // Return a failed result instead of throwing
+        sendResult = {
+          success: false,
+          error: error.message || 'Failed to send email'
+        }
+      }
 
       // Log email in emails table
       await supabase
@@ -112,7 +146,7 @@ export async function POST(
           campaign_id: campaign.id,
           to_email: contact.email,
           subject: campaign.subject,
-          html: campaign.html_content || '',
+          html: htmlContent,
           status: sendResult.success ? 'sent' : 'failed',
           sent_at: sendResult.success ? new Date().toISOString() : null,
           provider_message_id: sendResult.providerMessageId || null,
@@ -144,7 +178,11 @@ export async function POST(
     })
   } catch (error: any) {
     console.error('Send campaign error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Always return JSON, never HTML
+    return NextResponse.json({ 
+      error: error.message || 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 })
   }
 }
 

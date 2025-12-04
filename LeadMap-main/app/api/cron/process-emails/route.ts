@@ -7,6 +7,7 @@ import { refreshGmailToken } from '@/lib/email/providers/gmail'
 import { refreshOutlookToken } from '@/lib/email/providers/outlook'
 import { decryptMailboxTokens, encryptMailboxTokens } from '@/lib/email/encryption'
 import { recordSentEvent, recordFailedEvent, logEmailFailure } from '@/lib/email/event-tracking'
+import { getUserEmailSettings, appendComplianceFooter, getUnsubscribeUrl } from '@/lib/email/email-settings'
 
 /**
  * Email Processing Scheduler
@@ -399,7 +400,26 @@ async function runCronJob(request: NextRequest) {
           // Substitute template variables in subject and HTML
           const variables = extractRecipientVariables(recipientData)
           const processedSubject = substituteTemplateVariables(email.subject || '', variables)
-          const processedHtml = substituteTemplateVariables(email.html || '', variables)
+          let processedHtml = substituteTemplateVariables(email.html || '', variables)
+
+          // For campaign emails, append compliance footer (with fallback on error)
+          if (email.campaign_id) {
+            let emailSettings
+            try {
+              emailSettings = await getUserEmailSettings(email.user_id, supabase)
+            } catch (error) {
+              console.warn('Error fetching email settings, using defaults:', error)
+              emailSettings = {
+                from_name: 'LeadMap',
+                reply_to: null,
+                default_footer_html: '',
+                unsubscribe_footer_html: '',
+                physical_address: null
+              }
+            }
+            const unsubscribeUrl = getUnsubscribeUrl(email.user_id, email.campaign_recipient_id || undefined)
+            processedHtml = appendComplianceFooter(processedHtml, emailSettings, unsubscribeUrl)
+          }
 
           // Send email
           const fromName = mailbox.from_name || mailbox.display_name
@@ -411,7 +431,7 @@ async function runCronJob(request: NextRequest) {
             html: processedHtml,
             fromName,
             fromEmail
-          })
+          }, supabase)
 
           if (sendResult.success) {
             // Update email record

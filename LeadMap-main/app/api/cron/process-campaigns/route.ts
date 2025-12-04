@@ -6,6 +6,7 @@ import { checkWarmupLimit, calculateNextWarmupDay } from '@/lib/email/campaigns/
 import { checkSendWindow } from '@/lib/email/campaigns/send-window'
 import { checkAndStopOnReply } from '@/lib/email/campaigns/reply-detection'
 import { substituteTemplateVariables } from '@/lib/email/template-variables'
+import { getUserEmailSettings, appendComplianceFooter, getUnsubscribeUrl } from '@/lib/email/email-settings'
 
 /**
  * Campaign Processing Cron Job
@@ -277,7 +278,24 @@ async function runCronJob(request: NextRequest) {
             }
 
             const processedSubject = substituteTemplateVariables(nextStep.subject, recipientData)
-            const processedHtml = substituteTemplateVariables(nextStep.html, recipientData)
+            let processedHtml = substituteTemplateVariables(nextStep.html, recipientData)
+
+            // Get user's email settings and append compliance footer (with fallback on error)
+            let emailSettings
+            try {
+              emailSettings = await getUserEmailSettings(campaign.user_id, supabase)
+            } catch (error) {
+              console.warn('Error fetching email settings, using defaults:', error)
+              emailSettings = {
+                from_name: 'LeadMap',
+                reply_to: null,
+                default_footer_html: '',
+                unsubscribe_footer_html: '',
+                physical_address: null
+              }
+            }
+            const unsubscribeUrl = getUnsubscribeUrl(campaign.user_id, recipient.id)
+            processedHtml = appendComplianceFooter(processedHtml, emailSettings, unsubscribeUrl)
 
             // Create email record
             const { data: emailRecord, error: emailError } = await supabase
@@ -303,14 +321,14 @@ async function runCronJob(request: NextRequest) {
               continue
             }
 
-            // Send email
+            // Send email (pass supabase for transactional providers)
             const sendResult = await sendViaMailbox(mailbox, {
               to: recipient.email,
               subject: processedSubject,
               html: processedHtml,
-              fromName: mailbox.from_name || mailbox.display_name,
+              fromName: mailbox.from_name || mailbox.display_name || emailSettings.from_name,
               fromEmail: mailbox.from_email || mailbox.email
-            })
+            }, supabase)
 
             if (sendResult.success) {
               // Update email record

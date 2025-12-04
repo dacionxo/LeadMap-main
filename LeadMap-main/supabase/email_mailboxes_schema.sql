@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS mailboxes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL CHECK (provider IN ('gmail', 'outlook', 'smtp')),
+  provider TEXT NOT NULL CHECK (provider IN ('gmail', 'outlook', 'smtp', 'resend', 'sendgrid', 'mailgun', 'ses', 'generic')),
   email TEXT NOT NULL,
   display_name TEXT,
   access_token TEXT,      -- encrypted / KMS (stored as plain text for now, should be encrypted in production)
