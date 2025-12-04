@@ -34,6 +34,7 @@ interface Listing {
   time_listed?: string | null
   year_built?: number | null
   text?: string | null
+  listing_source_name?: string | null
   lat?: number | null
   lng?: number | null
 }
