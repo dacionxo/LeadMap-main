@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { Inter, Montserrat, Lato } from 'next/font/google'
-import Script from 'next/script'
 import './globals.css'
 import { Providers } from './providers'
 import AdvancedChatButton from '@/components/AdvancedChatButton'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import GlobalListSelector from './components/GlobalListSelector'
+import GoogleMapsScript from '@/components/GoogleMapsScript'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -42,26 +42,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M'
-  
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${montserrat.variable} ${lato.variable} ${inter.className}`}>
-        <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places,geometry&loading=async`}
-          strategy="lazyOnload"
-          onLoad={() => {
-            // Initialize Google Maps when script loads
-            if (typeof window !== 'undefined') {
-              (window as any).initMap = (window as any).initMap || (() => {
-                console.log('Google Maps API loaded successfully')
-              })
-            }
-          }}
-          onError={(e) => {
-            console.error('Failed to load Google Maps API:', e)
-          }}
-        />
+        <GoogleMapsScript />
         <ThemeProvider>
           <Providers>
             {children}
