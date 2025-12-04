@@ -23,7 +23,7 @@ export async function detectAndLinkReply(
     messageId?: string
     threadId?: string
   }
-): Promise<{ isReply: boolean; sentEmailId?: string; campaignRecipientId?: string }> {
+): Promise<{ isReply: boolean; isAutoReply?: boolean; sentEmailId?: string; campaignRecipientId?: string }> {
   try {
     // Check In-Reply-To header first (most reliable)
     if (inboundEmail.inReplyTo) {
