@@ -57,6 +57,15 @@ const MapComponent: React.FC<{
   const [infoWindow, setInfoWindow] = useState<google.maps.InfoWindow | null>(null);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInitializedRef = useRef(false);
+  // Store callbacks in refs to avoid dependency issues
+  const onMapReadyRef = useRef(onMapReady);
+  const onErrorRef = useRef(onError);
+  
+  // Update refs when callbacks change
+  useEffect(() => {
+    onMapReadyRef.current = onMapReady;
+    onErrorRef.current = onError;
+  }, [onMapReady, onError]);
 
   // Function to get marker color based on lead type
   const getMarkerColor = (lead: Lead) => {
@@ -91,8 +100,8 @@ const MapComponent: React.FC<{
     // Check if google.maps is available
     if (typeof window === 'undefined' || !window.google || !window.google.maps) {
       console.error('Google Maps API not loaded');
-      if (onError) {
-        setTimeout(() => onError(), 100);
+      if (onErrorRef.current) {
+        setTimeout(() => onErrorRef.current?.(), 100);
       }
       return;
     }
@@ -103,7 +112,7 @@ const MapComponent: React.FC<{
       initTimeoutRef.current = setTimeout(() => {
         if (!map) {
           console.error('Google Maps failed to initialize within timeout');
-          if (onError) onError();
+          if (onErrorRef.current) onErrorRef.current();
         }
       }, 15000); // 15 second timeout - give more time for API to load
 
@@ -149,7 +158,7 @@ const MapComponent: React.FC<{
       }
 
       setMap(mapInstance);
-      onMapReady(mapInstance);
+      onMapReadyRef.current(mapInstance);
       isInitializedRef.current = true;
       
       // Clear timeout on success
@@ -168,7 +177,7 @@ const MapComponent: React.FC<{
       // Listen for map errors
       mapInstance.addListener('error', (error: any) => {
         console.error('Google Maps error event:', error);
-        if (onError) onError();
+        if (onErrorRef.current) onErrorRef.current();
       });
     } catch (error) {
       console.error('Error initializing Google Maps:', error);
@@ -176,8 +185,8 @@ const MapComponent: React.FC<{
         clearTimeout(initTimeoutRef.current);
         initTimeoutRef.current = null;
       }
-      if (onError) {
-        setTimeout(() => onError(), 100);
+      if (onErrorRef.current) {
+        setTimeout(() => onErrorRef.current?.(), 100);
       }
     }
 
