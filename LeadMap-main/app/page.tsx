@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { getServerComponentClient } from '../lib/supabase-singleton'
 import LandingPage from '@/components/LandingPage'
 
 // Force dynamic rendering to prevent static generation issues with cookies
@@ -14,10 +13,10 @@ export default async function Home() {
   }
 
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerComponentClient({ cookies: () => cookieStore })
+    // Use singleton client to prevent multiple instances
+    const supabase = await getServerComponentClient()
     
-    // Use getSession instead of getUser to reduce API calls
+    // Use getSession which reads from cookies, doesn't trigger refresh
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     
     // If there's a session, redirect immediately (this will throw NEXT_REDIRECT which is expected)
@@ -25,14 +24,23 @@ export default async function Home() {
       redirect('/dashboard')
     }
     
-    // Handle session errors gracefully
+    // Handle session errors gracefully - don't trigger refresh
     if (sessionError) {
+      // Handle invalid refresh token - don't retry, just show landing page
+      if (sessionError.message?.includes('refresh_token_not_found') || 
+          sessionError.message?.includes('Invalid Refresh Token') ||
+          sessionError.code === 'refresh_token_not_found') {
+        // Invalid token - user needs to login again, just show landing page
+        return <LandingPage />
+      }
+      
       if (sessionError.message?.includes('rate limit') || sessionError.message?.includes('Request rate limit')) {
         console.warn('Supabase rate limit hit on home page, showing landing page')
       } else if (sessionError.message?.includes('Invalid API key') || sessionError.message?.includes('supabaseUrl')) {
         console.warn('Supabase configuration error, showing landing page:', sessionError.message)
       } else {
-        console.warn('Auth error on home page:', sessionError.message)
+        // Don't log every auth error to avoid noise
+        // console.warn('Auth error on home page:', sessionError.message)
       }
     }
   } catch (error: any) {
@@ -45,7 +53,8 @@ export default async function Home() {
     if (error.message?.includes('cookies') || error.message?.includes('CookieStore')) {
       console.warn('Cookie handling error, showing landing page:', error.message)
     } else {
-      console.warn('Error in Home component:', error.message)
+      // Don't log every error to avoid noise
+      // console.warn('Error in Home component:', error.message)
     }
   }
 

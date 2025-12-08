@@ -1935,7 +1935,7 @@ function ProspectEnrichInner() {
                     geo_source: l.listing_source_name || null,
                     enrichment_confidence: null
                   }))} 
-                  loading={listingsLoading}
+                  loading={listingsLoading} 
                   onStreetViewListingClick={(leadId) => {
                     // Find the listing by listing_id or property_url
                     const listing = filteredListings.find(

@@ -1,8 +1,8 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { User } from '@supabase/supabase-js'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
+import { User, SupabaseClient } from '@supabase/supabase-js'
+import { getClientComponentClient } from '../lib/supabase-singleton'
 import { PageStateProvider } from './contexts/PageStateContext'
 
 interface UserProfile {
@@ -18,6 +18,7 @@ interface AppContextType {
   user: User | null
   profile: UserProfile | null
   loading: boolean
+  supabase: SupabaseClient
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -29,19 +30,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   
-  // Memoize supabase client to prevent recreation on every render
-  // Use a singleton pattern to prevent multiple instances
-  const supabase = useMemo(() => {
-    // Clear any existing client to prevent stale connections
-    if (typeof window !== 'undefined') {
-      // Only create one client instance per browser session
-      if (!(window as any).__supabaseClient) {
-        (window as any).__supabaseClient = createClientComponentClient()
-      }
-      return (window as any).__supabaseClient
-    }
-    return createClientComponentClient()
-  }, [])
+  // Use singleton client to prevent multiple instances and refresh token storms
+  const supabase = getClientComponentClient()
   
   // Track if profile refresh is in progress to prevent loops
   const refreshingProfile = useRef(false)
@@ -101,83 +91,140 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true
-    let lastAuthCheck = 0
-    const AUTH_CHECK_THROTTLE = 5000 // 5 seconds minimum between checks (more aggressive)
     let cachedSession: any = null
+    let refreshInProgress = false
+    let consecutiveFailures = 0
+    const MAX_FAILURES = 3
+    const BACKOFF_BASE = 1000 // 1 second
 
-    const getUser = async () => {
-      const now = Date.now()
-      const timeSinceLastCheck = now - lastAuthCheck
-      
-      // Throttle auth checks aggressively to avoid rate limits
-      if (timeSinceLastCheck < AUTH_CHECK_THROTTLE) {
-        // Use cached session if available during throttle period
-        if (cachedSession && mounted) {
-          setUser(cachedSession?.user ?? null)
-          setLoading(false)
-          return
-        }
-        await new Promise(resolve => setTimeout(resolve, AUTH_CHECK_THROTTLE - timeSinceLastCheck))
-      }
-      
-      if (!mounted) return
-      
+    // Clear invalid tokens helper
+    const clearInvalidTokens = async () => {
       try {
-        // Use getSession instead of getUser to avoid extra API call (uses cached data)
+        // Clear all Supabase auth cookies
+        const cookies = document.cookie.split(';')
+        cookies.forEach(cookie => {
+          const eqPos = cookie.indexOf('=')
+          const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim()
+          if (name.includes('supabase') || name.includes('auth')) {
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+          }
+        })
+        
+        // Clear localStorage
+        if (typeof window !== 'undefined') {
+          Object.keys(localStorage).forEach(key => {
+            if (key.includes('supabase') || key.includes('auth')) {
+              localStorage.removeItem(key)
+            }
+          })
+        }
+      } catch (err) {
+        console.error('Error clearing tokens:', err)
+      }
+    }
+
+    // Handle auth state changes - this is event-driven and doesn't trigger refresh
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event: string, session: any) => {
+        if (!mounted) return
+
+        // Handle different auth events
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+          cachedSession = session
+          setUser(session?.user ?? null)
+          setLoading(false)
+          consecutiveFailures = 0 // Reset on successful events
+        } else if (event === 'USER_UPDATED') {
+          cachedSession = session
+          setUser(session?.user ?? null)
+        }
+      }
+    )
+
+    // Initial session check - only once, then rely on events
+    const getInitialSession = async () => {
+      if (!mounted || refreshInProgress) return
+
+      try {
+        refreshInProgress = true
+        
+        // Use getSession which reads from cache/cookies, doesn't trigger refresh
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
-          // Handle rate limit errors gracefully - use cached session if available
-          if (error.message?.includes('rate limit') || error.message?.includes('Request rate limit')) {
-            console.warn('Supabase rate limit hit, using cached session if available')
+          // Handle invalid refresh token error
+          if (error.message?.includes('refresh_token_not_found') || 
+              error.message?.includes('Invalid Refresh Token') ||
+              error.code === 'refresh_token_not_found') {
+            console.warn('Invalid refresh token detected, clearing auth state')
+            await clearInvalidTokens()
             if (mounted) {
-              setUser(cachedSession?.user ?? null)
+              setUser(null)
+              setProfile(null)
               setLoading(false)
             }
             return
           }
+
+          // Handle rate limit errors
+          const isRateLimit = error.status === 429 || 
+                            error.message?.includes('rate limit') ||
+                            error.message?.includes('Too many requests')
+          
+          if (isRateLimit) {
+            consecutiveFailures++
+            const backoff = Math.min(300000, BACKOFF_BASE * Math.pow(2, consecutiveFailures))
+            console.warn(`Rate limit hit, backing off for ${backoff/1000}s`)
+            
+            // Use cached session if available
+            if (mounted && cachedSession) {
+              setUser(cachedSession?.user ?? null)
+              setLoading(false)
+            }
+            
+            // Don't retry immediately on rate limit
+            refreshInProgress = false
+            return
+          }
+
           console.error('Auth error:', error)
+          consecutiveFailures++
+        } else {
+          // Success - reset failure counter
+          consecutiveFailures = 0
+          cachedSession = session
         }
-        
-        // Cache the session
-        cachedSession = session
-        lastAuthCheck = Date.now()
-        
+
         if (mounted) {
           setUser(session?.user ?? null)
           setLoading(false)
         }
-      } catch (err) {
-        console.error('Error getting session:', err)
-        // Use cached session on error if available
-        if (mounted && cachedSession) {
-          setUser(cachedSession?.user ?? null)
+      } catch (err: any) {
+        console.error('Error getting initial session:', err)
+        
+        // Circuit breaker - stop trying after max failures
+        consecutiveFailures++
+        if (consecutiveFailures >= MAX_FAILURES) {
+          console.error(`Max auth failures (${MAX_FAILURES}) reached, stopping retries`)
+          if (mounted) {
+            setUser(null)
+            setProfile(null)
+            setLoading(false)
+          }
         }
-        if (mounted) {
-          setLoading(false)
-        }
+      } finally {
+        refreshInProgress = false
       }
     }
 
-    // Initial check
-    getUser()
-
-    // Listen for auth changes (this doesn't make API calls, just listens to events)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: string, session: any) => {
-        if (mounted) {
-          cachedSession = session // Update cache
-          setUser(session?.user ?? null)
-          setLoading(false)
-        }
-      }
-    )
+    // Only check once on mount, then rely on onAuthStateChange events
+    getInitialSession()
 
     return () => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, []) // Remove refreshProfile dependency to avoid infinite loop
+  }, [supabase]) // Only depend on supabase client
 
   // Separate useEffect to handle profile loading when user changes
   // Only depend on user.id to prevent loops
@@ -202,6 +249,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       user,
       profile,
       loading,
+      supabase,
       signOut,
       refreshProfile
     }}>

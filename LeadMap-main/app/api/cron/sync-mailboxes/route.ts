@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getServiceRoleClient } from '../../../lib/supabase-singleton'
 import { syncGmailMessages } from '@/lib/email/unibox/gmail-connector'
 import { syncOutlookMessages, refreshOutlookToken } from '@/lib/email/unibox/outlook-connector'
 import { refreshGmailToken } from '@/lib/email/providers/gmail-watch'
@@ -30,19 +30,8 @@ async function runCronJob(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: 'Missing Supabase configuration' }, { status: 500 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
+    // Use singleton service role client (no auto-refresh, no session persistence)
+    const supabase = getServiceRoleClient()
 
     // Get all active mailboxes that need syncing
     const { data: mailboxes, error: mailboxesError } = await supabase

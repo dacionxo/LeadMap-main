@@ -1,16 +1,13 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { getRouteHandlerClient, getServiceRoleClient } from '../../../lib/supabase-singleton'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
 
   if (code) {
-    // Await cookies first, then pass sync function
-    const cookieStore = await cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Use singleton route handler client
+    const supabase = await getRouteHandlerClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (error) {
@@ -26,17 +23,8 @@ export async function GET(request: NextRequest) {
       // Check if service role key is configured before trying to create profile
       if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_supabase_service_role_key') {
         try {
-          // Use service role key to bypass RLS
-          const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.SUPABASE_SERVICE_ROLE_KEY,
-            {
-              auth: {
-                autoRefreshToken: false,
-                persistSession: false
-              }
-            }
-          )
+          // Use service role key to bypass RLS (singleton, no auto-refresh)
+          const supabaseAdmin = getServiceRoleClient()
 
           // Check if user profile already exists
           const { data: existingProfile } = await supabaseAdmin

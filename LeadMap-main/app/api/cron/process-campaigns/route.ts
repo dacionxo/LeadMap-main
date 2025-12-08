@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getServiceRoleClient } from '../../../lib/supabase-singleton'
 import { sendViaMailbox, checkMailboxLimits } from '@/lib/email/sendViaMailbox'
 import { checkCampaignThrottle } from '@/lib/email/campaigns/throttle'
 import { checkWarmupLimit, calculateNextWarmupDay } from '@/lib/email/campaigns/warmup'
@@ -32,16 +32,8 @@ async function runCronJob(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
+    // Use singleton service role client (no auto-refresh, no session persistence)
+    const supabase = getServiceRoleClient()
 
     const now = new Date()
     const results: any[] = []

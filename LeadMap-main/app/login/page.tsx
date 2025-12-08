@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { getServerComponentClient } from '../lib/supabase-singleton'
 import LoginPage from '@/components/LoginPage'
 
 // Force dynamic rendering to prevent static generation issues with cookies
@@ -14,12 +13,22 @@ export default async function Login() {
   }
 
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerComponentClient({ cookies: () => cookieStore })
+    // Use singleton client to prevent multiple instances
+    const supabase = await getServerComponentClient()
     
     try {
-      // Use getSession instead of getUser to reduce API calls
-      const { data: { session } } = await supabase.auth.getSession()
+      // Use getSession which reads from cookies, doesn't trigger refresh
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      // Handle invalid refresh token - don't retry, just show login page
+      if (sessionError && (
+        sessionError.message?.includes('refresh_token_not_found') || 
+        sessionError.message?.includes('Invalid Refresh Token') ||
+        sessionError.code === 'refresh_token_not_found'
+      )) {
+        // Invalid token - user needs to login again
+        return <LoginPage />
+      }
       
       if (session?.user) {
         redirect('/dashboard')
@@ -30,8 +39,6 @@ export default async function Login() {
         console.warn('Supabase rate limit hit on login page, showing login page')
       } else if (error.message?.includes('Invalid API key') || error.message?.includes('supabaseUrl')) {
         console.warn('Supabase configuration error, showing login page:', error.message)
-      } else {
-        console.error('Auth error on login page:', error)
       }
       // Continue to show login page even on error
     }
@@ -39,9 +46,8 @@ export default async function Login() {
     // If cookies() fails or any other error, just show login page
     if (error.message?.includes('cookies') || error.message?.includes('CookieStore')) {
       console.warn('Cookie handling error, showing login page:', error.message)
-    } else {
-      console.error('Error in Login component:', error)
     }
+    // Continue to show login page
   }
 
   return <LoginPage />

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
+import { getRouteHandlerClient, getServiceRoleClient } from '../../../lib/supabase-singleton'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,24 +34,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    // Use service role key to bypass RLS (singleton, no auto-refresh)
+    const supabaseAdmin = getServiceRoleClient()
 
     // Verify the user exists in auth.users (optional check, won't block profile creation)
     // Note: If email confirmation is required, the user might not be fully authenticated
     // immediately after signup. We'll still create the profile using the service role.
     try {
-      const cookieStore = await cookies()
-      const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+      const supabase = await getRouteHandlerClient()
       const { data: { user }, error: authError } = await supabase.auth.getUser()
 
       // Log auth status for debugging (but don't block if user exists in auth.users)

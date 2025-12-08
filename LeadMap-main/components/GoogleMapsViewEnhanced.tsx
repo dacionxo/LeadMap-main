@@ -230,12 +230,12 @@ const MapComponent: React.FC<{
     leadsWithCoords.forEach((lead) => {
       const marker = new window.google.maps.Marker({
         position: { lat: lead.latitude!, lng: lead.longitude! },
-        map: map,
-        title: `${lead.address}, ${lead.city}, ${lead.state}`,
-        icon: getMarkerIcon(lead)
-      });
+          map: map,
+          title: `${lead.address}, ${lead.city}, ${lead.state}`,
+          icon: getMarkerIcon(lead)
+        });
 
-      marker.addListener('click', () => {
+        marker.addListener('click', () => {
           if (infoWindow) {
             infoWindow.close();
           }
@@ -309,9 +309,9 @@ const MapComponent: React.FC<{
               }
             });
           }
-      });
+        });
 
-      newMarkers.push(marker);
+        newMarkers.push(marker);
     });
 
     // Geocode leads without coordinates (fallback - only if needed)

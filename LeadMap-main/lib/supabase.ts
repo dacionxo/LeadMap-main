@@ -1,11 +1,20 @@
-import { createClientComponentClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+/**
+ * @deprecated Use supabase-singleton.ts instead
+ * This file is kept for backward compatibility
+ */
 
+import { getClientComponentClient, getServerComponentClient } from './supabase-singleton'
+
+/**
+ * @deprecated Use getClientComponentClient() from '@/lib/supabase-singleton' instead
+ */
 export const createClient = () => {
-  return createClientComponentClient()
+  return getClientComponentClient()
 }
 
+/**
+ * @deprecated Use getServerComponentClient() from '@/lib/supabase-singleton' instead
+ */
 export const createServerClient = async () => {
-  const cookieStore = await cookies()
-  return createServerComponentClient({ cookies: () => cookieStore })
+  return getServerComponentClient()
 }
