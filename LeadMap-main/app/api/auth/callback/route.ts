@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
                 trial_end: trialEnd.toISOString(),
                 is_subscribed: false,
                 plan_tier: 'free'
-              })
+              } as any)
+              .select()
 
             if (profileError) {
               console.error('Error creating user profile:', profileError)
