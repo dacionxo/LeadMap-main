@@ -196,7 +196,7 @@ async function runCronJob(request: NextRequest) {
           .eq('id', campaign.mailbox_id)
           .single()
 
-        if (mailboxError || !mailbox || !mailbox.active) {
+        if (mailboxError || !mailbox || !(mailbox as any).active) {
           console.error(`Mailbox not found or inactive for campaign ${campaign.id}`)
           continue
         }
@@ -256,7 +256,7 @@ async function runCronJob(request: NextRequest) {
             const { data: recentEmails } = await supabase
               .from('emails')
               .select('sent_at')
-              .eq('mailbox_id', mailbox.id)
+              .eq('mailbox_id', (mailbox as any).id)
               .eq('status', 'sent')
               .not('sent_at', 'is', null)
 
@@ -268,7 +268,7 @@ async function runCronJob(request: NextRequest) {
               e.sent_at && new Date(e.sent_at) >= oneDayAgo
             ).length || 0
 
-            const limitCheck = await checkMailboxLimits(mailbox, {
+            const limitCheck = await checkMailboxLimits(mailbox as any, {
               hourly: hourlyCount,
               daily: dailyCount
             }, supabase)
@@ -332,12 +332,12 @@ async function runCronJob(request: NextRequest) {
             }
 
             // Send email (pass supabase for transactional providers)
-            const sendResult = await sendViaMailbox(mailbox, {
+            const sendResult = await sendViaMailbox(mailbox as any, {
               to: recipient.email,
               subject: processedSubject,
               html: processedHtml,
-              fromName: mailbox.from_name || mailbox.display_name || emailSettings.from_name,
-              fromEmail: mailbox.from_email || mailbox.email
+              fromName: (mailbox as any).from_name || (mailbox as any).display_name || emailSettings.from_name,
+              fromEmail: (mailbox as any).from_email || (mailbox as any).email
             }, supabase)
 
             if (sendResult.success) {
