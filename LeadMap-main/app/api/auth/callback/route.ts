@@ -114,6 +114,7 @@ export async function GET(request: NextRequest) {
         console.log('[OAuth Callback] User needs email verification')
         return NextResponse.redirect(`${requestUrl.origin}/verify-email?verified=true`)
       }
+      }
     } catch (callbackError: any) {
       console.error('[OAuth Callback] Unexpected error:', callbackError)
       return NextResponse.redirect(
