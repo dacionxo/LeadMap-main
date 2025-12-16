@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
           // Google Calendar uses exclusive end dates for all-day events
           // For example, a single-day event on Dec 16 returns end.date = "2025-12-17"
           // We need to subtract one day to get the actual end date
-          const adjustedEndDate = endDate && startDate
+          const adjustedEndDate = (endDate && startDate && typeof endDate === 'string' && typeof startDate === 'string')
             ? new Date(new Date(endDate).getTime() - 86400000)
                 .toISOString()
                 .split('T')[0]
@@ -258,9 +258,9 @@ export async function POST(request: NextRequest) {
             .select()
             .single()
 
-          if (updateError) {
+          if (updateError || !updatedEvent) {
             console.error(`Error updating event ${googleEvent.id}:`, updateError)
-            skippedEvents.push({ id: googleEvent.id, reason: 'update_error', error: updateError.message })
+            skippedEvents.push({ id: googleEvent.id, reason: 'update_error', error: updateError?.message || 'Update failed' })
             continue
           }
 
@@ -277,9 +277,9 @@ export async function POST(request: NextRequest) {
             .select()
             .single()
 
-          if (insertError) {
+          if (insertError || !newEvent) {
             console.error(`Error inserting event ${googleEvent.id}:`, insertError)
-            skippedEvents.push({ id: googleEvent.id, reason: 'insert_error', error: insertError.message })
+            skippedEvents.push({ id: googleEvent.id, reason: 'insert_error', error: insertError?.message || 'Insert failed' })
             continue
           }
 

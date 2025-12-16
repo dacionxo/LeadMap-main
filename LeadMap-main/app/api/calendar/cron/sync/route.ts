@@ -487,9 +487,10 @@ async function syncConnectionEvents(
       )
 
       // Type guard: ensure existingResult.data is an array
-      const existing = existingResult.success && existingResult.data && Array.isArray(existingResult.data) && existingResult.data.length > 0
-        ? existingResult.data[0]
-        : null
+      let existing: { id: string; updated_at: string } | null = null
+      if (existingResult.success && existingResult.data && Array.isArray(existingResult.data) && existingResult.data.length > 0) {
+        existing = existingResult.data[0]
+      }
 
       // Check if event was updated in Google Calendar
       const googleUpdated = googleEvent.updated ? new Date(googleEvent.updated) : null
