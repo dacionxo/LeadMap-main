@@ -21,11 +21,15 @@ export async function scheduleNextStep(
   currentStepId: string
 ): Promise<void> {
   try {
-    // Get campaign to check campaign-level stop_on_reply
-    const campaignResult = await executeSelectOperation<{ stop_on_reply: boolean }>(
+    // Get campaign to check campaign-level stop_on_reply and get user_id/mailbox_id
+    const campaignResult = await executeSelectOperation<{ 
+      stop_on_reply: boolean
+      user_id: string
+      mailbox_id: string
+    }>(
       supabase,
       'campaigns',
-      'stop_on_reply',
+      'stop_on_reply, user_id, mailbox_id',
       (query) => {
         return (query as any).eq('id', campaignId).single()
       },
@@ -54,17 +58,27 @@ export async function scheduleNextStep(
       }
     )
 
-    if (!stepResult.success || !stepResult.data || stepResult.data.length === 0) {
+    // Handle .single() result - it returns a single object, not an array
+    if (!stepResult.success || !stepResult.data) {
       return
     }
 
-    const currentStep = stepResult.data[0]
+    // .single() returns a single object, not an array
+    const currentStep = Array.isArray(stepResult.data) ? stepResult.data[0] : stepResult.data
+    if (!currentStep) {
+      return
+    }
 
-    // Check if recipient has replied
-    const recipientResult = await executeSelectOperation<{ replied: boolean; status: string }>(
+    // Check if recipient has replied - also get email and campaign_id in same query
+    const recipientResult = await executeSelectOperation<{ 
+      replied: boolean
+      status: string
+      email: string
+      campaign_id: string
+    }>(
       supabase,
       'campaign_recipients',
-      'replied, status',
+      'replied, status, email, campaign_id',
       (query) => {
         return (query as any).eq('id', recipientId).single()
       },
@@ -74,11 +88,15 @@ export async function scheduleNextStep(
       }
     )
 
-    if (!recipientResult.success || !recipientResult.data || recipientResult.data.length === 0) {
+    // Handle .single() result
+    if (!recipientResult.success || !recipientResult.data) {
       return
     }
 
-    const recipient = recipientResult.data[0]
+    const recipient = Array.isArray(recipientResult.data) ? recipientResult.data[0] : recipientResult.data
+    if (!recipient) {
+      return
+    }
 
     // Check if recipient has replied
     if (recipient.replied) {
@@ -133,7 +151,8 @@ export async function scheduleNextStep(
       }
     )
 
-    if (!nextStepResult.success || !nextStepResult.data || nextStepResult.data.length === 0) {
+    // Handle .single() result
+    if (!nextStepResult.success || !nextStepResult.data) {
       // No more steps, mark as completed
       await executeUpdateOperation(
         supabase,
@@ -150,7 +169,11 @@ export async function scheduleNextStep(
       return
     }
 
-    const nextStep = nextStepResult.data[0]
+    // .single() returns a single object, not an array
+    const nextStep = Array.isArray(nextStepResult.data) ? nextStepResult.data[0] : nextStepResult.data
+    if (!nextStep) {
+      return
+    }
 
     // Calculate next send time
     const now = new Date()
@@ -158,48 +181,14 @@ export async function scheduleNextStep(
       (nextStep.delay_hours || 0) * 60 * 60 * 1000 + (nextStep.delay_days || 0) * 24 * 60 * 60 * 1000
     const nextSendAt = new Date(now.getTime() + delayMs)
 
-    // Get recipient email and user_id for creating email
-    const recipientEmailResult = await executeSelectOperation<{ email: string; campaign_id: string }>(
-      supabase,
-      'campaign_recipients',
-      'email, campaign_id',
-      (query) => {
-        return (query as any).eq('id', recipientId).single()
-      },
-      {
-        operation: 'fetch_recipient_email',
-        recipientId,
-      }
-    )
-
-    if (!recipientEmailResult.success || !recipientEmailResult.data || recipientEmailResult.data.length === 0) {
+    // Use campaign data already fetched (includes user_id and mailbox_id)
+    if (!campaignData) {
+      console.error(`[Schedule Next Step] Campaign data not available for campaign ${campaignId}`)
       return
     }
-
-    const recipientEmail = recipientEmailResult.data[0]
-
-    // Get campaign to get user_id and mailbox_id
-    const campaignForEmailResult = await executeSelectOperation<{ user_id: string; mailbox_id: string }>(
-      supabase,
-      'campaigns',
-      'user_id, mailbox_id',
-      (query) => {
-        return (query as any).eq('id', campaignId).single()
-      },
-      {
-        operation: 'fetch_campaign_for_email',
-        campaignId,
-      }
-    )
-
-    if (!campaignForEmailResult.success || !campaignForEmailResult.data || campaignForEmailResult.data.length === 0) {
-      return
-    }
-
-    const campaignForEmail = campaignForEmailResult.data[0]
 
     // Create email record for next step
-    await executeInsertOperation(
+    const insertResult = await executeInsertOperation(
       supabase,
       'emails',
       {
@@ -238,7 +227,13 @@ export async function scheduleNextStep(
       }
     )
   } catch (error) {
-    console.error('Error scheduling next step:', error)
+    console.error('[Schedule Next Step] Error scheduling next step:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      campaignId,
+      recipientId,
+      currentStepId,
+    })
     // Don't throw - this is a helper function that shouldn't break the main flow
   }
 }

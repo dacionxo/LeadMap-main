@@ -120,7 +120,13 @@ export function handleCronError(
       ...(safeDetails && { details: safeDetails }),
     }
 
-    return NextResponse.json(errorResponse, { status: error.statusCode })
+    // Add Retry-After header for rate limit errors
+    const headers: HeadersInit = {}
+    if (error instanceof RateLimitError && error.retryAfter) {
+      headers['Retry-After'] = error.retryAfter.toString()
+    }
+
+    return NextResponse.json(errorResponse, { status: error.statusCode, headers })
   }
 
   // Handle standard Error instances
@@ -208,5 +214,35 @@ export function isValidationError(error: unknown): error is ValidationError {
  */
 export function isDatabaseError(error: unknown): error is DatabaseError {
   return error instanceof DatabaseError
+}
+
+/**
+ * Checks if an error is an authentication error
+ * 
+ * @param error - The error to check
+ * @returns true if error is an AuthenticationError instance
+ */
+export function isAuthenticationError(error: unknown): error is AuthenticationError {
+  return error instanceof AuthenticationError
+}
+
+/**
+ * Checks if an error is a configuration error
+ * 
+ * @param error - The error to check
+ * @returns true if error is a ConfigurationError instance
+ */
+export function isConfigurationError(error: unknown): error is ConfigurationError {
+  return error instanceof ConfigurationError
+}
+
+/**
+ * Checks if an error is a rate limit error
+ * 
+ * @param error - The error to check
+ * @returns true if error is a RateLimitError instance
+ */
+export function isRateLimitError(error: unknown): error is RateLimitError {
+  return error instanceof RateLimitError
 }
 

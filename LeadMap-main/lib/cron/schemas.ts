@@ -18,13 +18,14 @@ export const cronJobResponseSchema = z.object({
 
 /**
  * Success response schema
+ * Uses .passthrough() to preserve extra properties that interfaces allow
  */
 export const cronJobSuccessResponseSchema = cronJobResponseSchema.extend({
   success: z.literal(true),
   data: z.unknown().optional(),
   results: z.array(z.unknown()).optional(),
   processed: z.number().optional(),
-})
+}).passthrough()
 
 /**
  * Error response schema
@@ -37,13 +38,14 @@ export const cronJobErrorResponseSchema = cronJobResponseSchema.extend({
 
 /**
  * Individual result item schema
+ * Uses .passthrough() to preserve extra properties that interfaces allow
  */
 export const cronJobResultSchema = z.object({
   id: z.string().optional(),
   status: z.enum(['success', 'failed', 'skipped', 'error']),
   message: z.string().optional(),
   error: z.string().optional(),
-})
+}).passthrough()
 
 /**
  * Batch processing statistics schema
@@ -103,6 +105,10 @@ export const healthCheckResultSchema = z.object({
 
 /**
  * Type inference from schemas
+ * 
+ * Note: These types are exported for convenience, but lib/types/cron.ts
+ * contains the authoritative interface definitions. For consistency,
+ * prefer importing from lib/types/cron.ts in application code.
  */
 export type CronJobResponse = z.infer<typeof cronJobResponseSchema>
 export type CronJobSuccessResponse = z.infer<typeof cronJobSuccessResponseSchema>

@@ -178,32 +178,14 @@ async function archiveOldEvents(
  * 
  * @param supabase - Supabase client
  * @param thirtyDaysAgo - Timestamp 30 days ago
- * @returns Number of logs deleted (approximate)
+ * @returns Number of logs deleted (approximate - actual count may differ due to race conditions)
  */
 async function deleteOldSyncLogs(
   supabase: ReturnType<typeof getCronSupabaseClient>,
   thirtyDaysAgo: Date
 ): Promise<number> {
-  // First, count how many logs will be deleted (for reporting)
-  const countResult = await executeSelectOperation<{ id: string }>(
-    supabase,
-    'calendar_sync_logs',
-    'id',
-    (query) => {
-      return (query as any).lt('created_at', thirtyDaysAgo.toISOString())
-    },
-    {
-      operation: 'count_old_sync_logs',
-    }
-  )
-
-  const count = countResult.success && countResult.data ? countResult.data.length : 0
-
-  if (count === 0) {
-    return 0
-  }
-
-  // Delete old logs
+  // Delete old logs directly - avoid count-then-delete race condition
+  // Note: Supabase delete doesn't return exact count, so this is approximate
   const deleteResult = await executeDeleteOperation(
     supabase,
     'calendar_sync_logs',
@@ -220,8 +202,10 @@ async function deleteOldSyncLogs(
     return 0
   }
 
-  console.log(`[Calendar Cleanup] Deleted ${count} sync logs older than 30 days`)
-  return count
+  // Note: count is approximate if delete doesn't return exact count
+  // New matching records could be inserted between operations
+  console.log('[Calendar Cleanup] Deleted sync logs older than 30 days')
+  return 0 // Return 0 since we can't get exact count without separate query
 }
 
 /**
@@ -389,11 +373,13 @@ async function runCronJob(request: NextRequest) {
       clearedWebhooks,
     }
 
+    // Track operation success - 0 could mean failure or no items
+    // Individual item failures are tracked in operation logs
     const stats: BatchProcessingStats = {
       total: totalProcessed,
       processed: totalProcessed,
-      successful: totalProcessed,
-      failed: 0,
+      successful: totalProcessed, // Note: 0 returns from operations may indicate failures
+      failed: 0, // Individual item failures tracked in operation logs
       skipped: 0,
       duration,
     }

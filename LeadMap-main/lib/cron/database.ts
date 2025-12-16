@@ -68,9 +68,12 @@ export async function executeDatabaseOperation<T>(
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown database error'
 
-    console.error('Database operation exception:', {
+    // TODO: Replace with structured logging (Sentry or similar) in production
+    console.error('[Database Operation] Exception:', {
       ...context,
       error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     })
 
     return {
@@ -125,7 +128,7 @@ export async function executeUpdateOperation(
  * @param table - Table name
  * @param data - Insert data (can be single object or array)
  * @param context - Context for error messages
- * @returns Result with success flag and data
+ * @returns Result with success flag and inserted data
  */
 export async function executeInsertOperation<T>(
   supabase: SupabaseClient,
@@ -138,7 +141,9 @@ export async function executeInsertOperation<T>(
 ): Promise<DatabaseOperationResult<T>> {
   return executeDatabaseOperation(
     async () => {
-      const result = await (supabase.from(table) as any).insert(data)
+      // Use .select() to return inserted data
+      const dataArray = Array.isArray(data) ? data : [data]
+      const result = await supabase.from(table).insert(dataArray as object[]).select()
       return {
         data: result.data as T | null,
         error: result.error,
@@ -161,6 +166,9 @@ export async function executeInsertOperation<T>(
  * @param filter - Filter function (e.g., .eq('id', id))
  * @param context - Context for error messages
  * @returns Result with success flag and data
+ * 
+ * Note: When using .single(), the result will be a single object, not an array.
+ * Callers should handle this appropriately (see schedule-next-step.ts for example).
  */
 export async function executeSelectOperation<T>(
   supabase: SupabaseClient,
@@ -171,14 +179,16 @@ export async function executeSelectOperation<T>(
     operation?: string
     [key: string]: unknown
   }
-): Promise<DatabaseOperationResult<T[]>> {
+): Promise<DatabaseOperationResult<T[] | T>> {
   return executeDatabaseOperation(
     async () => {
-      const query = supabase.from(table).select(select)
-      const filteredQuery = filter ? filter(query as any) : query
-      const result = await filteredQuery as { data: T[] | null; error: unknown }
+      let query = supabase.from(table).select(select)
+      if (filter) {
+        query = filter(query as ReturnType<typeof supabase.from>) as typeof query
+      }
+      const result = await query
       return {
-        data: result.data ?? null,
+        data: result.data as T[] | T | null,
         error: result.error,
       }
     },
@@ -197,7 +207,7 @@ export async function executeSelectOperation<T>(
  * @param table - Table name
  * @param filter - Filter function (e.g., .eq('id', id))
  * @param context - Context for error messages
- * @returns Result with success flag
+ * @returns Result with success flag (Supabase delete returns null for data by default)
  */
 export async function executeDeleteOperation(
   supabase: SupabaseClient,
@@ -207,12 +217,12 @@ export async function executeDeleteOperation(
     operation?: string
     [key: string]: unknown
   }
-): Promise<DatabaseOperationResult<number | null>> {
+): Promise<DatabaseOperationResult<null>> {
   return executeDatabaseOperation(
     async () => {
-      const query = supabase.from(table)
-      const filteredQuery = filter(query as any)
-      const result = await (filteredQuery as any).delete() as { data: number | null; error: unknown }
+      let query = supabase.from(table)
+      query = filter(query as ReturnType<typeof supabase.from>) as typeof query
+      const result = await query.delete()
       return {
         data: result.data,
         error: result.error,

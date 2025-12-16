@@ -22,7 +22,7 @@ export interface CronJobSuccessResponse<T = unknown> extends CronJobResponse {
   data?: T
   results?: unknown[]
   processed?: number
-  [key: string]: unknown
+  metadata?: Record<string, unknown>
 }
 
 /**
@@ -47,12 +47,12 @@ export interface CronAuthPayload {
 /**
  * Individual result item for batch operations
  */
-export interface CronJobResult {
+export interface CronJobResult<TMetadata = Record<string, unknown>> {
   id?: string
   status: 'success' | 'failed' | 'skipped' | 'error'
   message?: string
   error?: string
-  [key: string]: unknown
+  metadata?: TMetadata
 }
 
 /**

@@ -36,7 +36,7 @@ export function createSuccessResponse<T = unknown>(
     ...(options?.processed !== undefined && { processed: options.processed }),
     ...Object.fromEntries(
       Object.entries(options || {}).filter(
-        ([key]) => !['message', 'results', 'processed'].includes(key)
+        ([key, value]) => !['message', 'results', 'processed'].includes(key) && value !== undefined
       )
     ),
   }

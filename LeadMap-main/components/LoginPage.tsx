@@ -80,10 +80,10 @@ function LoginPageContent() {
   const handleOAuthSignIn = async (provider: 'google' | 'azure') => {
     if (typeof window === 'undefined') return
 
+    setLoading(true)
+    setError('')
+
     try {
-      setLoading(true)
-      setError('')
-      
       // Validate environment variables
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
         throw new Error('Supabase configuration is missing. Please contact support.')
@@ -91,18 +91,31 @@ function LoginPageContent() {
 
       // Construct redirect URL
       const redirectUrl = `${window.location.origin}/api/auth/callback`
-      
       console.log(`[OAuth] Initiating ${provider} sign-in with redirect: ${redirectUrl}`)
       
+      // Provider-specific OAuth parameters
+      const oauthOptions: {
+        redirectTo: string
+        queryParams?: Record<string, string>
+        scopes?: string
+      } = {
+        redirectTo: redirectUrl,
+      }
+
+      // Google-specific parameters
+      if (provider === 'google') {
+        oauthOptions.queryParams = {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      } else if (provider === 'azure') {
+        // Azure uses scopes for offline access, not query parameters
+        oauthOptions.scopes = 'offline_access'
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
+        options: oauthOptions,
       })
 
       if (error) {
@@ -110,17 +123,16 @@ function LoginPageContent() {
         throw error
       }
 
-      // Check if we got a URL to redirect to
-      if (data?.url) {
-        console.log(`[OAuth] Redirecting to ${provider} OAuth page`)
-        // The redirect happens automatically in client-side OAuth
-        // But we should verify the URL is valid
-        if (!data.url.startsWith('http')) {
-          throw new Error('Invalid OAuth redirect URL received')
-        }
-      } else {
+      if (!data?.url) {
         console.warn(`[OAuth] No redirect URL received from ${provider} OAuth`)
-        // This might be okay if Supabase handles the redirect automatically
+        setLoading(false)
+        return
+      }
+
+      console.log(`[OAuth] Redirecting to ${provider} OAuth page`)
+      
+      if (!data.url.startsWith('https://')) {
+        throw new Error('Invalid OAuth redirect URL received - must use HTTPS')
       }
     } catch (err: any) {
       console.error(`[OAuth] ${provider} sign-in failed:`, err)
@@ -139,6 +151,8 @@ function LoginPageContent() {
       } else {
         setError(`Unable to sign in with ${provider === 'google' ? 'Google' : 'Microsoft'}. ${errorMessage}`)
       }
+    } finally {
+      // Only set loading to false if we didn't redirect
       setLoading(false)
     }
   }

@@ -56,7 +56,12 @@ export async function GET(request: NextRequest) {
     // Now create user profile after email verification (if it doesn't exist)
     if (data.user && data.session) {
       // Check if service role key is configured before trying to create profile
-      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_supabase_service_role_key') {
+      const isServiceRoleConfigured = 
+        process.env.NEXT_PUBLIC_SUPABASE_URL && 
+        process.env.SUPABASE_SERVICE_ROLE_KEY && 
+        process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_supabase_service_role_key'
+      
+      if (isServiceRoleConfigured) {
         try {
           // Use service role key to bypass RLS (singleton, no auto-refresh)
           const supabaseAdmin = getServiceRoleClient()
@@ -73,17 +78,29 @@ export async function GET(request: NextRequest) {
             const trialEnd = new Date()
             trialEnd.setDate(trialEnd.getDate() + 7)
 
+            interface UserProfileInsert {
+              id: string
+              email: string
+              name: string
+              role: string
+              trial_end: string
+              is_subscribed: boolean
+              plan_tier: string
+            }
+
+            const profileData: UserProfileInsert = {
+              id: data.user.id,
+              email: data.user.email || '',
+              name: data.user.user_metadata?.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+              role: 'user',
+              trial_end: trialEnd.toISOString(),
+              is_subscribed: false,
+              plan_tier: 'free'
+            }
+
             const { error: profileError } = await supabaseAdmin
               .from('users')
-              .insert({
-                id: data.user.id,
-                email: data.user.email || '',
-                name: data.user.user_metadata?.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
-                role: 'user',
-                trial_end: trialEnd.toISOString(),
-                is_subscribed: false,
-                plan_tier: 'free'
-              } as any)
+              .insert(profileData)
               .select()
 
             if (profileError) {
@@ -114,7 +131,7 @@ export async function GET(request: NextRequest) {
         console.log('[OAuth Callback] User needs email verification')
         return NextResponse.redirect(`${requestUrl.origin}/verify-email?verified=true`)
       }
-      }
+    }
     } catch (callbackError: any) {
       console.error('[OAuth Callback] Unexpected error:', callbackError)
       return NextResponse.redirect(

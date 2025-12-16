@@ -97,7 +97,7 @@ interface CalendarEvent {
   start_date?: string | null
   end_date?: string | null
   location?: string | null
-  event_timezone?: string | null
+  timezone?: string | null
   external_event_id: string
   external_calendar_id: string
   sync_status: string
@@ -365,7 +365,7 @@ function parseGoogleEventToDatabase(
     start_date: startDate,
     end_date: endDate,
     location,
-    event_timezone: timezone,
+    timezone: timezone,
     external_event_id: googleEvent.id,
     external_calendar_id: calendarId,
     sync_status: 'synced',

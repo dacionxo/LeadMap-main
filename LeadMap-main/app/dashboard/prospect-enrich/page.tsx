@@ -26,7 +26,6 @@ import { postEnrichLeads } from '@/lib/api'
 import { 
   Search, 
   Filter, 
-  Download, 
   Plus, 
   Sparkles, 
   Building2, 
@@ -780,36 +779,6 @@ function ProspectEnrichInner() {
     router.replace(window.location.pathname, { scroll: false })
   }
 
-  const handleExportCSV = () => {
-    const headers = ['Listing ID', 'Property URL', 'Street', 'Unit', 'City', 'State', 'Zip Code', 'List Price', 'Beds', 'Baths', 'Sqft', 'Status', 'Agent Name', 'Agent Email', 'Agent Phone', 'MLS', 'AI Score']
-    const rows = listings.map(l => [
-      l.listing_id || '',
-      l.property_url || '',
-      l.street || '',
-      l.unit || '',
-      l.city || '',
-      l.state || '',
-      l.zip_code || '',
-      (l.list_price || 0).toString(),
-      (l.beds || '').toString(),
-      (l.full_baths || '').toString(),
-      (l.sqft || '').toString(),
-      l.status || '',
-      l.agent_name || '',
-      l.agent_email || '',
-      l.agent_phone || '',
-      l.mls || '',
-      (l.ai_investment_score || '').toString()
-    ])
-    
-    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `prospects-${Array.from(selectedFilters).join('-')}-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-  }
 
   // Fetch counts from each table separately to ensure accurate counts
   useEffect(() => {
@@ -1683,7 +1652,6 @@ function ProspectEnrichInner() {
           sortBy={sortBy}
           onSortChange={setSortBy}
           onImport={() => setShowImportModal(true)}
-          onExport={handleExportCSV}
           onSaveSearch={() => alert('Save search functionality coming soon')}
           onCreateWorkflow={() => alert('Create workflow functionality coming soon')}
           onRunAIPrompt={() => {

@@ -93,25 +93,26 @@ export async function pushEventToGoogleCalendar(
     }
 
     // Handle start and end times
+    const eventTimezone = event.timezone || event.event_timezone || 'UTC'
     if (event.all_day && event.start_date) {
       // All-day event
       googleEvent.start = {
         date: event.start_date, // YYYY-MM-DD format
-        timeZone: event.event_timezone || 'UTC',
+        timeZone: eventTimezone,
       }
       googleEvent.end = {
         date: event.end_date || event.start_date,
-        timeZone: event.event_timezone || 'UTC',
+        timeZone: eventTimezone,
       }
     } else if (event.start_time) {
       // Timed event
       googleEvent.start = {
         dateTime: event.start_time, // ISO 8601 string
-        timeZone: event.event_timezone || 'UTC',
+        timeZone: eventTimezone,
       }
       googleEvent.end = {
         dateTime: event.end_time || event.start_time,
-        timeZone: event.event_timezone || 'UTC',
+        timeZone: eventTimezone,
       }
     } else {
       return { success: false, error: 'Event missing start time or date' }

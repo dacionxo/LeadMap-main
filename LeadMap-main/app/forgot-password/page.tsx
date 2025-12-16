@@ -125,12 +125,11 @@ function ForgotPasswordContent() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white">
           <div className="mx-4 sm:mx-6 lg:mx-8">
             <div className="flex justify-between items-center h-16 max-w-[1872px] mx-auto">
-              <div 
-                className="flex items-center space-x-3 group cursor-pointer mt-6 -ml-[10px] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg transition-all"
+              <button
+                type="button"
+                className="flex items-center space-x-3 group cursor-pointer mt-6 -ml-[10px] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg transition-all bg-transparent border-none p-0"
                 onClick={() => router.push('/')}
                 onKeyDown={handleLogoKeyDown}
-                tabIndex={0}
-                role="button"
                 aria-label="Navigate to home page"
               >
                 <Image
@@ -156,7 +155,7 @@ function ForgotPasswordContent() {
                     NextDeal
                   </span>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </nav>
@@ -271,7 +270,11 @@ function ForgotPasswordContent() {
                           </div>
 
                           {error && (
-                            <div className="p-3 bg-error/10 border border-error/30 rounded-lg">
+                            <div 
+                              className="p-3 bg-error/10 border border-error/30 rounded-lg"
+                              role="alert"
+                              aria-live="assertive"
+                            >
                               <p className="text-error text-xs">{error}</p>
                             </div>
                           )}
@@ -331,7 +334,7 @@ function ForgotPasswordContent() {
                           Have an account?{' '}
                           <a
                             href="/login"
-                            className="text-primary hover:text-primary-600 font-medium"
+                            className="text-primary hover:text-primary-600 font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
                           >
                             Log in here
                           </a>
@@ -339,7 +342,7 @@ function ForgotPasswordContent() {
                       </div>
 
                       {/* Copyright */}
-                      <p className="text-xs text-gray-500 text-center mt-6">
+                      <p className="text-xs text-gray-600 text-center mt-6">
                         2025 All Rights Reserved. Privacy and Terms.
                       </p>
                     </div>

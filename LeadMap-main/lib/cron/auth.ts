@@ -4,7 +4,22 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 import type { CronAuthPayload } from '@/lib/types/cron'
+import { createUnauthorizedResponse } from './responses'
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    // Use dummy comparison to maintain constant time
+    const dummy = Buffer.from(a)
+    timingSafeEqual(dummy, dummy)
+    return false
+  }
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b))
+}
 
 /**
  * Verifies if a cron request is authenticated
@@ -46,23 +61,6 @@ export function verifyCronRequest(request: NextRequest): boolean {
   }
 
   return false
-}
-
-/**
- * Creates an unauthorized response for cron jobs
- * 
- * @param message - Optional custom error message
- * @returns NextResponse with 401 status
- */
-export function createUnauthorizedResponse(message?: string): NextResponse {
-  return NextResponse.json(
-    {
-      success: false,
-      error: message || 'Unauthorized',
-      timestamp: new Date().toISOString(),
-    },
-    { status: 401 }
-  )
 }
 
 /**

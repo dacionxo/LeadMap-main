@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { MapPin } from 'lucide-react'
+import { handleOAuthSignIn as handleOAuthSignInUtil } from '@/lib/auth/oauth'
+import { sendVerificationEmail } from '@/lib/auth/verification'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -115,26 +117,25 @@ export default function SignUpPage() {
       }
 
       if (data.user) {
+        // Validate email exists before sending verification
+        if (!data.user.email) {
+          throw new Error('User account created but email address is missing. Please contact support.')
+        }
+
         // Send verification email via SendGrid (not Supabase)
         // This ensures we use SendGrid for all email communications
-        const emailResponse = await fetch('/api/auth/send-verification-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email: data.user.email!,
-            name,
-          }),
+        const emailResult = await sendVerificationEmail({
+          userId: data.user.id,
+          email: data.user.email,
+          name,
         })
 
-        const emailResult = await emailResponse.json()
-
-        if (!emailResponse.ok) {
+        if (!emailResult.success) {
           console.error('Failed to send verification email:', emailResult.error)
-          // Still show success message to user (email might have been sent)
-          // But log the error for debugging
+          // Show warning to user but don't block signup flow
+          setError(`Account created, but we couldn't send the verification email. ${emailResult.error || 'Please try again later or contact support.'}`)
+          // Still set emailSent to true to show the verification message
+          // User can try resending if needed
         }
 
         // Check if email confirmation is required
@@ -186,65 +187,24 @@ export default function SignUpPage() {
   const handleOAuthSignIn = async (provider: 'google' | 'azure') => {
     if (typeof window === 'undefined') return
 
+    setLoading(true)
+    setError('')
+
     try {
-      setLoading(true)
-      setError('')
-      
-      // Validate environment variables
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-        throw new Error('Supabase configuration is missing. Please contact support.')
-      }
-
-      // Construct redirect URL
       const redirectUrl = `${window.location.origin}/api/auth/callback`
-      
-      console.log(`[OAuth] Initiating ${provider} sign-in with redirect: ${redirectUrl}`)
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      })
+      const result = await handleOAuthSignInUtil(supabase, provider, redirectUrl)
 
-      if (error) {
-        console.error(`[OAuth] ${provider} sign-in error:`, error)
-        throw error
+      if (!result.success) {
+        setError(result.error || 'OAuth sign-in failed')
+        setLoading(false)
+        return
       }
 
-      // Check if we got a URL to redirect to
-      if (data?.url) {
-        console.log(`[OAuth] Redirecting to ${provider} OAuth page`)
-        // The redirect happens automatically in client-side OAuth
-        // But we should verify the URL is valid
-        if (!data.url.startsWith('http')) {
-          throw new Error('Invalid OAuth redirect URL received')
-        }
-      } else {
-        console.warn(`[OAuth] No redirect URL received from ${provider} OAuth`)
-        // This might be okay if Supabase handles the redirect automatically
-      }
+      // OAuth redirect happens automatically via Supabase
+      // No need to manually redirect
     } catch (err: any) {
       console.error(`[OAuth] ${provider} sign-in failed:`, err)
-      
-      // Handle specific error types
-      const errorMessage = err.message || err.toString() || 'Unknown error'
-      
-      if (errorMessage.includes('rate limit') || errorMessage.includes('Request rate limit')) {
-        setError('Too many requests. Please wait a moment and try again.')
-      } else if (errorMessage.includes('redirect_uri_mismatch') || errorMessage.includes('redirect')) {
-        setError('OAuth configuration error. Please contact support.')
-      } else if (errorMessage.includes('invalid_client') || errorMessage.includes('client')) {
-        setError('OAuth provider not configured. Please contact support.')
-      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-        setError('Network error. Please check your connection and try again.')
-      } else {
-        setError(`Unable to sign in with ${provider === 'google' ? 'Google' : 'Microsoft'}. ${errorMessage}`)
-      }
+      setError(`Unable to sign in with ${provider === 'google' ? 'Google' : 'Microsoft'}. Please try again.`)
       setLoading(false)
     }
   }
