@@ -14,6 +14,16 @@ import {
 } from 'lucide-react'
 import SaveButton from './AddToCrmButton'
 
+// Helper function to format bathroom count with proper decimal display
+function formatBaths(baths: number | null | undefined): string {
+  if (baths === null || baths === undefined) return '-'
+  // Convert to number if it's a string
+  const numBaths = typeof baths === 'string' ? parseFloat(baths) : baths
+  if (isNaN(numBaths)) return '-'
+  // Remove trailing zeros for whole numbers, keep decimals for fractional values
+  return numBaths % 1 === 0 ? numBaths.toString() : numBaths.toFixed(1)
+}
+
 interface Listing {
   listing_id: string
   street?: string | null
@@ -400,7 +410,7 @@ export default function ApolloContactCard({
             fontSize: '14px',
             color: isDark ? '#e2e8f0' : '#374151'
           }}>
-            {listing.full_baths ?? '-'}
+            {formatBaths(listing.full_baths)}
           </span>
         </div>
       )}
