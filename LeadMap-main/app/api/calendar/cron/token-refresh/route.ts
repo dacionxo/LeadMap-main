@@ -86,7 +86,7 @@ async function runCronJob(request: NextRequest) {
             access_token: refreshResult.accessToken,
             token_expires_at: expiresAt,
             updated_at: new Date().toISOString(),
-          } as any)
+          })
           .eq('id', connection.id)
 
         results.push({
