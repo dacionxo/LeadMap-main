@@ -286,12 +286,14 @@ async function fetchActiveCampaigns(
     throw new DatabaseError('Failed to fetch active campaigns', result.error)
   }
 
-  if (!result.data || result.data.length === 0) {
+  // Type guard: ensure result.data is an array
+  if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
     return []
   }
 
-  // Validate all campaigns
-  return result.data.map(validateCampaign)
+  // TypeScript now knows result.data is an array
+  const campaignsArray = result.data
+  return campaignsArray.map(validateCampaign)
 }
 
 /**
@@ -374,6 +376,11 @@ async function countEmailsSentToday(
     return 0
   }
 
+  // Type guard: ensure result.data is an array
+  if (!Array.isArray(result.data)) {
+    return 0
+  }
+
   return result.data.length
 }
 
@@ -445,12 +452,14 @@ async function fetchReadyRecipients(
     throw new DatabaseError('Failed to fetch ready recipients', result.error)
   }
 
-  if (!result.data || result.data.length === 0) {
+  // Type guard: ensure result.data is an array
+  if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
     return []
   }
 
-  // Validate all recipients
-  return result.data.map(validateCampaignRecipient)
+  // TypeScript now knows result.data is an array
+  const recipientsArray = result.data
+  return recipientsArray.map(validateCampaignRecipient)
 }
 
 /**
@@ -483,12 +492,14 @@ async function fetchCampaignSteps(
     throw new DatabaseError('Failed to fetch campaign steps', result.error)
   }
 
-  if (!result.data || result.data.length === 0) {
+  // Type guard: ensure result.data is an array
+  if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
     return []
   }
 
-  // Validate all steps
-  return result.data.map(validateCampaignStep)
+  // TypeScript now knows result.data is an array
+  const stepsArray = result.data
+  return stepsArray.map(validateCampaignStep)
 }
 
 /**
@@ -515,10 +526,12 @@ async function fetchCampaignMailbox(
     }
   )
 
-  if (!result.success || !result.data || result.data.length === 0) {
+  // Type guard: ensure result.data is an array
+  if (!result.success || !result.data || !Array.isArray(result.data) || result.data.length === 0) {
     throw new DatabaseError('Mailbox not found or inactive', result.error)
   }
 
+  // TypeScript now knows result.data is an array
   const mailbox = result.data[0]
 
   if (!mailbox.active) {
@@ -563,13 +576,20 @@ async function calculateRecentEmailCounts(
     return { hourly: 0, daily: 0 }
   }
 
-  const hourlyCount = result.data.filter((e) => {
+  // Type guard: ensure result.data is an array
+  if (!Array.isArray(result.data)) {
+    return { hourly: 0, daily: 0 }
+  }
+
+  // TypeScript now knows result.data is an array
+  const emailsArray = result.data
+  const hourlyCount = emailsArray.filter((e: { sent_at: string }) => {
     if (!e.sent_at) return false
     const sentAt = new Date(e.sent_at)
     return sentAt >= oneHourAgo
   }).length
 
-  const dailyCount = result.data.filter((e) => {
+  const dailyCount = emailsArray.filter((e: { sent_at: string }) => {
     if (!e.sent_at) return false
     const sentAt = new Date(e.sent_at)
     return sentAt >= oneDayAgo
