@@ -1,6 +1,8 @@
-# Chrome Extension Development Rules
+# Development Rules
 
-You are an expert Chrome extension developer, proficient in JavaScript/TypeScript, browser extension APIs, and web development.
+You are an expert developer proficient in:
+- Chrome Extension development (JavaScript/TypeScript, browser extension APIs)
+- TypeScript, React Native, Expo, and Mobile UI development
 
 ## Code Style and Structure
 
@@ -278,12 +280,306 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 - Web Store: https://developer.chrome.com/docs/webstore/
 - See `docs/CHROME_EXTENSION_REFERENCE.md` for comprehensive reference
 
+---
+
+# React Native, Expo, and Mobile UI Development Rules
+
+You are an expert in TypeScript, React Native, Expo, and Mobile UI development.
+
+## Code Style and Structure
+
+### TypeScript Best Practices
+- Write concise, technical TypeScript code with accurate examples
+- Use functional and declarative programming patterns; avoid classes
+- Prefer iteration and modularization over code duplication
+- Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`)
+- Structure files: exported component, subcomponents, helpers, static content, types
+- Use strict mode in TypeScript for better type safety
+- Prefer interfaces over types
+- Avoid enums; use maps instead
+- Use functional components with TypeScript interfaces
+
+### File Organization
+```
+app/
+├── components/
+│   └── auth-wizard/
+│       ├── index.tsx
+│       └── types.ts
+├── screens/
+├── utils/
+├── hooks/
+├── context/
+└── types/
+```
+
+### Naming Conventions
+- Use lowercase with dashes for directories (e.g., `components/auth-wizard`)
+- Favor named exports for components
+- Use descriptive component and function names
+
+### Syntax and Formatting
+- Use the "function" keyword for pure functions
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements
+- Use declarative JSX
+- Use Prettier for consistent code formatting
+
+## Expo Configuration
+
+### Setup and Configuration
+- Follow Expo's official documentation: https://docs.expo.dev/
+- Use `app.json`, `app.config.js`, or `app.config.ts` for configuration
+- Use `expo-constants` for managing environment variables and configuration
+- Use `expo-permissions` to handle device permissions gracefully
+- Rely on Expo's managed workflow for streamlined development and deployment
+
+### Dynamic Configuration
+```typescript
+// app.config.ts
+export default {
+  name: process.env.APP_NAME || 'My App',
+  version: process.env.APP_VERSION || '1.0.0',
+  extra: {
+    apiUrl: process.env.API_URL,
+  },
+};
+```
+
+## UI and Styling
+
+### Expo Components
+- Use Expo's built-in components for common UI patterns and layouts
+- Implement responsive design with Flexbox and `useWindowDimensions` for screen size adjustments
+- Use styled-components or Tailwind CSS for component styling
+- Implement dark mode support using Expo's `useColorScheme`
+- Ensure high accessibility (a11y) standards using ARIA roles and native accessibility props
+
+### Safe Area Management
+- Use `SafeAreaProvider` from `react-native-safe-area-context` to manage safe areas globally
+- Wrap top-level components with `SafeAreaView` to handle notches, status bars, and screen insets
+- Use `SafeAreaScrollView` for scrollable content to ensure it respects safe area boundaries
+- Use `useSafeAreaInsets` hook for precise control instead of `SafeAreaView` when needed
+- Avoid hardcoding padding or margins for safe areas; rely on SafeAreaView and context hooks
+- Avoid nesting multiple `SafeAreaView` components
+
+**Example**:
+```typescript
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+function MyComponent() {
+  const insets = useSafeAreaInsets();
+  
+  return (
+    <View style={{
+      paddingTop: insets.top,
+      paddingBottom: insets.bottom,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+    }}>
+      {/* Content */}
+    </View>
+  );
+}
+```
+
+### Animations and Gestures
+- Leverage `react-native-reanimated` for performant animations
+- Use `react-native-gesture-handler` for gesture handling
+- Run animations on the native UI thread for smooth performance
+- Use `useSharedValue` and `useAnimatedStyle` for animations
+
+## Performance Optimization
+
+### Best Practices
+- Minimize the use of `useState` and `useEffect`; prefer context and reducers for state management
+- Use Expo's `AppLoading` and `SplashScreen` for optimized app startup experience
+- Optimize images: use WebP format where supported, include size data, implement lazy loading with `expo-image`
+- Implement code splitting and lazy loading for non-critical components with React's `Suspense` and dynamic imports
+- Profile and monitor performance using React Native's built-in tools and Expo's debugging features
+- Avoid unnecessary re-renders by memoizing components and using `useMemo` and `useCallback` hooks appropriately
+
+### Memoization
+```typescript
+// useMemo for expensive computations
+const processedData = useMemo(() => {
+  return data.map(item => /* expensive operation */);
+}, [data]);
+
+// useCallback for function references
+const handlePress = useCallback(() => {
+  // Handler logic
+}, [dependencies]);
+
+// React.memo for component memoization
+const MemoizedComponent = React.memo(Component);
+```
+
+### Mobile Web Vitals
+- Prioritize Load Time, Jank, and Responsiveness
+- Optimize bundle size
+- Implement proper image optimization
+- Use lazy loading for screens and components
+
+## Navigation
+
+### React Navigation
+- Use `react-navigation` for routing and navigation
+- Follow best practices for stack, tab, and drawer navigators
+- Minimize navigator nesting to avoid complexity and performance issues
+- Manage headers in nested navigators by hiding parent headers when needed
+- Leverage deep linking and universal links for better user engagement
+- Use dynamic routes with `expo-router` for better navigation handling
+- Utilize navigation hooks: `useNavigation`, `useRoute`, `useFocusEffect`
+
+### Deep Linking
+- Configure deep linking to allow direct navigation to specific screens
+- Handle URL parameters using `expo-linking`
+- Test deep links on both iOS and Android
+
+## State Management
+
+### React Context and useReducer
+- Use React Context and `useReducer` for managing global state
+- Appropriate for shared, low-frequency state (theme, auth, language)
+- Be cautious with frequently updating state to avoid unnecessary re-renders
+
+### External Libraries
+- Leverage `react-query` for data fetching and caching; avoid excessive API calls
+- For complex state management, consider using Zustand or Redux Toolkit
+- Start simple with local state, scale to Context, then external libraries as needed
+
+### Best Practices
+- Keep state as close as possible to components that use it
+- Separate business logic from UI logic
+- Normalize large datasets for better performance
+- Avoid mutating state directly; always return new state objects
+
+## Error Handling and Validation
+
+### Zod for Validation
+- Use Zod for runtime validation and error handling
+- Define schemas for data structures
+- Validate inputs before processing
+
+**Example**:
+```typescript
+import { z } from 'zod';
+
+const userSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email format'),
+});
+
+try {
+  const validated = userSchema.parse(userData);
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    // Handle validation errors
+  }
+}
+```
+
+### Error Handling Patterns
+- Handle errors at the beginning of functions
+- Use early returns for error conditions to avoid deeply nested if statements
+- Avoid unnecessary else statements; use if-return pattern instead
+- Implement global error boundaries to catch and handle unexpected errors
+- Use `expo-error-reporter` for logging and reporting errors in production
+
+### Error Logging
+- Implement proper error logging using Sentry or similar service
+- Use `sentry-expo` for error tracking in Expo projects
+- Capture Zod validation errors with Sentry integration
+- Never log sensitive information (PII, passwords, tokens)
+
+## Testing
+
+### Unit Testing
+- Write unit tests using Jest and React Native Testing Library
+- Test behavior, not implementation
+- Keep tests fast to encourage frequent runs
+- Mock external dependencies (APIs, AsyncStorage, native modules)
+- Use descriptive test names
+
+### Integration Testing
+- Implement integration tests for critical user flows using Detox
+- Keep tests isolated by reloading app between tests
+- Use unique `testID` properties for reliable element identification
+- Focus on critical user journeys
+- Integrate with CI/CD pipelines
+
+### Expo Testing
+- Expo projects come with Jest preconfigured
+- Use Expo's testing tools for running tests in different environments
+- Consider snapshot testing for components to ensure UI consistency
+
+## Security
+
+### Best Practices
+- Sanitize user inputs to prevent XSS attacks
+- Use `expo-secure-store` or `react-native-encrypted-storage` for secure storage of sensitive data
+- Ensure secure communication with APIs using HTTPS and proper authentication
+- Use Expo's Security guidelines: https://docs.expo.dev/guides/security/
+- Implement SSL pinning for additional security
+- Use OAuth2 or OpenID Connect for authentication
+- Regularly audit and update dependencies
+- Remove unused libraries to reduce attack surface
+- Obfuscate and minify JavaScript code in production
+
+## Internationalization (i18n)
+
+### Setup
+- Use `expo-localization` for device locale information
+- Use `i18n-js` or `react-native-i18n` for internationalization
+- Support multiple languages and RTL layouts
+- Ensure text scaling and font adjustments for accessibility
+
+### RTL Support
+```typescript
+import { I18nManager } from 'react-native';
+import * as Localization from 'expo-localization';
+
+if (Localization.isRTL) {
+  I18nManager.forceRTL(true);
+} else {
+  I18nManager.forceRTL(false);
+}
+```
+
+## Key Conventions
+
+1. Rely on Expo's managed workflow for streamlined development and deployment
+2. Prioritize Mobile Web Vitals (Load Time, Jank, and Responsiveness)
+3. Use `expo-constants` for managing environment variables and configuration
+4. Use `expo-permissions` to handle device permissions gracefully
+5. Implement `expo-updates` for over-the-air (OTA) updates
+6. Follow Expo's best practices for app deployment and publishing: https://docs.expo.dev/distribution/introduction/
+7. Ensure compatibility with iOS and Android by testing extensively on both platforms
+
+## Documentation References
+
+### Expo
+- Official Documentation: https://docs.expo.dev/
+- Configuration: https://docs.expo.dev/workflow/configuration/
+- Security: https://docs.expo.dev/guides/security/
+- Distribution: https://docs.expo.dev/distribution/introduction/
+
+### React Native
+- Official Documentation: https://reactnative.dev/
+- React Navigation: https://reactnavigation.org/
+- React Native Reanimated: https://docs.swmansion.com/react-native-reanimated/
+- React Native Gesture Handler: https://docs.swmansion.com/react-native-gesture-handler/
+
+### TypeScript
+- TypeScript Handbook: https://www.typescriptlang.org/docs/
+
 ## Output Expectations
 
 - Provide clear, working code examples
 - Include necessary error handling
 - Follow security best practices
-- Ensure cross-browser compatibility
+- Ensure cross-platform compatibility (iOS and Android)
 - Write maintainable and scalable code
-- Use TypeScript with proper types
+- Use TypeScript with proper types and strict mode
 - Document complex logic with JSDoc comments
+- Follow Expo and React Native best practices
