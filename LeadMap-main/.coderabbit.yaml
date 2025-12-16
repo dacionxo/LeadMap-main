@@ -1,0 +1,113 @@
+# CodeRabbit Configuration
+# Repository: LeadMap-main
+# Owner: Dacionxo
+
+# Enable CodeRabbit for this repository
+enable: true
+
+# Review settings
+review:
+  # Automatically review pull requests
+  auto_review: true
+  
+  # Review comments on pull requests
+  review_comment: true
+  
+  # Review commits
+  review_commit: true
+  
+  # Review code suggestions
+  suggest_reviewers: true
+  
+  # Language-specific settings
+  languages:
+    - typescript
+    - javascript
+    - python
+    - sql
+    - markdown
+    - yaml
+    - json
+
+# Paths to include/exclude
+paths:
+  # Include all source files
+  include:
+    - "app/**"
+    - "lib/**"
+    - "components/**"
+    - "scripts/**"
+    - "*.ts"
+    - "*.tsx"
+    - "*.js"
+    - "*.jsx"
+    - "*.py"
+  
+  # Exclude node_modules, build outputs, etc.
+  exclude:
+    - "node_modules/**"
+    - ".next/**"
+    - "dist/**"
+    - "build/**"
+    - "*.min.js"
+    - "*.min.css"
+    - ".git/**"
+    - "coverage/**"
+
+# Code quality settings
+quality:
+  # Enable security scanning
+  security: true
+  
+  # Enable performance checks
+  performance: true
+  
+  # Enable best practices checks
+  best_practices: true
+  
+  # Enable accessibility checks
+  accessibility: true
+
+# AI model settings
+model:
+  # Use the latest model
+  provider: "anthropic"
+  
+  # Temperature for more deterministic reviews
+  temperature: 0.1
+
+# Pull request settings
+pull_request:
+  # Review title and description
+  review_title: true
+  review_description: true
+  
+  # Review file changes
+  review_changes: true
+  
+  # Suggest improvements
+  suggest_improvements: true
+  
+  # Check for breaking changes
+  check_breaking_changes: true
+
+# Commit message settings
+commit:
+  # Review commit messages
+  review_message: true
+  
+  # Check commit message format
+  check_format: true
+
+# Custom instructions
+instructions: |
+  This is a Next.js application with TypeScript, Supabase, and various integrations.
+  Please focus on:
+  - TypeScript type safety
+  - Next.js best practices
+  - Supabase query optimization
+  - Security best practices
+  - Performance optimization
+  - Code maintainability
+  
+  The repository owner is Dacionxo.
