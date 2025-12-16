@@ -66,7 +66,7 @@ async function runCronJob(request: NextRequest) {
         }
 
         // Update listings with current timestamp and check for expired status
-        for (const listing of listings) {
+        for (const listing of listings as any[]) {
           try {
             const updates: any = {
               updated_at: new Date().toISOString(),

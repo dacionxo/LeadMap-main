@@ -66,7 +66,7 @@ async function runCronJob(request: NextRequest) {
 
     const results = []
 
-    for (const mailbox of mailboxes) {
+    for (const mailbox of mailboxes as any[]) {
       try {
         // Get valid access token (refresh if needed)
         let accessToken = mailbox.access_token

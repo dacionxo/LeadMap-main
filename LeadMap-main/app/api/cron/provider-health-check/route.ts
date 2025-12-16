@@ -51,7 +51,7 @@ async function runCronJob(request: NextRequest) {
     const results = []
 
     // Check health of each credential
-    for (const cred of credentials) {
+    for (const cred of credentials as any[]) {
       try {
         // Decrypt credentials
         const decryptedCred = {

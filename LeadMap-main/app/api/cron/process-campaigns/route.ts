@@ -59,7 +59,7 @@ async function runCronJob(request: NextRequest) {
     }
 
     // Process each campaign
-    for (const campaign of activeCampaigns) {
+    for (const campaign of activeCampaigns as any[]) {
       try {
         // Check if campaign has passed its end date
         if (campaign.end_at) {

@@ -75,7 +75,7 @@ async function runCronJob(request: NextRequest) {
         }
 
         // Geocode addresses
-        for (const listing of listings) {
+        for (const listing of listings as any[]) {
           try {
             const address = `${listing.street}, ${listing.city}, ${listing.state} ${listing.zip_code || ''}`.trim()
             

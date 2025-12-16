@@ -56,7 +56,7 @@ async function runCronJob(request: NextRequest) {
     }
 
     // Process each email
-    for (const email of queuedEmails) {
+    for (const email of queuedEmails as any[]) {
       try {
         // Mark as processing
         await supabase
