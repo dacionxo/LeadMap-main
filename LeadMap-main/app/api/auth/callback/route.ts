@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
 
             const { error: profileError } = await supabaseAdmin
               .from('users')
-              .insert(profileData)
+              .insert([profileData])
               .select()
 
             if (profileError) {
