@@ -66,9 +66,8 @@ async function runCronJob(request: NextRequest) {
           const endDate = new Date(campaign.end_at)
           if (now > endDate) {
             // Campaign has ended, mark as completed
-            await supabase
-              .from('campaigns')
-              .update({ 
+            await (supabase.from('campaigns') as any)
+              .update({
                 status: 'completed',
                 completed_at: now.toISOString()
               })
@@ -116,8 +115,7 @@ async function runCronJob(request: NextRequest) {
           const nextWarmupDay = calculateNextWarmupDay(campaignStart, campaign.current_warmup_day || 0)
 
           if (nextWarmupDay !== campaign.current_warmup_day) {
-            await supabase
-              .from('campaigns')
+            await (supabase.from('campaigns') as any)
               .update({ current_warmup_day: nextWarmupDay })
               .eq('id', campaign.id)
           }
@@ -210,8 +208,7 @@ async function runCronJob(request: NextRequest) {
             // Check stop on reply
             const replyCheck = await checkAndStopOnReply(recipient.id, campaign.id, supabase)
             if (replyCheck.shouldStop) {
-              await supabase
-                .from('campaign_recipients')
+              await (supabase.from('campaign_recipients') as any)
                 .update({ status: 'stopped' })
                 .eq('id', recipient.id)
               continue
@@ -223,8 +220,7 @@ async function runCronJob(request: NextRequest) {
 
             if (!nextStep) {
               // No more steps, mark as completed
-              await supabase
-                .from('campaign_recipients')
+              await (supabase.from('campaign_recipients') as any)
                 .update({ 
                   status: 'completed',
                   current_step_number: currentStepNumber
@@ -244,8 +240,7 @@ async function runCronJob(request: NextRequest) {
 
               if (!stepWindowCheck.allowed) {
                 // Schedule for next available time
-                await supabase
-                  .from('campaign_recipients')
+                await (supabase.from('campaign_recipients') as any)
                   .update({ 
                     next_send_at: stepWindowCheck.nextAvailableTime?.toISOString()
                   })
@@ -347,8 +342,7 @@ async function runCronJob(request: NextRequest) {
 
             if (sendResult.success) {
               // Update email record
-              await supabase
-                .from('emails')
+              await (supabase.from('emails') as any)
                 .update({
                   status: 'sent',
                   sent_at: new Date().toISOString(),
@@ -361,8 +355,7 @@ async function runCronJob(request: NextRequest) {
               const delayDays = nextStep.delay_days || 0
               const nextSendAt = new Date(now.getTime() + (delayHours * 60 * 60 * 1000) + (delayDays * 24 * 60 * 60 * 1000))
 
-              await supabase
-                .from('campaign_recipients')
+              await (supabase.from('campaign_recipients') as any)
                 .update({
                   current_step_number: nextStep.step_number,
                   last_step_sent: nextStep.step_number,
@@ -376,16 +369,14 @@ async function runCronJob(request: NextRequest) {
               processedCount++
             } else {
               // Send failed
-              await supabase
-                .from('emails')
+              await (supabase.from('emails') as any)
                 .update({
                   status: 'failed',
                   error: sendResult.error
                 })
                 .eq('id', emailRecord.id)
 
-              await supabase
-                .from('campaign_recipients')
+              await (supabase.from('campaign_recipients') as any)
                 .update({
                   error_count: (recipient.error_count || 0) + 1,
                   last_error: sendResult.error
