@@ -59,27 +59,30 @@ async function runCronJob(request: NextRequest) {
     for (const email of queuedEmails as Array<{ id: string; [key: string]: unknown }>) {
       try {
         // Mark as processing
-        await supabase
-          .from('email_queue')
-          .update({ status: 'processing' } as Record<string, unknown>)
+        const processingData: any = {
+          status: 'processing'
+        }
+        await (supabase.from('email_queue') as any)
+          .update(processingData)
           .eq('id', email.id)
 
         // Get mailbox
         const { data: mailbox, error: mailboxError } = await supabase
           .from('mailboxes')
           .select('*')
-          .eq('id', email.mailbox_id)
-          .eq('user_id', email.user_id) // Ensure multi-tenant isolation
+          .eq('id', email.mailbox_id as string)
+          .eq('user_id', email.user_id as string) // Ensure multi-tenant isolation
           .single()
 
         if (mailboxError || !mailbox) {
-          await supabase
-            .from('email_queue')
-            .update({
-              status: 'failed',
-              last_error: 'Mailbox not found',
-              retry_count: email.retry_count + 1
-            } as Record<string, unknown>)
+          const retryCount = typeof email.retry_count === 'number' ? email.retry_count : 0
+          const failData: any = {
+            status: 'failed',
+            last_error: 'Mailbox not found',
+            retry_count: retryCount + 1
+          }
+          await (supabase.from('email_queue') as any)
+            .update(failData)
             .eq('id', email.id)
           
           results.push({
@@ -91,13 +94,14 @@ async function runCronJob(request: NextRequest) {
         }
 
         if (!(mailbox as any).active) {
-          await supabase
-            .from('email_queue')
-            .update({
-              status: 'failed',
-              last_error: 'Mailbox is not active',
-              retry_count: email.retry_count + 1
-            } as Record<string, unknown>)
+          const retryCount = typeof email.retry_count === 'number' ? email.retry_count : 0
+          const inactiveData: any = {
+            status: 'failed',
+            last_error: 'Mailbox is not active',
+            retry_count: retryCount + 1
+          }
+          await (supabase.from('email_queue') as any)
+            .update(inactiveData)
             .eq('id', email.id)
           
           results.push({
@@ -134,9 +138,11 @@ async function runCronJob(request: NextRequest) {
 
         if (!limitCheck.allowed) {
           // Rate limited - keep in queue, don't increment retry count
-          await supabase
-            .from('email_queue')
-            .update({ status: 'queued' } as Record<string, unknown>)
+          const queuedData: any = {
+            status: 'queued'
+          }
+          await (supabase.from('email_queue') as any)
+            .update(queuedData)
             .eq('id', email.id)
           
           results.push({
@@ -176,12 +182,12 @@ async function runCronJob(request: NextRequest) {
             })
 
           // Mark queue entry as sent
-          await supabase
-            .from('email_queue')
-            .update({
-              status: 'sent',
-              processed_at: new Date().toISOString()
-            } as Record<string, unknown>)
+          const sentData: any = {
+            status: 'sent',
+            processed_at: new Date().toISOString()
+          }
+          await (supabase.from('email_queue') as any)
+            .update(sentData)
             .eq('id', email.id)
 
           results.push({
@@ -191,16 +197,18 @@ async function runCronJob(request: NextRequest) {
           })
         } else {
           // Send failed - retry if under max retries
-          const retryCount = email.retry_count + 1
-          const shouldRetry = retryCount < (email.max_retries || 3)
+          const currentRetryCount = typeof email.retry_count === 'number' ? email.retry_count : 0
+          const maxRetries = typeof email.max_retries === 'number' ? email.max_retries : 3
+          const retryCount = currentRetryCount + 1
+          const shouldRetry = retryCount < maxRetries
 
-          await supabase
-            .from('email_queue')
-            .update({
-              status: shouldRetry ? 'queued' : 'failed',
-              last_error: sendResult.error || 'Failed to send email',
-              retry_count: retryCount
-            } as Record<string, unknown>)
+          const retryData: any = {
+            status: shouldRetry ? 'queued' : 'failed',
+            last_error: sendResult.error || 'Failed to send email',
+            retry_count: retryCount
+          }
+          await (supabase.from('email_queue') as any)
+            .update(retryData)
             .eq('id', email.id)
 
           results.push({
@@ -213,16 +221,18 @@ async function runCronJob(request: NextRequest) {
       } catch (error: any) {
         console.error(`Error processing email ${email.id}:`, error)
         
-        const retryCount = email.retry_count + 1
-        const shouldRetry = retryCount < (email.max_retries || 3)
+        const currentRetryCount = typeof email.retry_count === 'number' ? email.retry_count : 0
+        const maxRetries = typeof email.max_retries === 'number' ? email.max_retries : 3
+        const retryCount = currentRetryCount + 1
+        const shouldRetry = retryCount < maxRetries
 
-        await supabase
-          .from('email_queue')
-          .update({
-            status: shouldRetry ? 'queued' : 'failed',
-            last_error: error.message || 'Processing error',
-            retry_count: retryCount
-          } as Record<string, unknown>)
+        const errorData: any = {
+          status: shouldRetry ? 'queued' : 'failed',
+          last_error: error.message || 'Processing error',
+          retry_count: retryCount
+        }
+        await (supabase.from('email_queue') as any)
+          .update(errorData)
           .eq('id', email.id)
 
         results.push({
