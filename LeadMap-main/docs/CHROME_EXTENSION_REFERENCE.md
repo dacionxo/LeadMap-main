@@ -10,8 +10,15 @@ This document serves as a comprehensive reference index for Chrome Extension dev
 4. [Security Best Practices](#security-best-practices)
 5. [Architecture Patterns](#architecture-patterns)
 6. [Performance Optimization](#performance-optimization)
-7. [Testing & Debugging](#testing--debugging)
-8. [Publishing Guidelines](#publishing-guidelines)
+7. [UI and User Experience](#ui-and-user-experience)
+8. [Internationalization](#internationalization)
+9. [Accessibility](#accessibility)
+10. [Testing & Debugging](#testing--debugging)
+11. [Publishing Guidelines](#publishing-guidelines)
+12. [Code Style Guidelines](#code-style-guidelines)
+13. [Common Patterns & Solutions](#common-patterns--solutions)
+14. [Quick Reference Links](#quick-reference-links)
+15. [Troubleshooting Common Issues](#troubleshooting-common-issues)
 
 ---
 
@@ -70,6 +77,60 @@ This document serves as a comprehensive reference index for Chrome Extension dev
 - No DOM access (use offscreen documents if needed)
 - Use `fetch` API instead of `XMLHttpRequest`
 - Store state in `chrome.storage` APIs
+
+**Migration Steps from Background Pages**:
+
+1. **Update manifest.json**:
+   ```json
+   {
+     "background": {
+       "service_worker": "service_worker.js",
+       "type": "module"
+     }
+   }
+   ```
+   - Replace `"background.scripts"` with `"background.service_worker"`
+   - Remove `"background.persistent"`
+   - Include `"type": "module"` for ES modules
+
+2. **Handle DOM and window Object Access**:
+   - Use Offscreen API for DOM operations:
+   ```typescript
+   await chrome.offscreen.createDocument({
+     url: chrome.runtime.getURL('offscreen.html'),
+     reasons: ['CLIPBOARD'],
+     justification: 'Accessing clipboard data',
+   });
+   ```
+
+3. **Replace localStorage**:
+   - Use `chrome.storage.local` instead:
+   ```typescript
+   await chrome.storage.local.set({ key: value });
+   ```
+
+4. **Register Event Listeners Synchronously**:
+   - Register at top level of service worker:
+   ```typescript
+   chrome.action.onClicked.addListener(handleActionClick);
+   ```
+
+5. **Replace XMLHttpRequest with fetch**:
+   ```typescript
+   const response = await fetch('https://api.example.com/data');
+   const data = await response.json();
+   ```
+
+6. **Use Alarms for Timers**:
+   - Service workers can be terminated, so use alarms:
+   ```typescript
+   chrome.alarms.create('myAlarm', { delayInMinutes: 1 });
+   chrome.alarms.onAlarm.addListener((alarm) => {
+     if (alarm.name === 'myAlarm') {
+       // Perform action
+     }
+   });
+   ```
 
 ---
 
@@ -153,16 +214,118 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 const url = chrome.runtime.getURL('popup.html');
 ```
 
-### Other Important APIs
+### chrome.action
 
-- **chrome.action**: Browser action (replaces chrome.browserAction in MV3)
-  - Documentation: https://developer.chrome.com/docs/extensions/reference/api/action
+**Documentation**: https://developer.chrome.com/docs/extensions/reference/api/action
 
-- **chrome.alarms**: Scheduled tasks
-  - Documentation: https://developer.chrome.com/docs/extensions/reference/api/alarms
+**Unified API**: Replaces `browserAction` and `pageAction` from Manifest V2
 
-- **chrome.offscreen**: DOM access without visible window
-  - Documentation: https://developer.chrome.com/docs/extensions/reference/api/offscreen
+**Key Features**:
+- Toolbar icon management
+- Popup definition
+- Badge text and colors
+- Click event handling
+
+**Manifest Configuration**:
+```json
+{
+  "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    },
+    "default_popup": "popup.html"
+  }
+}
+```
+
+**Usage Examples**:
+```typescript
+// Set icon dynamically
+await chrome.action.setIcon({ path: 'icons/new-icon.png' });
+
+// Set popup dynamically
+await chrome.action.setPopup({ popup: 'new-popup.html' });
+
+// Set badge text
+await chrome.action.setBadgeText({ text: 'NEW' });
+await chrome.action.setBadgeBackgroundColor({ color: '#FF0000' });
+
+// Handle click events (when no popup defined)
+chrome.action.onClicked.addListener((tab) => {
+  // Perform action when icon is clicked
+});
+```
+
+**Migration from V2**:
+- Replace `browser_action` or `page_action` with `action` in manifest
+- Replace `chrome.browserAction` or `chrome.pageAction` API calls with `chrome.action`
+
+### chrome.alarms
+
+**Documentation**: https://developer.chrome.com/docs/extensions/reference/api/alarms
+
+**Key Features**:
+- Schedule tasks at specific times or intervals
+- Event-driven execution
+- Persistence across sessions (may be cleared on browser restart)
+- Minimum interval: 30 seconds (Chrome 120+)
+- Maximum active alarms: 500 (Chrome 117+)
+
+**Usage Example**:
+```typescript
+// Create periodic alarm
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.alarms.create('myAlarm', {
+    periodInMinutes: 1  // or 0.5 for 30 seconds
+  });
+});
+
+// Listen for alarm events
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'myAlarm') {
+    // Perform periodic task
+    console.log('Alarm triggered!');
+  }
+});
+
+// Create one-time alarm
+chrome.alarms.create('oneTime', {
+  when: Date.now() + 60000  // 1 minute from now
+});
+```
+
+**Important Considerations**:
+- Alarms continue to run while device is sleeping
+- Alarms will not wake up a device
+- When device wakes up, missed alarms will fire
+- Always check if alarm exists when service worker starts
+
+### chrome.offscreen
+
+**Documentation**: https://developer.chrome.com/docs/extensions/reference/api/offscreen
+
+**Purpose**: Access DOM without visible window (for service workers)
+
+**Usage**:
+```typescript
+// Create offscreen document
+await chrome.offscreen.createDocument({
+  url: 'offscreen.html',
+  reasons: ['DOM_SCRAPING'],
+  justification: 'Need DOM access for content extraction'
+});
+
+// Close when done
+await chrome.offscreen.closeDocument();
+```
+
+**Reasons**:
+- `DOM_SCRAPING`: Scraping DOM content
+- `DOM_PARSER`: Parsing DOM
+- `BLOBS`: Creating blobs
+- `AUDIO_PLAYBACK`: Audio playback
+- `CLIPBOARD`: Clipboard access
 
 ---
 
@@ -172,18 +335,66 @@ const url = chrome.runtime.getURL('popup.html');
 
 **Documentation**: https://developer.chrome.com/docs/extensions/reference/manifest/content-security-policy
 
-**Best Practices**:
-1. **Strict CSP**: Always define explicit CSP in manifest.json
-2. **No unsafe directives**: Avoid `'unsafe-inline'` and `'unsafe-eval'`
-3. **Self-only scripts**: Use `script-src 'self'` to restrict script sources
-4. **Separate files**: Include all scripts as separate files, not inline
-
-**Example CSP**:
+**Default CSP**:
 ```json
 {
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';"
   }
+}
+```
+
+**Best Practices**:
+1. **Strict CSP**: Always define explicit CSP in manifest.json
+2. **No unsafe directives**: Avoid `'unsafe-inline'` and `'unsafe-eval'`
+3. **Self-only scripts**: Use `script-src 'self'` to restrict script sources
+4. **Separate files**: Include all scripts as separate files, not inline
+5. **Trusted sources only**: Only include trusted external sources if needed
+
+**Custom CSP Example**:
+```json
+{
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://trusted-source.com; object-src 'self';"
+  }
+}
+```
+
+**Avoid Unsafe Practices**:
+- Don't use `'unsafe-eval'` - use `JSON.parse()` instead of `eval()`
+- Don't use `'unsafe-inline'` - use separate script files
+- Regularly review and update CSP to match current functionality
+
+### web_accessible_resources
+
+**Documentation**: https://developer.chrome.com/docs/extensions/reference/manifest/web-accessible-resources
+
+**Best Practices**:
+1. **Limit Exposure**: Only declare resources as web-accessible if absolutely necessary
+2. **Specific Matches**: Use precise match patterns:
+   ```json
+   {
+     "web_accessible_resources": [
+       {
+         "resources": ["images/icon.png"],
+         "matches": ["https://example.com/*"]
+       }
+     ]
+   }
+   ```
+3. **Dynamic URLs**: Use `use_dynamic_url: true` in MV3 for enhanced security
+4. **Avoid Exposing Scripts**: Be cautious when making scripts web-accessible
+
+**Example with Dynamic URLs**:
+```json
+{
+  "web_accessible_resources": [
+    {
+      "resources": ["images/*"],
+      "matches": ["https://example.com/*"],
+      "use_dynamic_url": true
+    }
+  ]
 }
 ```
 
@@ -196,9 +407,41 @@ const url = chrome.runtime.getURL('popup.html');
 5. **Regular Updates**: Keep dependencies updated to patch vulnerabilities
 6. **Security Audits**: Perform regular code reviews and security audits
 
+### XSS Prevention
+
+**Best Practices**:
+1. **Sanitize Inputs**: Always sanitize and validate user inputs
+2. **Avoid innerHTML**: Use `textContent` instead:
+   ```typescript
+   // Safe
+   outputElement.textContent = userInput;
+   
+   // Unsafe
+   outputElement.innerHTML = userInput;  // Can execute scripts
+   ```
+3. **Use DOMPurify**: For HTML content, use libraries like DOMPurify
+4. **Avoid Dangerous APIs**: Don't use `eval()`, `document.write()`, etc.
+5. **Use JSON.parse()**: Instead of `eval()` for parsing JSON
+
+### Cross-Origin Requests
+
+**Best Practices**:
+1. **Request Necessary Permissions**: Specify host permissions in manifest:
+   ```json
+   {
+     "host_permissions": [
+       "https://api.example.com/"
+     ]
+   }
+   ```
+2. **Avoid Arbitrary URL Fetching**: Don't allow content scripts to request arbitrary URLs
+3. **Define Specific Endpoints**: Only allow access to specific, defined endpoints
+4. **Validate Origins**: Always validate message origins in message handlers
+
 **Additional Resources**:
 - Security Best Practices: https://developer.chrome.com/docs/extensions/mv2/security/
 - Secure Extension Development: https://reintech.io/blog/securing-chrome-extensions-against-vulnerabilities
+- XSS Prevention: https://reintech.io/blog/protect-chrome-extensions-using-csp
 
 ---
 
@@ -274,11 +517,14 @@ async function loadState(): Promise<AppState> {
 
 ### Best Practices
 
-1. **Minimize Resource Usage**: Keep service workers lightweight
-2. **Avoid Memory Leaks**: Clean up listeners and timers
-3. **Efficient Caching**: Implement proper caching mechanisms
-4. **Async Operations**: Use async/await for all async operations
-5. **Monitor Usage**: Track CPU/memory usage with Chrome DevTools
+1. **Event-Driven Background Scripts**: Use event-driven service workers (can reduce CPU usage by up to 60%)
+2. **Lazy Loading**: Delay loading heavy scripts until needed
+3. **Minimize Permissions**: Fewer permissions = faster loading
+4. **Optimize DOM Manipulations**: Batch DOM changes, use virtual DOM libraries
+5. **Manage Event Listeners**: Remove listeners when no longer needed
+6. **Profile Memory Usage**: Use Chrome DevTools to monitor heap size and DOM nodes
+7. **Optimize Network Requests**: Cache data locally, debounce frequent requests
+8. **Efficient Storage**: Use IndexedDB for larger datasets
 
 ### Service Worker Optimization
 
@@ -286,6 +532,59 @@ async function loadState(): Promise<AppState> {
 - Avoid long-running operations
 - Use `chrome.alarms` for scheduled tasks instead of `setInterval`
 - Store data in `chrome.storage` instead of global variables
+- Load content scripts programmatically when needed:
+  ```typescript
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ['content-script.js']
+  });
+  ```
+
+### Memory Leak Prevention
+
+**Common Causes**:
+- Unmanaged event listeners
+- Unclosed timers/intervals
+- DOM references not cleaned up
+- Circular references
+
+**Best Practices**:
+```typescript
+// Clean up event listeners
+function setupListener() {
+  const handler = () => { /* ... */ };
+  chrome.storage.onChanged.addListener(handler);
+  
+  // Store handler for cleanup
+  return () => chrome.storage.onChanged.removeListener(handler);
+}
+
+// Clear timers
+const timerId = setInterval(() => {}, 1000);
+// Always clear when done
+clearInterval(timerId);
+
+// Use alarms instead of intervals in service workers
+chrome.alarms.create('periodic', { periodInMinutes: 1 });
+```
+
+### Caching Strategies
+
+```typescript
+// Cache API responses
+async function getCachedData(key: string) {
+  const cached = await chrome.storage.local.get([key]);
+  if (cached[key] && Date.now() - cached[key].timestamp < 3600000) {
+    return cached[key].data;
+  }
+  
+  const fresh = await fetchData();
+  await chrome.storage.local.set({
+    [key]: { data: fresh, timestamp: Date.now() }
+  });
+  return fresh;
+}
+```
 
 ---
 
@@ -299,6 +598,52 @@ async function loadState(): Promise<AppState> {
 - **Network Tab**: Monitor fetch requests
 - **Performance Tab**: Profile extension performance
 
+### Debugging Different Components
+
+**Popup Debugging**:
+1. Open the popup
+2. Right-click inside the popup
+3. Select "Inspect"
+4. DevTools opens attached to the popup
+
+**Background Scripts (Service Workers)**:
+1. Navigate to `chrome://extensions/`
+2. Find your extension
+3. Click "background page" link under "Inspect views"
+4. DevTools opens connected to the service worker
+
+**Content Scripts**:
+1. Open the target web page
+2. Launch DevTools
+3. Select your extension's content script from the context menu
+4. Debug as it interacts with the web page
+
+### Unit Testing
+
+**For Non-Chrome API Code**:
+- Use standard JavaScript testing frameworks (Jest, Mocha, etc.)
+- Test individual components in isolation
+
+**For Chrome API Code**:
+- Create mocks for Chrome APIs
+- Use dependency injection to decouple from `chrome` namespace
+- Example with Jest:
+  ```typescript
+  jest.mock('chrome', () => ({
+    tabs: {
+      query: jest.fn(() => Promise.resolve([{ id: 1 }]))
+    }
+  }));
+  ```
+
+### Integration Testing
+
+**Using Puppeteer**:
+- Automate browser actions
+- Load extension into test browser instance
+- Simulate user interactions
+- Verify end-to-end functionality
+
 ### Common Debugging Steps
 
 1. Check service worker status in chrome://serviceworker-internals
@@ -306,6 +651,8 @@ async function loadState(): Promise<AppState> {
 3. Verify permissions in manifest.json
 4. Test message passing between components
 5. Check storage values in chrome.storage API
+6. Monitor network requests in DevTools
+7. Profile performance to identify bottlenecks
 
 ### Testing Checklist
 
@@ -315,6 +662,9 @@ async function loadState(): Promise<AppState> {
 - [ ] Test error scenarios
 - [ ] Test cross-browser compatibility (if applicable)
 - [ ] Monitor performance metrics
+- [ ] Test with screen readers
+- [ ] Test keyboard-only navigation
+- [ ] Test in different locales
 
 ---
 
@@ -337,16 +687,51 @@ async function loadState(): Promise<AppState> {
 
 - **Name**: Clear, descriptive name
 - **Description**: Detailed functionality description
-- **Screenshots**: High-quality images (1280x800 or 640x400)
+- **Screenshots**: 
+  - Minimum: 1 screenshot
+  - Maximum: 5 screenshots
+  - Size: 1280x800 or 640x400 pixels
+  - Format: Square corners, no padding (full bleed)
+  - Quality: Clear, properly oriented, no blur
+  - Content: Accurately represent user experience, highlight core features
 - **Icon**: 128x128 pixel icon
-- **Privacy Policy**: Required if collecting user data
+- **Privacy Policy**: 
+  - **Required** if collecting any user data
+  - Must clearly detail data collection, use, and sharing
+  - Must be accessible via link in Developer Dashboard
+  - Must disclose all parties with whom data is shared
 - **Support URL**: Contact information for support
+- **Consistent Branding**: Maintain consistency across screenshots and promotional materials
 
 ### Review Process
 
 - **Documentation**: https://developer.chrome.com/docs/webstore/review-process/
-- Typical review time: 1-3 business days
-- Common rejection reasons: Policy violations, security issues, misleading descriptions
+- **Typical Review Time**: 1-3 business days
+- **Common Rejection Reasons**: 
+  - Policy violations
+  - Security issues
+  - Misleading descriptions
+  - Missing privacy policy (when required)
+  - Poor quality screenshots
+  - Inaccurate store listing
+
+### Privacy Policy Requirements
+
+**Mandatory When**:
+- Extension handles any user data
+- Extension collects, uses, or shares user data
+
+**Must Include**:
+- How data is collected
+- How data is used
+- How data is shared
+- All parties with whom data is shared
+- Data retention policies
+- User rights regarding their data
+
+**Accessibility**:
+- Must be accessible via link in Chrome Web Store Developer Dashboard
+- Should be publicly accessible URL
 
 ---
 
@@ -388,31 +773,127 @@ async function loadState(): Promise<AppState> {
 
 ---
 
+## UI and User Experience
+
+### Material Design Guidelines
+
+**Popup Dimensions**:
+- **Width**: 320-400 pixels (optimal)
+- **Height**: 350-600 pixels (optimal)
+- Exceeding these can decrease action rates by up to 23%
+
+**Touch Targets**:
+- Minimum size: 48x48 dp (Material Design standard)
+- Reduces mis-taps and enhances accuracy
+
+**Visual Hierarchy**:
+- **Contrast Ratio**: Minimum 4.5:1 for text and interactive elements
+- **Navigation Options**: Limit to 3 core options to prevent clutter
+- **Spacing**: Use 8pt spacing system for consistency
+
+**Responsive Design**:
+- Use media queries for different screen resolutions
+- Use flexible containers with `min-width` and `max-width`
+- Prevent element overlap on various screen sizes
+
+**Performance Optimization**:
+- Disable distracting animations (static transitions have 15-22% higher satisfaction)
+- Provide immediate inline error messages (decreases task failure by 41%)
+- Display core actions above the fold
+
+**Content Layout**:
+- Primary actions visible immediately
+- Apply 8pt spacing system
+- Maintain visual consistency
+
+### User Feedback
+
+- Provide clear loading states
+- Show immediate error messages inline
+- Guide correction visually
+- Support keyboard navigation
+- Ensure proper focus management
+
+---
+
 ## Internationalization
 
 ### chrome.i18n API
 
 **Documentation**: https://developer.chrome.com/docs/extensions/reference/api/i18n
 
-**Structure**:
+**Directory Structure**:
 ```
 _locales/
 ├── en/
 │   └── messages.json
 ├── es/
 │   └── messages.json
-└── fr/
+├── ar/
+│   └── messages.json
+└── he/
     └── messages.json
 ```
 
-**Usage**:
-```typescript
-// In code
-const message = chrome.i18n.getMessage('hello');
-
-// In HTML
-<span data-i18n="hello"></span>
+**messages.json Format**:
+```json
+{
+  "appName": {
+    "message": "My Extension"
+  },
+  "appDescription": {
+    "message": "This extension does something great."
+  }
+}
 ```
+
+**Manifest Configuration**:
+```json
+{
+  "name": "__MSG_appName__",
+  "description": "__MSG_appDescription__",
+  "default_locale": "en"
+}
+```
+
+**Usage in Code**:
+```typescript
+// Get message
+const message = chrome.i18n.getMessage('appName');
+
+// Get message with placeholders
+const greeting = chrome.i18n.getMessage('greeting', ['John']);
+```
+
+**Usage in HTML**:
+```html
+<span data-i18n="appName"></span>
+```
+
+### RTL Language Support
+
+**Detect Text Direction**:
+```typescript
+// In JavaScript
+document.documentElement.setAttribute('dir', chrome.i18n.getMessage('@@bidi_dir'));
+```
+
+**CSS for RTL**:
+```css
+body {
+  direction: __MSG_@@bidi_dir__;
+}
+
+.content {
+  padding-__MSG_@@bidi_start_edge__: 10px;
+  padding-__MSG_@@bidi_end_edge__: 20px;
+}
+```
+
+**Predefined Messages**:
+- `@@bidi_dir`: Text direction (ltr or rtl)
+- `@@bidi_start_edge`: Start edge (left for LTR, right for RTL)
+- `@@bidi_end_edge`: End edge (right for LTR, left for RTL)
 
 ---
 
@@ -421,10 +902,54 @@ const message = chrome.i18n.getMessage('hello');
 ### Best Practices
 
 - Implement ARIA labels for interactive elements
-- Ensure sufficient color contrast (WCAG AA minimum)
+- Ensure sufficient color contrast (WCAG AA minimum - 4.5:1 for text)
 - Support screen readers with proper semantic HTML
 - Add keyboard shortcuts for common actions
 - Test with keyboard-only navigation
+
+### ARIA Implementation
+
+**Roles and Labels**:
+```html
+<div role="toolbar" tabindex="0" aria-activedescendant="button1">
+  <img src="buttoncut.png" role="button" alt="cut" id="button1">
+  <img src="buttoncopy.png" role="button" alt="copy" id="button2">
+  <img src="buttonpaste.png" role="button" alt="paste" id="button3">
+</div>
+```
+
+**Keyboard Navigation**:
+```typescript
+function optionKeyEvent(event: KeyboardEvent) {
+  const ENTER_KEYCODE = 13;
+  const RIGHT_KEYCODE = 39;
+  const LEFT_KEYCODE = 37;
+
+  if (event.type === "keydown") {
+    if (event.keyCode === ENTER_KEYCODE) {
+      ExecuteButtonAction(getCurrentButtonID());
+    } else if (event.keyCode === RIGHT_KEYCODE) {
+      const buttonid = getNextButtonID();
+      event.target.setAttribute("aria-activedescendant", buttonid);
+    } else if (event.keyCode === LEFT_KEYCODE) {
+      const buttonid = getPrevButtonID();
+      event.target.setAttribute("aria-activedescendant", buttonid);
+    }
+  }
+}
+```
+
+### Standard HTML Controls
+
+- Use native HTML elements (`<button>`, `<input>`, `<select>`) when possible
+- These elements have built-in accessibility features
+- Reduces need for additional ARIA attributes
+
+### Testing Tools
+
+- **ARIA DevTools**: Chrome extension for finding missing ARIA labels
+- **Accessibility Insights for Web**: Helps find and fix accessibility issues
+- **Chrome DevTools**: Built-in accessibility inspection
 
 ---
 
