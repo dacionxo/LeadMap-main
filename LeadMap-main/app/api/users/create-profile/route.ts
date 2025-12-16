@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         trial_end: trialEnd.toISOString(),
         is_subscribed: false,
         plan_tier: 'free'
-      })
+      } as any)
       .select()
       .single()
 

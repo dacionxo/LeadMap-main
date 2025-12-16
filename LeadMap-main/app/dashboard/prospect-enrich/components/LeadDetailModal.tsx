@@ -63,6 +63,9 @@ interface Listing {
   pipeline_status?: string | null
   lat?: number | null
   lng?: number | null
+  // Compatibility fields for probate_leads (which uses latitude/longitude)
+  latitude?: number | null
+  longitude?: number | null
 }
 
 interface LeadDetailModalProps {
