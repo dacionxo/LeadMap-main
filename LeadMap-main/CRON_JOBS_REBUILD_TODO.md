@@ -763,3 +763,4 @@ Each cron job should:
 - Use Context7 documentation for Next.js and Supabase best practices
 - Follow the cursor rules file strictly
 - Make it world-class - this is production code
+

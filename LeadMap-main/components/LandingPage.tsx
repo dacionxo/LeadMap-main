@@ -388,8 +388,18 @@ export default function LandingPage() {
     try {
       setLoading(true)
       setError('')
+      
+      // Validate environment variables
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        throw new Error('Supabase configuration is missing. Please contact support.')
+      }
+
+      // Construct redirect URL
       const redirectUrl = `${window.location.origin}/api/auth/callback`
-      const { error } = await supabase.auth.signInWithOAuth({
+      
+      console.log(`[OAuth] Initiating ${provider} sign-in with redirect: ${redirectUrl}`)
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: redirectUrl,
@@ -399,13 +409,40 @@ export default function LandingPage() {
           },
         },
       })
-      if (error) throw error
-    } catch (err: any) {
-      // Handle rate limit errors specifically
-      if (err.message?.includes('rate limit') || err.message?.includes('Request rate limit')) {
-        setError('Too many requests. Please wait a moment and try again.')
+
+      if (error) {
+        console.error(`[OAuth] ${provider} sign-in error:`, error)
+        throw error
+      }
+
+      // Check if we got a URL to redirect to
+      if (data?.url) {
+        console.log(`[OAuth] Redirecting to ${provider} OAuth page`)
+        // The redirect happens automatically in client-side OAuth
+        // But we should verify the URL is valid
+        if (!data.url.startsWith('http')) {
+          throw new Error('Invalid OAuth redirect URL received')
+        }
       } else {
-        setError(err.message || 'An error occurred. Please try again.')
+        console.warn(`[OAuth] No redirect URL received from ${provider} OAuth`)
+        // This might be okay if Supabase handles the redirect automatically
+      }
+    } catch (err: any) {
+      console.error(`[OAuth] ${provider} sign-in failed:`, err)
+      
+      // Handle specific error types
+      const errorMessage = err.message || err.toString() || 'Unknown error'
+      
+      if (errorMessage.includes('rate limit') || errorMessage.includes('Request rate limit')) {
+        setError('Too many requests. Please wait a moment and try again.')
+      } else if (errorMessage.includes('redirect_uri_mismatch') || errorMessage.includes('redirect')) {
+        setError('OAuth configuration error. Please contact support.')
+      } else if (errorMessage.includes('invalid_client') || errorMessage.includes('client')) {
+        setError('OAuth provider not configured. Please contact support.')
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.')
+      } else {
+        setError(`Unable to sign in with ${provider === 'google' ? 'Google' : 'Microsoft'}. ${errorMessage}`)
       }
       setLoading(false)
     }

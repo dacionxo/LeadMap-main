@@ -242,3 +242,4 @@ export async function scheduleNextStep(
     // Don't throw - this is a helper function that shouldn't break the main flow
   }
 }
+

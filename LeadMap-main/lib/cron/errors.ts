@@ -209,3 +209,4 @@ export function isValidationError(error: unknown): error is ValidationError {
 export function isDatabaseError(error: unknown): error is DatabaseError {
   return error instanceof DatabaseError
 }
+

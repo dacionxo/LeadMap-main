@@ -1,8 +1,15 @@
 'use client'
 
-import React, { useState, Suspense } from 'react'
+import React, { useState, Suspense, useId } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { MapPin, Mail, ArrowLeft } from 'lucide-react'
+import { z } from 'zod'
+
+// Email validation schema using Zod (per .cursorrules)
+const emailSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+})
 
 function ForgotPasswordContent() {
   const [email, setEmail] = useState('')
@@ -10,13 +17,30 @@ function ForgotPasswordContent() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [isHoveringSubmit, setIsHoveringSubmit] = useState(false)
+  const [emailValidationError, setEmailValidationError] = useState('')
   const router = useRouter()
+  const emailErrorId = useId()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setEmailValidationError('')
     setSuccess(false)
+
+    // Client-side validation using Zod
+    try {
+      emailSchema.parse({ email })
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        const emailError = validationError.errors.find(err => err.path[0] === 'email')
+        if (emailError) {
+          setEmailValidationError(emailError.message)
+          setLoading(false)
+          return
+        }
+      }
+    }
 
     try {
       const response = await fetch('/api/auth/forgot-password', {
@@ -32,13 +56,49 @@ function ForgotPasswordContent() {
       if (response.ok) {
         setSuccess(true)
         setError('')
+        setEmailValidationError('')
       } else {
         setError(data.error || 'An error occurred. Please try again.')
       }
-    } catch (error: any) {
+    } catch (error) {
+      // Proper TypeScript error handling (per .cursorrules)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('Password reset error:', errorMessage)
+      
+      // TODO: Implement proper error logging using Sentry or similar service for production
+      // Example: Sentry.captureException(error)
+      
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value
+    setEmail(newEmail)
+    setError('')
+    setEmailValidationError('')
+    
+    // Real-time validation feedback
+    if (newEmail && !emailSchema.safeParse({ email: newEmail }).success) {
+      try {
+        emailSchema.parse({ email: newEmail })
+      } catch (validationError) {
+        if (validationError instanceof z.ZodError) {
+          const emailError = validationError.errors.find(err => err.path[0] === 'email')
+          if (emailError) {
+            setEmailValidationError(emailError.message)
+          }
+        }
+      }
+    }
+  }
+
+  const handleLogoKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      router.push('/')
     }
   }
 
@@ -65,16 +125,26 @@ function ForgotPasswordContent() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white">
           <div className="mx-4 sm:mx-6 lg:mx-8">
             <div className="flex justify-between items-center h-16 max-w-[1872px] mx-auto">
-              <div className="flex items-center space-x-3 group cursor-pointer mt-6 -ml-[10px]" onClick={() => router.push('/')}>
-                <img 
-                  src="/nextdeal-logo.png" 
-                  alt="NextDeal" 
+              <div 
+                className="flex items-center space-x-3 group cursor-pointer mt-6 -ml-[10px] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg transition-all"
+                onClick={() => router.push('/')}
+                onKeyDown={handleLogoKeyDown}
+                tabIndex={0}
+                role="button"
+                aria-label="Navigate to home page"
+              >
+                <Image
+                  src="/nextdeal-logo.png"
+                  alt="NextDeal"
+                  width={32}
+                  height={32}
                   className="h-8 w-auto"
+                  priority
                   onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const fallback = target.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = 'flex';
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                    const fallback = target.nextElementSibling as HTMLElement
+                    if (fallback) fallback.style.display = 'flex'
                   }}
                 />
                 <div className="flex items-center space-x-2" style={{ display: 'none' }} id="logo-fallback">
@@ -122,7 +192,11 @@ function ForgotPasswordContent() {
                       {/* Success Message */}
                       {success ? (
                         <div className="space-y-6">
-                          <div className="p-6 bg-green-50 border-2 border-green-300 rounded-lg">
+                          <div 
+                            className="p-6 bg-green-50 border-2 border-green-300 rounded-lg"
+                            role="alert"
+                            aria-live="polite"
+                          >
                             <div className="flex items-start space-x-3">
                               <Mail className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
                               <div className="flex-1">
@@ -175,16 +249,25 @@ function ForgotPasswordContent() {
                               id="email"
                               name="email"
                               type="email"
+                              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
                               placeholder="Type your email"
                               value={email}
-                              onChange={(e) => {
-                                setEmail(e.target.value)
-                                setError('')
-                              }}
+                              onChange={handleEmailChange}
                               autoComplete="email"
-                              className="w-full px-4 py-3 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                              aria-invalid={emailValidationError ? 'true' : 'false'}
+                              aria-describedby={emailValidationError ? emailErrorId : undefined}
+                              className={`w-full px-4 py-3 text-sm bg-white border rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+                                emailValidationError 
+                                  ? 'border-error focus:ring-error' 
+                                  : 'border-gray-300'
+                              }`}
                               required
                             />
+                            {emailValidationError && (
+                              <p id={emailErrorId} className="mt-1 text-xs text-error">
+                                {emailValidationError}
+                              </p>
+                            )}
                           </div>
 
                           {error && (
@@ -199,16 +282,11 @@ function ForgotPasswordContent() {
                             disabled={loading}
                             onMouseEnter={() => setIsHoveringSubmit(true)}
                             onMouseLeave={() => setIsHoveringSubmit(false)}
-                            className="w-full py-3 text-sm bg-primary text-white font-semibold rounded-lg relative overflow-hidden group transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                            style={{
-                              transform: isHoveringSubmit && !loading ? 'scale(1.02)' : 'scale(1)',
-                              paddingLeft: isHoveringSubmit && !loading ? '32px' : '24px',
-                              paddingRight: isHoveringSubmit && !loading ? '40px' : '24px',
-                              boxShadow: isHoveringSubmit && !loading 
-                                ? '0 10px 25px -5px rgba(59, 130, 246, 0.4), 0 0 20px rgba(147, 51, 234, 0.3)' 
-                                : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                              transition: 'transform 0.3s ease, box-shadow 0.3s ease, padding-left 0.3s ease, padding-right 0.3s ease'
-                            }}
+                            className={`w-full text-sm bg-primary text-white font-semibold rounded-lg relative overflow-hidden group transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isHoveringSubmit && !loading
+                                ? 'scale-[1.02] pl-8 pr-10 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.4),0_0_20px_rgba(147,51,234,0.3)]'
+                                : 'py-3 px-6 shadow-md'
+                            }`}
                           >
                             <span className="relative z-10 flex items-center justify-center">
                               {loading ? (
@@ -223,14 +301,11 @@ function ForgotPasswordContent() {
                                 <>
                                   Send Instructions
                                   <svg 
-                                    className="transition-all duration-300 overflow-hidden" 
-                                    style={{
-                                      width: isHoveringSubmit ? '16px' : '0px',
-                                      marginLeft: isHoveringSubmit ? '8px' : '0px',
-                                      opacity: isHoveringSubmit ? 1 : 0,
-                                      transform: isHoveringSubmit ? 'translateX(0)' : 'translateX(-4px)',
-                                      transition: 'width 0.3s ease, margin-left 0.3s ease, opacity 0.3s ease, transform 0.3s ease'
-                                    }}
+                                    className={`transition-all duration-300 overflow-hidden ${
+                                      isHoveringSubmit
+                                        ? 'w-4 ml-2 opacity-100 translate-x-0'
+                                        : 'w-0 ml-0 opacity-0 -translate-x-1'
+                                    }`}
                                     fill="none" 
                                     stroke="currentColor" 
                                     viewBox="0 0 24 24"
@@ -243,10 +318,7 @@ function ForgotPasswordContent() {
                             {/* Animated gradient background */}
                             {isHoveringSubmit && !loading && (
                               <span 
-                                className="absolute inset-0 bg-gradient-to-r from-primary via-purple-500 to-pink-500 opacity-90"
-                                style={{
-                                  animation: 'shimmer 2s infinite',
-                                }}
+                                className="absolute inset-0 bg-gradient-to-r from-primary via-purple-500 to-pink-500 opacity-90 animate-[shimmer_2s_infinite]"
                               ></span>
                             )}
                           </button>
@@ -277,16 +349,19 @@ function ForgotPasswordContent() {
                 {/* Right Column - Image/Illustration */}
                 <div className="relative w-full md:w-[35%] rounded-xl overflow-hidden flex items-center justify-center bg-white h-auto">
                   <div className="p-8 w-full h-full flex items-center justify-center">
-                    <img
+                    <Image
                       src="/nextdeal-logo.png"
                       alt="NextDeal"
+                      width={400}
+                      height={400}
                       className="max-w-full max-h-full w-auto h-auto rounded-xl object-contain"
+                      priority={false}
                       onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        const parent = target.parentElement
                         if (parent) {
-                          parent.innerHTML = '<div class="absolute inset-0 h-full w-full rounded-xl bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center"><div class="text-white text-4xl font-bold">NextDeal</div></div>';
+                          parent.innerHTML = '<div class="absolute inset-0 h-full w-full rounded-xl bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center"><div class="text-white text-4xl font-bold">NextDeal</div></div>'
                         }
                       }}
                     />

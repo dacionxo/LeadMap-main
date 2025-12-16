@@ -143,3 +143,4 @@ export function validateSuccessResponse(data: unknown) {
 export function validateErrorResponse(data: unknown) {
   return cronJobErrorResponseSchema.safeParse(data)
 }
+

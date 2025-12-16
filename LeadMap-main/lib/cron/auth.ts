@@ -98,3 +98,4 @@ export function extractAuthPayload(request: NextRequest): CronAuthPayload {
     bearerToken: authHeader ? '***' : undefined,
   }
 }
+

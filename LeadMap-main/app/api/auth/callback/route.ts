@@ -4,16 +4,51 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const errorParam = requestUrl.searchParams.get('error')
+  const errorDescription = requestUrl.searchParams.get('error_description')
+
+  // Handle OAuth errors from provider
+  if (errorParam) {
+    console.error('[OAuth Callback] Provider error:', errorParam, errorDescription)
+    const errorMessage = errorDescription || errorParam || 'OAuth authentication failed'
+    return NextResponse.redirect(
+      `${requestUrl.origin}/?error=${encodeURIComponent(`OAuth Error: ${errorMessage}`)}`
+    )
+  }
 
   if (code) {
-    // Use singleton route handler client
-    const supabase = await getRouteHandlerClient()
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    try {
+      console.log('[OAuth Callback] Exchanging code for session...')
+      
+      // Use singleton route handler client
+      const supabase = await getRouteHandlerClient()
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (error) {
-      console.error('Error exchanging code for session:', error)
-      return NextResponse.redirect(`${requestUrl.origin}/?error=${encodeURIComponent(error.message)}`)
-    }
+      if (error) {
+        console.error('[OAuth Callback] Error exchanging code for session:', error)
+        
+        // Provide more specific error messages
+        let errorMessage = error.message || 'Authentication failed'
+        
+        if (error.message?.includes('expired') || error.message?.includes('invalid')) {
+          errorMessage = 'The authentication link has expired or is invalid. Please try signing in again.'
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          errorMessage = 'Network error during authentication. Please try again.'
+        }
+        
+        return NextResponse.redirect(
+          `${requestUrl.origin}/?error=${encodeURIComponent(errorMessage)}`
+        )
+      }
+
+      if (!data.session || !data.user) {
+        console.error('[OAuth Callback] No session or user data received')
+        return NextResponse.redirect(
+          `${requestUrl.origin}/?error=${encodeURIComponent('Authentication failed: No session created')}`
+        )
+      }
+
+      console.log('[OAuth Callback] Session created successfully for user:', data.user.id)
 
     // Steps 8-11: User clicks link → Token validated → Mark email as verified → Login session is created
     // (Supabase handles token validation, email verification, and session creation automatically)
@@ -68,13 +103,28 @@ export async function GET(request: NextRequest) {
       }
 
       // URL to redirect to after sign in process completes
-      // If user was verified, redirect to verification confirmation page
-      if (data.user && data.session) {
+      // For OAuth users, they're already verified, so go to dashboard
+      // For email verification, redirect to verification confirmation page
+      if (data.user.email_confirmed_at) {
+        // OAuth users are automatically verified, go to dashboard
+        console.log('[OAuth Callback] User verified, redirecting to dashboard')
+        return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+      } else {
+        // Email verification needed
+        console.log('[OAuth Callback] User needs email verification')
         return NextResponse.redirect(`${requestUrl.origin}/verify-email?verified=true`)
       }
+    } catch (callbackError: any) {
+      console.error('[OAuth Callback] Unexpected error:', callbackError)
+      return NextResponse.redirect(
+        `${requestUrl.origin}/?error=${encodeURIComponent('An unexpected error occurred during authentication')}`
+      )
     }
   }
   
-  // Fallback to dashboard if no code or no session
-  return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+  // No code provided - redirect to home with error
+  console.warn('[OAuth Callback] No authorization code provided')
+  return NextResponse.redirect(
+    `${requestUrl.origin}/?error=${encodeURIComponent('No authorization code received. Please try signing in again.')}`
+  )
 }

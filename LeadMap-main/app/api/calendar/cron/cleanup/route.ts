@@ -67,8 +67,15 @@ async function archiveOldEvents(
 ): Promise<number> {
   let totalArchived = 0
   let hasMore = true
+  let consecutiveFailures = 0
+  const MAX_CONSECUTIVE_FAILURES = 3
+  const MAX_ITERATIONS = 1000 // Safety limit to prevent infinite loops
+  let iterationCount = 0
+  const failedEventIds: string[] = []
 
-  while (hasMore) {
+  while (hasMore && iterationCount < MAX_ITERATIONS) {
+    iterationCount++
+
     // Fetch batch of old events
     const result = await executeSelectOperation<{ id: string }>(
       supabase,
@@ -109,16 +116,58 @@ async function archiveOldEvents(
 
     if (updateResult.success) {
       totalArchived += eventIds.length
+      consecutiveFailures = 0 // Reset failure counter on success
       console.log(`[Calendar Cleanup] Archived ${eventIds.length} events (total: ${totalArchived})`)
+      
+      // If we got fewer than batch size, we're done
+      if (eventIds.length < BATCH_SIZE) {
+        hasMore = false
+      }
     } else {
-      console.error(`[Calendar Cleanup] Failed to archive batch of ${eventIds.length} events:`, updateResult.error)
-      // Continue with next batch even if this one failed
-    }
+      consecutiveFailures++
+      failedEventIds.push(...eventIds)
+      console.error(
+        `[Calendar Cleanup] Failed to archive batch of ${eventIds.length} events (consecutive failures: ${consecutiveFailures}):`,
+        updateResult.error
+      )
 
-    // If we got fewer than batch size, we're done
-    if (eventIds.length < BATCH_SIZE) {
-      hasMore = false
+      // Circuit breaker: stop if too many consecutive failures
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        console.error(
+          `[Calendar Cleanup] Stopping archive operation after ${consecutiveFailures} consecutive failures. ` +
+          `Failed event IDs (first 10): ${failedEventIds.slice(0, 10).join(', ')}`
+        )
+        hasMore = false
+        break
+      }
+
+      // Skip failed batch and continue with next batch
+      // Use exponential backoff for retries (wait before next attempt)
+      if (consecutiveFailures > 1) {
+        const backoffMs = Math.min(1000 * Math.pow(2, consecutiveFailures - 2), 10000)
+        console.log(`[Calendar Cleanup] Waiting ${backoffMs}ms before next attempt...`)
+        await new Promise(resolve => setTimeout(resolve, backoffMs))
+      }
+
+      // If we got fewer than batch size, we're done (even if update failed)
+      if (eventIds.length < BATCH_SIZE) {
+        hasMore = false
+      }
     }
+  }
+
+  if (iterationCount >= MAX_ITERATIONS) {
+    console.error(
+      `[Calendar Cleanup] Reached maximum iteration limit (${MAX_ITERATIONS}). ` +
+      `This may indicate an infinite loop. Stopping archive operation.`
+    )
+  }
+
+  if (failedEventIds.length > 0) {
+    console.warn(
+      `[Calendar Cleanup] Total failed event IDs: ${failedEventIds.length}. ` +
+      `These events were not archived and may need manual review.`
+    )
   }
 
   return totalArchived
