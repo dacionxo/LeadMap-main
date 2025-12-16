@@ -36,7 +36,7 @@ ProspectEnrichPage
 | 5 | Total Beds | 100px | 24px | 124px | `beds` | Number of bedrooms |
 | 6 | Total Baths | 110px | 24px | 134px | `full_baths` | Number of full bathrooms |
 | 7 | Housing Square Feet | 140px | 24px | 164px | `sqft` | Square footage |
-| 8 | Description | 200px | 24px | 224px | `text` | Property description (stored in Supabase 'text' field) |
+| 8 | Description | 200px | 24px | 224px | `other.description` | Property description (stored in Supabase 'other' JSONB field, falls back to 'text' field) |
 | 9 | Agent Name | 150px | 24px | 174px | `agent_name` | Listing agent name |
 | 10 | Agent Email | 180px | 24px | 204px | `agent_email` | Agent email address |
 | 11 | Agent Phone | 130px | 24px | 154px | `agent_phone` | Primary phone number |

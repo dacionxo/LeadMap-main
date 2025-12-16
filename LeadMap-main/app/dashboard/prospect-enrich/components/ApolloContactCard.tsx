@@ -24,6 +24,26 @@ function formatBaths(baths: number | null | undefined): string {
   return numBaths % 1 === 0 ? numBaths.toString() : numBaths.toFixed(1)
 }
 
+// Helper function to extract description from other JSONB field
+function getDescription(listing: Listing): string {
+  // First, try to get description from other JSONB field
+  if (listing.other) {
+    try {
+      const other = typeof listing.other === 'string' ? JSON.parse(listing.other) : listing.other
+      // Try common keys for description in JSONB
+      const description = other?.description || other?.Description || other?.listing_description || other?.property_description || other?.text
+      if (description && typeof description === 'string' && description.trim()) {
+        return description
+      }
+    } catch (error) {
+      // If JSON parsing fails, continue to fallback
+      console.warn('Failed to parse other JSONB field:', error)
+    }
+  }
+  // Fallback to text field if nothing found in other JSONB
+  return listing.text || '-'
+}
+
 interface Listing {
   listing_id: string
   street?: string | null
@@ -43,8 +63,10 @@ interface Listing {
   agent_phone_2?: string | null
   listing_agent_phone_2?: string | null
   listing_agent_phone_5?: string | null
-  /** Property description text from Supabase 'text' field */
+  /** Property description text from Supabase 'text' field (fallback) */
   text?: string | null
+  /** Other JSONB field containing additional property data including description */
+  other?: any
   year_built?: number | null
   last_sale_price?: number | null
   last_sale_date?: string | null
@@ -434,7 +456,7 @@ export default function ApolloContactCard({
         </div>
       )}
 
-      {/* Description Column - Property description from Supabase 'text' field */}
+      {/* Description Column - Property description from Supabase 'other' JSONB field */}
       {columns.includes('description') && (
         <div style={{ 
           flex: '0 0 200px', 
@@ -452,7 +474,7 @@ export default function ApolloContactCard({
             WebkitBoxOrient: 'vertical',
             lineHeight: '1.4'
           }}>
-            {listing.text || '-'}
+            {getDescription(listing)}
           </span>
         </div>
       )}
