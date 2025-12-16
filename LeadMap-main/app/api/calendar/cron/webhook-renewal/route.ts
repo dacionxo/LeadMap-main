@@ -152,8 +152,9 @@ async function fetchConnectionsNeedingRenewal(
     return []
   }
 
-  // Validate each connection
-  return result.data.map(validateCalendarConnection)
+  // TypeScript now knows result.data is an array
+  const connectionsArray = result.data
+  return connectionsArray.map(validateCalendarConnection)
 }
 
 /**
