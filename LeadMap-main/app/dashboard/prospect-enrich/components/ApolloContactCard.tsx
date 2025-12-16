@@ -33,6 +33,7 @@ interface Listing {
   agent_phone_2?: string | null
   listing_agent_phone_2?: string | null
   listing_agent_phone_5?: string | null
+  /** Property description text from Supabase 'text' field */
   text?: string | null
   year_built?: number | null
   last_sale_price?: number | null
@@ -423,7 +424,7 @@ export default function ApolloContactCard({
         </div>
       )}
 
-      {/* Text Column */}
+      {/* Description Column - Property description from Supabase 'text' field */}
       {columns.includes('description') && (
         <div style={{ 
           flex: '0 0 200px', 

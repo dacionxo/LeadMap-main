@@ -1407,7 +1407,7 @@ function ProspectEnrichInner() {
           textTransform: 'uppercase',
           letterSpacing: '0.5px'
         }}>
-          Text
+          Description
         </span>
       </div>
       <div style={{ 
@@ -2257,7 +2257,7 @@ function ProspectEnrichInner() {
                             </span>
                           </div>
 
-                          {/* Text Column */}
+                          {/* Description Column */}
                           <div style={{ 
                             flex: '0 0 200px', 
                             marginRight: '24px',
@@ -2271,7 +2271,7 @@ function ProspectEnrichInner() {
                               textTransform: 'uppercase',
                               letterSpacing: '0.5px'
                             }}>
-                              Text
+                              Description
                             </span>
                           </div>
 
@@ -2724,7 +2724,7 @@ function ProspectEnrichInner() {
                             </span>
                           </div>
 
-                          {/* Text Column */}
+                          {/* Description Column */}
                           <div style={{ 
                             flex: '0 0 200px', 
                             marginRight: '24px',
@@ -2738,7 +2738,7 @@ function ProspectEnrichInner() {
                               textTransform: 'uppercase',
                               letterSpacing: '0.5px'
                             }}>
-                              Text
+                              Description
                             </span>
                           </div>
 

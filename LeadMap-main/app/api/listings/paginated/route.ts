@@ -55,9 +55,12 @@ export async function GET(request: NextRequest) {
     console.warn(`Invalid or unsafe table name "${table}", using "listings" instead`)
   }
 
+  // Select all columns including 'text' field (property description)
+  // Using select('*') ensures all fields including 'text' are included in the response
   let query = supabase.from(safeTable).select('*', { count: 'exact' })
 
   // Apply search filter - works for all category tables as they share the same schema
+  // Note: Could add 'text' field to search if needed: text.ilike.%${search}%
   if (search) {
     query = query.or(`street.ilike.%${search}%,city.ilike.%${search}%,state.ilike.%${search}%,zip_code.ilike.%${search}%,listing_id.ilike.%${search}%,agent_name.ilike.%${search}%`)
   }
