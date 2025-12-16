@@ -304,13 +304,31 @@ export default function LandingPage() {
         }
 
         if (data.user) {
-          // Steps 5-7: Generate email verification token → Store token → Send verification email
-          // (Supabase handles token generation, storage, and email sending automatically)
-          
+          // Send verification email via SendGrid (not Supabase)
+          // This ensures we use SendGrid for all email communications
+          const emailResponse = await fetch('/api/auth/send-verification-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: data.user.id,
+              email: data.user.email!,
+              name,
+            }),
+          })
+
+          const emailResult = await emailResponse.json()
+
+          if (!emailResponse.ok) {
+            console.error('Failed to send verification email:', emailResult.error)
+            // Still show success message to user (email might have been sent)
+            // But log the error for debugging
+          }
+
           // Check if email confirmation is required
           if (data.user && !data.session) {
             // Email confirmation required - show success message
-            // Supabase automatically sends verification email
             setEmailSent(true)
           } else if (data.session) {
             // Email confirmation not required - create profile and redirect
