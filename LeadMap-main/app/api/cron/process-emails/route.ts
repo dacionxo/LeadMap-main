@@ -361,11 +361,10 @@ async function runCronJob(request: NextRequest) {
           
           if (campaignData) {
             // Check if email is globally unsubscribed
-            const { data: isUnsubscribed } = await supabase
-              .rpc('is_email_unsubscribed', {
-                p_user_id: campaignData.user_id,
-                p_email: email.to_email.toLowerCase()
-              })
+            const { data: isUnsubscribed } = await (supabase.rpc as any)('is_email_unsubscribed', {
+              p_user_id: campaignData.user_id,
+              p_email: email.to_email.toLowerCase()
+            })
             
             if (isUnsubscribed) {
               await supabase
@@ -396,11 +395,10 @@ async function runCronJob(request: NextRequest) {
 
             if (!allowRisky) {
               // Check if email has hard bounced
-              const { data: hasBounced } = await supabase
-                .rpc('has_email_bounced', {
-                  p_user_id: campaignData.user_id,
-                  p_email: email.to_email.toLowerCase()
-                })
+              const { data: hasBounced } = await (supabase.rpc as any)('has_email_bounced', {
+                p_user_id: campaignData.user_id,
+                p_email: email.to_email.toLowerCase()
+              })
               
               if (hasBounced) {
                 await supabase

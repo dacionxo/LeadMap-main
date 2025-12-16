@@ -395,7 +395,7 @@ async function runCronJob(request: NextRequest) {
         })
 
         // Update campaign report
-        await supabase.rpc('update_campaign_report', {
+        await (supabase.rpc as any)('update_campaign_report', {
           p_campaign_id: campaign.id,
           p_report_date: now.toISOString().split('T')[0]
         })
