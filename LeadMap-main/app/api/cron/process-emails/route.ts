@@ -70,7 +70,7 @@ async function runCronJob(request: NextRequest) {
       .eq('status', 'queued')
       .eq('direction', 'sent') // Only process sent emails, not received
       .lte('scheduled_at', now.toISOString())
-      .not('mailbox_id', 'is', null)
+      .not('mailbox_id', 'is', null) as { data: any[] | null; error: any }
 
     if (emailsError) {
       console.error('Error fetching queued emails:', emailsError)
@@ -129,10 +129,10 @@ async function runCronJob(request: NextRequest) {
     }
 
     // Group emails by mailbox to respect rate limits
-    const emailsByMailbox = new Map<string, typeof validEmails>()
+    const emailsByMailbox = new Map<string, any[]>()
     
     for (const email of validEmails) {
-      const mailboxId = email.mailbox_id
+      const mailboxId = email.mailbox_id as string
       if (!emailsByMailbox.has(mailboxId)) {
         emailsByMailbox.set(mailboxId, [])
       }
@@ -280,8 +280,8 @@ async function runCronJob(request: NextRequest) {
             const { data: campaignCheck } = await supabase
               .from('campaigns')
               .select('status')
-              .eq('id', email.campaign_id)
-              .single()
+              .eq('id', email.campaign_id as string)
+              .single() as { data: { status: string } | null; error: any }
             
             if (campaignCheck && ['paused', 'cancelled'].includes(campaignCheck.status)) {
               // Skip this email - campaign is paused or cancelled
@@ -294,7 +294,7 @@ async function runCronJob(request: NextRequest) {
             .from('mailboxes')
             .select('active')
             .eq('id', mailboxId)
-            .single()
+            .single() as { data: { active: boolean } | null; error: any }
           
           if (!mailboxCheck || !mailboxCheck.active) {
             // Mailbox was deactivated, skip
@@ -302,21 +302,21 @@ async function runCronJob(request: NextRequest) {
           }
           
           // Mark as sending
-          await supabase
-            .from('emails')
-            .update({ status: 'sending' })
+          const sendingData: any = { status: 'sending' }
+          await (supabase.from('emails') as any)
+            .update(sendingData)
             .eq('id', email.id)
 
           // Get recipient data for template variable substitution
-          let recipientData: any = { email: email.to_email }
+          let recipientData: any = { email: email.to_email as string }
           let campaignRecipient: any = null
           
           if (email.campaign_recipient_id) {
             const { data: recipient } = await supabase
               .from('campaign_recipients')
               .select('email, first_name, last_name, metadata, unsubscribed, bounced')
-              .eq('id', email.campaign_recipient_id)
-              .single()
+              .eq('id', email.campaign_recipient_id as string)
+              .single() as { data: any | null; error: any }
             
             if (recipient) {
               campaignRecipient = recipient
@@ -329,24 +329,24 @@ async function runCronJob(request: NextRequest) {
               
               // UNSUBSCRIBE ENFORCEMENT: Check if recipient is unsubscribed
               if (recipient.unsubscribed) {
-                await supabase
-                  .from('emails')
-                  .update({ 
-                    status: 'failed',
-                    error: 'Recipient has unsubscribed'
-                  })
+                const unsubData: any = {
+                  status: 'failed',
+                  error: 'Recipient has unsubscribed'
+                }
+                await (supabase.from('emails') as any)
+                  .update(unsubData)
                   .eq('id', email.id)
                 continue // Skip this email
               }
               
               // BOUNCE HANDLING: Check if recipient has hard bounced
               if (recipient.bounced) {
-                await supabase
-                  .from('emails')
-                  .update({ 
-                    status: 'failed',
-                    error: 'Recipient email has hard bounced'
-                  })
+                const bounceData: any = {
+                  status: 'failed',
+                  error: 'Recipient email has hard bounced'
+                }
+                await (supabase.from('emails') as any)
+                  .update(bounceData)
                   .eq('id', email.id)
                 continue // Skip this email
               }
@@ -354,69 +354,88 @@ async function runCronJob(request: NextRequest) {
           }
           
           // Also check global unsubscribe/bounce status
-          const { data: campaignData } = email.campaign_id ? await supabase
+          const campaignQuery = email.campaign_id ? await supabase
             .from('campaigns')
             .select('user_id')
-            .eq('id', email.campaign_id)
-            .single() : { data: null }
+            .eq('id', email.campaign_id as string)
+            .single() as { data: { user_id: string } | null; error: any } : { data: null, error: null }
+          const campaignData = campaignQuery.data
           
           if (campaignData) {
             // Check if email is globally unsubscribed
-            const { data: isUnsubscribed } = await (supabase.rpc('is_email_unsubscribed', {
-              p_user_id: campaignData.user_id,
-              p_email: email.to_email.toLowerCase()
-            }) as Promise<{ data: boolean | null; error: unknown }>)
-            
-            if (isUnsubscribed) {
-              await supabase
-                .from('emails')
-                .update({ 
+            try {
+              const rpcResult = await supabase.rpc('is_email_unsubscribed', {
+                p_user_id: campaignData.user_id,
+                p_email: (email.to_email as string).toLowerCase()
+              }) as any
+              const isUnsubscribed = rpcResult.data
+              
+              if (isUnsubscribed) {
+                const globalUnsubData: any = {
                   status: 'failed',
                   error: 'Email is globally unsubscribed'
-                })
-                .eq('id', email.id)
-              
-              if (email.campaign_recipient_id) {
-                await supabase
-                  .from('campaign_recipients')
-                  .update({ unsubscribed: true, status: 'unsubscribed' })
-                  .eq('id', email.campaign_recipient_id)
+                }
+                await (supabase.from('emails') as any)
+                  .update(globalUnsubData)
+                  .eq('id', email.id)
+                
+                if (email.campaign_recipient_id) {
+                  const recipientUnsubData: any = {
+                    unsubscribed: true,
+                    status: 'unsubscribed'
+                  }
+                  await (supabase.from('campaign_recipients') as any)
+                    .update(recipientUnsubData)
+                    .eq('id', email.campaign_recipient_id as string)
+                }
+                continue
               }
-              continue
+            } catch (rpcError) {
+              // RPC may not exist, continue
+              console.warn('RPC is_email_unsubscribed failed:', rpcError)
             }
             
             // Check if email has hard bounced (unless allow_risky_emails is enabled)
             const { data: campaignSettings } = await supabase
               .from('campaigns')
               .select('allow_risky_emails')
-              .eq('id', email.campaign_id)
-              .single()
+              .eq('id', email.campaign_id as string)
+              .single() as { data: { allow_risky_emails: boolean } | null; error: any }
 
             const allowRisky = campaignSettings?.allow_risky_emails || false
 
             if (!allowRisky) {
               // Check if email has hard bounced
-              const { data: hasBounced } = await (supabase.rpc('has_email_bounced', {
-                p_user_id: campaignData.user_id,
-                p_email: email.to_email.toLowerCase()
-              }) as Promise<{ data: boolean | null; error: unknown }>)
-              
-              if (hasBounced) {
-                await supabase
-                  .from('emails')
-                  .update({ 
+              try {
+                const rpcResult = await supabase.rpc('has_email_bounced', {
+                  p_user_id: campaignData.user_id,
+                  p_email: (email.to_email as string).toLowerCase()
+                }) as any
+                const hasBounced = rpcResult.data
+                
+                if (hasBounced) {
+                  const bounceData: any = {
                     status: 'failed',
                     error: 'Email has hard bounced'
-                  })
-                  .eq('id', email.id)
-                
-                if (email.campaign_recipient_id) {
-                  await supabase
-                    .from('campaign_recipients')
-                    .update({ bounced: true, status: 'bounced' })
-                    .eq('id', email.campaign_recipient_id)
+                  }
+                  await (supabase.from('emails') as any)
+                    .update(bounceData)
+                    .eq('id', email.id)
+                  
+                  if (email.campaign_recipient_id) {
+                    const recipientBounceData: any = {
+                      bounced: true,
+                      status: 'bounced'
+                    }
+                    await (supabase.from('campaign_recipients') as any)
+                      .update(recipientBounceData)
+                      .eq('id', email.campaign_recipient_id as string)
+                  }
+                  continue
                 }
-                continue
+              } catch (rpcError) {
+                // RPC may not exist, continue
+                console.warn('RPC has_email_bounced failed:', rpcError)
               }
             }
           }
@@ -448,8 +467,8 @@ async function runCronJob(request: NextRequest) {
             const { data: campaignSettings } = await supabase
               .from('campaigns')
               .select('open_tracking_enabled, link_tracking_enabled')
-              .eq('id', email.campaign_id)
-              .single()
+              .eq('id', email.campaign_id as string)
+              .single() as { data: { open_tracking_enabled: boolean; link_tracking_enabled: boolean } | null; error: any }
 
             // Apply tracking if enabled
             if (campaignSettings) {
@@ -503,12 +522,12 @@ async function runCronJob(request: NextRequest) {
             if (timeSinceLastSend < timeGap) {
               const delayNeeded = timeGap - timeSinceLastSend
               // Reschedule email for later instead of sending now
-              await supabase
-                .from('emails')
-                .update({
-                  scheduled_at: new Date(Date.now() + delayNeeded).toISOString(),
-                  status: 'queued'
-                })
+              const rescheduleData: any = {
+                scheduled_at: new Date(Date.now() + delayNeeded).toISOString(),
+                status: 'queued'
+              }
+              await (supabase.from('emails') as any)
+                .update(rescheduleData)
                 .eq('id', email.id)
               continue // Skip this email for now
             }
@@ -583,13 +602,13 @@ async function runCronJob(request: NextRequest) {
 
           if (sendResult.success) {
             // Update email record
-            await supabase
-              .from('emails')
-              .update({
-                status: 'sent',
-                sent_at: now.toISOString(),
-                provider_message_id: sendResult.providerMessageId
-              })
+            const sentData: any = {
+              status: 'sent',
+              sent_at: now.toISOString(),
+              provider_message_id: sendResult.providerMessageId
+            }
+            await (supabase.from('emails') as any)
+              .update(sentData)
               .eq('id', email.id)
 
             // Update variant assignment if this is a split test email
@@ -597,17 +616,17 @@ async function runCronJob(request: NextRequest) {
               const { data: assignment } = await supabase
                 .from('campaign_recipient_variant_assignments')
                 .select('id')
-                .eq('step_id', email.campaign_step_id)
-                .eq('recipient_id', email.campaign_recipient_id)
-                .single()
+                .eq('step_id', email.campaign_step_id as string)
+                .eq('recipient_id', email.campaign_recipient_id as string)
+                .single() as { data: { id: string } | null; error: any }
 
               if (assignment) {
-                await supabase
-                  .from('campaign_recipient_variant_assignments')
-                  .update({
-                    email_id: email.id,
-                    sent_at: now.toISOString()
-                  })
+                const variantData: any = {
+                  email_id: email.id,
+                  sent_at: now.toISOString()
+                }
+                await (supabase.from('campaign_recipient_variant_assignments') as any)
+                  .update(variantData)
                   .eq('id', assignment.id)
               }
             }

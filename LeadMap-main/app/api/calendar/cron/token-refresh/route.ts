@@ -80,12 +80,13 @@ async function runCronJob(request: NextRequest) {
 
         const expiresAt = new Date(Date.now() + refreshResult.expiresIn * 1000).toISOString()
 
+        const updateData: any = {
+          access_token: refreshResult.accessToken,
+          token_expires_at: expiresAt,
+          updated_at: new Date().toISOString(),
+        }
         await (supabase.from('calendar_connections') as any)
-          .update({
-            access_token: refreshResult.accessToken,
-            token_expires_at: expiresAt,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq('id', connection.id)
 
         results.push({

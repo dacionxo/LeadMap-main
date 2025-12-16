@@ -155,31 +155,32 @@ async function runCronJob(request: NextRequest) {
 
         // Send email (pass supabase for transactional providers)
         const sendResult = await sendViaMailbox(mailbox, {
-          to: email.to_email,
-          subject: email.subject,
-          html: email.html,
-          fromName: email.from_name,
-          fromEmail: email.from_email
+          to: email.to_email as string,
+          subject: email.subject as string,
+          html: email.html as string,
+          fromName: email.from_name as string | undefined,
+          fromEmail: email.from_email as string | undefined
         }, supabase)
 
         if (sendResult.success) {
           // Create email record
-          await supabase
-            .from('emails')
-            .insert({
-              user_id: email.user_id,
-              mailbox_id: email.mailbox_id,
-              to_email: email.to_email,
-              subject: email.subject,
-              html: email.html,
+          const emailInsertData: any = {
+            user_id: email.user_id as string,
+            mailbox_id: email.mailbox_id as string,
+            to_email: email.to_email as string,
+            subject: email.subject as string,
+            html: email.html as string,
               status: 'sent',
               sent_at: new Date().toISOString(),
-              provider_message_id: sendResult.providerMessageId,
-              direction: 'sent',
-              type: email.type,
-              campaign_id: email.campaign_id || null,
-              campaign_recipient_id: email.campaign_recipient_id || null
-            })
+            provider_message_id: sendResult.providerMessageId,
+            direction: 'sent',
+            type: email.type as string | undefined,
+            campaign_id: email.campaign_id as string | undefined || null,
+            campaign_recipient_id: email.campaign_recipient_id as string | undefined || null
+          }
+          await supabase
+            .from('emails')
+            .insert(emailInsertData)
 
           // Mark queue entry as sent
           const sentData: any = {

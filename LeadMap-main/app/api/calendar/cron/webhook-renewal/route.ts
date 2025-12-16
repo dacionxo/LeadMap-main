@@ -153,13 +153,13 @@ async function runCronJob(request: NextRequest) {
         const expiresAt = new Date(webhookData.expiration || expiration).toISOString()
 
         // Update connection with new webhook info
-        await supabase
-          .from('calendar_connections')
-          .update({
-            webhook_id: webhookData.id,
-            webhook_expires_at: expiresAt,
-            updated_at: new Date().toISOString(),
-          })
+        const webhookUpdateData: any = {
+          webhook_id: webhookData.id,
+          webhook_expires_at: expiresAt,
+          updated_at: new Date().toISOString(),
+        }
+        await (supabase.from('calendar_connections') as any)
+          .update(webhookUpdateData)
           .eq('id', connection.id)
 
         results.push({

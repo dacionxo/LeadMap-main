@@ -56,10 +56,10 @@ async function runCronJob(request: NextRequest) {
       .limit(1000) // Process in batches
 
     if (!oldEventsError && oldEvents && oldEvents.length > 0) {
-      const { error: archiveError } = await supabase
-        .from('calendar_events')
-        .update({ status: 'archived' })
-        .in('id', oldEvents.map(e => e.id))
+      const archiveData: any = { status: 'archived' }
+      const { error: archiveError } = await (supabase.from('calendar_events') as any)
+        .update(archiveData)
+        .in('id', oldEvents.map((e: any) => e.id))
 
       if (!archiveError) {
         results.archivedEvents = oldEvents.length
@@ -103,10 +103,13 @@ async function runCronJob(request: NextRequest) {
 
     if (expiredWebhooks && expiredWebhooks.length > 0) {
       // Clear webhook IDs (they'll be renewed by webhook renewal cron)
-      await supabase
-        .from('calendar_connections')
-        .update({ webhook_id: null, webhook_expires_at: null })
-        .in('id', expiredWebhooks.map(w => w.id))
+      const webhookClearData: any = {
+        webhook_id: null,
+        webhook_expires_at: null
+      }
+      await (supabase.from('calendar_connections') as any)
+        .update(webhookClearData)
+        .in('id', expiredWebhooks.map((w: any) => w.id))
 
       results.expiredWebhooks = expiredWebhooks.length
     }

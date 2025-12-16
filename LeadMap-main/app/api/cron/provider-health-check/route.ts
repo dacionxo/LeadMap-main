@@ -80,20 +80,20 @@ async function runCronJob(request: NextRequest) {
         const healthResult = await checkProviderHealth(cred.provider_type, config, supabase)
 
         // Store result
-        await supabase
-          .from('provider_health_checks')
-          .upsert({
-            credential_id: cred.id,
-            healthy: healthResult.healthy,
-            status: healthResult.status,
-            last_checked_at: new Date().toISOString(),
-            last_successful_check_at: healthResult.healthy ? new Date().toISOString() : null,
-            error_message: healthResult.error || null,
-            response_time_ms: healthResult.responseTime,
-            rate_limit_remaining: healthResult.rateLimitRemaining,
-            quota_used_percent: healthResult.quotaUsedPercent,
-            updated_at: new Date().toISOString()
-          } as Record<string, unknown>, {
+        const healthCheckData: any = {
+          credential_id: cred.id,
+          healthy: healthResult.healthy,
+          status: healthResult.status,
+          last_checked_at: new Date().toISOString(),
+          last_successful_check_at: healthResult.healthy ? new Date().toISOString() : null,
+          error_message: healthResult.error || null,
+          response_time_ms: healthResult.responseTime,
+          rate_limit_remaining: healthResult.rateLimitRemaining,
+          quota_used_percent: healthResult.quotaUsedPercent,
+          updated_at: new Date().toISOString()
+        }
+        await (supabase.from('provider_health_checks') as any)
+          .upsert(healthCheckData, {
             onConflict: 'credential_id'
           })
 

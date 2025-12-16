@@ -90,12 +90,12 @@ async function runCronJob(request: NextRequest) {
         // Update token if it was refreshed
         if (validAccessToken !== connection.access_token) {
           const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString()
-          await supabase
-            .from('calendar_connections')
-            .update({
-              access_token: validAccessToken,
-              token_expires_at: expiresAt,
-            })
+          const tokenUpdateData: any = {
+            access_token: validAccessToken,
+            token_expires_at: expiresAt,
+          }
+          await (supabase.from('calendar_connections') as any)
+            .update(tokenUpdateData)
             .eq('id', connection.id)
         }
 
@@ -211,8 +211,7 @@ async function runCronJob(request: NextRequest) {
 
           if (existing) {
             // Update existing event
-            await supabase
-              .from('calendar_events')
+            await (supabase.from('calendar_events') as any)
               .update(eventData)
               .eq('id', existing.id)
             updatedCount++
@@ -220,15 +219,17 @@ async function runCronJob(request: NextRequest) {
             // Create new event
             await supabase
               .from('calendar_events')
-              .insert([eventData])
+              .insert([eventData] as any)
             syncedCount++
           }
         }
 
         // Update connection's last_sync_at
-        await supabase
-          .from('calendar_connections')
-          .update({ last_sync_at: new Date().toISOString() })
+        const syncUpdateData: any = {
+          last_sync_at: new Date().toISOString()
+        }
+        await (supabase.from('calendar_connections') as any)
+          .update(syncUpdateData)
           .eq('id', connection.id)
 
         results.push({
