@@ -54,7 +54,7 @@ async function runCronJob(request: NextRequest) {
 
     const results = []
 
-    for (const connection of connections as any[]) {
+    for (const connection of connections as Array<{ id: string; refresh_token?: string; [key: string]: unknown }>) {
       try {
         if (!connection.refresh_token) {
           results.push({

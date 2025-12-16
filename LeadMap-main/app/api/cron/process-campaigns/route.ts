@@ -59,18 +59,19 @@ async function runCronJob(request: NextRequest) {
     }
 
     // Process each campaign
-    for (const campaign of activeCampaigns as any[]) {
+    for (const campaign of activeCampaigns as Array<{ id: string; [key: string]: unknown }>) {
       try {
         // Check if campaign has passed its end date
         if (campaign.end_at) {
           const endDate = new Date(campaign.end_at)
           if (now > endDate) {
             // Campaign has ended, mark as completed
-            await (supabase.from('campaigns') as any)
+            await supabase
+              .from('campaigns')
               .update({
                 status: 'completed',
                 completed_at: now.toISOString()
-              })
+              } as Record<string, unknown>)
               .eq('id', campaign.id)
             
             results.push({
@@ -115,15 +116,16 @@ async function runCronJob(request: NextRequest) {
           const nextWarmupDay = calculateNextWarmupDay(campaignStart, campaign.current_warmup_day || 0)
 
           if (nextWarmupDay !== campaign.current_warmup_day) {
-            await (supabase.from('campaigns') as any)
-              .update({ current_warmup_day: nextWarmupDay })
+            await supabase
+              .from('campaigns')
+              .update({ current_warmup_day: nextWarmupDay } as Record<string, unknown>)
               .eq('id', campaign.id)
           }
 
           const warmupCheck = checkWarmupLimit(
             campaign.warmup_enabled,
             nextWarmupDay,
-            campaign.warmup_schedule as any,
+            campaign.warmup_schedule as Record<string, unknown>,
             emailsSentToday
           )
 
@@ -196,35 +198,37 @@ async function runCronJob(request: NextRequest) {
           .eq('id', campaign.mailbox_id)
           .single()
 
-        if (mailboxError || !mailbox || !(mailbox as any).active) {
+        if (mailboxError || !mailbox || !(mailbox as { active?: boolean }).active) {
           console.error(`Mailbox not found or inactive for campaign ${campaign.id}`)
           continue
         }
 
         // Process each recipient
         let processedCount = 0
-        for (const recipient of readyRecipients as any[]) {
+        for (const recipient of readyRecipients as Array<{ id: string; [key: string]: unknown }>) {
           try {
             // Check stop on reply
             const replyCheck = await checkAndStopOnReply(recipient.id, campaign.id, supabase)
             if (replyCheck.shouldStop) {
-              await (supabase.from('campaign_recipients') as any)
-                .update({ status: 'stopped' })
+              await supabase
+                .from('campaign_recipients')
+                .update({ status: 'stopped' } as Record<string, unknown>)
                 .eq('id', recipient.id)
               continue
             }
 
             // Determine which step to send
             const currentStepNumber = recipient.current_step_number || 0
-            const nextStep = (steps as any[]).find((s: any) => s.step_number === currentStepNumber + 1)
+            const nextStep = (steps as Array<{ step_number: number; [key: string]: unknown }>).find((s) => s.step_number === currentStepNumber + 1)
 
             if (!nextStep) {
               // No more steps, mark as completed
-              await (supabase.from('campaign_recipients') as any)
+              await supabase
+                .from('campaign_recipients')
                 .update({ 
                   status: 'completed',
                   current_step_number: currentStepNumber
-                })
+                } as Record<string, unknown>)
                 .eq('id', recipient.id)
               continue
             }
@@ -240,10 +244,11 @@ async function runCronJob(request: NextRequest) {
 
               if (!stepWindowCheck.allowed) {
                 // Schedule for next available time
-                await (supabase.from('campaign_recipients') as any)
+                await supabase
+                  .from('campaign_recipients')
                   .update({ 
                     next_send_at: stepWindowCheck.nextAvailableTime?.toISOString()
-                  })
+                  } as Record<string, unknown>)
                   .eq('id', recipient.id)
                 continue
               }
@@ -256,7 +261,7 @@ async function runCronJob(request: NextRequest) {
             const { data: recentEmails } = await supabase
               .from('emails')
               .select('sent_at')
-              .eq('mailbox_id', (mailbox as any).id)
+              .eq('mailbox_id', (mailbox as { id: string; [key: string]: unknown }).id)
               .eq('status', 'sent')
               .not('sent_at', 'is', null)
 
@@ -268,7 +273,7 @@ async function runCronJob(request: NextRequest) {
               e.sent_at && new Date(e.sent_at) >= oneDayAgo
             ).length || 0
 
-            const limitCheck = await checkMailboxLimits(mailbox as any, {
+            const limitCheck = await checkMailboxLimits(mailbox as { id: string; [key: string]: unknown }, {
               hourly: hourlyCount,
               daily: dailyCount
             }, supabase)
@@ -308,7 +313,8 @@ async function runCronJob(request: NextRequest) {
             processedHtml = appendComplianceFooter(processedHtml, emailSettings, unsubscribeUrl)
 
             // Create email record
-            const { data: emailRecord, error: emailError } = await (supabase.from('emails') as any)
+            const { data: emailRecord, error: emailError } = await supabase
+              .from('emails')
               .insert({
                 user_id: campaign.user_id,
                 mailbox_id: campaign.mailbox_id,
@@ -331,22 +337,31 @@ async function runCronJob(request: NextRequest) {
             }
 
             // Send email (pass supabase for transactional providers)
-            const sendResult = await sendViaMailbox(mailbox as any, {
+            const mailboxTyped = mailbox as { 
+              id: string; 
+              from_name?: string; 
+              display_name?: string; 
+              from_email?: string; 
+              email?: string;
+              [key: string]: unknown;
+            }
+            const sendResult = await sendViaMailbox(mailboxTyped, {
               to: recipient.email,
               subject: processedSubject,
               html: processedHtml,
-              fromName: (mailbox as any).from_name || (mailbox as any).display_name || emailSettings.from_name,
-              fromEmail: (mailbox as any).from_email || (mailbox as any).email
+              fromName: mailboxTyped.from_name || mailboxTyped.display_name || emailSettings.from_name,
+              fromEmail: mailboxTyped.from_email || mailboxTyped.email
             }, supabase)
 
             if (sendResult.success) {
               // Update email record
-              await (supabase.from('emails') as any)
+              await supabase
+                .from('emails')
                 .update({
                   status: 'sent',
                   sent_at: new Date().toISOString(),
                   provider_message_id: sendResult.providerMessageId
-                })
+                } as Record<string, unknown>)
                 .eq('id', emailRecord.id)
 
               // Update recipient
@@ -354,7 +369,8 @@ async function runCronJob(request: NextRequest) {
               const delayDays = nextStep.delay_days || 0
               const nextSendAt = new Date(now.getTime() + (delayHours * 60 * 60 * 1000) + (delayDays * 24 * 60 * 60 * 1000))
 
-              await (supabase.from('campaign_recipients') as any)
+              await supabase
+                .from('campaign_recipients')
                 .update({
                   current_step_number: nextStep.step_number,
                   last_step_sent: nextStep.step_number,
@@ -362,24 +378,26 @@ async function runCronJob(request: NextRequest) {
                   next_send_at: nextSendAt.toISOString(),
                   status: 'in_progress',
                   updated_at: new Date().toISOString()
-                })
+                } as Record<string, unknown>)
                 .eq('id', recipient.id)
 
               processedCount++
             } else {
               // Send failed
-              await (supabase.from('emails') as any)
+              await supabase
+                .from('emails')
                 .update({
                   status: 'failed',
                   error: sendResult.error
-                })
+                } as Record<string, unknown>)
                 .eq('id', emailRecord.id)
 
-              await (supabase.from('campaign_recipients') as any)
+              await supabase
+                .from('campaign_recipients')
                 .update({
                   error_count: (recipient.error_count || 0) + 1,
                   last_error: sendResult.error
-                })
+                } as Record<string, unknown>)
                 .eq('id', recipient.id)
             }
           } catch (error: any) {
@@ -395,10 +413,10 @@ async function runCronJob(request: NextRequest) {
         })
 
         // Update campaign report
-        await (supabase.rpc as any)('update_campaign_report', {
+        await (supabase.rpc('update_campaign_report', {
           p_campaign_id: campaign.id,
           p_report_date: now.toISOString().split('T')[0]
-        })
+        }) as Promise<{ data: unknown; error: unknown }>)
       } catch (error: any) {
         console.error(`Error processing campaign ${campaign.id}:`, error)
         results.push({

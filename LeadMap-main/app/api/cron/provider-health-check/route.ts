@@ -51,7 +51,7 @@ async function runCronJob(request: NextRequest) {
     const results = []
 
     // Check health of each credential
-    for (const cred of credentials as any[]) {
+    for (const cred of credentials as Array<{ id: string; provider_type: string; [key: string]: unknown }>) {
       try {
         // Decrypt credentials
         const decryptedCred = {
@@ -80,7 +80,8 @@ async function runCronJob(request: NextRequest) {
         const healthResult = await checkProviderHealth(cred.provider_type, config, supabase)
 
         // Store result
-        await (supabase.from('provider_health_checks') as any)
+        await supabase
+          .from('provider_health_checks')
           .upsert({
             credential_id: cred.id,
             healthy: healthResult.healthy,
@@ -92,7 +93,7 @@ async function runCronJob(request: NextRequest) {
             rate_limit_remaining: healthResult.rateLimitRemaining,
             quota_used_percent: healthResult.quotaUsedPercent,
             updated_at: new Date().toISOString()
-          }, {
+          } as Record<string, unknown>, {
             onConflict: 'credential_id'
           })
 

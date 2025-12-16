@@ -176,12 +176,13 @@ async function runCronJob(request: NextRequest) {
                 // Calculate new expiration (typically 1 hour from now)
                 const newExpiresAt = new Date(Date.now() + 3600 * 1000).toISOString()
 
-                await (supabase.from('mailboxes') as any)
+                await supabase
+                  .from('mailboxes')
                   .update({
                     access_token: encrypted.access_token || refreshResult.accessToken,
                     token_expires_at: newExpiresAt,
                     updated_at: new Date().toISOString()
-                  })
+                  } as Record<string, unknown>)
                   .eq('id', mailboxId)
 
                 // Update local mailbox object with new token
@@ -361,10 +362,10 @@ async function runCronJob(request: NextRequest) {
           
           if (campaignData) {
             // Check if email is globally unsubscribed
-            const { data: isUnsubscribed } = await (supabase.rpc as any)('is_email_unsubscribed', {
+            const { data: isUnsubscribed } = await (supabase.rpc('is_email_unsubscribed', {
               p_user_id: campaignData.user_id,
               p_email: email.to_email.toLowerCase()
-            })
+            }) as Promise<{ data: boolean | null; error: unknown }>)
             
             if (isUnsubscribed) {
               await supabase
@@ -395,10 +396,10 @@ async function runCronJob(request: NextRequest) {
 
             if (!allowRisky) {
               // Check if email has hard bounced
-              const { data: hasBounced } = await (supabase.rpc as any)('has_email_bounced', {
+              const { data: hasBounced } = await (supabase.rpc('has_email_bounced', {
                 p_user_id: campaignData.user_id,
                 p_email: email.to_email.toLowerCase()
-              })
+              }) as Promise<{ data: boolean | null; error: unknown }>)
               
               if (hasBounced) {
                 await supabase
@@ -713,8 +714,9 @@ async function runCronJob(request: NextRequest) {
             }
 
             // Update mailbox last_error
-            await (supabase.from('mailboxes') as any)
-              .update({ last_error: sendResult.error })
+            await supabase
+              .from('mailboxes')
+              .update({ last_error: sendResult.error } as Record<string, unknown>)
               .eq('id', mailboxId)
 
             // Update recipient status
@@ -884,7 +886,7 @@ async function scheduleNextStep(
     const scheduledAt = new Date(Date.now() + totalDelayMs)
 
     // Get campaign mailbox
-    const campaignMailbox = recipientInfo.campaign as any
+    const campaignMailbox = recipientInfo.campaign as { mailbox_id: string; [key: string]: unknown }
     const { data: mailbox } = await supabase
       .from('mailboxes')
       .select('id')
@@ -1017,7 +1019,8 @@ async function scheduleNextStep(
 
           // Create variant assignment
           if (variantId) {
-            await (supabase.from('campaign_recipient_variant_assignments') as any)
+            await supabase
+              .from('campaign_recipient_variant_assignments')
               .insert({
                 campaign_id: campaignId,
                 step_id: nextStep.id,
@@ -1025,7 +1028,7 @@ async function scheduleNextStep(
                 variant_id: variantId,
                 user_id: campaignData.user_id,
                 assignment_method: splitTest.distribution_method === 'equal' ? 'round_robin' : 'weighted_random'
-              })
+              } as Record<string, unknown>)
           }
         }
       }
@@ -1092,10 +1095,11 @@ async function scheduleNextStep(
     }
 
     // Create email record for next step
-    const { data: emailRecord } = await (supabase.from('emails') as any)
+    const { data: emailRecord } = await supabase
+      .from('emails')
       .insert({
         user_id: campaignData.user_id,
-        mailbox_id: campaignMailbox.mailbox_id,
+        mailbox_id: (campaignMailbox as { mailbox_id: string; [key: string]: unknown }).mailbox_id,
         campaign_id: campaignId,
         campaign_step_id: nextStep.id,
         campaign_recipient_id: recipientId,
