@@ -415,10 +415,11 @@ async function runCronJob(request: NextRequest) {
 
         // Update campaign report (if RPC function exists)
         try {
-          const rpcResult = await (supabase.rpc('update_campaign_report', {
+          const rpcParams = {
             p_campaign_id: campaign.id,
             p_report_date: now.toISOString().split('T')[0]
-          }) as any)
+          }
+          const rpcResult = await ((supabase as any).rpc('update_campaign_report', rpcParams) as Promise<{ data: unknown; error: any }>)
           if (rpcResult?.error) {
             // RPC function may not exist, log but don't fail
             console.warn('Failed to update campaign report:', rpcResult.error)
