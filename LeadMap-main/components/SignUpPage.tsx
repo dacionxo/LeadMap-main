@@ -229,7 +229,7 @@ export default function SignUpPage() {
           }
         }
       `}</style>
-      <div className="min-h-screen" style={{ backgroundColor: '#E8E3D6' }}>
+      <div className="min-h-screen" style={{ backgroundColor: '#f7faff' }}>
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 dark:bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
@@ -237,7 +237,7 @@ export default function SignUpPage() {
       </div>
 
       {/* Navigation - Fixed/Sticky */}
-      <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: '#E8E3D6' }}>
+      <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: '#f7faff' }}>
         <div className="mx-4 sm:mx-6 lg:mx-8">
           <div className="flex justify-between items-center h-16 max-w-[1872px] mx-auto">
             <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => router.push('/')}>

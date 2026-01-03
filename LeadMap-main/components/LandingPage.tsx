@@ -409,7 +409,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#E8E3D6' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f7faff' }}>
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 dark:bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
@@ -417,7 +417,7 @@ export default function LandingPage() {
       </div>
 
       {/* Navigation - Fixed/Sticky */}
-      <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: '#E8E3D6' }}>
+      <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: '#f7faff' }}>
         <div className="mx-4 sm:mx-6 lg:mx-8">
           <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center space-x-6">
@@ -1303,7 +1303,7 @@ export default function LandingPage() {
           </div>
 
           {/* Wave Divider */}
-          <div className="relative w-full overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.15),0_5px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.4),0_5px_20px_rgba(0,0,0,0.5)]" style={{ backgroundColor: '#E8E3D6' }}>
+          <div className="relative w-full overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.15),0_5px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.4),0_5px_20px_rgba(0,0,0,0.5)]" style={{ backgroundColor: '#f7faff' }}>
             <style dangerouslySetInnerHTML={{
               __html: `
                 @keyframes waveFlow {
@@ -1333,7 +1333,7 @@ export default function LandingPage() {
             >
               <defs>
                 <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#E8E3D6" />
+                  <stop offset="0%" stopColor="#f7faff" />
                   <stop offset="100%" stopColor="#F5F5F0" />
                 </linearGradient>
                 <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1555,7 +1555,7 @@ export default function LandingPage() {
           <div className="h-24 bg-gradient-to-b from-white to-neutral-light dark:from-neutral-dark dark:to-neutral-dark" />
 
           {/* Cloud Divider - After Stats Section */}
-          <div className="relative w-full overflow-hidden" style={{ backgroundColor: '#E8E3D6', height: '120px' }}>
+          <div className="relative w-full overflow-hidden" style={{ backgroundColor: '#f7faff', height: '120px' }}>
             <style dangerouslySetInnerHTML={{
               __html: `
                 @keyframes cloudFloat {
@@ -1585,7 +1585,7 @@ export default function LandingPage() {
             >
               <defs>
                 <linearGradient id="cloudWaveGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#E8E3D6" />
+                  <stop offset="0%" stopColor="#f7faff" />
                   <stop offset="100%" stopColor="#F5F5F0" />
                 </linearGradient>
                 <linearGradient id="cloudWaveGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
