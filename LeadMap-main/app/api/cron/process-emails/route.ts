@@ -915,7 +915,12 @@ async function processEmail(
         )
 
         if (campaignMailboxesResult.success && campaignMailboxesResult.data) {
-          const mailboxIds = campaignMailboxesResult.data.map((m) => m.mailbox_id)
+          // Normalize to array (executeSelectOperation can return T or T[])
+          const dataArray = Array.isArray(campaignMailboxesResult.data)
+            ? campaignMailboxesResult.data
+            : [campaignMailboxesResult.data]
+          
+          const mailboxIds = dataArray.map((m) => m.mailbox_id)
           const availableMailboxesResult = await executeSelectOperation<Mailbox>(
             supabase,
             'mailboxes',
@@ -929,8 +934,13 @@ async function processEmail(
           )
 
           if (availableMailboxesResult.success && availableMailboxesResult.data) {
+            // Normalize to array (executeSelectOperation can return T or T[])
+            const availableMailboxesArray = Array.isArray(availableMailboxesResult.data)
+              ? availableMailboxesResult.data
+              : [availableMailboxesResult.data]
+            
             // Find mailbox with matching provider
-            const matchingMailbox = availableMailboxesResult.data.find((m) => {
+            const matchingMailbox = availableMailboxesArray.find((m) => {
               const mProvider = extractEmailProvider(m.email)
               return mProvider === recipientProvider
             })
@@ -1358,8 +1368,13 @@ async function runCronJob(request: NextRequest) {
           )
 
           if (recipientsResult.success && recipientsResult.data) {
+            // Normalize to array (executeSelectOperation can return T or T[])
+            const dataArray = Array.isArray(recipientsResult.data)
+              ? recipientsResult.data
+              : [recipientsResult.data]
+            
             const recipientMap = new Map(
-              recipientsResult.data.map((r) => [r.id, r.created_at])
+              dataArray.map((r) => [r.id, r.created_at])
             )
             emailsToProcess.sort((a: QueuedEmail, b: QueuedEmail) => {
               const aCreated =
