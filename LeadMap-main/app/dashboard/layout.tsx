@@ -36,10 +36,17 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  // Type assertion needed because service role client doesn't have database schema types
+  const userData = user as {
+    id: string
+    trial_end: string | null
+    subscription_status: string | null
+  }
+
   // Check entitlement
   const ent = getEntitlement({
-    trialEndsAt: user.trial_end,
-    subscriptionStatus: (user.subscription_status as string) || 'none',
+    trialEndsAt: userData.trial_end,
+    subscriptionStatus: (userData.subscription_status as string) || 'none',
   })
 
   // Redirect to billing if access is denied
