@@ -156,12 +156,19 @@ async function fetchQueuedEmails(
     )
   }
 
-  if (!result.data || result.data.length === 0) {
+  if (!result.data) {
+    return []
+  }
+
+  // Normalize to array (executeSelectOperation can return T or T[])
+  const dataArray = Array.isArray(result.data) ? result.data : [result.data]
+  
+  if (dataArray.length === 0) {
     return []
   }
 
   // Validate all items
-  return result.data.map(validateEmailQueueItem)
+  return dataArray.map(validateEmailQueueItem)
 }
 
 /**
@@ -195,14 +202,26 @@ async function fetchMailbox(
     }
   )
 
-  if (!result.success || !result.data || result.data.length === 0) {
+  if (!result.success || !result.data) {
     throw new DatabaseError(
       'Mailbox not found or access denied',
       result.error
     )
   }
 
-  return result.data[0]
+  // Since we use .single(), result.data should be a single Mailbox object
+  // But handle both cases for type safety
+  if (Array.isArray(result.data)) {
+    if (result.data.length === 0) {
+      throw new DatabaseError(
+        'Mailbox not found or access denied',
+        result.error
+      )
+    }
+    return result.data[0]
+  }
+
+  return result.data
 }
 
 /**
@@ -240,13 +259,16 @@ async function calculateRecentEmailCounts(
     return { hourly: 0, daily: 0 }
   }
 
-  const hourlyCount = result.data.filter((e) => {
+  // Normalize to array (executeSelectOperation can return T or T[])
+  const dataArray = Array.isArray(result.data) ? result.data : [result.data]
+
+  const hourlyCount = dataArray.filter((e) => {
     if (!e.sent_at) return false
     const sentAt = new Date(e.sent_at)
     return sentAt >= oneHourAgo
   }).length
 
-  const dailyCount = result.data.filter((e) => {
+  const dailyCount = dataArray.filter((e) => {
     if (!e.sent_at) return false
     const sentAt = new Date(e.sent_at)
     return sentAt >= oneDayAgo
