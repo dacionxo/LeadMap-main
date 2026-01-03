@@ -15,7 +15,7 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { verifyCronRequestOrError, createUnauthorizedResponse } from '@/lib/cron/auth'
+import { verifyCronRequestOrError } from '@/lib/cron/auth'
 import { handleCronError, DatabaseError, ValidationError } from '@/lib/cron/errors'
 import { createSuccessResponse, createErrorResponse, createNoDataResponse, createBatchResponse } from '@/lib/cron/responses'
 import { getCronSupabaseClient, executeUpdateOperation, executeSelectOperation, executeInsertOperation } from '@/lib/cron/database'
