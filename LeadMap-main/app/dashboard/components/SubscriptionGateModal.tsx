@@ -7,13 +7,13 @@ import { CreditCard, Copy, CheckCircle2 } from 'lucide-react'
 
 interface SubscriptionGateModalProps {
   userName?: string
-  trialEndsAt: Date | null
+  trialEndsAt: string | null
   workspaceId?: string
 }
 
 export default function SubscriptionGateModal({
   userName,
-  trialEndsAt,
+  trialEndsAt: trialEndsAtString,
   workspaceId
 }: SubscriptionGateModalProps) {
   const router = useRouter()

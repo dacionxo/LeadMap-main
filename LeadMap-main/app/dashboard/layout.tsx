@@ -64,7 +64,7 @@ export default async function DashboardLayout({
         {/* Subscription Gate Modal */}
         <SubscriptionGateModal
           userName={userData.name || undefined}
-          trialEndsAt={userData.trial_end ? new Date(userData.trial_end) : null}
+          trialEndsAt={userData.trial_end || null}
           workspaceId={userData.id}
         />
       </>
