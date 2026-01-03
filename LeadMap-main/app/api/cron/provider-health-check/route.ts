@@ -168,12 +168,19 @@ async function fetchActiveCredentials(
     throw new DatabaseError('Failed to fetch active email provider credentials', result.error)
   }
 
-  if (!result.data || result.data.length === 0) {
+  if (!result.data) {
+    return []
+  }
+
+  // Normalize to array (executeSelectOperation can return T or T[])
+  const dataArray = Array.isArray(result.data) ? result.data : [result.data]
+
+  if (dataArray.length === 0) {
     return []
   }
 
   // Validate each credential
-  return result.data.map(validateEmailProviderCredential)
+  return dataArray.map(validateEmailProviderCredential)
 }
 
 /**

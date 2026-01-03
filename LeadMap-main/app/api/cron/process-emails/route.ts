@@ -252,8 +252,11 @@ async function fetchCampaigns(
     return new Map()
   }
 
+  // Normalize to array (executeSelectOperation can return T or T[])
+  const dataArray = Array.isArray(result.data) ? result.data : [result.data]
+
   const campaignsMap = new Map<string, Campaign>()
-  for (const campaign of result.data) {
+  for (const campaign of dataArray) {
     campaignsMap.set(campaign.id, campaign)
   }
 
@@ -433,13 +436,16 @@ async function calculateRecentEmailCounts(
     return { hourly: 0, daily: 0 }
   }
 
-  const hourlyCount = result.data.filter((e) => {
+  // Normalize to array (executeSelectOperation can return T or T[])
+  const dataArray = Array.isArray(result.data) ? result.data : [result.data]
+
+  const hourlyCount = dataArray.filter((e) => {
     if (!e.sent_at) return false
     const sentAt = new Date(e.sent_at)
     return sentAt >= oneHourAgo
   }).length
 
-  const dailyCount = result.data.filter((e) => {
+  const dailyCount = dataArray.filter((e) => {
     if (!e.sent_at) return false
     const sentAt = new Date(e.sent_at)
     return sentAt >= oneDayAgo
@@ -534,11 +540,20 @@ async function fetchCampaignRecipient(
     }
   )
 
-  if (!result.success || !result.data || result.data.length === 0) {
+  if (!result.success || !result.data) {
     return null
   }
 
-  return result.data[0]
+  // Since we use .single(), result.data should be a single CampaignRecipient object
+  // But handle both cases for type safety
+  if (Array.isArray(result.data)) {
+    if (result.data.length === 0) {
+      return null
+    }
+    return result.data[0]
+  }
+
+  return result.data
 }
 
 /**

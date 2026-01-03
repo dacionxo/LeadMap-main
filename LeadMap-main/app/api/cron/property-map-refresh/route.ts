@@ -232,12 +232,19 @@ async function fetchListingsWithoutCoordinates(
     )
   }
 
-  if (!result.data || result.data.length === 0) {
+  if (!result.data) {
+    return []
+  }
+
+  // Normalize to array (executeSelectOperation can return T or T[])
+  const dataArray = Array.isArray(result.data) ? result.data : [result.data]
+
+  if (dataArray.length === 0) {
     return []
   }
 
   // Validate each listing
-  return result.data.map(validatePropertyListing)
+  return dataArray.map(validatePropertyListing)
 }
 
 /**
