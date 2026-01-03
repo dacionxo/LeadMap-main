@@ -163,7 +163,7 @@ export async function executeInsertOperation<T>(
  * @param supabase - Supabase client
  * @param table - Table name
  * @param select - Select columns (default: '*')
- * @param filter - Filter function (e.g., .eq('id', id))
+ * @param filter - Filter function that operates on the result of .select() (e.g., .eq('id', id))
  * @param context - Context for error messages
  * @returns Result with success flag and data
  * 
@@ -174,7 +174,7 @@ export async function executeSelectOperation<T>(
   supabase: SupabaseClient,
   table: string,
   select: string = '*',
-  filter?: (query: ReturnType<typeof supabase.from>) => ReturnType<typeof supabase.from>,
+  filter?: (query: any) => any,
   context?: {
     operation?: string
     [key: string]: unknown
@@ -184,7 +184,7 @@ export async function executeSelectOperation<T>(
     async () => {
       let query = supabase.from(table).select(select)
       if (filter) {
-        query = filter(query as ReturnType<typeof supabase.from>) as typeof query
+        query = filter(query)
       }
       const result = await query
       return {
