@@ -68,6 +68,7 @@ module.exports = {
           DEFAULT: '#f7faff',
           surface: '#ffffff',
         },
+        surface: '#ffffff',
         text: {
           primary: '#0b1220',
           muted: '#516075',
