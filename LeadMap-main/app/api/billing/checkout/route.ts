@@ -35,6 +35,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Type assertion for Supabase query result
+    const userData = user as { email: string | null; stripe_customer_id: string | null }
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL 
       ? `https://${process.env.VERCEL_URL}` 
       : 'http://localhost:3000'
@@ -50,12 +53,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    let customerId = user.stripe_customer_id
+    let customerId = userData.stripe_customer_id
 
     // Create Stripe customer if doesn't exist
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: user.email ?? undefined,
+        email: userData.email ?? undefined,
         metadata: { userId },
       })
       customerId = customer.id
