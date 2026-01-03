@@ -98,14 +98,15 @@ export async function scheduleNextStep(
       return
     }
 
+    // Normalize campaignResult.data to handle T | T[] return type
+    // Do this early so it's available for both reply check and email creation
+    const campaignData = campaignResult.success && campaignResult.data
+      ? (Array.isArray(campaignResult.data) ? campaignResult.data[0] : campaignResult.data)
+      : null
+
     // Check if recipient has replied
     if (recipient.replied) {
       // Check if we should stop (campaign-level setting takes precedence, then step-level)
-      // Normalize campaignResult.data to handle T | T[] return type
-      const campaignData = campaignResult.success && campaignResult.data
-        ? (Array.isArray(campaignResult.data) ? campaignResult.data[0] : campaignResult.data)
-        : null
-      
       const campaignStopOnReply =
         campaignData?.stop_on_reply !== false // Default to true if not set
       const stepStopOnReply = currentStep.stop_on_reply !== false // Default to true if not set
@@ -194,12 +195,12 @@ export async function scheduleNextStep(
       supabase,
       'emails',
       {
-        user_id: campaignForEmail.user_id,
-        mailbox_id: campaignForEmail.mailbox_id,
+        user_id: campaignData.user_id,
+        mailbox_id: campaignData.mailbox_id,
         campaign_id: campaignId,
         campaign_step_id: nextStep.id,
         campaign_recipient_id: recipientId,
-        to_email: recipientEmail.email,
+        to_email: recipient.email,
         subject: nextStep.subject,
         html: nextStep.html,
         status: 'queued',
