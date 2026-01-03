@@ -18,6 +18,7 @@ export default function ImportLeadsModal({
   const [uploading, setUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [importCount, setImportCount] = useState(0)
   const [importDetails, setImportDetails] = useState<{
     imported: number
@@ -144,6 +145,7 @@ export default function ImportLeadsModal({
     } catch (error: any) {
       console.error('Import error:', error)
       setUploadStatus('error')
+      setUploadProgress(0)
       
       // Enhanced error message parsing
       const errorMessage = error.message || 'Failed to import leads. Please try again.'
@@ -161,6 +163,7 @@ export default function ImportLeadsModal({
       setFile(null)
       setUploadStatus('idle')
       setMessage('')
+      setUploadProgress(0)
       setImportCount(0)
       setImportDetails(null)
       if (fileInputRef.current) {
