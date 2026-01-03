@@ -42,19 +42,37 @@ export async function POST(req: NextRequest) {
       ? `https://${process.env.VERCEL_URL}` 
       : 'http://localhost:3000'
     
-    // Get plan type from query or default to monthly
-    const { plan } = await req.json().catch(() => ({ plan: 'monthly' }))
-    const planType = plan === 'yearly' ? 'yearly' : 'monthly'
+    // Get plan type from request body or default to monthly
+    let planType = 'monthly'
+    try {
+      const body = await req.json()
+      if (body?.plan === 'yearly') {
+        planType = 'yearly'
+      }
+    } catch {
+      // Empty body or invalid JSON, use default
+    }
     
-    // Get price ID from environment based on plan type
-    const priceId = planType === 'yearly' 
+    // Get price ID from environment - try new vars first, fallback to old var
+    let priceId = planType === 'yearly' 
       ? process.env.STRIPE_PRICE_ID_YEARLY 
       : process.env.STRIPE_PRICE_ID_MONTHLY
 
+    // Fallback to old STRIPE_PRICE_ID if new vars not set
     if (!priceId) {
-      console.error(`STRIPE_PRICE_ID_${planType.toUpperCase()} not configured`)
+      priceId = process.env.STRIPE_PRICE_ID
+    }
+
+    if (!priceId) {
+      const missingVar = planType === 'yearly' 
+        ? 'STRIPE_PRICE_ID_YEARLY' 
+        : 'STRIPE_PRICE_ID_MONTHLY'
+      console.error(`Stripe price ID not configured. Please set ${missingVar} or STRIPE_PRICE_ID in environment variables.`)
       return NextResponse.json(
-        { error: 'Subscription not configured' },
+        { 
+          error: 'Subscription not configured',
+          details: `Missing ${missingVar} environment variable. Please configure Stripe price IDs.`
+        },
         { status: 500 }
       )
     }
