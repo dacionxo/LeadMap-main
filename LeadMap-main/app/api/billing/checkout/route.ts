@@ -64,9 +64,10 @@ export async function POST(req: NextRequest) {
       customerId = customer.id
 
       // Update user with customer ID
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ stripe_customer_id: customerId } as Record<string, unknown>)
+      // Type assertion needed because service role client doesn't have database schema types
+      const { error: updateError } = await (supabase
+        .from('users') as any)
+        .update({ stripe_customer_id: customerId })
         .eq('id', userId)
       
       if (updateError) {
