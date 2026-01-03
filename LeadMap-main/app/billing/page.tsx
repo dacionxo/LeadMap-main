@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Loader2, Calendar, CreditCard, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
@@ -14,7 +14,7 @@ interface UserSubscription {
   stripe_customer_id: string | null
 }
 
-export default function BillingPage() {
+function BillingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const reason = searchParams.get('reason')
@@ -199,6 +199,18 @@ export default function BillingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      <BillingPageContent />
+    </Suspense>
   )
 }
 
