@@ -105,13 +105,14 @@ export function parseUtmTags(source: URL | Record<string, string> | UtmTags): Ut
     }
   }
 
-  // Handle object format
+  // Handle object format - support both camelCase (UtmTags) and snake_case (Record<string, string>)
+  const sourceObj = source as UtmTags & Record<string, string>
   return {
-    utmSource: source.utmSource || source.utm_source || null,
-    utmMedium: source.utmMedium || source.utm_medium || null,
-    utmCampaign: source.utmCampaign || source.utm_campaign || null,
-    utmContent: source.utmContent || source.utm_content || null,
-    utmTerm: source.utmTerm || source.utm_term || null
+    utmSource: sourceObj.utmSource || sourceObj['utm_source'] || null,
+    utmMedium: sourceObj.utmMedium || sourceObj['utm_medium'] || null,
+    utmCampaign: sourceObj.utmCampaign || sourceObj['utm_campaign'] || null,
+    utmContent: sourceObj.utmContent || sourceObj['utm_content'] || null,
+    utmTerm: sourceObj.utmTerm || sourceObj['utm_term'] || null
   }
 }
 

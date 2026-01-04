@@ -139,12 +139,14 @@ export class TokenPersistence implements TokenPersistenceInterface {
       smtp_password: null // SMTP password is handled separately
     })
 
-    // Update mailbox with encrypted tokens
-    this.mailbox.access_token = encrypted.access_token || tokens.access_token || null
-    this.mailbox.refresh_token = encrypted.refresh_token || tokens.refresh_token || null
+    // Update mailbox with encrypted tokens (convert null to undefined for type compatibility)
+    this.mailbox.access_token = encrypted.access_token || tokens.access_token || undefined
+    this.mailbox.refresh_token = encrypted.refresh_token || tokens.refresh_token || undefined
     
-    if (tokens.token_expires_at !== undefined) {
+    if (tokens.token_expires_at !== undefined && tokens.token_expires_at !== null) {
       this.mailbox.token_expires_at = tokens.token_expires_at
+    } else {
+      this.mailbox.token_expires_at = undefined
     }
 
     // Clear decrypted cache to force re-decryption
@@ -162,9 +164,9 @@ export class TokenPersistence implements TokenPersistenceInterface {
    * Clear all tokens
    */
   clearTokens(): void {
-    this.mailbox.access_token = null
-    this.mailbox.refresh_token = null
-    this.mailbox.token_expires_at = null
+    this.mailbox.access_token = undefined
+    this.mailbox.refresh_token = undefined
+    this.mailbox.token_expires_at = undefined
     this._decryptedCache = null
   }
 

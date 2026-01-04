@@ -31,9 +31,9 @@ function ForgotPasswordContent() {
     // Client-side validation using Zod
     try {
       emailSchema.parse({ email })
-    } catch (validationError) {
+    } catch (validationError: unknown) {
       if (validationError instanceof z.ZodError) {
-        const emailError = validationError.errors.find(err => err.path[0] === 'email')
+        const emailError = validationError.issues.find((err: z.ZodIssue) => err.path[0] === 'email')
         if (emailError) {
           setEmailValidationError(emailError.message)
           setLoading(false)
@@ -84,9 +84,9 @@ function ForgotPasswordContent() {
     if (newEmail && !emailSchema.safeParse({ email: newEmail }).success) {
       try {
         emailSchema.parse({ email: newEmail })
-      } catch (validationError) {
+      } catch (validationError: unknown) {
         if (validationError instanceof z.ZodError) {
-          const emailError = validationError.errors.find(err => err.path[0] === 'email')
+          const emailError = validationError.issues.find((err: z.ZodIssue) => err.path[0] === 'email')
           if (emailError) {
             setEmailValidationError(emailError.message)
           }
