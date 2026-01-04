@@ -55,6 +55,19 @@ export async function GET(
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Default: last 30 days
     const end = endDate ? new Date(endDate) : new Date()
 
+    // Validate dates
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
+    }
+    if (start > end) {
+      return NextResponse.json({ error: 'Start date must be before end date' }, { status: 400 })
+    }
+    const today = new Date()
+    today.setHours(23, 59, 59, 999) // Set to end of today
+    if (start > today || end > today) {
+      return NextResponse.json({ error: 'Dates cannot be in the future' }, { status: 400 })
+    }
+
     // Get performance data for date range
     let performanceQuery = supabaseAdmin
       .from('campaign_performance')
@@ -78,16 +91,22 @@ export async function GET(
       .gte('event_timestamp', start.toISOString())
       .lte('event_timestamp', end.toISOString())
 
-    // Aggregate overall metrics
+    // Aggregate overall metrics using single-pass reduce for better performance
+    const eventCounts = events?.reduce((acc, e) => {
+      const type = e.event_type
+      acc[type] = (acc[type] || 0) + 1
+      return acc
+    }, {} as Record<string, number>) || {}
+
     const overallStats = {
       total_recipients: 0,
-      emails_sent: events?.filter((e) => e.event_type === 'sent').length || 0,
-      emails_delivered: events?.filter((e) => e.event_type === 'delivered').length || 0,
-      emails_opened: events?.filter((e) => e.event_type === 'opened').length || 0,
-      emails_clicked: events?.filter((e) => e.event_type === 'clicked').length || 0,
-      emails_replied: events?.filter((e) => e.event_type === 'replied').length || 0,
-      emails_bounced: events?.filter((e) => e.event_type === 'bounced').length || 0,
-      emails_unsubscribed: events?.filter((e) => e.event_type === 'unsubscribed').length || 0,
+      emails_sent: eventCounts['sent'] || 0,
+      emails_delivered: eventCounts['delivered'] || 0,
+      emails_opened: eventCounts['opened'] || 0,
+      emails_clicked: eventCounts['clicked'] || 0,
+      emails_replied: eventCounts['replied'] || 0,
+      emails_bounced: eventCounts['bounced'] || 0,
+      emails_unsubscribed: eventCounts['unsubscribed'] || 0,
     }
 
     // Get recipient count
@@ -152,8 +171,14 @@ export async function GET(
     })
   } catch (error: any) {
     console.error('Campaign performance API error:', error)
+    
+    // Only expose generic error message to client in production
+    const isDev = process.env.NODE_ENV === 'development'
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      {
+        error: 'Internal server error',
+        ...(isDev && { details: error.message }),
+      },
       { status: 500 }
     )
   }

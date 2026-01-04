@@ -46,6 +46,8 @@ Hyvor Relay is now documented in `EMAIL_RESOURCES.md` as a reference for develop
 
 ## Installation
 
+> **Note**: These instructions install and self-host the external Hyvor Relay PHP/Laravel service (not LeadMap). Hyvor Relay is written in PHP/Laravel and runs as a separate service. Once deployed, LeadMap (Node.js/TypeScript) communicates with it via REST API.
+
 ### Prerequisites
 
 - PHP 8.1 or higher

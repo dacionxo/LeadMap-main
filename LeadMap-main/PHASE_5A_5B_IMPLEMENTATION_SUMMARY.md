@@ -31,6 +31,7 @@ Completed: [Current Date]
 - Winner highlighting with trophy icon
 
 **Props Interface**:
+
 ```typescript
 interface VariantPerformanceCardProps {
   variant: {
@@ -73,6 +74,7 @@ interface VariantPerformanceCardProps {
 - Winner highlighting in chart
 
 **Props Interface**:
+
 ```typescript
 interface VariantComparisonChartProps {
   variants: Array<{
@@ -111,6 +113,7 @@ interface VariantComparisonChartProps {
 - Test status indicators
 
 **Props Interface**:
+
 ```typescript
 interface ABTestingDashboardProps {
   parentEmailId: string
@@ -151,6 +154,7 @@ interface ABTestingDashboardProps {
 - Color-coded values (green for positive, red for negative)
 
 **Props Interface**:
+
 ```typescript
 interface ROIMetricsCardProps {
   roiData: {
@@ -185,6 +189,7 @@ interface ROIMetricsCardProps {
 - Performance trend visualization
 
 **Props Interface**:
+
 ```typescript
 interface CampaignPerformanceChartProps {
   dailyPerformance: Array<{
@@ -227,6 +232,7 @@ interface CampaignPerformanceChartProps {
 - Metric cards
 
 **Props Interface**:
+
 ```typescript
 interface CampaignPerformanceDashboardProps {
   campaignId: string
