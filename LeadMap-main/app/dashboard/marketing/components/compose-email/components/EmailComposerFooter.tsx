@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Send, Clock, X, Loader2, AlertCircle } from 'lucide-react'
 import type { EmailComposerFooterProps } from '../types'
 
@@ -8,7 +9,7 @@ import type { EmailComposerFooterProps } from '../types'
  * Footer with send, cancel actions and validation feedback
  * Following .cursorrules patterns: TailwindCSS, accessibility, error handling
  */
-export default function EmailComposerFooter({
+function EmailComposerFooter({
   onSend,
   onCancel,
   sending,

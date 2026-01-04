@@ -36,6 +36,14 @@ export default function ComposeEmailEnhanced({
   const router = useRouter()
   const { composition, updateComposition, resetComposition } = useEmailComposition(initialData)
   const { validate } = useEmailValidation()
+  const {
+    getCachedMailboxes,
+    getCachedTemplates,
+    getCachedTokens,
+    setCachedMailboxes,
+    setCachedTemplates,
+    setCachedTokens,
+  } = useEmailCache()
 
   const [mailboxes, setMailboxes] = useState<MailboxSelection[]>([])
   const [templates, setTemplates] = useState<EmailTemplateSelection[]>([])
@@ -56,20 +64,71 @@ export default function ComposeEmailEnhanced({
   const [availableTokens] = useState<EmailToken[]>(getAllDefaultTokens())
   const [showTokenSelector, setShowTokenSelector] = useState(false)
 
-  // Fetch mailboxes and templates on mount
+  // Fetch mailboxes and templates on mount (with cache)
   useEffect(() => {
     fetchMailboxes()
     fetchTemplates()
   }, [])
 
-  // Update validation when composition changes
+  // Update validation when composition changes (memoized)
   useEffect(() => {
     const result = validate(composition)
     setValidationResult(result)
   }, [composition, validate])
 
+  // Register keyboard shortcuts
+  useEffect(() => {
+    const shortcuts = COMPOSER_SHORTCUTS.map((shortcut) => {
+      if (shortcut.key === 's' && shortcut.ctrl) {
+        return {
+          ...shortcut,
+          handler: () => {
+            if (onSave) {
+              handleSaveDraft()
+            }
+          },
+        }
+      }
+      if (shortcut.key === 'Enter' && shortcut.ctrl) {
+        return {
+          ...shortcut,
+          handler: () => {
+            handleSend()
+          },
+        }
+      }
+      if (shortcut.key === 'Escape') {
+        return {
+          ...shortcut,
+          handler: () => {
+            handleCancel()
+          },
+        }
+      }
+      return shortcut
+    })
+
+    const cleanup = registerKeyboardShortcuts(shortcuts)
+    return cleanup
+  }, [onSave, onCancel]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchMailboxes = async () => {
     try {
+      // Check cache first
+      const cached = getCachedMailboxes()
+      if (cached) {
+        setMailboxes(cached)
+        if (cached.length > 0 && !composition.mailboxId) {
+          updateComposition({
+            mailboxId: cached[0].id,
+            fromEmail: cached[0].email,
+            fromName: cached[0].displayName || cached[0].email,
+          })
+        }
+        setLoading(false)
+        return
+      }
+
       const response = await fetch('/api/mailboxes', {
         credentials: 'include',
       })
@@ -92,6 +151,7 @@ export default function ComposeEmailEnhanced({
         }))
 
       setMailboxes(activeMailboxes)
+      setCachedMailboxes(activeMailboxes)
 
       // Set default mailbox if none selected and mailboxes available
       if (activeMailboxes.length > 0 && !composition.mailboxId) {
@@ -110,6 +170,13 @@ export default function ComposeEmailEnhanced({
 
   const fetchTemplates = async () => {
     try {
+      // Check cache first
+      const cached = getCachedTemplates()
+      if (cached) {
+        setTemplates(cached)
+        return
+      }
+
       const response = await fetch('/api/email-templates', {
         credentials: 'include',
       })
@@ -131,6 +198,7 @@ export default function ComposeEmailEnhanced({
       )
 
       setTemplates(fetchedTemplates)
+      setCachedTemplates(fetchedTemplates)
     } catch (error) {
       console.error('Error loading templates:', error)
     }

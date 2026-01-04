@@ -8,7 +8,7 @@ import type { EmailComposerHeaderProps } from '../types'
  * Header section with title, description, and action buttons
  * Following .cursorrules patterns: TailwindCSS, accessibility, dark mode
  */
-export default function EmailComposerHeader({
+function EmailComposerHeader({
   title = 'Compose Email',
   description = 'Create and send professional emails',
   status = 'draft',
