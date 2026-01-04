@@ -96,7 +96,6 @@ export async function GET(
         updated_at: new Date().toISOString()
       })
       .eq('id', triggerLink.id)
-      .then(() => {})
       .catch(err => console.warn('Failed to update click count:', err))
 
     // Record email event if we have email context
