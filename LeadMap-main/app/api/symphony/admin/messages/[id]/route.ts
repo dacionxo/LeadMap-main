@@ -20,7 +20,7 @@ export const runtime = 'nodejs'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     // Authenticate user
@@ -32,7 +32,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const messageId = params.id
+    const { id: messageId } = await params
 
     // Get Supabase client
     const cronSupabase = getCronSupabaseClient()
@@ -78,7 +78,7 @@ export async function GET(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     // Authenticate user
@@ -90,7 +90,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const messageId = params.id
+    const { id: messageId } = await params
 
     // Get Supabase client
     const cronSupabase = getCronSupabaseClient()

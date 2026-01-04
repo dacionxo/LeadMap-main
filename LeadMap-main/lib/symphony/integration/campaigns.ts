@@ -6,6 +6,9 @@
 import { dispatchCampaignMessage } from '../utils/message-builders'
 import { shouldUseSymphonyForCampaigns } from '../utils/feature-flags'
 
+// Re-export for convenience
+export { shouldUseSymphonyForCampaigns }
+
 /**
  * Dispatch campaign processing via Symphony (if enabled)
  */
