@@ -89,17 +89,22 @@
 - **Remaining**: Screen reader optimization enhancements (optional), mobile-responsive improvements (optional)
 
 ### Phase 8: Integration & APIs ⚠️ (Partially Complete)
-- **Status**: Partially Complete (Backend APIs Needed)
+- **Status**: Partially Complete (Draft APIs Created, UI Integration Needed)
 - **Files**:
+  - `app/api/emails/drafts/route.ts`
+  - `app/api/emails/drafts/[id]/route.ts`
   - `COMPOSE_EMAIL_PHASE_5_6_8_SUMMARY.md`
+  - `COMPOSE_EMAIL_FINAL_IMPLEMENTATION_SUMMARY.md`
 - **Completed**:
   - Email sending API integration (`/api/emails/send`)
   - Template API integration (`/api/email-templates`)
   - Token replacement API (`/api/email/tokens/replace`)
+  - **Draft API endpoints** (`/api/emails/drafts`) ✅
 - **Remaining**:
-  - Draft saving API (auto-save, manual save, load drafts)
+  - Draft UI integration (load/save in composer)
+  - Auto-save implementation
   - Campaign creation/selection UI
-  - Real-time preview updates (enhancement)
+  - Database schema for `email_drafts` table
 
 ### Phase 9: Code Quality & Documentation ⚠️ (Partially Complete)
 - **Status**: Partially Complete
