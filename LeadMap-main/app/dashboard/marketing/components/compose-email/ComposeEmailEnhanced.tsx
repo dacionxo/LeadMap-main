@@ -9,8 +9,11 @@ import EmailComposerFooter from './components/EmailComposerFooter'
 import EmailSettingsPanel from './components/EmailSettingsPanel'
 import TemplateSelector from './components/TemplateSelector'
 import EmailEditorBasic from './components/EmailEditorBasic'
+import EmailBuilder from './components/EmailBuilder'
+import EmailPreview from './components/EmailPreview'
 import { useEmailComposition } from './hooks/useEmailComposition'
 import { useEmailValidation } from './hooks/useEmailValidation'
+import { validateEmail } from './utils/email-validation'
 import type {
   ComposeEmailProps,
   EmailComposition,
@@ -63,6 +66,9 @@ export default function ComposeEmailEnhanced({
   })
   const [availableTokens] = useState<EmailToken[]>(getAllDefaultTokens())
   const [showTokenSelector, setShowTokenSelector] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [showValidation, setShowValidation] = useState(false)
+  const [emailValidation, setEmailValidation] = useState(validateEmail(composition.htmlContent || ''))
 
   // Fetch mailboxes and templates on mount (with cache)
   useEffect(() => {
