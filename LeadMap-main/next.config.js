@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Fix for Windows filesystem issues with webpack
+  outputFileTracingRoot: require('path').join(__dirname),
   images: {
     remotePatterns: [
       {
@@ -19,6 +21,8 @@ const nextConfig = {
         resend: false,
       }
     }
+    // Fix for Windows filesystem symlink issues
+    config.resolve.symlinks = false
     return config
   },
   // Turbopack configuration (used by default in Next.js 16)
