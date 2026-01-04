@@ -6,6 +6,47 @@ import { createClient } from '@supabase/supabase-js'
 export const runtime = 'nodejs'
 
 /**
+ * TypeScript interfaces for Campaign Performance API response
+ * Following .cursorrules: prefer interfaces over types for object shapes
+ */
+interface CampaignPerformanceResponse {
+  campaign: {
+    id: string
+    name: string
+  }
+  dateRange: {
+    start: string
+    end: string
+  }
+  overallStats: {
+    total_recipients: number
+    emails_sent: number
+    emails_delivered: number
+    emails_opened: number
+    emails_clicked: number
+    emails_replied: number
+    emails_bounced: number
+    emails_unsubscribed: number
+    delivery_rate: number
+    open_rate: number
+    click_rate: number
+    reply_rate: number
+    bounce_rate: number
+    unsubscribe_rate: number
+  }
+  roiData: {
+    campaign_cost: number
+    revenue: number
+    roi_percentage: number
+    cost_per_conversion: number
+    revenue_per_email: number
+    conversions: number
+    conversion_rate: number
+  } | null
+  dailyPerformance: Array<Record<string, unknown>>
+}
+
+/**
  * Campaign Performance Analytics API
  * GET /api/campaigns/[id]/performance?startDate=...&endDate=...
  * Returns enhanced campaign performance metrics with ROI tracking following Mautic patterns
@@ -153,7 +194,7 @@ export async function GET(
         }
       : null
 
-    return NextResponse.json({
+    const response: CampaignPerformanceResponse = {
       campaign: {
         id: campaign.id,
         name: campaign.name,
@@ -168,7 +209,9 @@ export async function GET(
       },
       roiData,
       dailyPerformance: performanceData || [],
-    })
+    }
+
+    return NextResponse.json(response)
   } catch (error: any) {
     console.error('Campaign performance API error:', error)
     
