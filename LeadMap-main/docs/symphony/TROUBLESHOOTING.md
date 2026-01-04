@@ -341,3 +341,4 @@ console.log('Worker health:', health)
 - **Cause**: Message processing took too long
 - **Solution**: Increase lock duration or optimize handler
 
+

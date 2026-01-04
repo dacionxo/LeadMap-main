@@ -181,3 +181,4 @@ export function registerExampleHandlers(): void {
   console.log('Example handlers registered (in production, use HandlerRegistry)')
 }
 
+

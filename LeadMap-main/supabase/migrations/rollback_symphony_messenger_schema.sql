@@ -28,3 +28,4 @@ DROP TABLE IF EXISTS messenger_messages CASCADE;
 
 SELECT 'Symphony Messenger schema rollback completed!' as status;
 
+

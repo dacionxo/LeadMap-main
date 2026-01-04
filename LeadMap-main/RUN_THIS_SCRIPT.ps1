@@ -98,3 +98,4 @@ Write-Host "2. Files can now be created in compose-email directory" -ForegroundC
 Write-Host "3. Use code from COMPOSE_EMAIL_PHASE_2_IMPLEMENTATION_CODE.md" -ForegroundColor White
 Write-Host ""
 
+

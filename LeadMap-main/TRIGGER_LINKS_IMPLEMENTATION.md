@@ -353,3 +353,4 @@ This implementation follows Mautic's approach to trigger links:
 - Support for multiple action types
 
 
+

@@ -395,3 +395,4 @@ END $$;
 
 SELECT 'Symphony Messenger schema migration completed successfully!' as status;
 
+

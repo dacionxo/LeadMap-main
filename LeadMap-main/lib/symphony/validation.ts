@@ -32,14 +32,13 @@ export function validateMessage(message: unknown): Message {
     return MessageSchema.parse(message)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      if (error instanceof z.ZodError) {
-        throw new MessageValidationError(
-          'Message validation failed',
-          error.issues
-        )
-      } else {
-        throw new MessageValidationError('Invalid message format', error)
-      }
+      throw new MessageValidationError(
+        'Message validation failed',
+        error.issues
+      )
+    }
+    throw new MessageValidationError('Invalid message format', error)
+  }
 }
 
 /**
@@ -100,7 +99,10 @@ export function validateRetryStrategyConfig(
  */
 export function validateScheduleConfig(config: unknown): ScheduleConfig {
   try {
-    return ScheduleConfigSchema.parse(config)
+    const parsed = ScheduleConfigSchema.parse(config)
+    // The schema validates the structure, but we need to cast to ScheduleConfig
+    // since the schema uses z.record(z.unknown()) for flexibility
+    return parsed as unknown as ScheduleConfig
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new MessageValidationError(
@@ -273,4 +275,3 @@ export function validateQueueName(name: unknown): string {
 
   return name
 }
-

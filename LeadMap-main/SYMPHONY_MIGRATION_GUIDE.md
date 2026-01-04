@@ -210,3 +210,4 @@ For issues or questions:
 - Check the migration file comments for table/column documentation
 - Review existing migrations in `supabase/migrations/` for reference
 
+

@@ -52,3 +52,4 @@ Write-Host "=" * 80 -ForegroundColor Gray
 Write-Host ""
 Write-Host "Migration file displayed above. Copy and paste into Supabase SQL Editor." -ForegroundColor Yellow
 
+

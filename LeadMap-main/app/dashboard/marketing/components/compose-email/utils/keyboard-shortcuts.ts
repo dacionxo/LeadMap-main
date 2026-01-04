@@ -98,3 +98,4 @@ export function matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut
   return keyMatch && ctrlMatch && shiftMatch && altMatch
 }
 
+

@@ -316,3 +316,4 @@ COMMENT ON COLUMN messenger_messages.locked_by IS 'Identifier of worker processi
 COMMENT ON COLUMN messenger_messages.idempotency_key IS 'Key to prevent duplicate processing';
 
 
+
