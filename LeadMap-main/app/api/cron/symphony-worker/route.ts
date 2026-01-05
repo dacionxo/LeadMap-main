@@ -76,10 +76,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       batchSize: WORKER_CONFIG.batchSize,
       maxConcurrency: WORKER_CONFIG.maxConcurrency,
       pollInterval: WORKER_CONFIG.pollInterval,
-      messageLimit: WORKER_CONFIG.messageLimit,
+      messageLimit: WORKER_CONFIG.messageLimit ?? undefined,
       timeLimit: WORKER_CONFIG.timeLimit,
-      memoryLimit: WORKER_CONFIG.memoryLimit,
-      failureLimit: WORKER_CONFIG.failureLimit,
+      memoryLimit: WORKER_CONFIG.memoryLimit ?? undefined,
+      failureLimit: WORKER_CONFIG.failureLimit ?? undefined,
       logger: {
         info: (message, meta) => {
           console.log(`[Symphony Worker] ${message}`, meta || '')
