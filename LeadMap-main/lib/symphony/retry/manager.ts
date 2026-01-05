@@ -10,6 +10,7 @@ import type {
   RetryStrategyConfig,
 } from '@/lib/types/symphony'
 import { HandlerError, TransportError } from '../errors'
+import { SupabaseTransport } from '../transports/supabase'
 import {
   ExponentialBackoffRetryStrategy,
   type ExponentialBackoffRetryStrategy as RetryStrategyType,
@@ -57,7 +58,7 @@ export class RetryManager {
   private logger: NonNullable<RetryManagerOptions['logger']>
 
   constructor(options: RetryManagerOptions = {}) {
-    this.strategy = options.strategy || globalRetryStrategy
+    this.strategy = options.strategy || new ExponentialBackoffRetryStrategy()
     this.transport = options.transport
     this.logger = options.logger || {
       info: console.log,
@@ -247,7 +248,4 @@ export function createRetryManager(
 ): RetryManager {
   return new RetryManager(options)
 }
-
-// Import SupabaseTransport for type checking
-import { SupabaseTransport } from '../transports/supabase'
 
