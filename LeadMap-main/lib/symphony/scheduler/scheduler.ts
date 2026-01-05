@@ -208,7 +208,7 @@ export class Scheduler {
     // Calculate next run time
     const scheduleConfig: ScheduleConfig = {
       type: schedule.schedule_type,
-      config: schedule.schedule_config as ScheduleConfig['config'],
+      config: schedule.schedule_config as unknown as ScheduleConfig['config'],
       timezone: schedule.timezone,
       maxRuns: schedule.max_runs || undefined,
     }
