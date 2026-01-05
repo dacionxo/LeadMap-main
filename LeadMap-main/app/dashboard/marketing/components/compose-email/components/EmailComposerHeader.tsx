@@ -21,6 +21,7 @@ function EmailComposerHeader({
       draft: { label: 'Draft', className: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' },
       scheduled: { label: 'Scheduled', className: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' },
       sending: { label: 'Sending', className: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300' },
+      sent: { label: 'Sent', className: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' },
     }
     const config = statusConfig[status] || statusConfig.draft
     return (

@@ -221,7 +221,7 @@ export interface EmailSettingsPanelProps {
 export interface EmailComposerHeaderProps {
   title?: string
   description?: string
-  status?: 'draft' | 'scheduled' | 'sending'
+  status?: 'draft' | 'scheduled' | 'sending' | 'sent'
   onSaveDraft?: () => void
   onPreview?: () => void
   saving?: boolean
