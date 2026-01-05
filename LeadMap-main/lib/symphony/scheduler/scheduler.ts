@@ -224,7 +224,7 @@ export class Scheduler {
     const updateData: Partial<ScheduledMessageRow> = {
       last_run_at: new Date().toISOString(),
       run_count: newRunCount,
-      next_run_at: shouldDisable ? null : nextRunAt.toISOString(),
+      next_run_at: shouldDisable ? undefined : nextRunAt.toISOString(),
       enabled: !shouldDisable,
     }
 
