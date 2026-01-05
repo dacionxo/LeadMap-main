@@ -33,7 +33,7 @@ export class EmailMessage implements Message {
   metadata?: Record<string, unknown>
 
   constructor(payload: EmailMessagePayload, metadata?: Record<string, unknown>) {
-    this.payload = payload as Record<string, unknown>
+    this.payload = payload as unknown as Record<string, unknown>
     this.metadata = metadata
   }
 }
@@ -61,7 +61,7 @@ export class CampaignMessage implements Message {
     payload: CampaignMessagePayload,
     metadata?: Record<string, unknown>
   ) {
-    this.payload = payload as Record<string, unknown>
+    this.payload = payload as unknown as Record<string, unknown>
     this.metadata = metadata
   }
 }
@@ -86,7 +86,7 @@ export class SMSMessage implements Message {
   metadata?: Record<string, unknown>
 
   constructor(payload: SMSMessagePayload, metadata?: Record<string, unknown>) {
-    this.payload = payload as Record<string, unknown>
+    this.payload = payload as unknown as Record<string, unknown>
     this.metadata = metadata
   }
 }
