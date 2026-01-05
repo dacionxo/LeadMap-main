@@ -5,6 +5,7 @@
  * Dispatches messages to Symphony Messenger queue
  * 
  * @module app/api/symphony/dispatch
+ * @updated 2024-01-04
  */
 
 import { NextRequest, NextResponse } from 'next/server'
