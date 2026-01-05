@@ -25,39 +25,33 @@ export const TOKEN_PATTERNS = {
 export function extractTokens(content: string): string[] {
   const tokens: Set<string> = new Set()
 
-  // Extract contact field tokens
-  const contactMatches = content.matchAll(TOKEN_PATTERNS.contactfield)
-  for (const match of contactMatches) {
-    tokens.add(match[0])
+  // Helper function to extract matches using exec (compatible with all targets)
+  const extractMatches = (pattern: RegExp, text: string): void => {
+    // Reset regex lastIndex to ensure we start from the beginning
+    pattern.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) {
+      tokens.add(match[0])
+      // Prevent infinite loop if regex has no global flag (shouldn't happen, but safety check)
+      if (!pattern.global) {
+        break
+      }
+    }
   }
+
+  // Extract contact field tokens
+  extractMatches(TOKEN_PATTERNS.contactfield, content)
 
   // Extract campaign field tokens
-  const campaignMatches = content.matchAll(TOKEN_PATTERNS.campaignfield)
-  for (const match of campaignMatches) {
-    tokens.add(match[0])
-  }
+  extractMatches(TOKEN_PATTERNS.campaignfield, content)
 
   // Extract email field tokens
-  const emailMatches = content.matchAll(TOKEN_PATTERNS.emailfield)
-  for (const match of emailMatches) {
-    tokens.add(match[0])
-  }
+  extractMatches(TOKEN_PATTERNS.emailfield, content)
 
   // Extract date/time tokens
-  const dateMatches = content.matchAll(TOKEN_PATTERNS.date)
-  for (const match of dateMatches) {
-    tokens.add(match[0])
-  }
-
-  const timeMatches = content.matchAll(TOKEN_PATTERNS.time)
-  for (const match of timeMatches) {
-    tokens.add(match[0])
-  }
-
-  const datetimeMatches = content.matchAll(TOKEN_PATTERNS.datetime)
-  for (const match of datetimeMatches) {
-    tokens.add(match[0])
-  }
+  extractMatches(TOKEN_PATTERNS.date, content)
+  extractMatches(TOKEN_PATTERNS.time, content)
+  extractMatches(TOKEN_PATTERNS.datetime, content)
 
   return Array.from(tokens)
 }
