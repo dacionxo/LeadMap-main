@@ -37,7 +37,7 @@ export class EmailMessageHandler implements MessageHandler {
       )
     }
 
-    const payload = message.payload as EmailMessagePayload
+    const payload = message.payload as unknown as EmailMessagePayload
 
     // Validate payload
     if (!payload.emailId || !payload.toEmail || !payload.subject || !payload.html) {
@@ -77,7 +77,7 @@ export class CampaignMessageHandler implements MessageHandler {
       )
     }
 
-    const payload = message.payload as CampaignMessagePayload
+    const payload = message.payload as unknown as CampaignMessagePayload
 
     // Validate payload
     if (!payload.campaignId || !payload.userId || !payload.action) {
@@ -154,7 +154,7 @@ export class SMSMessageHandler implements MessageHandler {
       )
     }
 
-    const payload = message.payload as SMSMessagePayload
+    const payload = message.payload as unknown as SMSMessagePayload
 
     // Validate payload
     if (!payload.to || !payload.message) {
