@@ -23,7 +23,6 @@ import {
 } from '@/lib/cron/responses'
 import { Worker } from '@/lib/symphony/worker'
 import { SupabaseTransport } from '@/lib/symphony/transports'
-import type { CronJobResult } from '@/lib/types/cron'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // 60 seconds max execution time for Vercel
@@ -106,22 +105,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const health = await worker.getHealth()
 
     // Return success response with stats
-    return createSuccessResponse({
-      message: 'Symphony worker completed',
-      stats: {
-        totalProcessed: stats.totalProcessed,
-        totalSucceeded: stats.totalSucceeded,
-        totalFailed: stats.totalFailed,
-        averageProcessingTime: stats.averageProcessingTime,
-        currentQueueDepth: stats.currentQueueDepth,
+    return createSuccessResponse(
+      {
+        stats: {
+          totalProcessed: stats.totalProcessed,
+          totalSucceeded: stats.totalSucceeded,
+          totalFailed: stats.totalFailed,
+          averageProcessingTime: stats.averageProcessingTime,
+          currentQueueDepth: stats.currentQueueDepth,
+        },
+        health: {
+          running: health.running,
+          processing: health.processing,
+          uptime: health.uptime,
+          memoryUsage: health.memoryUsage,
+        },
       },
-      health: {
-        running: health.running,
-        processing: health.processing,
-        uptime: health.uptime,
-        memoryUsage: health.memoryUsage,
-      },
-    } as CronJobResult)
+      {
+        message: 'Symphony worker completed',
+        processed: stats.totalProcessed,
+      }
+    )
   } catch (error) {
     return handleCronError(error, {
       cronJob: 'symphony-worker',
