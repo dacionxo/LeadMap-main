@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, Clock, Calendar, RefreshCw, AlertCircle } from 'lucide-react'
+import { Mail, Clock, Calendar, RefreshCw, AlertCircle, Rss } from 'lucide-react'
 import type {
   EmailSettingsPanelProps,
   EmailTrackingConfig,
