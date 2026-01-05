@@ -89,7 +89,7 @@ export class Scheduler {
         body: message.payload,
         headers: {},
         schedule_type: scheduleConfig.type,
-        schedule_config: scheduleConfig.config as Record<string, unknown>,
+        schedule_config: scheduleConfig.config as unknown as Record<string, unknown>,
         timezone: scheduleConfig.timezone || 'UTC',
         next_run_at: nextRunAt.toISOString(),
         run_count: 0,
