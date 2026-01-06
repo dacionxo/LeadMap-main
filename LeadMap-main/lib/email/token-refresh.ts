@@ -240,8 +240,11 @@ async function refreshOutlookTokenInternal(
       const errorCode = errorData.error || 'UNKNOWN_ERROR'
       const errorDescription = errorData.error_description || 'Failed to refresh Outlook token'
       
-      // Determine if error is retryable
-      const shouldRetry = response.status === 429 || response.status >= 500 || response.status === 408
+      // invalid_grant means refresh token is invalid/expired/revoked - user needs to re-authenticate
+      const isInvalidGrant = errorCode === 'invalid_grant'
+      
+      // Determine if error is retryable (don't retry invalid_grant)
+      const shouldRetry = !isInvalidGrant && (response.status === 429 || response.status >= 500 || response.status === 408)
       
       console.error('Outlook token refresh failed:', {
         status: response.status,
@@ -249,7 +252,8 @@ async function refreshOutlookTokenInternal(
         error_description: errorDescription,
         mailbox_id: mailbox.id,
         mailbox_email: mailbox.email,
-        shouldRetry
+        shouldRetry,
+        needsReAuth: isInvalidGrant
       })
       
       return {
