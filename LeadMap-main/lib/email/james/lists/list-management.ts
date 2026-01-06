@@ -200,7 +200,7 @@ export class ListManager {
       }
     } else {
       // Unsubscribe from all lists
-      for (const [lid, subscribers] of this.subscribers.entries()) {
+      for (const [lid, subscribers] of Array.from(this.subscribers.entries())) {
         const subscriber = subscribers.find(s => s.email === email)
         if (subscriber) {
           subscriber.status = 'unsubscribed'
