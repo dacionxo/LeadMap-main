@@ -87,7 +87,7 @@ function parseIMAPMessage(rawMessage: any, mailboxEmail: string): {
 
   // Parse message IDs using james-project threading utilities
   const headerMap: Record<string, string | string[]> = {}
-  headers.forEach((value, key) => {
+  headers.forEach((value: string | string[], key: string) => {
     headerMap[key.toLowerCase()] = Array.isArray(value) ? value : [value]
   })
   

@@ -106,7 +106,7 @@ export class TransporterPool {
     nodemailer: typeof import('nodemailer')
   ): Promise<nodemailer.Transporter> {
     const smtpConfig = getSMTPConfig(mailbox)
-    const config: SMTPConfig = {
+    const config: Partial<SMTPConfig> = {
       ...smtpConfig,
       pool: true,
       maxConnections: this.config.maxConnections,

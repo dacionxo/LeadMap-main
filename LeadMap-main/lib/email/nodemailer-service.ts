@@ -14,7 +14,7 @@
  * ```
  */
 
-import type nodemailer from 'nodemailer'
+import type * as nodemailer from 'nodemailer'
 import type { Mailbox, EmailPayload, SendResult } from './types'
 import type { SendEmailOptions, SendEmailResult, RetryConfig } from './nodemailer/types'
 import { getTransporterPool } from './nodemailer/transporter-pool'
@@ -185,16 +185,18 @@ export class NodemailerService {
         recipientCount
       )
       if (!senderLimitResult.allowed) {
+        // TypeScript narrowing: when allowed is false, reason and resetAt are guaranteed to exist
+        const rateLimitError = senderLimitResult as { allowed: false; reason: string; resetAt: Date }
         globalLogger.warn('Per-sender rate limit exceeded', {
           protocol: 'SMTP',
           action: 'SEND',
           mailboxId: mailbox.id,
           senderEmail,
-          reason: senderLimitResult.reason,
+          reason: rateLimitError.reason,
         })
         return {
           success: false,
-          error: `Rate limit exceeded: ${senderLimitResult.reason}. Reset at ${senderLimitResult.resetAt.toISOString()}`,
+          error: `Rate limit exceeded: ${rateLimitError.reason}. Reset at ${rateLimitError.resetAt.toISOString()}`,
           attempts: 0,
         }
       }
@@ -204,15 +206,17 @@ export class NodemailerService {
     if (this.globalRateLimit) {
       const globalLimitResult = await this.globalRateLimit.checkLimit(messageSize, recipientCount)
       if (!globalLimitResult.allowed) {
+        // TypeScript narrowing: when allowed is false, reason and resetAt are guaranteed to exist
+        const rateLimitError = globalLimitResult as { allowed: false; reason: string; resetAt: Date }
         globalLogger.warn('Global rate limit exceeded', {
           protocol: 'SMTP',
           action: 'SEND',
           mailboxId: mailbox.id,
-          reason: globalLimitResult.reason,
+          reason: rateLimitError.reason,
         })
         return {
           success: false,
-          error: `Global rate limit exceeded: ${globalLimitResult.reason}. Reset at ${globalLimitResult.resetAt.toISOString()}`,
+          error: `Global rate limit exceeded: ${rateLimitError.reason}. Reset at ${rateLimitError.resetAt.toISOString()}`,
           attempts: 0,
         }
       }
@@ -406,18 +410,61 @@ export class NodemailerService {
     let size = 0
 
     // Headers
-    if (mailOptions.from) size += mailOptions.from.length
+    // FROM: Can be string | Address | Address[]
+    if (mailOptions.from) {
+      if (typeof mailOptions.from === 'string') {
+        size += mailOptions.from.length
+      } else if (Array.isArray(mailOptions.from)) {
+        for (const f of mailOptions.from) {
+          if (typeof f === 'string') {
+            size += f.length
+          } else if (typeof f === 'object' && f !== null && 'address' in f && typeof f.address === 'string') {
+            if ('name' in f && typeof f.name === 'string') size += f.name.length
+            size += f.address.length
+          }
+        }
+      } else if (typeof mailOptions.from === 'object' && mailOptions.from !== null && 'address' in mailOptions.from && typeof mailOptions.from.address === 'string') {
+        if ('name' in mailOptions.from && typeof mailOptions.from.name === 'string') size += mailOptions.from.name.length
+        size += mailOptions.from.address.length
+      }
+    }
+
+    // TO: Can be string | Address | (Array<string|Address>)
     if (mailOptions.to) {
-      const to = Array.isArray(mailOptions.to) ? mailOptions.to.join(', ') : mailOptions.to
-      size += to.length
+      const tos = Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to]
+      for (const t of tos) {
+        if (typeof t === 'string') {
+          size += t.length
+        } else if (typeof t === 'object' && t !== null && 'address' in t && typeof t.address === 'string') {
+          if ('name' in t && typeof t.name === 'string') size += t.name.length
+          size += t.address.length
+        }
+      }
     }
+
+    // CC: Can be string | Address | (Array<string|Address>)
     if (mailOptions.cc) {
-      const cc = Array.isArray(mailOptions.cc) ? mailOptions.cc.join(', ') : mailOptions.cc
-      size += cc.length
+      const ccs = Array.isArray(mailOptions.cc) ? mailOptions.cc : [mailOptions.cc]
+      for (const c of ccs) {
+        if (typeof c === 'string') {
+          size += c.length
+        } else if (typeof c === 'object' && c !== null && 'address' in c && typeof c.address === 'string') {
+          if ('name' in c && typeof c.name === 'string') size += c.name.length
+          size += c.address.length
+        }
+      }
     }
+    // BCC: Can be string | Address | (Array<string|Address>)
     if (mailOptions.bcc) {
-      const bcc = Array.isArray(mailOptions.bcc) ? mailOptions.bcc.join(', ') : mailOptions.bcc
-      size += bcc.length
+      const bccs = Array.isArray(mailOptions.bcc) ? mailOptions.bcc : [mailOptions.bcc]
+      for (const b of bccs) {
+        if (typeof b === 'string') {
+          size += b.length
+        } else if (typeof b === 'object' && b !== null && 'address' in b && typeof b.address === 'string') {
+          if ('name' in b && typeof b.name === 'string') size += b.name.length
+          size += b.address.length
+        }
+      }
     }
     if (mailOptions.subject) size += mailOptions.subject.length
     if (mailOptions.headers) {
@@ -425,16 +472,24 @@ export class NodemailerService {
     }
 
     // Body
-    if (mailOptions.html) size += mailOptions.html.length
-    if (mailOptions.text) size += mailOptions.text.length
+    if (mailOptions.html && typeof mailOptions.html === 'string') {
+      size += mailOptions.html.length
+    }
+    if (mailOptions.text && typeof mailOptions.text === 'string') {
+      size += mailOptions.text.length
+    }
 
     // Attachments
     if (mailOptions.attachments) {
       for (const attachment of mailOptions.attachments) {
         if (attachment.content) {
-          size += typeof attachment.content === 'string' 
-            ? attachment.content.length 
-            : Buffer.byteLength(attachment.content)
+          if (typeof attachment.content === 'string') {
+            size += Buffer.byteLength(attachment.content, 'utf-8')
+          } else if (Buffer.isBuffer(attachment.content)) {
+            size += attachment.content.length
+          }
+          // Skip Readable streams - cannot determine size without reading
+          // Skip AttachmentLike (path/href) - size calculation would require file system access
         }
         if (attachment.path) {
           // Approximate - actual file size would require filesystem access

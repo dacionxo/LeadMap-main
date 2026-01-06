@@ -11,7 +11,7 @@
  * - Consider using a key management service (AWS KMS, GCP KMS, etc.) for production
  */
 
-import crypto from 'crypto'
+import * as crypto from 'crypto'
 
 const ENCRYPTION_KEY = process.env.EMAIL_ENCRYPTION_KEY || process.env.ENCRYPTION_KEY
 const ALGORITHM = 'aes-256-gcm'
