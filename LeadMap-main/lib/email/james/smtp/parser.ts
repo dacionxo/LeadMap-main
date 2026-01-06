@@ -160,38 +160,5 @@ export function isMessageTerminated(data: string | Buffer): boolean {
   return false
 }
 
-/**
- * Validate SMTP message structure
- * 
- * @param message - SMTP message to validate
- * @returns Validation result
- */
-export function validateSMTPMessage(message: SMTPMessage): {
-  valid: boolean
-  errors: string[]
-} {
-  const errors: string[] = []
-
-  // Check required headers
-  if (!message.headers['from']) {
-    errors.push('Missing From header')
-  }
-
-  if (!message.headers['to'] && !message.headers['cc'] && !message.headers['bcc']) {
-    errors.push('Missing recipient header (To, Cc, or Bcc)')
-  }
-
-  // Validate header format
-  for (const [key, value] of Object.entries(message.headers)) {
-    if (typeof value === 'string' && value.length === 0) {
-      errors.push(`Empty ${key} header`)
-    }
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  }
-}
 
 
