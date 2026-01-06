@@ -196,35 +196,6 @@ export function validateMailboxMetadata(metadata: MailboxMetadata): {
   return { valid: true }
 }
 
-/**
- * Build mailbox path
- * 
- * @param namespace - Namespace (optional)
- * @param user - User identifier (optional)
- * @param mailboxName - Mailbox name
- * @param delimiter - Path delimiter (default: /)
- * @returns Mailbox path
- */
-export function buildMailboxPath(
-  namespace: string | null,
-  user: string | null,
-  mailboxName: string,
-  delimiter: string = '/'
-): string {
-  const parts: string[] = []
-  
-  if (namespace) {
-    parts.push(namespace)
-  }
-  
-  if (user) {
-    parts.push(user)
-  }
-  
-  parts.push(mailboxName)
-  
-  return parts.join(delimiter)
-}
 
 /**
  * Parse mailbox path
