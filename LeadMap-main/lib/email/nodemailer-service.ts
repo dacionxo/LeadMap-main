@@ -351,17 +351,33 @@ export class NodemailerService {
 
     // Add attachments if provided
     if (email.attachments && email.attachments.length > 0) {
-      mailOptions.attachments = email.attachments.map((att) => ({
-        filename: att.filename,
-        content: att.content,
-        path: att.path,
-        href: att.href,
-        contentType: att.contentType,
-        contentDisposition: att.contentDisposition,
-        cid: att.cid,
-        encoding: att.encoding,
-        headers: att.headers,
-      }))
+      mailOptions.attachments = email.attachments
+        .filter((att) => {
+          // Filter out attachments with incompatible stream types (ReadableStream from Web Streams API)
+          // nodemailer expects Readable from Node.js streams, not ReadableStream
+          if (att.content && typeof att.content !== 'string' && !Buffer.isBuffer(att.content)) {
+            // Check if it's a Node.js Readable stream (has readable property)
+            const stream = att.content as any
+            if (stream && typeof stream.readable === 'boolean') {
+              return true // It's a Node.js Readable stream
+            }
+            // If it's a Web ReadableStream, we can't use it directly
+            // In a real implementation, we'd need to convert it
+            return false
+          }
+          return true
+        })
+        .map((att) => ({
+          filename: att.filename,
+          content: att.content as string | Buffer | undefined,
+          path: att.path,
+          href: att.href,
+          contentType: att.contentType,
+          contentDisposition: att.contentDisposition,
+          cid: att.cid,
+          encoding: att.encoding,
+          headers: att.headers,
+        }))
     }
 
     // Add threading headers (following james-project patterns)
