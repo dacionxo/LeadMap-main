@@ -239,13 +239,16 @@ export class EmailFilterEngine {
         return (message.size || 0) < Number(condition.value)
 
       case 'has_attachment':
-        return message.hasAttachments === (condition.value === 'true' || condition.value === true)
+        const hasAttachmentValue = condition.value === 'true' || condition.value === 1 || condition.value === '1'
+        return message.hasAttachments === hasAttachmentValue
 
       case 'is_read':
-        return message.flags?.includes('\\Seen') === (condition.value === 'true' || condition.value === true)
+        const isReadValue = condition.value === 'true' || condition.value === 1 || condition.value === '1'
+        return message.flags?.includes('\\Seen') === isReadValue
 
       case 'is_unread':
-        return !message.flags?.includes('\\Seen') === (condition.value === 'true' || condition.value === true)
+        const isUnreadValue = condition.value === 'true' || condition.value === 1 || condition.value === '1'
+        return !message.flags?.includes('\\Seen') === isUnreadValue
 
       default:
         return false
