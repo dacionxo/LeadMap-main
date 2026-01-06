@@ -146,7 +146,7 @@ export class SenderReputationManager {
     let totalScore = 0
     let count = 0
 
-    for (const [sender, score] of this.scores.entries()) {
+    for (const [sender, score] of Array.from(this.scores.entries())) {
       if (this.extractDomain(sender) === domain) {
         totalScore += score.score
         count++
