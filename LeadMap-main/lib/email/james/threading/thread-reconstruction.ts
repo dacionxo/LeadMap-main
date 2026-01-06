@@ -535,7 +535,7 @@ export function mergeThreadsBySubject(threads: Map<string, Thread>): Map<string,
       const otherSubject = normalizeSubject(otherThread.root.subject)
       if (subjectsMatch(rootSubject, otherSubject)) {
         // Merge threads
-        for (const messageId of otherThread.allMessageIds) {
+        for (const messageId of Array.from(otherThread.allMessageIds)) {
           mergedThread.allMessageIds.add(messageId)
         }
         mergedThread.messageCount = mergedThread.allMessageIds.size
