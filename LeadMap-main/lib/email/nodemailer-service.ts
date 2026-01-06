@@ -15,7 +15,7 @@
  */
 
 import type nodemailer from 'nodemailer'
-import type { Mailbox, EmailPayload, SendResult } from '../types'
+import type { Mailbox, EmailPayload, SendResult } from './types'
 import type { SendEmailOptions, SendEmailResult, RetryConfig } from './nodemailer/types'
 import { getTransporterPool } from './nodemailer/transporter-pool'
 import { createEmailError, requiresTokenRefresh, getRetryDelay, sleep } from './nodemailer/error-handler'
