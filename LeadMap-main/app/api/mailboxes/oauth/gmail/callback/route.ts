@@ -27,8 +27,23 @@ export async function GET(request: NextRequest) {
     }
 
     if (!code || !state) {
+      // Log the actual URL parameters for debugging
+      console.error('OAuth callback missing required parameters:', {
+        code: code ? 'present' : 'missing',
+        state: state ? 'present' : 'missing',
+        error: searchParams.get('error'),
+        allParams: Object.fromEntries(searchParams.entries()),
+        url: request.url
+      })
+      
+      const errorMessage = !code && !state 
+        ? 'OAuth callback missing required parameters (code and state). Please start the OAuth flow from the application.'
+        : !code 
+        ? 'OAuth callback missing authorization code. Please try connecting again.'
+        : 'OAuth callback missing state parameter. Please try connecting again.'
+      
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/marketing?tab=emails&error=missing_params`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/marketing?tab=emails&error=${encodeURIComponent(errorMessage)}`
       )
     }
 
