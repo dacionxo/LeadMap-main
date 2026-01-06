@@ -513,7 +513,7 @@ export function mergeThreadsBySubject(threads: Map<string, Thread>): Map<string,
   const merged = new Map<string, Thread>()
   const processed = new Set<string>()
 
-  for (const [rootId, thread] of threads) {
+  for (const [rootId, thread] of Array.from(threads.entries())) {
     if (processed.has(rootId)) {
       continue
     }
@@ -527,7 +527,7 @@ export function mergeThreadsBySubject(threads: Map<string, Thread>): Map<string,
     }
 
     // Find threads with matching subjects
-    for (const [otherRootId, otherThread] of threads) {
+    for (const [otherRootId, otherThread] of Array.from(threads.entries())) {
       if (otherRootId === rootId || processed.has(otherRootId)) {
         continue
       }
