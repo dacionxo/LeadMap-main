@@ -39,8 +39,8 @@ export interface OIDCTokenValidationResult {
  * Following james-project OIDC patterns
  */
 export class OIDCTokenValidator {
-  private config: Required<Omit<OIDCConfig, 'configurationUrl' | 'jwksUrl' | 'issuer' | 'introspectionUrl' | 'introspectionAuth'>> &
-    Partial<Pick<OIDCConfig, 'configurationUrl' | 'jwksUrl' | 'issuer' | 'introspectionUrl' | 'introspectionAuth'>>
+  private config: Required<Omit<OIDCConfig, 'configurationUrl' | 'jwksUrl' | 'issuer' | 'introspectionUrl' | 'introspectionAuth' | 'clientSecret'>> &
+    Partial<Pick<OIDCConfig, 'configurationUrl' | 'jwksUrl' | 'issuer' | 'introspectionUrl' | 'introspectionAuth' | 'clientSecret'>>
 
   constructor(config: OIDCConfig) {
     this.config = {
