@@ -145,8 +145,8 @@ export async function refreshOAuth2Token(mailbox: Mailbox): Promise<TokenRefresh
 
   // Calculate expiration
   const expiresIn = refreshResult.expiresIn || 3600
-  const expiresAt = new Date(Date.now() + expiresIn * 1000)
-  const expires = Math.floor(expiresAt.getTime() / 1000)
+  const expiresAtDate = new Date(Date.now() + expiresIn * 1000)
+  const expires = Math.floor(expiresAtDate.getTime() / 1000)
 
   // Build OAuth2 configuration
   const oauth2Config: OAuth2Config = {
@@ -164,8 +164,8 @@ export async function refreshOAuth2Token(mailbox: Mailbox): Promise<TokenRefresh
     oauth2Config.accessUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/token'
   }
 
-  // Calculate expiration date
-  const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString()
+  // Calculate expiration date (ISO string)
+  const expiresAt = expiresAtDate.toISOString()
 
   return {
     oauth2Config,
