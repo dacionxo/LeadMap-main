@@ -145,6 +145,11 @@ export class EmailSearchEngine {
         const bValue = this.getFieldValue(b, query.sortBy!)
         const order = query.sortOrder === 'desc' ? -1 : 1
 
+        // Handle undefined values - treat as less than defined values
+        if (aValue === undefined && bValue === undefined) return 0
+        if (aValue === undefined) return 1 * order
+        if (bValue === undefined) return -1 * order
+
         if (aValue < bValue) return -1 * order
         if (aValue > bValue) return 1 * order
         return 0
