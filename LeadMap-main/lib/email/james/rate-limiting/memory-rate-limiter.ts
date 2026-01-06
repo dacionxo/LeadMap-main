@@ -218,7 +218,7 @@ export class MemoryRateLimiter implements RateLimiter {
     const now = Date.now()
     const keysToDelete: string[] = []
 
-    for (const [key, entry] of this.storage.entries()) {
+    for (const [key, entry] of Array.from(this.storage.entries())) {
       if (entry.windowEnd < now) {
         keysToDelete.push(key)
       }
