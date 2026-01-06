@@ -205,7 +205,7 @@ export class EmailArchivingManager {
     const now = new Date()
     let cleaned = 0
 
-    for (const [messageId, entry] of this.archiveEntries.entries()) {
+    for (const [messageId, entry] of Array.from(this.archiveEntries.entries())) {
       if (entry.expiresAt && entry.expiresAt < now) {
         this.archiveEntries.delete(messageId)
         cleaned++
@@ -231,7 +231,7 @@ export class EmailArchivingManager {
     const entriesByFolder: Record<string, number> = {}
     let expiredEntries = 0
 
-    for (const entry of this.archiveEntries.values()) {
+    for (const entry of Array.from(this.archiveEntries.values())) {
       totalSize += entry.metadata.size || 0
       entriesByFolder[entry.folder] = (entriesByFolder[entry.folder] || 0) + 1
 
