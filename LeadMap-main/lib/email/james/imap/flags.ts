@@ -172,7 +172,7 @@ export function formatFlags(flags: FlagSet): string {
   }
   
   // Add user flags
-  for (const userFlag of flags.userFlags) {
+  for (const userFlag of Array.from(flags.userFlags)) {
     parts.push(userFlag)
   }
   
