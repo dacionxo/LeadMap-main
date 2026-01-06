@@ -163,7 +163,7 @@ export class Cache<K = string, V = unknown> {
     this.cleanExpired()
 
     let totalAccesses = 0
-    for (const entry of this.entries.values()) {
+    for (const entry of Array.from(this.entries.values())) {
       totalAccesses += entry.accessCount
     }
 
