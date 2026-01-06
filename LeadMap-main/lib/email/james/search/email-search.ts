@@ -41,9 +41,9 @@ export interface SearchCondition {
 }
 
 /**
- * Search query
+ * Email search query
  */
-export interface SearchQuery {
+export interface EmailSearchQuery {
   conditions: SearchCondition[]
   operator?: SearchOperator // Default: AND
   limit?: number
@@ -115,10 +115,10 @@ export class EmailSearchEngine {
   /**
    * Search emails
    * 
-   * @param query - Search query
+   * @param query - Email search query
    * @returns Search results
    */
-  search(query: SearchQuery): SearchResult {
+  search(query: EmailSearchQuery): SearchResult {
     const operator = query.operator || 'AND'
     const allEntries = Array.from(this.index.values())
 
