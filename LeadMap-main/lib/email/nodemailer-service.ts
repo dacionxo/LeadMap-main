@@ -251,12 +251,23 @@ export class NodemailerService {
         globalMetricFactory.counter('email_send_success', { provider: mailbox.provider || 'unknown' }).increment()
 
         // Publish message sent event
+        // Convert Address objects to strings (nodemailer can use string | { name?: string; address: string })
+        const normalizeAddress = (addr: string | { name?: string; address: string }): string => {
+          if (typeof addr === 'string') return addr
+          return addr.address || ''
+        }
+        const toAddresses = Array.isArray(mailOptions.to)
+          ? mailOptions.to.map(normalizeAddress)
+          : mailOptions.to
+          ? [normalizeAddress(mailOptions.to)]
+          : []
+        
         const event = createMessageSentEvent({
           messageId: result.providerMessageId || `msg_${Date.now()}`,
           mailboxId: mailbox.id,
           userId: mailbox.user_id || '',
           from: senderEmail,
-          to: Array.isArray(mailOptions.to) ? mailOptions.to : mailOptions.to ? [mailOptions.to] : [],
+          to: toAddresses,
           subject: mailOptions.subject || '',
           provider: mailbox.provider || 'unknown',
           providerMessageId: result.providerMessageId,
