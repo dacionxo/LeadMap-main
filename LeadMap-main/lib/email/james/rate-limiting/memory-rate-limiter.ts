@@ -157,7 +157,7 @@ export class MemoryRateLimiter implements RateLimiter {
    */
   async reset(key: RateLimitingKey): Promise<void> {
     const keysToDelete: string[] = []
-    for (const storageKey of this.storage.keys()) {
+    for (const storageKey of Array.from(this.storage.keys())) {
       if (storageKey.startsWith(`${this.keyPrefix}:${key.type}:${key.identifier}:`)) {
         keysToDelete.push(storageKey)
       }
