@@ -22,8 +22,9 @@ export abstract class BaseEventHandler implements EventListener {
 
   /**
    * Get listener group (for distributed execution)
+   * Optional - returns undefined if not implemented
    */
-  getGroup?(): string {
+  getGroup?(): string | undefined {
     return undefined
   }
 
@@ -113,14 +114,29 @@ export class EmailLoggingHandler extends BaseEventHandler {
 
   async handle(event: Event): Promise<void> {
     const logLevel = this.getLogLevel(event.type)
-
-    globalLogger[logLevel](`Email event: ${event.type}`, {
+    const context = {
       protocol: 'EVENT',
       action: 'LOG',
       eventType: event.type,
       eventId: event.metadata.eventId,
       ...event.payload,
-    })
+    }
+
+    // Call appropriate logger method based on level
+    switch (logLevel) {
+      case 'debug':
+        globalLogger.debug(`Email event: ${event.type}`, context)
+        break
+      case 'info':
+        globalLogger.info(`Email event: ${event.type}`, context)
+        break
+      case 'warn':
+        globalLogger.warn(`Email event: ${event.type}`, context)
+        break
+      case 'error':
+        globalLogger.error(`Email event: ${event.type}`, undefined, context)
+        break
+    }
   }
 
   private getLogLevel(eventType: EventType): 'debug' | 'info' | 'warn' | 'error' {

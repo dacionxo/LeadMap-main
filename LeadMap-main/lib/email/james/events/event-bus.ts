@@ -55,7 +55,7 @@ export interface EventListener {
   /**
    * Get listener group (for distributed execution)
    */
-  getGroup?(): string
+  getGroup?(): string | undefined
 
   /**
    * Get registration key (for entity-specific listeners)
