@@ -92,6 +92,7 @@ interface EmailStats {
 
 function EmailMarketingContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'compose-email' | 'campaigns' | 'unibox' | 'templates' | 'analytics'>('campaigns')
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([])
   const [selectedMailbox, setSelectedMailbox] = useState<string | null>(null)
@@ -124,6 +125,19 @@ function EmailMarketingContent() {
     const success = searchParams.get('success')
     const error = searchParams.get('error')
     
+    // Clear URL parameters after processing to prevent re-displaying on navigation
+    const clearParams = () => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (success || error) {
+        params.delete('success')
+        params.delete('error')
+        const newUrl = params.toString() 
+          ? `${window.location.pathname}?${params.toString()}`
+          : window.location.pathname
+        router.replace(newUrl, { scroll: false })
+      }
+    }
+    
     if (success) {
       // Show success message
       if (success === 'gmail_connected') {
@@ -135,11 +149,13 @@ function EmailMarketingContent() {
       }
       // Refresh mailboxes after successful connection
       fetchMailboxes()
+      // Clear success parameter from URL
+      clearParams()
     }
     if (error) {
-      // Show error message
+      // Show error message - handle both old error codes and new descriptive messages
       const errorMessages: Record<string, string> = {
-        'missing_params': 'OAuth callback missing required parameters',
+        'missing_params': 'OAuth callback missing required parameters. Please start the OAuth flow from the application.',
         'invalid_state': 'Invalid OAuth state. Please try again.',
         'unauthorized': 'Unauthorized. Please log in again.',
         'oauth_not_configured': 'OAuth is not configured. Please contact support.',
@@ -148,8 +164,21 @@ function EmailMarketingContent() {
         'database_error': 'Failed to save mailbox. Please try again.',
         'internal_error': 'An internal error occurred. Please try again.',
       }
-      const errorMessage = errorMessages[error] || `Error: ${error}`
+      
+      // Check if error is a descriptive message (contains spaces or is longer than typical error codes)
+      // If it's a URL-encoded message, decode it first
+      let decodedError = error
+      try {
+        decodedError = decodeURIComponent(error)
+      } catch {
+        // If decoding fails, use original error
+      }
+      
+      const errorMessage = errorMessages[decodedError] || decodedError
       alert(errorMessage)
+      
+      // Clear error parameter from URL
+      clearParams()
     }
 
     fetchMailboxes()
