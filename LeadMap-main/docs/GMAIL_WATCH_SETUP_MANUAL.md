@@ -66,14 +66,29 @@ Gmail Watch requires a Google Cloud Pub/Sub topic to deliver push notifications.
 5. Set **"Acknowledgment deadline"** to 60 seconds
 6. Click **"Create"**
 
-### Step 5: Grant Pub/Sub Permissions
+### Step 5: Grant Pub/Sub Permissions (CRITICAL)
+
+**This step is required for Gmail Watch to work!**
+
+#### Option A: Topic-Level Permission (Recommended)
+
+1. Go to **Pub/Sub** → **Topics**
+2. Click on your topic (e.g., `gmail-notifications3`)
+3. Click **"Permissions"** tab (or **"SHOW INFO PANEL"** → **"Permissions"**)
+4. Click **"Add Principal"**
+5. Enter service account: `gmail-api-push@system.gserviceaccount.com`
+6. Select role: **Pub/Sub Publisher**
+7. Click **"Save"**
+
+#### Option B: Project-Level Permission
 
 1. Go to **IAM & Admin** → **IAM**
-2. Find the service account: `gmail-api-push@system.gserviceaccount.com`
-3. If it doesn't exist, create it or use the default compute service account
-4. Grant the following roles:
-   - **Pub/Sub Publisher** (for Gmail to publish notifications)
-   - **Pub/Sub Subscriber** (for your app to receive notifications)
+2. Click **"Grant Access"** (or **"ADD"**)
+3. Enter service account: `gmail-api-push@system.gserviceaccount.com`
+4. Select role: **Pub/Sub Publisher**
+5. Click **"Save"**
+
+**Note**: If you get "User not authorized" error, see [Gmail Watch Permissions Fix](GMAIL_WATCH_PERMISSIONS_FIX.md) for detailed troubleshooting.
 
 ### Step 6: Configure OAuth Consent Screen
 
