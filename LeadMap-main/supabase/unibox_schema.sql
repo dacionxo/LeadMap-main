@@ -278,10 +278,12 @@ CREATE POLICY "Users can insert email participants for their messages"
   );
 
 -- Email Attachments policies
+-- CRITICAL: Allow service_role to bypass RLS for cron jobs and webhooks
 DROP POLICY IF EXISTS "Users can view attachments for their messages" ON email_attachments;
 CREATE POLICY "Users can view attachments for their messages"
   ON email_attachments FOR SELECT
   USING (
+    auth.role() = 'service_role' OR
     EXISTS (
       SELECT 1 FROM email_messages
       WHERE email_messages.id = email_attachments.message_id
@@ -293,6 +295,7 @@ DROP POLICY IF EXISTS "Users can insert attachments for their messages" ON email
 CREATE POLICY "Users can insert attachments for their messages"
   ON email_attachments FOR INSERT
   WITH CHECK (
+    auth.role() = 'service_role' OR
     EXISTS (
       SELECT 1 FROM email_messages
       WHERE email_messages.id = email_attachments.message_id
