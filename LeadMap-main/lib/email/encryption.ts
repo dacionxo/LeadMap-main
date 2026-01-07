@@ -113,8 +113,17 @@ export function decrypt(encryptedText: string): string {
 
   // Check if text is already decrypted (plain text, not encrypted format)
   // Encrypted format: [128 hex chars salt][32 hex chars IV][32 hex chars tag][variable hex chars encrypted]
+  // Minimum encrypted length: 128 + 32 + 32 = 192 hex chars = 384 characters minimum
   if (encryptedText.length < ENCRYPTED_START) {
     // Likely plain text, return as-is (for migration period)
+    return encryptedText
+  }
+
+  // Additional check: encrypted text should be hex-only (0-9, a-f)
+  // If it contains non-hex characters, it's likely already decrypted
+  const isHexOnly = /^[0-9a-f]+$/i.test(encryptedText)
+  if (!isHexOnly) {
+    // Contains non-hex characters, likely already decrypted
     return encryptedText
   }
 
@@ -124,6 +133,12 @@ export function decrypt(encryptedText: string): string {
     const iv = Buffer.from(encryptedText.slice(IV_START, IV_END), 'hex')
     const tag = Buffer.from(encryptedText.slice(TAG_START, TAG_END), 'hex')
     const encrypted = encryptedText.slice(ENCRYPTED_START)
+
+    // Validate extracted components
+    if (salt.length !== SALT_LENGTH || iv.length !== IV_LENGTH || tag.length !== TAG_LENGTH) {
+      console.warn('Decryption: Invalid encrypted format (component length mismatch), assuming plain text')
+      return encryptedText
+    }
 
     // Derive key
     const derivedKey = deriveKey(salt)
@@ -136,17 +151,34 @@ export function decrypt(encryptedText: string): string {
     let decrypted = decipher.update(encrypted, 'hex', 'utf8')
     decrypted += decipher.final('utf8')
 
+    // Validate decrypted result (should not be empty and should be reasonable length)
+    if (!decrypted || decrypted.length === 0) {
+      console.warn('Decryption: Result is empty, returning original text')
+      return encryptedText
+    }
+
     return decrypted
   } catch (error: any) {
-    // If decryption fails, assume it's plain text (for migration period)
-    // Only log if it's not a common decryption error (to reduce noise)
-    const isCommonError = error.message?.includes('Unsupported state') || 
-                          error.message?.includes('unable to authenticate') ||
-                          error.message?.includes('bad decrypt')
+    // If decryption fails, log the error for debugging
+    // This is critical - we need to know if decryption is failing
+    const errorMessage = error.message || String(error)
+    const isCommonError = errorMessage.includes('Unsupported state') || 
+                          errorMessage.includes('unable to authenticate') ||
+                          errorMessage.includes('bad decrypt') ||
+                          errorMessage.includes('Invalid IV length') ||
+                          errorMessage.includes('Invalid tag length')
     
-    if (!isCommonError) {
-      console.warn('Decryption failed, assuming plain text:', error.message)
-    }
+    // Always log decryption failures - they indicate a serious problem
+    console.error('Decryption failed:', {
+      error: errorMessage,
+      encryptedLength: encryptedText.length,
+      isCommonError,
+      hasEncryptionKey: !!ENCRYPTION_KEY,
+      encryptionKeyLength: ENCRYPTION_KEY?.length || 0
+    })
+    
+    // Return original text (may be plain text if encryption wasn't used)
+    // BUT: This is dangerous - if it's actually encrypted, we'll pass encrypted token to API
     return encryptedText
   }
 }

@@ -26,6 +26,7 @@ import { getCronSupabaseClient, executeSelectOperation, executeUpdateOperation }
 import { syncGmailMessages } from '@/lib/email/unibox/gmail-connector'
 import { syncOutlookMessages } from '@/lib/email/unibox/outlook-connector'
 import { refreshToken } from '@/lib/email/token-refresh'
+import { decryptMailboxTokens } from '@/lib/email/encryption'
 import { dbDatetimeNullable, dbDatetimeRequired } from '@/lib/cron/zod'
 import type { GmailSyncResult } from '@/lib/email/unibox/gmail-connector'
 import type { OutlookSyncResult } from '@/lib/email/unibox/outlook-connector'
@@ -173,42 +174,86 @@ async function refreshTokenIfNeeded(
 ): Promise<string | null> {
   // Only refresh for Gmail and Outlook
   if (mailbox.provider !== 'gmail' && mailbox.provider !== 'outlook') {
+    // For non-OAuth providers, return token as-is (not encrypted)
     return mailbox.access_token || null
   }
 
-  let accessToken = mailbox.access_token || null
+  // CRITICAL FIX: Tokens are stored encrypted in database
+  // We MUST decrypt them before using, even if they don't need refresh
+  // Following the same pattern as webhook handler (which works correctly)
+  const decrypted = decryptMailboxTokens({
+    access_token: mailbox.access_token || '',
+    refresh_token: mailbox.refresh_token || '',
+    smtp_password: null
+  })
+
+  // DIAGNOSTIC: Log token decryption status
+  const encryptedAccessTokenLength = mailbox.access_token?.length || 0
+  const decryptedAccessTokenLength = decrypted.access_token?.length || 0
+  const encryptedRefreshTokenLength = mailbox.refresh_token?.length || 0
+  const decryptedRefreshTokenLength = decrypted.refresh_token?.length || 0
+  
+  // Check if decryption actually worked (decrypted should be different from encrypted if encrypted)
+  // Encrypted tokens are typically 200+ characters (salt + IV + tag + encrypted data)
+  // Decrypted tokens are typically 50-200 characters
+  const accessTokenLooksEncrypted = encryptedAccessTokenLength > 200 && decryptedAccessTokenLength === encryptedAccessTokenLength
+  const refreshTokenLooksEncrypted = encryptedRefreshTokenLength > 200 && decryptedRefreshTokenLength === encryptedRefreshTokenLength
+  
+  if (accessTokenLooksEncrypted || refreshTokenLooksEncrypted) {
+    console.error(`[Sync Mailboxes] CRITICAL: Token decryption may have failed for mailbox ${mailbox.id} (${mailbox.email})`, {
+      accessTokenEncrypted: encryptedAccessTokenLength,
+      accessTokenDecrypted: decryptedAccessTokenLength,
+      refreshTokenEncrypted: encryptedRefreshTokenLength,
+      refreshTokenDecrypted: decryptedRefreshTokenLength,
+      accessTokenLooksEncrypted,
+      refreshTokenLooksEncrypted,
+      hasEncryptionKey: !!process.env.EMAIL_ENCRYPTION_KEY || !!process.env.ENCRYPTION_KEY
+    })
+  }
+
+  let accessToken = decrypted.access_token || null
+  const decryptedRefreshToken = decrypted.refresh_token || null
+  
   const needsRefresh = !accessToken || 
-    (mailbox.token_expires_at && mailbox.refresh_token && 
+    (mailbox.token_expires_at && decryptedRefreshToken && 
      new Date(mailbox.token_expires_at) < new Date(now.getTime() + 5 * 60 * 1000))
 
   if (!needsRefresh) {
+    // Return decrypted token (not encrypted token from database)
+    // This is critical - Gmail API requires plain text tokens, not encrypted ones
+    if (!accessToken) {
+      console.warn(`[Sync Mailboxes] No decrypted access token available for mailbox ${mailbox.id} (token may be missing or decryption failed)`)
+    }
     return accessToken
   }
 
-  if (!mailbox.refresh_token) {
-    console.warn(`[Sync Mailboxes] Cannot refresh token for mailbox ${mailbox.id}: no refresh token`)
+  if (!decryptedRefreshToken) {
+    console.warn(`[Sync Mailboxes] Cannot refresh token for mailbox ${mailbox.id}: no refresh token available (may be missing or decryption failed)`)
+    // Return decrypted access token even if expired (might still work)
     return accessToken
   }
 
   const reason = !accessToken ? 'missing' : 'expiring'
-  console.log(`[Sync Mailboxes] Refreshing ${reason} ${mailbox.provider} access token for mailbox ${mailbox.id}`)
+  console.log(`[Sync Mailboxes] Refreshing ${reason} ${mailbox.provider} access token for mailbox ${mailbox.id} (${mailbox.email})`)
   
-  // Convert local Mailbox to ProviderMailbox type (filter out null values and add defaults)
+  // Convert local Mailbox to ProviderMailbox type
+  // IMPORTANT: Pass encrypted tokens from database - refreshToken() will decrypt via token persistence
+  // The refreshToken function uses createTokenPersistence() which automatically decrypts
   const providerMailbox: ProviderMailbox = {
     id: mailbox.id,
     user_id: mailbox.user_id,
     email: mailbox.email,
     provider: mailbox.provider,
     active: mailbox.active,
-    access_token: mailbox.access_token || undefined,
-    refresh_token: mailbox.refresh_token || undefined,
+    access_token: mailbox.access_token || undefined,  // Encrypted - will be decrypted by token persistence
+    refresh_token: mailbox.refresh_token || undefined,  // Encrypted - will be decrypted by token persistence
     token_expires_at: mailbox.token_expires_at || undefined,
     daily_limit: 0, // Not used by token refresh
     hourly_limit: 0, // Not used by token refresh
   }
   
   // Use unified refreshToken function which handles:
-  // - Token decryption (via token persistence)
+  // - Token decryption (via token persistence - automatically decrypts encrypted tokens)
   // - Provider-specific refresh logic
   // - Database persistence (when persistToDatabase: true)
   // - Error handling and retry logic
@@ -450,24 +495,16 @@ async function runCronJob(request: NextRequest) {
     }
 
     console.log(`[Sync Mailboxes] Found ${mailboxes.length} active mailboxes to sync`)
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/cron/sync-mailboxes/route.ts:430',message:'Sync cron job started',data:{mailboxCount:mailboxes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
 
     const now = new Date()
     const results: MailboxSyncResult[] = []
     
     // Process each mailbox
     for (const mailbox of mailboxes) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/cron/sync-mailboxes/route.ts:436',message:'Processing mailbox',data:{mailboxId:mailbox.id,email:mailbox.email,provider:mailbox.provider},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       try {
         // Refresh token if needed (unified function handles both Gmail and Outlook)
+        // CRITICAL: This function now decrypts tokens before returning them
         const accessToken = await refreshTokenIfNeeded(mailbox, supabase, now)
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/cron/sync-mailboxes/route.ts:441',message:'Token refresh result',data:{mailboxId:mailbox.id,hasAccessToken:!!accessToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
 
         if (!accessToken) {
           // Access token refresh already failed in refreshTokenIfNeeded

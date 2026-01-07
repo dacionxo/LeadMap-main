@@ -82,12 +82,62 @@ async function refreshGmailTokenInternal(
   tokenPersistence: TokenPersistence
 ): Promise<TokenRefreshResult> {
   const refreshToken = tokenPersistence.getRefreshToken()
+  const encryptedRefreshToken = mailbox.refresh_token || ''
   
   if (!refreshToken) {
+    console.error('Gmail token refresh: Missing refresh token after decryption', {
+      mailbox_id: mailbox.id,
+      mailbox_email: mailbox.email,
+      hasEncryptedToken: !!mailbox.refresh_token,
+      encryptedTokenLength: mailbox.refresh_token?.length || 0,
+      hasEncryptionKey: !!process.env.EMAIL_ENCRYPTION_KEY || !!process.env.ENCRYPTION_KEY
+    })
     return {
       success: false,
-      error: 'Missing Gmail refresh token',
+      error: 'Missing Gmail refresh token (may be encrypted incorrectly or missing from database)',
       errorCode: 'MISSING_REFRESH_TOKEN',
+      shouldRetry: false
+    }
+  }
+
+  // CRITICAL VALIDATION: Check if refresh token is still encrypted
+  // Encrypted tokens are typically 200+ hex characters
+  // Decrypted Google refresh tokens are typically 50-200 characters and contain non-hex characters
+  const isHexOnly = /^[0-9a-f]+$/i.test(refreshToken)
+  const looksEncrypted = refreshToken.length > 200 && isHexOnly && refreshToken.length === encryptedRefreshToken.length
+  
+  if (looksEncrypted) {
+    console.error('Gmail token refresh: CRITICAL - Refresh token appears to still be encrypted!', {
+      mailbox_id: mailbox.id,
+      mailbox_email: mailbox.email,
+      tokenLength: refreshToken.length,
+      encryptedLength: encryptedRefreshToken.length,
+      isHexOnly,
+      tokenPreview: refreshToken.substring(0, 50) + '...',
+      hasEncryptionKey: !!process.env.EMAIL_ENCRYPTION_KEY || !!process.env.ENCRYPTION_KEY,
+      encryptionKeySet: !!(process.env.EMAIL_ENCRYPTION_KEY || process.env.ENCRYPTION_KEY)
+    })
+    return {
+      success: false,
+      error: 'Gmail refresh token is still encrypted - decryption failed. Check EMAIL_ENCRYPTION_KEY environment variable.',
+      errorCode: 'TOKEN_STILL_ENCRYPTED',
+      shouldRetry: false
+    }
+  }
+
+  // Validate refresh token format (should be a plain string, not encrypted)
+  // A valid Google refresh token is usually 50-200 characters
+  if (refreshToken.length < 20) {
+    console.error('Gmail token refresh: Refresh token appears to be invalid (too short)', {
+      mailbox_id: mailbox.id,
+      mailbox_email: mailbox.email,
+      tokenLength: refreshToken.length,
+      tokenPreview: refreshToken.substring(0, 10) + '...'
+    })
+    return {
+      success: false,
+      error: 'Gmail refresh token appears to be invalid (too short - may be encrypted incorrectly)',
+      errorCode: 'INVALID_REFRESH_TOKEN_FORMAT',
       shouldRetry: false
     }
   }
@@ -96,6 +146,11 @@ async function refreshGmailTokenInternal(
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
   if (!clientId || !clientSecret) {
+    console.error('Gmail token refresh: OAuth credentials missing', {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+      mailbox_id: mailbox.id
+    })
     return {
       success: false,
       error: 'Gmail OAuth client not configured (GOOGLE_CLIENT_ID/SECRET missing)',
@@ -136,8 +191,26 @@ async function refreshGmailTokenInternal(
         mailbox_id: mailbox.id,
         mailbox_email: mailbox.email,
         shouldRetry,
-        needsReAuth: isInvalidGrant
+        needsReAuth: isInvalidGrant,
+        hasRefreshToken: !!tokenPersistence.getRefreshToken(),
+        refreshTokenLength: tokenPersistence.getRefreshToken()?.length || 0
       })
+      
+      // Log additional details for 400 errors (bad request)
+      if (resp.status === 400) {
+        console.error('Gmail token refresh 400 error details:', {
+          errorCode,
+          errorDescription,
+          possibleCauses: [
+            'Refresh token may be invalid/expired/revoked',
+            'OAuth client credentials (GOOGLE_CLIENT_ID/SECRET) may be incorrect',
+            'Refresh token may be encrypted and not decrypted properly',
+            'Token may have been revoked by user'
+          ],
+          mailbox_id: mailbox.id,
+          mailbox_email: mailbox.email
+        })
+      }
 
       return {
         success: false,

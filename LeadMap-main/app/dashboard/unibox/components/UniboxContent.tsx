@@ -115,8 +115,14 @@ export default function UniboxContent() {
       params.append('pageSize', '50')
 
       const response = await fetch(`/api/unibox/threads?${params.toString()}`)
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/dashboard/unibox/components/UniboxContent.tsx:117',message:'Unibox threads API call',data:{url:`/api/unibox/threads?${params.toString()}`,status:response.status,ok:response.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       if (response.ok) {
         const data = await response.json()
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/dashboard/unibox/components/UniboxContent.tsx:120',message:'Unibox threads received',data:{threadCount:data.threads?.length||0,totalPages:data.pagination?.totalPages||0,threadIds:data.threads?.map((t:any)=>t.id)||[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         setThreads(data.threads || [])
         setHasMore(data.pagination.page < data.pagination.totalPages)
         
