@@ -287,15 +287,23 @@ export async function POST(request: NextRequest) {
 
     // CRITICAL FIX: Use History API for incremental sync when historyId is available
     // Following Realtime-Gmail-Listener pattern for efficient, real-time email processing
-    // Prefer historyId from webhook notification, fallback to stored watch_history_id, then date-based query
+    // 
+    // Priority order for historyId:
+    // 1. historyId from webhook notification (most recent, from Gmail)
+    // 2. Stored watch_history_id from database (last known good historyId)
+    // 3. Fallback to date-based query if no historyId available
+    //
+    // CRITICAL: If webhook provides historyId, prefer it over stored value
+    // This ensures we process the exact change that triggered the webhook
     const syncHistoryId = historyId || mailbox.watch_history_id || undefined
     
-    // Calculate since date as fallback (last sync or 1 hour ago for webhook)
+    // Calculate since date as fallback (last sync or 24 hours ago for webhook)
+    // Using 24h window provides better catch-up if we missed notifications
     const since = mailbox.last_synced_at 
       ? new Date(mailbox.last_synced_at).toISOString()
-      : new Date(Date.now() - 60 * 60 * 1000).toISOString() // Last hour
+      : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Last 24 hours
 
-    console.log(`[Gmail Webhook] Syncing with historyId: ${syncHistoryId || 'none (using date-based query)'}, since: ${since}`)
+    console.log(`[Gmail Webhook] Processing notification for ${mailbox.email} - historyId from notification: ${historyId || 'none'}, stored historyId: ${mailbox.watch_history_id || 'none'}, using: ${syncHistoryId || 'none (date-based fallback)'}`)
 
     // Use the unified sync function (same as cron job)
     // This ensures webhook and cron use the same logic and save to the same tables
