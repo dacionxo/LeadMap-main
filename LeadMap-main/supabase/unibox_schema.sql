@@ -213,41 +213,43 @@ ALTER TABLE email_labels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE email_thread_labels ENABLE ROW LEVEL SECURITY;
 
 -- Email Threads policies
+-- CRITICAL: Allow service_role to bypass RLS for cron jobs and webhooks
 DROP POLICY IF EXISTS "Users can view their own email threads" ON email_threads;
 CREATE POLICY "Users can view their own email threads"
   ON email_threads FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 DROP POLICY IF EXISTS "Users can insert their own email threads" ON email_threads;
 CREATE POLICY "Users can insert their own email threads"
   ON email_threads FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id OR auth.role() = 'service_role');
 
 DROP POLICY IF EXISTS "Users can update their own email threads" ON email_threads;
 CREATE POLICY "Users can update their own email threads"
   ON email_threads FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 DROP POLICY IF EXISTS "Users can delete their own email threads" ON email_threads;
 CREATE POLICY "Users can delete their own email threads"
   ON email_threads FOR DELETE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 -- Email Messages policies
+-- CRITICAL: Allow service_role to bypass RLS for cron jobs and webhooks
 DROP POLICY IF EXISTS "Users can view their own email messages" ON email_messages;
 CREATE POLICY "Users can view their own email messages"
   ON email_messages FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 DROP POLICY IF EXISTS "Users can insert their own email messages" ON email_messages;
 CREATE POLICY "Users can insert their own email messages"
   ON email_messages FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id OR auth.role() = 'service_role');
 
 DROP POLICY IF EXISTS "Users can update their own email messages" ON email_messages;
 CREATE POLICY "Users can update their own email messages"
   ON email_messages FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 -- Email Participants policies
 DROP POLICY IF EXISTS "Users can view email participants for their messages" ON email_participants;

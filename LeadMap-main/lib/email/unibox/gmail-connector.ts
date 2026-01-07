@@ -658,6 +658,8 @@ export async function syncGmailMessages(
         // Debug logging removed - was causing timeouts to non-existent local server
 
         // Insert message
+        // CRITICAL: Use maybeSingle() instead of single() to avoid PGRST116 error
+        // If RLS blocks the insert, we'll get an error instead of a silent failure
         const { data: insertedMessage, error: messageError } = await supabase
           .from('email_messages')
           .insert({
@@ -678,7 +680,7 @@ export async function syncGmailMessages(
             read: false
           })
           .select()
-          .single()
+          .maybeSingle()
 
         if (messageError || !insertedMessage) {
           // Debug logging removed - was causing timeouts to non-existent local server
