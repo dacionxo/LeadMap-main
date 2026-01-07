@@ -60,9 +60,16 @@ export async function fetchGmailMessage(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
+      const errorMessage = errorData.error?.message || `Gmail API error: ${response.status}`
+      
+      // Log authentication errors specifically
+      if (response.status === 401 || errorMessage.includes('invalid authentication') || errorMessage.includes('Invalid Credentials')) {
+        console.error(`[fetchGmailMessage] Authentication error (401) for message ${messageId}:`, errorMessage)
+      }
+      
       return {
         success: false,
-        error: errorData.error?.message || `Gmail API error: ${response.status}`
+        error: errorMessage
       }
     }
 
@@ -110,9 +117,16 @@ export async function listGmailMessages(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
+      const errorMessage = errorData.error?.message || `Gmail API error: ${response.status}`
+      
+      // Log authentication errors specifically
+      if (response.status === 401 || errorMessage.includes('invalid authentication') || errorMessage.includes('Invalid Credentials')) {
+        console.error(`[listGmailMessages] Authentication error (401):`, errorMessage)
+      }
+      
       return {
         success: false,
-        error: errorData.error?.message || `Gmail API error: ${response.status}`
+        error: errorMessage
       }
     }
 
@@ -347,12 +361,33 @@ export async function syncGmailMessages(
     // #endregion
 
     if (!listResult.success || !listResult.messages) {
+      const errorMessage = listResult.error || 'Failed to list messages'
+      
+      // Check for authentication errors
+      if (errorMessage.includes('invalid authentication') || 
+          errorMessage.includes('Invalid Credentials') ||
+          errorMessage.includes('401') ||
+          errorMessage.includes('Unauthorized')) {
+        console.error(`[syncGmailMessages] Authentication error for mailbox ${mailboxId}:`, errorMessage)
+        return {
+          success: false,
+          messagesProcessed: 0,
+          threadsCreated: 0,
+          threadsUpdated: 0,
+          errors: [{ 
+            messageId: 'auth', 
+            error: `Authentication failed: ${errorMessage}. Token may be expired or invalid. Please refresh the access token.` 
+          }]
+        }
+      }
+      
+      console.error(`[syncGmailMessages] Failed to list messages for mailbox ${mailboxId}:`, errorMessage)
       return {
         success: false,
         messagesProcessed: 0,
         threadsCreated: 0,
         threadsUpdated: 0,
-        errors: [{ messageId: 'list', error: listResult.error || 'Failed to list messages' }]
+        errors: [{ messageId: 'list', error: errorMessage }]
       }
     }
 

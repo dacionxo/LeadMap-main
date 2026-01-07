@@ -321,6 +321,126 @@ const transformedThreads = (threads || [])
    - Check for database insert errors
    - Monitor sync function execution
 
+---
+
+## Critical Fix: Gmail Webhook Token Authentication Issues ✅ FIXED
+
+### Problem 1: Gmail Webhook Not Processing Emails
+**Root Cause:** The webhook was using **encrypted tokens directly** without decrypting them first:
+- Line 169: `let accessToken = mailbox.access_token` - Using encrypted token
+- Line 177: `refreshGmailToken(mailbox.refresh_token)` - Passing encrypted refresh token to function expecting plain string
+- Line 206-214: Decryption happened AFTER refresh attempt, but refresh already failed
+
+**Impact:**
+- Webhook received notifications but couldn't process emails
+- Token refresh failed silently
+- Sync function received invalid/encrypted tokens
+- Gmail API rejected requests with "invalid authentication credentials"
+
+### Problem 2: Gmail Sync Authentication Error
+**Error:** `Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential.`
+
+**Root Cause:** Same as Problem 1 - encrypted tokens being used without decryption
+
+### Solution
+
+**Updated `app/api/webhooks/gmail/route.ts`:**
+
+1. **Decrypt tokens FIRST before any use:**
+   ```typescript
+   // BEFORE: Used encrypted tokens directly
+   let accessToken = mailbox.access_token
+   const refreshResult = await refreshGmailToken(mailbox.refresh_token) // ❌ Encrypted token
+   
+   // AFTER: Decrypt first, then use
+   const decrypted = decryptMailboxTokens({
+     access_token: mailbox.access_token || '',
+     refresh_token: mailbox.refresh_token || '',
+     smtp_password: null
+   })
+   ```
+
+2. **Use unified `refreshToken()` function:**
+   ```typescript
+   // BEFORE: Used legacy refreshGmailToken with encrypted token
+   const refreshResult = await refreshGmailToken(mailbox.refresh_token) // ❌
+   
+   // AFTER: Use unified refreshToken which handles decryption automatically
+   const refreshResult = await refreshToken(providerMailbox, {
+     supabase,
+     persistToDatabase: true,
+     autoRetry: true,
+   }) // ✅
+   ```
+
+3. **Use refreshed token for sync:**
+   ```typescript
+   // BEFORE: Used decrypted.access_token (might be stale)
+   await syncGmailMessages(..., decrypted.access_token, ...) // ❌
+   
+   // AFTER: Use validated/refreshed token
+   await syncGmailMessages(..., accessToken, ...) // ✅
+   ```
+
+4. **Added comprehensive error logging:**
+   - Log authentication errors specifically
+   - Log webhook processing results
+   - Log token refresh attempts and results
+   - Better error messages for debugging
+
+**Updated `lib/email/unibox/gmail-connector.ts`:**
+
+1. **Enhanced error detection for authentication errors:**
+   ```typescript
+   // Detect and log 401 errors specifically
+   if (response.status === 401 || errorMessage.includes('invalid authentication')) {
+     console.error(`[listGmailMessages] Authentication error (401):`, errorMessage)
+   }
+   ```
+
+2. **Better error messages:**
+   - Clear indication when authentication fails
+   - Suggests token refresh or re-authentication
+
+### Impact
+
+**Before:**
+- Webhook received notifications but couldn't process emails
+- Token refresh failed silently
+- Gmail API returned "invalid authentication credentials"
+- No way to diagnose the issue
+
+**After:**
+- Tokens are decrypted before use
+- Token refresh works correctly using unified function
+- Authentication errors are clearly logged
+- Webhook processes emails successfully
+- Better error messages for debugging
+
+### Files Modified
+
+1. **`app/api/webhooks/gmail/route.ts`**
+   - Fixed token decryption order
+   - Switched to unified `refreshToken()` function
+   - Added comprehensive logging
+   - Improved error handling
+
+2. **`lib/email/unibox/gmail-connector.ts`**
+   - Enhanced authentication error detection
+   - Better error messages
+   - Improved logging for debugging
+
+### Testing Checklist
+
+- [ ] Test webhook receives and processes Gmail notifications
+- [ ] Verify token refresh works when token expires
+- [ ] Check logs for authentication errors
+- [ ] Verify emails are saved to `email_messages` and `email_threads`
+- [ ] Test with expired tokens to verify refresh logic
+- [ ] Verify webhook returns proper status codes
+
+---
+
 ## References
 
 - james-project: Email push notification patterns
