@@ -687,9 +687,7 @@ export async function syncGmailMessages(
           errors.push({ messageId: msg.id, error: `Failed to insert message: ${messageError?.message || 'Unknown error'}` })
           continue
         }
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/email/unibox/gmail-connector.ts:454',message:'Message inserted successfully',data:{messageId:msg.id,insertedId:insertedMessage.id,direction,threadId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
+        // Debug logging removed - was causing timeouts to non-existent local server
 
         // Insert participants
         const participants = [
