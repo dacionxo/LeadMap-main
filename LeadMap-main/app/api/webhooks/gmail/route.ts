@@ -133,16 +133,36 @@ export async function POST(request: NextRequest) {
     })
 
     // Find mailbox by email address
+    // Use maybeSingle() instead of single() to avoid PGRST116 error when mailbox doesn't exist
     const { data: mailbox, error: mailboxError } = await supabase
       .from('mailboxes')
       .select('*')
       .eq('email', emailAddress)
       .eq('provider', 'gmail')
-      .single()
+      .maybeSingle()
 
-    if (mailboxError || !mailbox) {
-      console.error('Mailbox not found for email:', emailAddress, mailboxError)
-      return NextResponse.json({ error: 'Mailbox not found' }, { status: 404 })
+    // Handle mailbox not found gracefully
+    // Return 200 OK to prevent webhook retries (mailbox may have been disconnected)
+    if (mailboxError) {
+      console.error('[Gmail Webhook] Database error while looking up mailbox:', emailAddress, mailboxError)
+      // Return 200 OK to acknowledge receipt and prevent retries
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Mailbox lookup failed',
+        acknowledged: true 
+      }, { status: 200 })
+    }
+
+    if (!mailbox) {
+      // Mailbox not found - likely disconnected or never connected
+      // Log for monitoring but return 200 OK to prevent webhook retries
+      console.warn(`[Gmail Webhook] Mailbox not found for email: ${emailAddress}. This may indicate the mailbox was disconnected or the Gmail Watch subscription needs to be cleaned up.`)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Mailbox not found',
+        acknowledged: true,
+        message: 'Mailbox may have been disconnected. Consider cleaning up Gmail Watch subscriptions.'
+      }, { status: 200 })
     }
 
     // Get valid access token (refresh if needed)

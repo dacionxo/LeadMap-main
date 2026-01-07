@@ -9,7 +9,7 @@ OAuth emails were not displaying in the Unibox feature. Investigation revealed m
 - **Issue**: When users connected Gmail via OAuth, Gmail Watch subscriptions were not created
 - **Impact**: No real-time push notifications, emails only synced via polling (every 5 minutes)
 - **Fix**: Added Gmail Watch setup to OAuth callback (`app/api/mailboxes/oauth/gmail/callback/route.ts`)
-- **Following**: james-project patterns for email push notifications
+- **Following**: james-project patterns for email pu sh notifications
 
 ### 2. **Webhook Using Wrong Database Tables** ✅ FIXED
 - **Issue**: Gmail webhook saved emails to `emails` table with `direction: 'received'`
@@ -21,6 +21,17 @@ OAuth emails were not displaying in the Unibox feature. Investigation revealed m
 - **Issue**: Webhook used `direction: 'received'`, sync used `direction: 'inbound'`, Unibox filtered by `direction === 'inbound'`
 - **Impact**: Webhook emails filtered out by Unibox query
 - **Fix**: Unified to use `'inbound'` and `'outbound'` consistently (following james-project patterns)
+
+### 4. **PGRST116 Error: Mailbox Not Found** ✅ FIXED
+- **Issue**: Gmail webhook used `.single()` for mailbox lookup, causing PGRST116 errors when mailbox doesn't exist (e.g., disconnected accounts)
+- **Impact**: 341+ errors logged, webhook retries causing unnecessary load, poor error handling
+- **Error**: `Mailbox not found for email: david@growyourdigitalleverage.com { code: 'PGRST116', details: 'The result contains 0 rows', hint: null, message: 'Cannot coerce the result to a single JSON object' }`
+- **Fix**: Changed `.single()` to `.maybeSingle()` in both Gmail and Outlook webhooks
+- **Result**: 
+  - No more PGRST116 errors when mailbox doesn't exist
+  - Returns 200 OK instead of 404 to prevent webhook retries (following webhook best practices)
+  - Better logging to identify disconnected mailboxes
+  - Graceful handling of missing mailboxes
 
 ## Changes Made
 
@@ -37,6 +48,14 @@ OAuth emails were not displaying in the Unibox feature. Investigation revealed m
    - Now uses same logic as sync cron job
    - Saves to `email_messages` and `email_threads` tables
    - Uses consistent `direction: 'inbound'/'outbound'` values
+   - **Fixed PGRST116 error**: Changed `.single()` to `.maybeSingle()` for mailbox lookup
+   - Returns 200 OK when mailbox not found (prevents webhook retries)
+   - Added better error logging for disconnected mailboxes
+
+3. **`app/api/webhooks/outlook/route.ts`**
+   - **Fixed PGRST116 error**: Changed `.single()` to `.maybeSingle()` for mailbox lookup
+   - Added error handling for missing mailboxes
+   - Improved logging for subscription ID mismatches
 
 ## Architecture
 
@@ -68,7 +87,7 @@ OAuth emails were not displaying in the Unibox feature. Investigation revealed m
 
 ## Testing Checklist
 
-- [ ] Connect Gmail via OAuth → Verify Watch subscription created
+- [X] Connect Gmail via OAuth → Verify Watch subscription created
 - [ ] Send test email to Gmail → Verify webhook receives notification
 - [ ] Check database → Verify email saved to `email_messages` and `email_threads`
 - [ ] Open Unibox → Verify email appears in thread list
@@ -81,12 +100,35 @@ OAuth emails were not displaying in the Unibox feature. Investigation revealed m
 - `GMAIL_PUBSUB_VERIFICATION_TOKEN`: (Optional) Token for webhook verification
 - `NEXT_PUBLIC_APP_URL`: Base URL for webhook callbacks
 
+## Additional Fixes
+
+### PGRST116 Error Resolution
+
+**Problem**: Webhooks were throwing PGRST116 errors when mailboxes didn't exist in the database (e.g., disconnected accounts, expired subscriptions).
+
+**Solution**: Following the pattern from `MAILBOX_RATE_LIMITS_406_FIX.md`:
+- Changed `.single()` to `.maybeSingle()` in webhook handlers
+- Returns 200 OK instead of 404 when mailbox not found (prevents webhook retries)
+- Added comprehensive error logging to identify disconnected accounts
+- Graceful handling prevents error spam in logs
+
+**Files Fixed**:
+- `app/api/webhooks/gmail/route.ts` - Gmail webhook handler
+- `app/api/webhooks/outlook/route.ts` - Outlook webhook handler
+
+**Benefits**:
+- No more PGRST116 errors flooding logs
+- Better webhook reliability (no unnecessary retries)
+- Easier identification of disconnected mailboxes
+- Follows webhook best practices (acknowledge receipt even on errors)
+
 ## Next Steps
 
-1. **Outlook Webhook**: Similar fix may be needed for Outlook (if using push notifications)
+1. ✅ **Outlook Webhook**: Fixed PGRST116 error (completed)
 2. **Error Handling**: Add retry logic for Watch setup failures
 3. **Monitoring**: Add metrics for webhook delivery success rate
 4. **Documentation**: Update user-facing docs about real-time email sync
+5. **Cleanup**: Consider adding a cleanup job to remove expired Gmail Watch subscriptions for disconnected mailboxes
 
 ## References
 
