@@ -83,6 +83,69 @@ If the service account doesn't exist or you get an error:
 
 ## Troubleshooting
 
+### Issue: "Domain Restricted Sharing" Organization Policy Error
+
+**Error Message:**
+```
+IAM policy update failed The 'Domain Restricted Sharing' organization policy 
+(constraints/iam.allowedPolicyMemberDomains) is enforced. Only principals in 
+allowed domains can be added as principals in the policy.
+```
+
+**Root Cause:**
+Your Google Cloud organization has a policy that restricts IAM principals to only those from allowed domains. The Gmail API service account (`gmail-api-push@system.gserviceaccount.com`) uses the `@system.gserviceaccount.com` domain, which is not in your allowed domains list.
+
+**Solution: You Don't Need to Manually Grant Permissions!**
+
+The Gmail Watch API **automatically grants** the necessary permissions when you call the watch endpoint. This bypasses organization policy restrictions.
+
+**What to Do:**
+1. **Skip manual permission granting** - The error is expected and can be ignored
+2. **Ensure your Pub/Sub topic exists** (you've already done this)
+3. **Set the environment variable** `GMAIL_PUBSUB_TOPIC_NAME` correctly
+4. **Call Gmail Watch API** - This happens automatically when you connect Gmail via OAuth
+
+When you connect Gmail via OAuth, the code calls:
+```typescript
+await setupGmailWatch({
+  mailboxId: mailbox.id,
+  accessToken: access_token,
+  webhookUrl: `${baseUrl}/api/webhooks/gmail`
+})
+```
+
+The Gmail Watch API will:
+- Automatically grant `gmail-api-push@system.gserviceaccount.com` permission to your topic
+- Bypass organization policy restrictions
+- Set up the watch subscription
+
+**If Automatic Granting Still Fails:**
+
+#### Option 1: Request Organization Policy Exception (Requires Admin Access)
+
+1. Go to **IAM & Admin** → **Organization Policies**
+2. Find policy: `Domain Restricted Sharing` (constraints/iam.allowedPolicyMemberDomains)
+3. Click **"Edit"**
+4. Add exception domain: `system.gserviceaccount.com`
+5. Click **"Save"**
+
+**Note:** This requires organization admin permissions. Contact your Google Workspace admin if you don't have access.
+
+#### Option 2: Use a Different Project (If You Have Access)
+
+Create a new GCP project without organization policy restrictions:
+1. Create new project outside the restricted organization
+2. Enable Gmail API and Pub/Sub API
+3. Create topic in new project
+4. Update `GMAIL_PUBSUB_TOPIC_NAME` environment variable
+
+#### Option 3: Contact Your Organization Admin
+
+Request that your Google Workspace admin:
+- Add `system.gserviceaccount.com` to allowed domains, OR
+- Grant you permission to modify organization policies, OR
+- Create a project without domain restrictions for Gmail Watch
+
 ### Issue: "Principal not found"
 
 **Solution:**

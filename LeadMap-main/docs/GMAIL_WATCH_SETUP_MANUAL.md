@@ -66,11 +66,21 @@ Gmail Watch requires a Google Cloud Pub/Sub topic to deliver push notifications.
 5. Set **"Acknowledgment deadline"** to 60 seconds
 6. Click **"Create"**
 
-### Step 5: Grant Pub/Sub Permissions (CRITICAL)
+### Step 5: Grant Pub/Sub Permissions (OPTIONAL - Usually Not Needed!)
 
-**This step is required for Gmail Watch to work!**
+**Important:** Gmail Watch API **automatically grants** permissions when you connect Gmail via OAuth. You typically **don't need to manually grant permissions**.
 
-#### Option A: Topic-Level Permission (Recommended)
+**Skip this step if:**
+- You get a "Domain Restricted Sharing" error (this is expected and can be ignored)
+- You're in an organization with domain restrictions
+- You want to use the automatic permission granting
+
+**Only manually grant permissions if:**
+- You get a "User not authorized" error AFTER connecting Gmail
+- Automatic permission granting fails
+- You want explicit control over permissions
+
+#### Option A: Topic-Level Permission (If Manual Granting is Needed)
 
 1. Go to **Pub/Sub** → **Topics**
 2. Click on your topic (e.g., `gmail-notifications3`)
@@ -80,7 +90,9 @@ Gmail Watch requires a Google Cloud Pub/Sub topic to deliver push notifications.
 6. Select role: **Pub/Sub Publisher**
 7. Click **"Save"**
 
-#### Option B: Project-Level Permission
+**Note:** If you get "Domain Restricted Sharing" error, this is expected - skip manual permission granting and proceed to Step 6. The Gmail Watch API will handle permissions automatically.
+
+#### Option B: Project-Level Permission (If Manual Granting is Needed)
 
 1. Go to **IAM & Admin** → **IAM**
 2. Click **"Grant Access"** (or **"ADD"**)
@@ -88,7 +100,9 @@ Gmail Watch requires a Google Cloud Pub/Sub topic to deliver push notifications.
 4. Select role: **Pub/Sub Publisher**
 5. Click **"Save"**
 
-**Note**: If you get "User not authorized" error, see [Gmail Watch Permissions Fix](GMAIL_WATCH_PERMISSIONS_FIX.md) for detailed troubleshooting.
+**Troubleshooting:**
+- **"Domain Restricted Sharing" error**: This is expected! Skip manual permission granting. See [Gmail Watch Permissions Fix](GMAIL_WATCH_PERMISSIONS_FIX.md) for details.
+- **"User not authorized" error**: See [Gmail Watch Permissions Fix](GMAIL_WATCH_PERMISSIONS_FIX.md) for detailed troubleshooting.
 
 ### Step 6: Configure OAuth Consent Screen
 
