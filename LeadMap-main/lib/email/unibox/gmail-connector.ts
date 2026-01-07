@@ -621,21 +621,38 @@ export async function syncGmailMessages(
             .maybeSingle()
 
           if (threadError || !newThread) {
+            // CRITICAL: Log detailed error information for debugging
+            const errorDetails = threadError?.details || threadError?.hint || threadError?.message || 'Unknown error'
+            const errorCode = (threadError as any)?.code || 'UNKNOWN'
+            
             console.error(`[syncGmailMessages] Failed to create thread for message ${msg.id}:`, {
               error: threadError,
+              errorCode,
+              errorDetails,
               messageId: msg.id,
               providerThreadId: message.threadId,
               mailboxId,
               userId,
               subject: parsed.subject,
-              errorDetails: threadError?.details || threadError?.hint || threadError?.message
+              possibleCauses: [
+                errorCode === '42501' ? 'RLS policy violation - check if service_role is allowed' : null,
+                errorCode === '23505' ? 'Duplicate thread (unique constraint violation)' : null,
+                errorCode === '23503' ? 'Foreign key violation - mailbox_id or user_id invalid' : null,
+                'Check SUPABASE_SERVICE_ROLE_KEY is set correctly',
+                'Verify RLS policies allow service_role access'
+              ].filter(Boolean)
             })
-            errors.push({ messageId: msg.id, error: `Failed to create thread: ${threadError?.message || 'Unknown error'}` })
+            
+            errors.push({ 
+              messageId: msg.id, 
+              error: `Failed to create thread: ${errorDetails} (code: ${errorCode})` 
+            })
             continue
           }
 
           threadId = newThread.id
           threadsCreated++
+          console.log(`[syncGmailMessages] Created thread ${threadId} for message ${msg.id}`)
         }
 
         // Determine direction (inbound if not from this mailbox)
@@ -682,21 +699,40 @@ export async function syncGmailMessages(
           .maybeSingle()
 
         if (messageError || !insertedMessage) {
-          // Debug logging removed - was causing timeouts to non-existent local server
+          // CRITICAL: Log detailed error information for debugging
+          // This includes RLS policy violations, constraint errors, etc.
+          const errorDetails = messageError?.details || messageError?.hint || messageError?.message || 'Unknown error'
+          const errorCode = (messageError as any)?.code || 'UNKNOWN'
+          
           console.error(`[syncGmailMessages] Failed to insert message ${msg.id}:`, {
             error: messageError,
+            errorCode,
+            errorDetails,
             messageId: msg.id,
             threadId,
             direction,
             mailboxId,
             userId,
             subject: parsed.subject,
-            errorDetails: messageError?.details || messageError?.hint || messageError?.message
+            possibleCauses: [
+              errorCode === '42501' ? 'RLS policy violation - check if service_role is allowed' : null,
+              errorCode === '23505' ? 'Duplicate message (unique constraint violation)' : null,
+              errorCode === '23503' ? 'Foreign key violation - thread_id or mailbox_id invalid' : null,
+              'Check SUPABASE_SERVICE_ROLE_KEY is set correctly',
+              'Verify RLS policies allow service_role access'
+            ].filter(Boolean)
           })
-          errors.push({ messageId: msg.id, error: `Failed to insert message: ${messageError?.message || 'Unknown error'}` })
+          
+          errors.push({ 
+            messageId: msg.id, 
+            error: `Failed to insert message: ${errorDetails} (code: ${errorCode})` 
+          })
           continue
         }
-        // Debug logging removed - was causing timeouts to non-existent local server
+        
+        // Successfully inserted message
+        messagesProcessed++
+        console.log(`[syncGmailMessages] Successfully inserted message ${msg.id} for mailbox ${mailboxId}`)
 
         // Insert participants
         const participants = [
