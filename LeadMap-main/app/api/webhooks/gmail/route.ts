@@ -171,11 +171,43 @@ export async function POST(request: NextRequest) {
 
     // Decrypt tokens FIRST before checking expiration or using them
     // CRITICAL: Tokens are stored encrypted, must decrypt before use
-    const decrypted = decryptMailboxTokens({
-      access_token: mailbox.access_token || '',
-      refresh_token: mailbox.refresh_token || '',
-      smtp_password: null
-    })
+    // If decryption fails, it will throw an error (prevents encrypted tokens being used as Bearer tokens)
+    let decrypted: { access_token?: string | null; refresh_token?: string | null; smtp_password?: string | null }
+    try {
+      decrypted = decryptMailboxTokens({
+        access_token: mailbox.access_token || '',
+        refresh_token: mailbox.refresh_token || '',
+        smtp_password: null
+      })
+    } catch (decryptError: any) {
+      console.error('[Gmail Webhook] CRITICAL: Failed to decrypt tokens for mailbox:', {
+        mailboxId: mailbox.id,
+        mailboxEmail: mailbox.email,
+        error: decryptError.message,
+        hasEncryptionKey: !!(process.env.EMAIL_ENCRYPTION_KEY || process.env.ENCRYPTION_KEY),
+        possibleCause: 'EMAIL_ENCRYPTION_KEY environment variable may be missing or incorrect'
+      })
+      
+      // Update mailbox with error for visibility
+      const { error: updateError } = await supabase
+        .from('mailboxes')
+        .update({
+          last_error: `Token decryption failed: ${decryptError.message}. Check EMAIL_ENCRYPTION_KEY environment variable.`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', mailbox.id)
+      
+      if (updateError) {
+        console.error('[Gmail Webhook] Failed to update mailbox error:', updateError)
+      }
+      
+      // Return 200 OK to acknowledge webhook (don't retry - this is a configuration issue)
+      return NextResponse.json({ 
+        error: 'Token decryption failed',
+        acknowledged: true,
+        details: decryptError.message
+      }, { status: 200 })
+    }
 
     if (!decrypted.access_token && !decrypted.refresh_token) {
       console.error('[Gmail Webhook] No access token or refresh token available for mailbox:', mailbox.id)

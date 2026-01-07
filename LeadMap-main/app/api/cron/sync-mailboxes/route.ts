@@ -181,11 +181,39 @@ async function refreshTokenIfNeeded(
   // CRITICAL FIX: Tokens are stored encrypted in database
   // We MUST decrypt them before using, even if they don't need refresh
   // Following the same pattern as webhook handler (which works correctly)
-  const decrypted = decryptMailboxTokens({
-    access_token: mailbox.access_token || '',
-    refresh_token: mailbox.refresh_token || '',
-    smtp_password: null
-  })
+  // If decryption fails, it will throw an error (prevents encrypted tokens being used as Bearer tokens)
+  let decrypted: { access_token?: string | null; refresh_token?: string | null; smtp_password?: string | null }
+  try {
+    decrypted = decryptMailboxTokens({
+      access_token: mailbox.access_token || '',
+      refresh_token: mailbox.refresh_token || '',
+      smtp_password: null
+    })
+  } catch (decryptError: any) {
+    console.error(`[Sync Mailboxes] CRITICAL: Failed to decrypt tokens for mailbox ${mailbox.id} (${mailbox.email}):`, {
+      error: decryptError.message,
+      hasEncryptionKey: !!(process.env.EMAIL_ENCRYPTION_KEY || process.env.ENCRYPTION_KEY),
+      possibleCause: 'EMAIL_ENCRYPTION_KEY environment variable may be missing or incorrect'
+    })
+    
+    // Update mailbox with error for visibility
+    if (supabase) {
+      const { error: updateError } = await supabase
+        .from('mailboxes')
+        .update({
+          last_error: `Token decryption failed: ${decryptError.message}. Check EMAIL_ENCRYPTION_KEY environment variable.`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', mailbox.id)
+      
+      if (updateError) {
+        console.error(`[Sync Mailboxes] Failed to update mailbox error:`, updateError)
+      }
+    }
+    
+    // Return null to signal failure - caller will mark mailbox as failed
+    return null
+  }
 
   // DIAGNOSTIC: Log token decryption status
   const encryptedAccessTokenLength = mailbox.access_token?.length || 0

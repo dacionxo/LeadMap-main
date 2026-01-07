@@ -116,6 +116,7 @@ export function decrypt(encryptedText: string): string {
   // Minimum encrypted length: 128 + 32 + 32 = 192 hex chars = 384 characters minimum
   if (encryptedText.length < ENCRYPTED_START) {
     // Likely plain text, return as-is (for migration period)
+    // This is safe - if it's shorter than the minimum encrypted length, it can't be encrypted
     return encryptedText
   }
 
@@ -124,8 +125,14 @@ export function decrypt(encryptedText: string): string {
   const isHexOnly = /^[0-9a-f]+$/i.test(encryptedText)
   if (!isHexOnly) {
     // Contains non-hex characters, likely already decrypted
+    // This is safe - encrypted tokens are always hex
     return encryptedText
   }
+
+  // CRITICAL: If we get here, the text LOOKS encrypted (hex-only, long enough)
+  // We MUST attempt decryption and fail explicitly if it doesn't work
+  // Returning the encrypted text would cause it to be used as a Bearer token (401 errors)
+  const looksEncrypted = encryptedText.length >= ENCRYPTED_START && isHexOnly
 
   try {
     // Extract components using hex string positions (2 chars per byte)
@@ -136,7 +143,22 @@ export function decrypt(encryptedText: string): string {
 
     // Validate extracted components
     if (salt.length !== SALT_LENGTH || iv.length !== IV_LENGTH || tag.length !== TAG_LENGTH) {
-      console.warn('Decryption: Invalid encrypted format (component length mismatch), assuming plain text')
+      // If it looks encrypted but components are invalid, this is an error
+      if (looksEncrypted) {
+        console.error('Decryption failed: Text looks encrypted but has invalid format (component length mismatch)', {
+          saltLength: salt.length,
+          expectedSaltLength: SALT_LENGTH,
+          ivLength: iv.length,
+          expectedIvLength: IV_LENGTH,
+          tagLength: tag.length,
+          expectedTagLength: TAG_LENGTH,
+          textLength: encryptedText.length,
+          hasEncryptionKey: !!ENCRYPTION_KEY
+        })
+        // Throw error instead of returning encrypted text
+        throw new Error(`Invalid encrypted format: component length mismatch. Salt: ${salt.length}/${SALT_LENGTH}, IV: ${iv.length}/${IV_LENGTH}, Tag: ${tag.length}/${TAG_LENGTH}`)
+      }
+      // If it doesn't look encrypted, assume plain text (safe)
       return encryptedText
     }
 
@@ -153,32 +175,55 @@ export function decrypt(encryptedText: string): string {
 
     // Validate decrypted result (should not be empty and should be reasonable length)
     if (!decrypted || decrypted.length === 0) {
-      console.warn('Decryption: Result is empty, returning original text')
+      if (looksEncrypted) {
+        console.error('Decryption failed: Result is empty after decryption', {
+          textLength: encryptedText.length,
+          hasEncryptionKey: !!ENCRYPTION_KEY
+        })
+        throw new Error('Decryption result is empty - encryption key may be incorrect')
+      }
+      // If it doesn't look encrypted, assume plain text (safe)
       return encryptedText
     }
 
     return decrypted
   } catch (error: any) {
-    // If decryption fails, log the error for debugging
-    // This is critical - we need to know if decryption is failing
+    // CRITICAL: If text looks encrypted but decryption fails, we MUST throw an error
+    // Returning encrypted text would cause it to be used as Bearer token (401 errors)
     const errorMessage = error.message || String(error)
+    
+    if (looksEncrypted) {
+      // This is encrypted text that failed to decrypt - throw error
+      console.error('CRITICAL: Decryption failed for encrypted text:', {
+        error: errorMessage,
+        encryptedLength: encryptedText.length,
+        encryptedPreview: encryptedText.substring(0, 50) + '...',
+        hasEncryptionKey: !!ENCRYPTION_KEY,
+        encryptionKeyLength: ENCRYPTION_KEY?.length || 0,
+        possibleCauses: [
+          'EMAIL_ENCRYPTION_KEY environment variable is missing or incorrect',
+          'Token was encrypted with a different key',
+          'Encryption key was changed after tokens were stored'
+        ]
+      })
+      
+      // Throw error instead of returning encrypted text
+      // This will be caught by the caller and handled appropriately
+      throw new Error(`Failed to decrypt encrypted token: ${errorMessage}. Check EMAIL_ENCRYPTION_KEY environment variable.`)
+    }
+    
+    // If it doesn't look encrypted, assume plain text (safe for migration period)
+    // Only log if it's not a common decryption error (to reduce noise)
     const isCommonError = errorMessage.includes('Unsupported state') || 
                           errorMessage.includes('unable to authenticate') ||
                           errorMessage.includes('bad decrypt') ||
                           errorMessage.includes('Invalid IV length') ||
                           errorMessage.includes('Invalid tag length')
     
-    // Always log decryption failures - they indicate a serious problem
-    console.error('Decryption failed:', {
-      error: errorMessage,
-      encryptedLength: encryptedText.length,
-      isCommonError,
-      hasEncryptionKey: !!ENCRYPTION_KEY,
-      encryptionKeyLength: ENCRYPTION_KEY?.length || 0
-    })
+    if (!isCommonError) {
+      console.warn('Decryption attempt failed for text that looks plain, assuming plain text:', errorMessage)
+    }
     
-    // Return original text (may be plain text if encryption wasn't used)
-    // BUT: This is dangerous - if it's actually encrypted, we'll pass encrypted token to API
     return encryptedText
   }
 }
@@ -218,6 +263,9 @@ export function encryptMailboxTokens(mailbox: {
 
 /**
  * Decrypt mailbox tokens
+ * 
+ * CRITICAL: This function will throw an error if decryption fails for encrypted tokens.
+ * This prevents encrypted tokens from being silently passed to APIs (causing 401 errors).
  */
 export function decryptMailboxTokens(mailbox: {
   access_token?: string | null
@@ -234,16 +282,33 @@ export function decryptMailboxTokens(mailbox: {
     smtp_password?: string | null
   } = {}
 
+  // Decrypt each token - if any fails and looks encrypted, throw error
   if (mailbox.access_token) {
-    decrypted.access_token = decrypt(mailbox.access_token)
+    try {
+      decrypted.access_token = decrypt(mailbox.access_token)
+    } catch (error: any) {
+      // Re-throw with context for access_token (critical for API calls)
+      throw new Error(`Failed to decrypt access_token: ${error.message}`)
+    }
   }
 
   if (mailbox.refresh_token) {
-    decrypted.refresh_token = decrypt(mailbox.refresh_token)
+    try {
+      decrypted.refresh_token = decrypt(mailbox.refresh_token)
+    } catch (error: any) {
+      // Re-throw with context for refresh_token (critical for token refresh)
+      throw new Error(`Failed to decrypt refresh_token: ${error.message}`)
+    }
   }
 
   if (mailbox.smtp_password) {
-    decrypted.smtp_password = decrypt(mailbox.smtp_password)
+    try {
+      decrypted.smtp_password = decrypt(mailbox.smtp_password)
+    } catch (error: any) {
+      // SMTP password errors are less critical - log but continue
+      console.error(`Failed to decrypt smtp_password: ${error.message}`)
+      // Don't throw for SMTP password - it's not used for OAuth
+    }
   }
 
   return decrypted
