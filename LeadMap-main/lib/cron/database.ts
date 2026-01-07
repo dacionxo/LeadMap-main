@@ -89,7 +89,7 @@ export async function executeDatabaseOperation<T>(
  * @param supabase - Supabase client
  * @param table - Table name
  * @param data - Update data (typed as any for Supabase compatibility)
- * @param filter - Filter function (e.g., .eq('id', id))
+ * @param filter - Filter function that receives the update builder and applies filters (e.g., (updateBuilder) => updateBuilder.eq('id', id))
  * @param context - Context for error messages
  * @returns Result with success flag and count
  */
@@ -97,7 +97,7 @@ export async function executeUpdateOperation(
   supabase: SupabaseClient,
   table: string,
   data: Record<string, unknown>,
-  filter: (query: ReturnType<typeof supabase.from>) => ReturnType<typeof supabase.from>,
+  filter: (updateBuilder: any) => any, // Update builder after .update() call
   context?: {
     operation?: string
     [key: string]: unknown
@@ -105,9 +105,14 @@ export async function executeUpdateOperation(
 ): Promise<DatabaseOperationResult<number>> {
   return executeDatabaseOperation(
     async () => {
+      // CRITICAL FIX: In Supabase, the correct flow is:
+      // 1. supabase.from(table) - returns query builder
+      // 2. .update(data) - returns filter builder (PostgrestFilterBuilder)
+      // 3. .eq('id', value) - called on filter builder
       const query = supabase.from(table)
-      const filteredQuery = filter(query as ReturnType<typeof supabase.from>)
-      const result = await (filteredQuery as any).update(data)
+      const updateBuilder = query.update(data)
+      const filteredQuery = filter(updateBuilder)
+      const result = await filteredQuery
       return {
         data: result.data,
         error: result.error,

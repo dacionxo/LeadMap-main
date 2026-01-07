@@ -388,13 +388,14 @@ async function syncGmailMailbox(
   }
 
   // Update last_synced_at timestamp
+  // CRITICAL FIX: Filter function receives the update builder (after .update() call), not the query builder
   const updateResult = await executeUpdateOperation(
     supabase,
     'mailboxes',
     {
       last_synced_at: new Date().toISOString(),
     },
-    (query) => (query as any).eq('id', mailbox.id),
+    (updateBuilder) => updateBuilder.eq('id', mailbox.id),
     {
       operation: 'update_last_synced_at',
       mailboxId: mailbox.id,
@@ -463,13 +464,14 @@ async function syncOutlookMailbox(
   }
 
   // Update last_synced_at timestamp
+  // CRITICAL FIX: Filter function receives the update builder (after .update() call), not the query builder
   const updateResult = await executeUpdateOperation(
     supabase,
     'mailboxes',
     {
       last_synced_at: new Date().toISOString(),
     },
-    (query) => (query as any).eq('id', mailbox.id),
+    (updateBuilder) => updateBuilder.eq('id', mailbox.id),
     {
       operation: 'update_last_synced_at',
       mailboxId: mailbox.id,

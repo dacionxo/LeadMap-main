@@ -32,6 +32,9 @@ const ENCRYPTED_START = TAG_END
 /**
  * Get encryption key from environment
  * Falls back to a default key for development (NOT SECURE FOR PRODUCTION)
+ * 
+ * CRITICAL: This function trims whitespace and validates the key format
+ * to prevent issues with environment variable parsing
  */
 function getEncryptionKey(): Buffer {
   if (!ENCRYPTION_KEY) {
@@ -44,13 +47,29 @@ function getEncryptionKey(): Buffer {
     return Buffer.from('default-key-32-bytes-long-for-dev-only-not-secure-for-production-use!!', 'utf8').slice(0, 32)
   }
 
-  // If key is hex string, convert to buffer
-  if (ENCRYPTION_KEY.length === 64) {
-    return Buffer.from(ENCRYPTION_KEY, 'hex')
+  // CRITICAL FIX: Trim whitespace from key (env vars may have trailing spaces)
+  const trimmedKey = ENCRYPTION_KEY.trim()
+  
+  // Validate hex key format (must be exactly 64 hex characters)
+  const isValidHexKey = /^[0-9a-fA-F]{64}$/.test(trimmedKey)
+  
+  if (isValidHexKey) {
+    // Key is hex string - convert to buffer
+    return Buffer.from(trimmedKey, 'hex')
+  }
+  
+  // If key is 64 chars but not valid hex, log warning
+  if (trimmedKey.length === 64) {
+    console.warn(
+      'WARNING: EMAIL_ENCRYPTION_KEY is 64 characters but contains non-hex characters. ' +
+      'Key should be exactly 64 hex characters (0-9, a-f, A-F). ' +
+      'This may cause decryption failures if tokens were encrypted with a hex key.'
+    )
   }
 
   // Otherwise, use key directly (pad or truncate to 32 bytes)
-  const keyBuffer = Buffer.from(ENCRYPTION_KEY, 'utf8')
+  // This allows non-hex keys for backward compatibility
+  const keyBuffer = Buffer.from(trimmedKey, 'utf8')
   if (keyBuffer.length >= 32) {
     return keyBuffer.slice(0, 32)
   }
