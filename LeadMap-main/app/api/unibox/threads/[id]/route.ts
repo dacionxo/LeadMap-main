@@ -26,6 +26,7 @@ export async function GET(
     }
 
     // Get thread with all messages and participants
+    // CRITICAL: Use maybeSingle() instead of single() to prevent PGRST116 errors
     const { data: thread, error: threadError } = await supabase
       .from('email_threads')
       .select(`
@@ -60,9 +61,27 @@ export async function GET(
       `)
       .eq('id', id)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
-    if (threadError || !thread) {
+    if (threadError) {
+      console.error(`[GET /api/unibox/threads/[id]] Database error:`, {
+        error: threadError,
+        threadId: id,
+        userId: user.id,
+        errorCode: (threadError as any)?.code,
+        errorMessage: threadError.message
+      })
+      return NextResponse.json({ 
+        error: 'Failed to fetch thread',
+        details: process.env.NODE_ENV === 'development' ? threadError.message : undefined
+      }, { status: 500 })
+    }
+
+    if (!thread) {
+      console.warn(`[GET /api/unibox/threads/[id]] Thread not found:`, {
+        threadId: id,
+        userId: user.id
+      })
       return NextResponse.json({ error: 'Thread not found' }, { status: 404 })
     }
 
@@ -72,30 +91,36 @@ export async function GET(
     let campaign = null
 
     if (thread.contact_id) {
-      const { data } = await supabase
+      const { data, error: contactError } = await supabase
         .from('contacts')
         .select('*')
         .eq('id', thread.contact_id)
-        .single()
-      contact = data
+        .maybeSingle()
+      if (!contactError) {
+        contact = data
+      }
     }
 
     if (thread.listing_id) {
-      const { data } = await supabase
+      const { data, error: listingError } = await supabase
         .from('listings')
         .select('*')
-        .eq('listing_id', thread.listing_id)
-        .single()
-      listing = data
+        .eq('id', thread.listing_id)
+        .maybeSingle()
+      if (!listingError) {
+        listing = data
+      }
     }
 
     if (thread.campaign_id) {
-      const { data } = await supabase
+      const { data, error: campaignError } = await supabase
         .from('campaigns')
         .select('*')
         .eq('id', thread.campaign_id)
-        .single()
-      campaign = data
+        .maybeSingle()
+      if (!campaignError) {
+        campaign = data
+      }
     }
 
     // Sort messages by received_at/sent_at
@@ -132,9 +157,16 @@ export async function GET(
     })
 
   } catch (error: any) {
-    console.error('Error in GET /api/unibox/threads/[id]:', error)
+    console.error('[GET /api/unibox/threads/[id]] Unhandled exception:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { 
+        error: 'Internal server error', 
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }

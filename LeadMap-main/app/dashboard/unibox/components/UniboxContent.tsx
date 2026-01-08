@@ -145,9 +145,21 @@ export default function UniboxContent() {
       if (response.ok) {
         const data = await response.json()
         setThreadDetails(data.thread)
+      } else {
+        // Log error details for debugging
+        const errorData = await response.json().catch(() => ({}))
+        console.error(`[UniboxContent] Failed to fetch thread details:`, {
+          threadId,
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData.error || 'Unknown error'
+        })
+        // Set thread details to null to show error state
+        setThreadDetails(null)
       }
     } catch (error) {
-      console.error('Error fetching thread details:', error)
+      console.error('[UniboxContent] Error fetching thread details:', error)
+      setThreadDetails(null)
     } finally {
       setLoadingThread(false)
     }
