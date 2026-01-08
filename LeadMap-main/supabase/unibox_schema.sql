@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS email_participants (
   email TEXT NOT NULL,
   name TEXT,
   
-  contact_id UUID,  -- Link to contacts table if matched
+  contact_id UUID REFERENCES contacts(id) ON DELETE SET NULL,  -- Link to contacts table if matched
   
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

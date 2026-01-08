@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { logThreadGet, logThreadUpdate } from '@/lib/email/unibox/activity-logger'
 
 export const runtime = 'nodejs'
 
@@ -12,18 +13,23 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let user: any = null // Declare outside try block for catch block access
+  let threadId: string = 'unknown' // Declare outside try block for catch block access
+  
   try {
     const { id } = await params
+    threadId = id
     const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({
       cookies: () => cookieStore,
     })
     
     // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const { data: { user: authenticatedUser }, error: authError } = await supabase.auth.getUser()
+    if (authError || !authenticatedUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    user = authenticatedUser
 
     // Get thread with all messages and participants
     // CRITICAL: Use maybeSingle() instead of single() to prevent PGRST116 errors
@@ -71,6 +77,20 @@ export async function GET(
         errorCode: (threadError as any)?.code,
         errorMessage: threadError.message
       })
+      
+      // Log error to Supabase (non-blocking)
+      logThreadGet({
+        userId: user.id,
+        request,
+        threadId: id,
+        result: {
+          success: false,
+          error: threadError.message
+        }
+      }).catch(err => {
+        console.error('[UniboxLogger] Failed to log thread get error:', err)
+      })
+      
       return NextResponse.json({ 
         error: 'Failed to fetch thread',
         details: process.env.NODE_ENV === 'development' ? threadError.message : undefined
@@ -82,6 +102,20 @@ export async function GET(
         threadId: id,
         userId: user.id
       })
+      
+      // Log not found to Supabase (non-blocking)
+      logThreadGet({
+        userId: user.id,
+        request,
+        threadId: id,
+        result: {
+          success: false,
+          error: 'Thread not found'
+        }
+      }).catch(err => {
+        console.error('[UniboxLogger] Failed to log thread not found:', err)
+      })
+      
       return NextResponse.json({ error: 'Thread not found' }, { status: 404 })
     }
 
@@ -130,14 +164,38 @@ export async function GET(
       return dateA - dateB
     })
 
+    // Log successful response (multi-user safe)
+    console.log(`[GET /api/unibox/threads/[id]] Success for user ${user.id}:`, {
+      threadId: id,
+      messageCount: messages.length,
+      status: thread.status,
+      starred: thread.starred,
+      archived: thread.archived,
+      unread: thread.unread,
+      timestamp: new Date().toISOString()
+    })
+
+    // Log to Supabase (non-blocking)
+    logThreadGet({
+      userId: user.id,
+      request,
+      threadId: id,
+      result: {
+        success: true,
+        messageCount: messages.length
+      }
+    }).catch(err => {
+      console.error('[UniboxLogger] Failed to log thread get:', err)
+    })
+
     return NextResponse.json({
       thread: {
         id: thread.id,
         subject: thread.subject,
-        status: thread.status,
+        status: thread.status, // 'open', 'needs_reply', 'waiting', 'closed', 'ignored'
         unread: thread.unread,
-        starred: thread.starred,
-        archived: thread.archived,
+        starred: thread.starred || false,
+        archived: thread.archived || false,
         mailbox: {
           id: thread.mailboxes.id,
           email: thread.mailboxes.email,
@@ -157,11 +215,31 @@ export async function GET(
     })
 
   } catch (error: any) {
-    console.error('[GET /api/unibox/threads/[id]] Unhandled exception:', {
+    const userId = user?.id || 'unknown'
+    
+    console.error(`[GET /api/unibox/threads/[id]] Unhandled exception for user ${userId}:`, {
       error: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
+      threadId,
+      timestamp: new Date().toISOString()
     })
+    
+    // Log exception to Supabase activity logs (non-blocking)
+    if (user?.id && threadId !== 'unknown') {
+      logThreadGet({
+        userId: user.id,
+        request,
+        threadId,
+        result: {
+          success: false,
+          error: error.message
+        }
+      }).catch((logError) => {
+        console.error('[UniboxLogger] Failed to log thread get exception:', logError)
+      })
+    }
+    
     return NextResponse.json(
       { 
         error: 'Internal server error', 
@@ -180,18 +258,23 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let user: any = null // Declare outside try block for catch block access
+  let threadId: string = 'unknown' // Declare outside try block for catch block access
+  
   try {
     const { id } = await params
+    threadId = id
     const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({
       cookies: () => cookieStore,
     })
     
     // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const { data: { user: authenticatedUser }, error: authError } = await supabase.auth.getUser()
+    if (authError || !authenticatedUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    user = authenticatedUser
 
     // Verify thread belongs to user
     const { data: existingThread } = await supabase
@@ -209,38 +292,169 @@ export async function PATCH(
     const body = await request.json()
     const updates: any = {}
 
+    // Validate and update status
     if (body.status !== undefined) {
-      updates.status = body.status
+      const validStatuses = ['open', 'needs_reply', 'waiting', 'closed', 'ignored']
+      if (validStatuses.includes(body.status)) {
+        updates.status = body.status
+      } else {
+        return NextResponse.json({ 
+          error: 'Invalid status value',
+          details: `Status must be one of: ${validStatuses.join(', ')}`
+        }, { status: 400 })
+      }
     }
+    
+    // Validate and update unread
     if (body.unread !== undefined) {
-      updates.unread = body.unread
+      if (typeof body.unread === 'boolean') {
+        updates.unread = body.unread
+      } else {
+        return NextResponse.json({ 
+          error: 'Invalid unread value',
+          details: 'Unread must be a boolean'
+        }, { status: 400 })
+      }
     }
+    
+    // Validate and update starred
     if (body.starred !== undefined) {
-      updates.starred = body.starred
+      if (typeof body.starred === 'boolean') {
+        updates.starred = body.starred
+      } else {
+        return NextResponse.json({ 
+          error: 'Invalid starred value',
+          details: 'Starred must be a boolean'
+        }, { status: 400 })
+      }
     }
+    
+    // Validate and update archived
     if (body.archived !== undefined) {
-      updates.archived = body.archived
+      if (typeof body.archived === 'boolean') {
+        updates.archived = body.archived
+      } else {
+        return NextResponse.json({ 
+          error: 'Invalid archived value',
+          details: 'Archived must be a boolean'
+        }, { status: 400 })
+      }
+    }
+
+    // Log update request (multi-user safe)
+    console.log(`[PATCH /api/unibox/threads/[id]] Update request from user ${user.id}:`, {
+      threadId: id,
+      updates,
+      timestamp: new Date().toISOString()
+    })
+
+    // If no updates provided, return error
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ 
+        error: 'No valid updates provided',
+        details: 'Must provide at least one of: status, unread, starred, archived'
+      }, { status: 400 })
     }
 
     // Update thread
+    // CRITICAL: Always filter by user_id to ensure multi-user isolation
+    // Even though we verified ownership above, add it again for safety
     const { data: thread, error: updateError } = await supabase
       .from('email_threads')
       .update(updates)
       .eq('id', id)
+      .eq('user_id', user.id) // Multi-user isolation
       .select()
       .single()
 
     if (updateError) {
-      console.error('Error updating thread:', updateError)
-      return NextResponse.json({ error: 'Failed to update thread' }, { status: 500 })
+      console.error(`[PATCH /api/unibox/threads/[id]] Update error for user ${user.id}:`, {
+        threadId: id,
+        updates,
+        error: updateError,
+        timestamp: new Date().toISOString()
+      })
+      
+      // Log error to Supabase (non-blocking)
+      logThreadUpdate({
+        userId: user.id,
+        request,
+        threadId: id,
+        updates,
+        result: {
+          success: false,
+          error: updateError.message
+        }
+      }).catch(err => {
+        console.error('[UniboxLogger] Failed to log update error:', err)
+      })
+      
+      return NextResponse.json({ 
+        error: 'Failed to update thread',
+        details: process.env.NODE_ENV === 'development' ? updateError.message : undefined
+      }, { status: 500 })
     }
+
+    // Log successful update (multi-user safe)
+    console.log(`[PATCH /api/unibox/threads/[id]] Success for user ${user.id}:`, {
+      threadId: id,
+      updates,
+      result: {
+        status: thread.status,
+        unread: thread.unread,
+        starred: thread.starred,
+        archived: thread.archived
+      },
+      timestamp: new Date().toISOString()
+    })
+
+    // Log to Supabase (non-blocking)
+    logThreadUpdate({
+      userId: user.id,
+      request,
+      threadId: id,
+      updates,
+      result: {
+        success: true
+      }
+    }).catch(err => {
+      console.error('[UniboxLogger] Failed to log thread update:', err)
+    })
 
     return NextResponse.json({ thread })
 
   } catch (error: any) {
-    console.error('Error in PATCH /api/unibox/threads/[id]:', error)
+    const userId = user?.id || 'unknown'
+    
+    console.error(`[PATCH /api/unibox/threads/[id]] Unhandled exception for user ${userId}:`, {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+      threadId,
+      timestamp: new Date().toISOString()
+    })
+    
+    // Log exception to Supabase activity logs (non-blocking)
+    if (user?.id && threadId !== 'unknown') {
+      logThreadUpdate({
+        userId: user.id,
+        request,
+        threadId,
+        updates: {},
+        result: {
+          success: false,
+          error: error.message
+        }
+      }).catch((logError) => {
+        console.error('[UniboxLogger] Failed to log thread update exception:', logError)
+      })
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { 
+        error: 'Internal server error', 
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }
