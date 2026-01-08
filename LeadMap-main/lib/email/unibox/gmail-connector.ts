@@ -826,6 +826,10 @@ export async function syncGmailMessages(
       updateData.watch_history_id = latestHistoryId
       console.log(`[syncGmailMessages] Updating mailbox ${mailboxId} with latest historyId: ${latestHistoryId}`)
     }
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/email/unibox/gmail-connector.ts:830',message:'syncGmailMessages exit success',data:{messagesProcessed,threadsCreated,threadsUpdated,errorCount:errors.length,latestHistoryId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     await supabase
       .from('mailboxes')
