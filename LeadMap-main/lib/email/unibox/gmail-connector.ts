@@ -501,14 +501,25 @@ export async function syncGmailMessages(
       }
     }
 
-    // Fallback to date-based query if no historyId or History API failed (historyId too old)
-    if (messagesToProcess.length === 0 && !options.historyId) {
-      console.log(`[syncGmailMessages] Using date-based query (no historyId provided)`)
+    // CRITICAL FIX: Fallback to date-based query if:
+    // 1. No historyId provided, OR
+    // 2. History API failed because historyId is too old
+    // Previous bug: Only checked !options.historyId, missing the too-old case
+    if (messagesToProcess.length === 0 && (!options.historyId || historyIdTooOld)) {
+      console.log(`[syncGmailMessages] Using date-based query - historyId: ${options.historyId ? 'too old' : 'not provided'}`)
       
       // Build query for fetching messages
-      let query = options.since 
-        ? `newer_than:${Math.floor(new Date(options.since).getTime() / 1000)}`
-        : 'in:inbox'
+      // CRITICAL FIX: Gmail query format for newer_than is Unix timestamp in seconds
+      // Format: newer_than:1234567890 (seconds since epoch)
+      let query = 'in:inbox'
+      if (options.since) {
+        // Convert ISO date to Unix timestamp in seconds
+        const sinceDate = new Date(options.since)
+        const unixSeconds = Math.floor(sinceDate.getTime() / 1000)
+        // Gmail query: newer_than:X where X is seconds since Unix epoch
+        query = `in:inbox newer_than:${unixSeconds}`
+        console.log(`[syncGmailMessages] Date-based query using newer_than: ${unixSeconds} (since: ${options.since})`)
+      }
 
       // List messages
       const listResult = await listGmailMessages(accessToken, {
