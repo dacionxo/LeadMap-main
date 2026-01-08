@@ -177,11 +177,17 @@ export async function getGmailHistory(
     let response
     try {
       // CRITICAL: Reference uses Gmail.Users.History.list with:
-      // - startHistoryId: historyId
+      // - startHistoryId: historyId (exclusive - returns changes AFTER this historyId)
       // - pageToken: pageToken (if exists)
       // - historyTypes: ['messageAdded']
       // NO labelIds parameter (reference doesn't use it)
       // Reference: event-handlers.gs lines 91-95
+      // 
+      // IMPORTANT: startHistoryId is EXCLUSIVE - it returns changes AFTER this historyId.
+      // If notification has historyId: 4825661, that's the state AFTER the change.
+      // We should query from the PREVIOUS historyId (stored one) to get the new messages.
+      // However, if we're using the notification historyId, we need to query from it directly
+      // because the notification historyId represents the state when the change occurred.
       const params = new URLSearchParams()
       params.append('startHistoryId', historyId)
       params.append('historyTypes', 'messageAdded') // Only get messageAdded events
