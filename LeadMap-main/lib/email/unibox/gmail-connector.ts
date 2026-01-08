@@ -782,6 +782,55 @@ export async function syncGmailMessages(
         console.log('[DEBUG]', logEntry8);
         // #endregion
 
+        // CRITICAL FIX: Also insert into emails table for received emails (legacy log)
+        // This ensures received emails are logged to both email_messages (Unibox) and emails (legacy log)
+        if (direction === 'inbound') {
+          // #region agent log
+          const logEntry8b = JSON.stringify({location:'lib/email/unibox/gmail-connector.ts:755',message:'Inserting into emails table',data:{messageId:msg.id,direction,fromEmail:parsed.from.email,toEmail:mailbox.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'});
+          fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:logEntry8b}).catch(()=>{});
+          console.log('[DEBUG]', logEntry8b);
+          // #endregion
+
+          const { data: emailRecord, error: emailInsertError } = await supabase
+            .from('emails')
+            .insert({
+              user_id: userId,
+              mailbox_id: mailboxId,
+              from_email: parsed.from.email,
+              from_name: parsed.from.name || null,
+              to_email: mailbox.email,
+              subject: parsed.subject,
+              html: parsed.bodyHtml || '',
+              direction: 'received',
+              status: 'sent', // Received emails are considered 'sent' by the sender
+              received_at: parsed.receivedAt || new Date().toISOString(),
+              raw_message_id: msg.id,
+              thread_id: threadId,
+              in_reply_to: parsed.inReplyTo || null,
+              is_read: false,
+              is_starred: false,
+            })
+            .select()
+            .maybeSingle()
+
+          // #region agent log
+          const logEntry8c = JSON.stringify({location:'lib/email/unibox/gmail-connector.ts:780',message:'emails table insert result',data:{messageId:msg.id,hasEmailRecord:!!emailRecord,hasError:!!emailInsertError,errorCode:(emailInsertError as any)?.code,errorMessage:emailInsertError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'});
+          fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:logEntry8c}).catch(()=>{});
+          console.log('[DEBUG]', logEntry8c);
+          // #endregion
+
+          if (emailInsertError) {
+            // Log error but don't fail the whole sync - email_messages insert succeeded
+            console.error(`[syncGmailMessages] Failed to insert into emails table for message ${msg.id}:`, {
+              error: emailInsertError,
+              errorCode: (emailInsertError as any)?.code,
+              errorMessage: emailInsertError?.message
+            })
+          } else if (emailRecord) {
+            console.log(`[syncGmailMessages] Successfully inserted into emails table for message ${msg.id}`)
+          }
+        }
+
         // Insert participants
         const participants = [
           { type: 'from', email: parsed.from.email, name: parsed.from.name },
