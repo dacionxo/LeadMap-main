@@ -25,12 +25,14 @@
     "@stripe/stripe-js": "^2.4.0",
     "@supabase/auth-helpers-nextjs": "^0.8.7",
     "@supabase/auth-helpers-react": "^0.4.2",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.86.2",
     "@tanstack/react-virtual": "^3.13.12",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.0.0",
     "csv-parse": "^5.5.2",
     "csv-parser": "^3.2.0",
+    "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "googleapis": "^144.0.0",
     "grapesjs": "^0.22.14",
@@ -51,6 +53,7 @@
     "swr": "^2.2.4",
     "tailwind-merge": "^2.0.0",
     "twilio": "^5.10.6",
+    "twitter-api-v2": "^1.28.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
