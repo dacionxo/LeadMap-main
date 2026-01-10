@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
             // Mark account as refreshed
             await supabase
               .from('social_accounts')
-              .update({ refresh_needed: false })
+              .update({ refresh_needed: false } as any)
               .eq('id', candidate.social_account_id)
 
             results.refreshed++
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
             // Mark account as needing refresh (user must re-authenticate)
             await supabase
               .from('social_accounts')
-              .update({ refresh_needed: true })
+              .update({ refresh_needed: true } as any)
               .eq('id', candidate.social_account_id)
           }
         })
