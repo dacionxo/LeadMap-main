@@ -174,9 +174,10 @@ export async function GET(request: NextRequest) {
  * Convert data to CSV format
  */
 function convertToCSV(data: any, type: string): string {
+  type CsvRow = (string | number)[]
   if (type === 'account' && data) {
     // Single account performance
-    const rows = [
+    const rows: CsvRow[] = [
       ['Metric', 'Value'],
       ['Account ID', data.accountId],
       ['Account Name', data.accountName],
@@ -189,7 +190,7 @@ function convertToCSV(data: any, type: string): string {
       ['Impressions Growth (%)', data.growth.impressions.toFixed(2)],
       ['Engagements Growth (%)', data.growth.engagements.toFixed(2)],
     ]
-    return rows.map((row) => row.join(',')).join('\n')
+    return rows.map((row: CsvRow) => row.join(',')).join('\n')
   } else if (type === 'posts' && Array.isArray(data)) {
     // Top posts
     const headers = [
@@ -204,7 +205,7 @@ function convertToCSV(data: any, type: string): string {
       'Engagement',
       'Engagement Rate (%)',
     ]
-    const rows = data.map((post) => [
+    const rows: CsvRow[] = data.map((post) => [
       post.postId,
       `"${post.content.replace(/"/g, '""')}"`, // Escape quotes for CSV
       post.publishedAt,
@@ -216,7 +217,7 @@ function convertToCSV(data: any, type: string): string {
       post.engagement,
       post.engagementRate.toFixed(2),
     ])
-    return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n')
+    return [headers.join(','), ...rows.map((row: CsvRow) => row.join(','))].join('\n')
   } else if (type === 'summary' && data.accounts) {
     // Workspace summary
     const headers = [
@@ -229,7 +230,7 @@ function convertToCSV(data: any, type: string): string {
       'Engagement Rate (%)',
       'Posts Published',
     ]
-    const rows = data.accounts.map((account: any) => [
+    const rows: CsvRow[] = data.accounts.map((account: any) => [
       account.accountId,
       `"${account.accountName}"`,
       account.providerType,
@@ -239,7 +240,7 @@ function convertToCSV(data: any, type: string): string {
       account.engagementRate.toFixed(2),
       account.postsPublished,
     ])
-    return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n')
+    return [headers.join(','), ...rows.map((row: CsvRow) => row.join(','))].join('\n')
   }
 
   // Fallback: stringify as JSON in CSV
