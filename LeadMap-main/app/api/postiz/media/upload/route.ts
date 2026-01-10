@@ -244,8 +244,8 @@ async function validateFile(file: File): Promise<{
     return { valid: false, error: 'Unsupported file type. Only images (JPEG, PNG, GIF, WebP) and videos (MP4, MOV, AVI) are allowed.' }
   }
 
-  // For images, get dimensions (basic validation)
-  if (type === 'image') {
+  // For images and GIFs, get dimensions (basic validation)
+  if (type === 'image' || type === 'gif') {
     try {
       // This would require additional processing in a real implementation
       // For now, just basic validation
@@ -266,6 +266,10 @@ async function validateFile(file: File): Promise<{
       type,
       extension,
     }
+  }
+
+  if (!type) {
+    return { valid: false, error: 'Unknown file type' }
   }
 
   return { valid: false, error: 'Unknown validation error' }
