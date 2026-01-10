@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceRoleClient } from '@/lib/supabase-singleton'
 import { ingestSocialAccountAnalytics } from '@/lib/postiz/analytics/ingestion'
+import type { SocialAccount } from '@/lib/postiz/data-model'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -41,6 +42,14 @@ export async function POST(request: NextRequest) {
 
     const supabase = getServiceRoleClient()
 
+    // Define type for query result (subset of SocialAccount fields)
+    interface SocialAccountQueryResult {
+      id: string
+      workspace_id: string
+      provider_type: SocialAccount['provider_type']
+      disabled: boolean
+    }
+
     // Get active social accounts
     let query = supabase
       .from('social_accounts')
@@ -62,28 +71,35 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const results = []
-    const errors = []
+    // Type assertion for query result
+    const typedAccounts = socialAccounts as SocialAccountQueryResult[]
 
-      // Ingest analytics for each account
-      for (const account of socialAccounts) {
-        try {
-          // Ingest analytics using provider-specific ingestor
-          const result = await ingestSocialAccountAnalytics(account.id, days)
-          results.push(result)
-        } catch (error: any) {
-          errors.push({
-            accountId: account.id,
-            providerType: account.provider_type,
-            error: error.message,
-          })
-        }
+    const results: any[] = []
+    const errors: Array<{
+      accountId: string
+      providerType: string
+      error: string
+    }> = []
+
+    // Ingest analytics for each account
+    for (const account of typedAccounts) {
+      try {
+        // Ingest analytics using provider-specific ingestor
+        const result = await ingestSocialAccountAnalytics(account.id, days)
+        results.push(result)
+      } catch (error: any) {
+        errors.push({
+          accountId: account.id,
+          providerType: account.provider_type,
+          error: error.message,
+        })
       }
+    }
 
     return NextResponse.json({
       success: errors.length === 0,
       processed: results.length,
-      errors: errors.length,
+      errorCount: errors.length,
       results,
       errors: errors.length > 0 ? errors : undefined,
     })
