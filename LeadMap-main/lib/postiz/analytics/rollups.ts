@@ -319,19 +319,20 @@ export async function getAccountPerformance(
   const prevStartDate = new Date(startDate)
   prevStartDate.setDate(prevStartDate.getDate() - days)
 
-  const { data: prevMetrics } = await supabase
+  const prevMetricsQuery = await supabase
     .from('analytics_events')
     .select('event_type, event_value')
     .eq('social_account_id', socialAccountId)
     .gte('event_timestamp', prevStartDate.toISOString())
     .lt('event_timestamp', startDate.toISOString())
 
+  const prevMetricsArray = (prevMetricsQuery.data as Array<{ event_type: string; event_value: number }> | null) || []
+
   const prevTotals = {
     impressions: 0,
     engagements: 0,
   }
-
-  for (const metric of prevMetrics || []) {
+  for (const metric of prevMetricsArray) {
     if (metric.event_type === 'impression') {
       prevTotals.impressions += metric.event_value
     }
