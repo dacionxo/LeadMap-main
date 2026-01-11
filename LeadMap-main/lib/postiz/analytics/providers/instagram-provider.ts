@@ -57,15 +57,19 @@ export class InstagramAnalyticsIngestor extends AnalyticsIngestor {
 
       // Get credentials
       const supabase = this.supabase
-      const { data: socialAccount } = await supabase
+      const socialAccountQuery = await supabase
         .from('social_accounts')
         .select('workspace_id, provider_identifier')
         .eq('id', socialAccountId)
         .single()
 
-      if (!socialAccount) {
+      const socialAccountData = socialAccountQuery.data as SocialAccountQueryResult | null
+
+      if (!socialAccountData) {
         throw new Error(`Social account ${socialAccountId} not found`)
       }
+
+      const socialAccount = socialAccountData
 
       // Get OAuth credentials
       const credentialQuery = await supabase

@@ -13,6 +13,21 @@ import type { SocialProviderIdentifier } from '../../oauth/types'
 import { createLogger, logAnalyticsOperation } from '../../observability/logging'
 
 /**
+ * Credentials query result for LinkedIn analytics provider
+ */
+interface CredentialQueryResult {
+  user_id: string
+}
+
+/**
+ * Social account query result for LinkedIn analytics provider
+ */
+interface SocialAccountQueryResult {
+  workspace_id: string
+  provider_identifier: string
+}
+
+/**
  * LinkedIn Analytics Ingestor
  * 
  * Fetches analytics from LinkedIn Analytics API:
@@ -50,15 +65,19 @@ export class LinkedInAnalyticsIngestor extends AnalyticsIngestor {
 
       // Get credentials
       const supabase = this.supabase
-      const { data: socialAccount } = await supabase
+      const socialAccountQuery = await supabase
         .from('social_accounts')
         .select('workspace_id, provider_identifier')
         .eq('id', socialAccountId)
         .single()
 
-      if (!socialAccount) {
+      const socialAccountData = socialAccountQuery.data as SocialAccountQueryResult | null
+
+      if (!socialAccountData) {
         throw new Error(`Social account ${socialAccountId} not found`)
       }
+
+      const socialAccount = socialAccountData
 
       // Get OAuth credentials
       const credentialQuery = await supabase
