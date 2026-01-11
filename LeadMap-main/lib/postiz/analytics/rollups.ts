@@ -76,7 +76,7 @@ export async function getAccountAnalytics(
   startDate.setDate(startDate.getDate() - days)
 
   // Use SQL function for efficient time-series aggregation
-  const { data: timeSeriesData, error } = await supabase.rpc(
+  const rpcResult = await (supabase.rpc as any)(
     'get_time_series_analytics',
     {
       p_social_account_id: socialAccountId,
@@ -85,6 +85,11 @@ export async function getAccountAnalytics(
       p_event_type: null,
     }
   )
+
+  const { data: timeSeriesData, error } = rpcResult as {
+    data: Array<{ event_type: string; date: string; count: number }> | null
+    error: any
+  }
 
   if (error || !timeSeriesData) {
     console.error('Error fetching analytics events:', error)
