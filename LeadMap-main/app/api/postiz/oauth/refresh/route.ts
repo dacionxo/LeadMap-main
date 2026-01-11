@@ -18,6 +18,15 @@ import { getProvider } from '@/lib/postiz/oauth/providers'
 export const runtime = 'nodejs'
 
 /**
+ * Social account query result for refresh endpoint
+ */
+interface SocialAccountQueryResult {
+  id: string
+  provider_type: string
+  workspace_id: string
+}
+
+/**
  * POST /api/postiz/oauth/refresh
  * Refresh OAuth tokens for a social account
  */
@@ -67,19 +76,24 @@ export async function POST(request: NextRequest) {
 
     // Get social account to find provider
     const serviceSupabase = getServiceRoleClient()
-    const { data: socialAccount, error: accountError } = await serviceSupabase
+    const queryResult = await serviceSupabase
       .from('social_accounts')
-      .select('id, provider, workspace_id')
+      .select('id, provider_type, workspace_id')
       .eq('id', socialAccountId)
       .eq('user_id', user.id)
       .maybeSingle()
 
-    if (accountError || !socialAccount) {
+    const { data: socialAccountData, error: accountError } = queryResult
+
+    if (accountError || !socialAccountData) {
       return NextResponse.json(
         { error: 'Social account not found' },
         { status: 404 }
       )
     }
+
+    // Type assert the query result
+    const socialAccount = socialAccountData as SocialAccountQueryResult
 
     // Get current credentials
     const credentials = await getOAuthCredentials(socialAccountId, user.id)
@@ -115,11 +129,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get provider implementation
-    const provider = getProvider(socialAccount.provider)
+    const provider = getProvider(socialAccount.provider_type)
 
     if (!provider) {
       return NextResponse.json(
-        { error: `Unsupported provider: ${socialAccount.provider}` },
+        { error: `Unsupported provider: ${socialAccount.provider_type}` },
         { status: 400 }
       )
     }
