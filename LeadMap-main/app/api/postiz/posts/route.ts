@@ -337,7 +337,7 @@ export async function POST(request: NextRequest) {
               userId: user.id,
               content: {
                 message: content,
-                media: mediaIds?.map(id => ({ type: 'image' as const, path: id })),
+                media: mediaIds?.map((id: string) => ({ type: 'image' as const, path: id })),
                 settings: settings || {},
               },
               platform: account.provider_type,
