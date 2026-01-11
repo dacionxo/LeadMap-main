@@ -13,6 +13,16 @@ import { getOAuthCredentials } from '../oauth/credentials'
 import type { SocialProviderIdentifier } from '../oauth/types'
 import { AnalyticsEventType } from '../data-model'
 
+/**
+ * Post target query result for analytics ingestion
+ */
+interface PostTargetQueryResult {
+  id: string
+  post_id: string
+  workspace_id: string
+  published_post_id: string | null
+}
+
 export interface ProviderAnalyticsMetrics {
   impressions?: number
   clicks?: number
@@ -98,13 +108,14 @@ export abstract class AnalyticsIngestor {
       for (const data of analyticsData) {
         try {
           // Find the post by external_post_id or published_post_id
-          const { data: postTargets } = await this.supabase
+          const postTargetsQuery = await this.supabase
             .from('post_targets')
             .select('id, post_id, workspace_id, published_post_id')
             .eq('social_account_id', socialAccountId)
             .or(`published_post_id.eq.${data.postId},published_post_url.ilike.%${data.postId}%`)
             .limit(1)
 
+          const postTargets = postTargetsQuery.data as PostTargetQueryResult[] | null
           const postTarget = postTargets?.[0]
           if (!postTarget) {
             // Post not found, but we still want to store analytics
