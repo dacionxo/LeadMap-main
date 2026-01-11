@@ -87,7 +87,7 @@ export async function getAccountAnalytics(
   )
 
   const { data: timeSeriesData, error } = rpcResult as {
-    data: Array<{ event_type: string; date: string; count: number }> | null
+    data: Array<{ event_type: string; date: string; total: number }> | null
     error: any
   }
 
