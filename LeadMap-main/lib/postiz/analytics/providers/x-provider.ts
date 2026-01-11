@@ -29,6 +29,25 @@ interface SocialAccountQueryResult {
 }
 
 /**
+ * Twitter API public metrics structure
+ */
+interface TwitterPublicMetrics {
+  like_count?: number
+  reply_count?: number
+  retweet_count?: number
+  quote_count?: number
+}
+
+/**
+ * Twitter API organic/non-public metrics structure
+ */
+interface TwitterEnhancedMetrics {
+  impression_count?: number
+  url_link_clicks?: number
+  reach_count?: number
+}
+
+/**
  * X/Twitter Analytics Ingestor
  * 
  * Fetches analytics from Twitter/X API v2:
@@ -138,11 +157,11 @@ export class XAnalyticsIngestor extends AnalyticsIngestor {
 
       // Process tweets and extract metrics
       for await (const tweet of tweets) {
-        const metrics = tweet.public_metrics || {}
+        const metrics = (tweet.public_metrics || {}) as TwitterPublicMetrics
         
         // For enhanced metrics (impressions, engagement), use organic_metrics or non_public_metrics if available
-        const organicMetrics = (tweet as any).organic_metrics || {}
-        const nonPublicMetrics = (tweet as any).non_public_metrics || {}
+        const organicMetrics = ((tweet as any).organic_metrics || {}) as TwitterEnhancedMetrics
+        const nonPublicMetrics = ((tweet as any).non_public_metrics || {}) as TwitterEnhancedMetrics
 
         const analytics: ProviderAnalyticsData = {
           postId: tweet.id,
