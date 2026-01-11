@@ -247,16 +247,18 @@ export async function getAccountPerformance(
   startDate.setDate(startDate.getDate() - days)
 
   // Get account info
-  const { data: account } = await supabase
+  const accountQuery = await supabase
     .from('social_accounts')
     .select('id, name, provider_type')
     .eq('id', socialAccountId)
     .single()
 
+  const account = accountQuery.data as { id: string; name: string; provider_type: string } | null
+
   if (!account) return null
 
   // Use SQL function for efficient aggregation
-  const { data: performanceSummary, error: perfError } = await supabase.rpc(
+  const rpcResult = await (supabase.rpc as any)(
     'get_account_performance_summary',
     {
       p_social_account_id: socialAccountId,
@@ -264,6 +266,24 @@ export async function getAccountPerformance(
       p_end_date: endDate.toISOString(),
     }
   )
+
+  const { data: performanceSummary, error: perfError } = rpcResult as {
+    data: Array<{
+      account_id: string
+      account_name: string
+      provider_type: string
+      total_impressions: number
+      total_clicks: number
+      total_likes: number
+      total_comments: number
+      total_shares: number
+      total_saves: number
+      total_engagement: number
+      engagement_rate: number
+      posts_published: number
+    }> | null
+    error: any
+  }
 
   if (perfError || !performanceSummary || performanceSummary.length === 0) {
     console.error('Error fetching account performance:', perfError)
@@ -273,12 +293,14 @@ export async function getAccountPerformance(
   const summary = performanceSummary[0]
 
   // Aggregate metrics from events for growth calculation
-  const { data: metrics } = await supabase
+  const metricsQuery = await supabase
     .from('analytics_events')
     .select('event_type, event_value')
     .eq('social_account_id', socialAccountId)
     .gte('event_timestamp', startDate.toISOString())
     .lte('event_timestamp', endDate.toISOString())
+
+  const metrics = (metricsQuery.data as Array<{ event_type: string; event_value: number }> | null) || []
 
   // Use aggregated totals from SQL function
   const totals = {
@@ -355,15 +377,17 @@ export async function getBestPostingTimes(
   startDate.setDate(startDate.getDate() - days)
 
   // Get posts with their published times and engagement
-  const { data: posts } = await supabase
+  const postsQuery = await supabase
     .from('post_targets')
-    .select('published_at')
+    .select('id, published_at')
     .eq('workspace_id', workspaceId)
     .eq('publish_status', 'published')
     .gte('published_at', startDate.toISOString())
     .not('published_at', 'is', null)
 
-  if (!posts) return []
+  const posts = (postsQuery.data as Array<{ id: string; published_at: string | null }> | null) || []
+
+  if (!posts || posts.length === 0) return []
 
   // Aggregate engagement by hour
   const hourlyEngagement = new Map<number, number>()
@@ -374,13 +398,14 @@ export async function getBestPostingTimes(
     const hour = new Date(post.published_at).getHours()
 
     // Get engagement for this post
-    const { data: events } = await supabase
+    const eventsQuery = await supabase
       .from('analytics_events')
       .select('event_value')
       .eq('post_target_id', post.id)
       .in('event_type', ['like', 'comment', 'share', 'engagement'])
 
-    const engagement = (events || []).reduce((sum, e) => sum + e.event_value, 0)
+    const events = (eventsQuery.data as Array<{ event_value: number }> | null) || []
+    const engagement = events.reduce((sum, e) => sum + e.event_value, 0)
     hourlyEngagement.set(hour, (hourlyEngagement.get(hour) || 0) + engagement)
   }
 
