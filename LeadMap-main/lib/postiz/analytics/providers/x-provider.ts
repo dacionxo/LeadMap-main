@@ -21,6 +21,14 @@ interface CredentialQueryResult {
 }
 
 /**
+ * Social account query result for X/Twitter analytics provider
+ */
+interface SocialAccountQueryResult {
+  workspace_id: string
+  provider_identifier: string
+}
+
+/**
  * X/Twitter Analytics Ingestor
  * 
  * Fetches analytics from Twitter/X API v2:
