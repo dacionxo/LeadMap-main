@@ -186,12 +186,32 @@ export async function getTopPosts(
   startDate.setDate(startDate.getDate() - days)
 
   // Aggregate analytics by post
-  const { data: aggregated, error } = await supabase.rpc('get_post_performance', {
-    p_workspace_id: workspaceId,
-    p_start_date: startDate.toISOString(),
-    p_end_date: endDate.toISOString(),
-    p_limit: limit,
-  })
+  const rpcResult = await (supabase.rpc as any)(
+    'get_post_performance',
+    {
+      p_workspace_id: workspaceId,
+      p_start_date: startDate.toISOString(),
+      p_end_date: endDate.toISOString(),
+      p_limit: limit,
+    }
+  )
+
+  const { data: aggregated, error } = rpcResult as {
+    data: Array<{
+      post_id: string
+      content: string
+      published_at: string
+      impressions: number
+      clicks: number
+      likes: number
+      comments: number
+      shares: number
+      saves: number
+      engagement: number
+      engagement_rate: number
+    }> | null
+    error: any
+  }
 
   if (error) {
     console.error('Error fetching top posts:', error)
