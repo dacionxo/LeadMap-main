@@ -20,6 +20,14 @@ interface CredentialQueryResult {
 }
 
 /**
+ * Social account query result for Instagram analytics provider
+ */
+interface SocialAccountQueryResult {
+  workspace_id: string
+  provider_identifier: string
+}
+
+/**
  * Instagram Analytics Ingestor
  * 
  * Fetches analytics from Instagram Graph API:
