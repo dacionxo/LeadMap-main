@@ -143,7 +143,7 @@ export class LinkedInAnalyticsIngestor extends AnalyticsIngestor {
       )
 
       if (!postsResponse.ok) {
-        logger.warn('Failed to fetch LinkedIn posts for analytics', undefined, {
+        logger.warn('Failed to fetch LinkedIn posts for analytics', {
           status: postsResponse.status,
         })
       }
