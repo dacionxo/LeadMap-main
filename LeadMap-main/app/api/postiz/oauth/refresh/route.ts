@@ -82,7 +82,8 @@ export async function POST(request: NextRequest) {
       .eq('id', socialAccountId)
       .maybeSingle()
 
-    const { data: socialAccountData, error: accountError } = queryResult
+    const socialAccountData = queryResult.data as SocialAccountQueryResult | null
+    const accountError = queryResult.error
 
     if (accountError || !socialAccountData) {
       return NextResponse.json(
@@ -108,8 +109,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Type assert the query result
-    const socialAccount = socialAccountData as SocialAccountQueryResult
+    const socialAccount = socialAccountData
 
     // Get current credentials
     const credentials = await getOAuthCredentials(socialAccountId, user.id)
@@ -161,13 +161,12 @@ export async function POST(request: NextRequest) {
       )
 
       // Update stored credentials
+      // Note: Scopes don't change on refresh, so we don't update them
       await updateOAuthCredentials(socialAccountId, user.id, {
         accessToken: refreshedAuth.accessToken,
         refreshToken: refreshedAuth.refreshToken,
         expiresIn: refreshedAuth.expiresIn,
-        scopes: refreshedAuth.additionalSettings
-          ? [] // Scopes don't change on refresh
-          : undefined,
+        // Don't pass scopes - they remain unchanged after refresh
       })
 
       return NextResponse.json({
