@@ -288,7 +288,7 @@ export class Publisher {
     }
 
     // Check media count
-    const maxMedia = {
+    const maxMedia: Record<string, number> = {
       x: 4,
       twitter: 4,
       linkedin: 20,
