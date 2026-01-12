@@ -84,7 +84,7 @@ export class Publisher {
 
       // Check if token is expired
       if (credentials.expiresAt && credentials.expiresAt < new Date()) {
-        logger.warn('OAuth token expired', undefined, {
+        logger.warn('OAuth token expired', {
           socialAccountId,
           expiresAt: credentials.expiresAt.toISOString(),
         })
