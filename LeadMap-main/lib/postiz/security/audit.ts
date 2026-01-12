@@ -82,7 +82,7 @@ export class PostizAudit {
       }
 
       // Store in activity_logs with special audit flag
-      await this.supabase.from('activity_logs').insert({
+      await (this.supabase.from('activity_logs') as any).insert({
         workspace_id: event.workspaceId || null,
         user_id: event.userId || null,
         activity_type: event.eventType as any,
@@ -285,7 +285,27 @@ export class PostizAudit {
       query = query.in('activity_type', eventTypes as any[])
     }
 
-    const { data: logs, error } = await query
+    const queryResult = await query
+
+    const logs = queryResult.data as Array<{
+      id: string
+      activity_type: string
+      activity_metadata: {
+        audit?: boolean
+        severity?: string
+        resourceType?: string
+        resourceId?: string
+        action?: string
+        outcome?: string
+        ipAddress?: string
+        userAgent?: string
+        [key: string]: any
+      } | null
+      user_id: string | null
+      workspace_id: string
+      occurred_at: string
+    }> | null
+    const error = queryResult.error
 
     if (error || !logs) {
       return []
