@@ -6,7 +6,6 @@
 
 import { getProvider } from '../oauth/providers'
 import { getOAuthCredentials } from '../oauth/credentials'
-import { AuthTokenDetails } from '../oauth/types'
 import { createLogger, logProviderCall } from '../observability/logging'
 
 export interface PublishResult {
