@@ -274,7 +274,7 @@ export class Publisher {
     const errors: string[] = []
 
     // Check message length
-    const maxLengths = {
+    const maxLengths: Record<string, number> = {
       x: 280,
       twitter: 280,
       linkedin: 3000,
