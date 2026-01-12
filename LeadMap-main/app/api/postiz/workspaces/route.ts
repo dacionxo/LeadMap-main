@@ -54,20 +54,54 @@ export async function GET(request: NextRequest) {
         // Get user email from user object or metadata (consistent with LeadMap)
         const userEmail = user.email || user.user_metadata?.email || user.user_metadata?.email_address || ''
         
+        if (!userEmail) {
+          console.error(`[GET /api/postiz/workspaces] Cannot create workspace: user ${user.id} has no email`)
+          return NextResponse.json(
+            { error: 'User email is required to create workspace', workspaces: [] },
+            { status: 400 }
+          )
+        }
+        
+        console.log(`[GET /api/postiz/workspaces] Attempting to create default workspace for user ${user.id} (${userEmail})`)
+        
         const workspaceId = await createDefaultWorkspaceForUser(
           user.id, // Same UUID from auth.users that LeadMap uses everywhere
           userEmail
         )
         
         if (workspaceId) {
-          // Refresh workspaces after creation
+          // Refresh workspaces after creation with a small delay to ensure consistency
+          await new Promise(resolve => setTimeout(resolve, 100))
           workspaces = await getUserWorkspaces(user.id)
-          console.log(`[GET /api/postiz/workspaces] Auto-created workspace ${workspaceId} for user ${user.id}`)
+          
+          if (workspaces && workspaces.length > 0) {
+            console.log(`[GET /api/postiz/workspaces] Successfully auto-created workspace ${workspaceId} for user ${user.id}`)
+          } else {
+            console.warn(`[GET /api/postiz/workspaces] Workspace ${workspaceId} created but not found in getUserWorkspaces for user ${user.id}`)
+            // Retry once more after a longer delay
+            await new Promise(resolve => setTimeout(resolve, 500))
+            workspaces = await getUserWorkspaces(user.id)
+          }
+        } else {
+          console.error(`[GET /api/postiz/workspaces] createDefaultWorkspaceForUser returned null for user ${user.id}`)
         }
       } catch (workspaceError: any) {
-        console.error('[GET /api/postiz/workspaces] Error creating default workspace:', workspaceError)
-        // Continue even if workspace creation fails - return empty array
-        // The frontend will show the workspace required message if creation fails
+        console.error('[GET /api/postiz/workspaces] Error creating default workspace:', {
+          error: workspaceError,
+          message: workspaceError?.message,
+          stack: workspaceError?.stack,
+          userId: user.id,
+          userEmail: user.email || user.user_metadata?.email || 'unknown'
+        })
+        // Return error details to help debug
+        return NextResponse.json(
+          { 
+            error: 'Failed to create default workspace',
+            details: workspaceError?.message || 'Unknown error',
+            workspaces: []
+          },
+          { status: 500 }
+        )
       }
     }
 

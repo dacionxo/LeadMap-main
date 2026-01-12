@@ -141,24 +141,135 @@ export async function getWorkspace(workspaceId: string): Promise<Workspace | nul
 
 /**
  * Create a default workspace for a new user
+ * First tries the RPC function, then falls back to manual creation if needed
  */
 export async function createDefaultWorkspaceForUser(
   userId: string,
   userEmail: string
 ): Promise<string | null> {
-  const supabase = getSupabaseAdmin()
-  
-  const { data, error } = await supabase.rpc('create_default_workspace_for_user', {
-    user_uuid: userId,
-    user_email: userEmail,
-  })
-
-  if (error) {
-    console.error('Error creating default workspace:', error)
+  if (!userId || !userEmail) {
+    console.error('[createDefaultWorkspaceForUser] Missing userId or userEmail', { userId, userEmail })
     return null
   }
 
-  return data as string
+  const supabase = getSupabaseAdmin()
+  
+  // First, try using the RPC function (preferred method)
+  try {
+    const { data, error } = await supabase.rpc('create_default_workspace_for_user', {
+      user_uuid: userId,
+      user_email: userEmail,
+    })
+
+    if (!error && data) {
+      console.log(`[createDefaultWorkspaceForUser] Successfully created workspace ${data} for user ${userId} via RPC`)
+      return data as string
+    }
+
+    // If RPC fails, log but continue to fallback
+    console.warn('[createDefaultWorkspaceForUser] RPC function failed, trying manual creation:', {
+      error: error?.message || 'Unknown error',
+      code: error?.code,
+      userId,
+      userEmail,
+    })
+  } catch (err: any) {
+    console.warn('[createDefaultWorkspaceForUser] RPC exception, trying manual creation:', {
+      error: err?.message,
+      userId,
+      userEmail,
+    })
+  }
+
+  // Fallback: Manually create workspace and add user as owner
+  try {
+    // Generate workspace name from email
+    const emailPrefix = userEmail.split('@')[0]
+    const workspaceName = `${emailPrefix}'s Workspace`
+    
+    // Generate slug
+    const slug = workspaceName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 50) // Limit length
+    
+    // Ensure slug is unique
+    let finalSlug = slug
+    let slugSuffix = 1
+    while (true) {
+      const { data: existing } = await supabase
+        .from('workspaces')
+        .select('id')
+        .eq('slug', finalSlug)
+        .is('deleted_at', null)
+        .maybeSingle()
+      
+      if (!existing) break
+      finalSlug = `${slug}-${slugSuffix}`
+      slugSuffix++
+    }
+
+    // Create workspace
+    const { data: workspace, error: workspaceError } = await supabase
+      .from('workspaces')
+      .insert({
+        name: workspaceName,
+        slug: finalSlug,
+        created_by: userId,
+        plan_tier: 'free',
+        subscription_status: 'trial',
+      })
+      .select('id')
+      .single()
+
+    if (workspaceError || !workspace) {
+      console.error('[createDefaultWorkspaceForUser] Failed to create workspace manually:', {
+        error: workspaceError,
+        userId,
+        userEmail,
+      })
+      return null
+    }
+
+    const workspaceId = workspace.id
+
+    // Add user as owner
+    const { error: memberError } = await supabase
+      .from('workspace_members')
+      .insert({
+        workspace_id: workspaceId,
+        user_id: userId,
+        role: 'owner',
+        status: 'active',
+      })
+
+    if (memberError) {
+      console.error('[createDefaultWorkspaceForUser] Failed to add user as workspace owner:', {
+        error: memberError,
+        workspaceId,
+        userId,
+      })
+      // Try to clean up the workspace we just created
+      await supabase
+        .from('workspaces')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', workspaceId)
+      return null
+    }
+
+    console.log(`[createDefaultWorkspaceForUser] Successfully created workspace ${workspaceId} for user ${userId} via fallback method`)
+    return workspaceId
+  } catch (err: any) {
+    console.error('[createDefaultWorkspaceForUser] Fallback creation failed:', {
+      error: err,
+      message: err?.message,
+      stack: err?.stack,
+      userId,
+      userEmail,
+    })
+    return null
+  }
 }
 
 /**

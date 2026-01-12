@@ -33,7 +33,7 @@ export function useWorkspace(): WorkspaceContext {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchWorkspaces = async () => {
+  const fetchWorkspaces = async (retryCount = 0): Promise<void> => {
     // Use the user from useApp context (same user ID as LeadMap)
     if (!user) {
       setWorkspaces([])
@@ -47,7 +47,13 @@ export function useWorkspace(): WorkspaceContext {
       setError(null)
 
       // Fetch workspaces using the same user ID that LeadMap uses
-      const response = await fetch('/api/postiz/workspaces')
+      const response = await fetch('/api/postiz/workspaces', {
+        cache: 'no-store', // Ensure fresh data
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
       if (!response.ok) {
         // If unauthorized, user session might have expired
         if (response.status === 401) {
@@ -56,10 +62,26 @@ export function useWorkspace(): WorkspaceContext {
           setLoading(false)
           return
         }
-        throw new Error('Failed to fetch workspaces')
+        
+        // If server error and we haven't retried, try once more
+        if (response.status >= 500 && retryCount < 1) {
+          console.warn(`[useWorkspace] Server error ${response.status}, retrying...`)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          return fetchWorkspaces(retryCount + 1)
+        }
+        
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || errorData.details || `Failed to fetch workspaces: ${response.status}`)
       }
 
-      const { workspaces: fetchedWorkspaces } = await response.json()
+      const data = await response.json()
+      const { workspaces: fetchedWorkspaces, error: apiError } = data
+      
+      if (apiError) {
+        console.error('[useWorkspace] API returned error:', apiError)
+        setError(apiError)
+      }
+      
       const workspacesList = fetchedWorkspaces || []
       setWorkspaces(workspacesList)
 
@@ -78,13 +100,28 @@ export function useWorkspace(): WorkspaceContext {
           localStorage.setItem('postiz_current_workspace_id', primaryWorkspace.workspace_id)
         }
       } else {
-        // No workspaces found - this should be handled by the API route creating one automatically
-        // But if it still fails, we'll set to null and let PostizWrapper show the error
+        // No workspaces found - API should have auto-created one
+        // If still empty after retry, show error
+        if (retryCount < 1) {
+          console.warn('[useWorkspace] No workspaces found, retrying after delay...')
+          await new Promise(resolve => setTimeout(resolve, 1500))
+          return fetchWorkspaces(retryCount + 1)
+        }
+        
+        console.error('[useWorkspace] No workspaces found after retry. User may need to create workspace manually.')
         setCurrentWorkspaceId(null)
+        setError('No workspace found. Please contact support if this persists.')
       }
     } catch (err: any) {
-      console.error('Error fetching workspaces:', err)
+      console.error('[useWorkspace] Error fetching workspaces:', err)
       setError(err.message || 'Failed to load workspaces')
+      
+      // Retry once on network errors
+      if (retryCount < 1 && (err.message?.includes('fetch') || err.message?.includes('network'))) {
+        console.warn('[useWorkspace] Network error, retrying...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return fetchWorkspaces(retryCount + 1)
+      }
     } finally {
       setLoading(false)
     }
