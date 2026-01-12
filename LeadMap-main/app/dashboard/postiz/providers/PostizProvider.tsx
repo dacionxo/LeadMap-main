@@ -13,7 +13,6 @@
 
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react'
 import { useWorkspace, type Workspace } from '@/app/hooks/useWorkspace'
-import { createBrowserClient } from '@supabase/ssr'
 
 interface PostizFeatureFlags {
   canSchedule: boolean
