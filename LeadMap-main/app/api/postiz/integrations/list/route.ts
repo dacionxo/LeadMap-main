@@ -108,7 +108,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform to match Postiz format
-    const integrations = (socialAccounts || []).map((account) => {
+    const integrations = (socialAccounts || []).map((account: {
+      id: string
+      name: string | null
+      provider_type: string
+      profile_picture_url: string | null
+      provider_identifier: string | null
+      handle: string | null
+      disabled: boolean | null
+      workspace_id: string
+      created_at: string
+      updated_at: string
+    }) => {
       // Map provider_type to Postiz identifier format
       const identifierMap: Record<string, string> = {
         x: 'x',
