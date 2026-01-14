@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import {
   getUserWorkspaces,
@@ -18,22 +18,7 @@ export const runtime = 'nodejs'
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          },
-        },
-      }
-    )
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const {
       data: { user },
@@ -41,7 +26,17 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      console.error('[GET /api/postiz/workspaces] Authentication failed:', {
+        authError: authError?.message,
+        authErrorCode: authError?.status,
+        hasUser: !!user,
+        cookieCount: cookieStore.getAll().length,
+        cookieNames: cookieStore.getAll().map(c => c.name),
+      })
+      return NextResponse.json({ 
+        error: 'Unauthorized',
+        details: authError?.message || 'No authenticated user found'
+      }, { status: 401 })
     }
 
     let workspaces = await getUserWorkspaces(user.id)
@@ -122,22 +117,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          },
-        },
-      }
-    )
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const {
       data: { user },

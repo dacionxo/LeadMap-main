@@ -47,8 +47,10 @@ export function useWorkspace(): WorkspaceContext {
       setError(null)
 
       // Fetch workspaces using the same user ID that LeadMap uses
+      // Include credentials to ensure cookies (auth tokens) are sent with the request
       const response = await fetch('/api/postiz/workspaces', {
         cache: 'no-store', // Ensure fresh data
+        credentials: 'include', // Important: Send cookies with request for authentication
         headers: {
           'Content-Type': 'application/json',
         },
