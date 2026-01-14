@@ -29,7 +29,7 @@ import {
   ArrowRight
 } from 'lucide-react'
 
-type MarketingTab = 'social-planner' | 'emails' | 'snippets' | 'countdown-timers' | 'trigger-links'
+type MarketingTab = 'emails' | 'snippets' | 'countdown-timers' | 'trigger-links'
 
 // Platform Icon Component with logo fallback
 function PlatformIcon({ logo, Icon, name, className }: { logo: string | null, Icon: any, name: string, className?: string }) {
@@ -104,7 +104,6 @@ function MarketingPageContent() {
       </div>
 
       {/* Content based on active tab */}
-      {activeTab === 'social-planner' && <SocialPlannerContent />}
       {activeTab === 'emails' && <EmailMarketing />}
       {activeTab === 'snippets' && <Snippets />}
       {activeTab === 'countdown-timers' && <CountdownTimersContent />}
