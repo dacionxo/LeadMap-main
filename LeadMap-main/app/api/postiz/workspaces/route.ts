@@ -127,9 +127,9 @@ export async function GET(request: NextRequest) {
 
     // Return response with updated cookies
     const jsonResponse = NextResponse.json({ workspaces: workspaces || [] })
-    // Copy cookies from response to jsonResponse
+    // Copy cookies from response to jsonResponse to ensure session cookies are sent back
     response.cookies.getAll().forEach(cookie => {
-      jsonResponse.cookies.set(cookie.name, cookie.value, cookie)
+      jsonResponse.cookies.set(cookie.name, cookie.value)
     })
     return jsonResponse
   } catch (error: any) {
