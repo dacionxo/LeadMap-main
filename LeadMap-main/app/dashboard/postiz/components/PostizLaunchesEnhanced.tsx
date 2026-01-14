@@ -17,6 +17,33 @@ import Image from 'next/image'
 import clsx from 'clsx'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
+// API response structure
+interface ApiPost {
+  id: string
+  content: string
+  publish_date: string | null
+  state: 'draft' | 'queued' | 'publishing' | 'published' | 'failed' | 'canceled'
+  workspace_id?: string
+  created_at: string
+  updated_at: string
+  published_at: string | null
+  post_targets?: ApiPostTarget[]
+}
+
+interface ApiPostTarget {
+  id: string
+  social_account_id: string
+  publish_status: string
+  social_accounts?: {
+    id: string
+    name: string
+    handle: string | null
+    provider_type: string
+    profile_picture_url: string | null
+  }
+}
+
+// Component-friendly structure
 interface Post {
   id: string
   content: string
@@ -56,7 +83,7 @@ export default function PostizLaunchesEnhanced() {
   }, [])
 
   const { data: postsData, isLoading: postsLoading, mutate: refreshPosts } = useSWR(
-    workspace ? `/api/postiz/posts?workspace_id=${workspace.workspace_id}&status=${filterStatus}` : null,
+    workspace ? `/api/postiz/posts?workspace_id=${workspace.workspace_id}${filterStatus !== 'all' ? `&status=${filterStatus}` : ''}` : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -65,7 +92,30 @@ export default function PostizLaunchesEnhanced() {
     }
   )
 
-  const posts: Post[] = postsData?.posts || []
+  // Map API response to component structure
+  const posts: Post[] = useMemo(() => {
+    if (!postsData?.posts) return []
+    
+    return (postsData.posts as ApiPost[]).map((apiPost): Post => ({
+      id: apiPost.id,
+      content: apiPost.content,
+      scheduled_at: apiPost.publish_date,
+      status: apiPost.state as 'draft' | 'queued' | 'publishing' | 'published' | 'failed',
+      workspace_id: apiPost.workspace_id || workspace?.workspace_id || '',
+      created_at: apiPost.created_at,
+      post_targets: apiPost.post_targets?.map((apiTarget): PostTarget => ({
+        id: apiTarget.id,
+        social_account_id: apiTarget.social_account_id,
+        publish_status: apiTarget.publish_status,
+        social_account: apiTarget.social_accounts ? {
+          id: apiTarget.social_accounts.id,
+          name: apiTarget.social_accounts.name,
+          provider_type: apiTarget.social_accounts.provider_type,
+          profile_picture_url: apiTarget.social_accounts.profile_picture_url,
+        } : undefined,
+      })),
+    }))
+  }, [postsData, workspace])
 
   // Filter posts by date
   const filteredPosts = useMemo(() => {

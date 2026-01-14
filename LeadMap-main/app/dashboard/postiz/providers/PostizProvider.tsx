@@ -3,7 +3,7 @@
  * 
  * Provides Postiz-specific context including:
  * - Workspace/organization context
- * - Feature flags based on subscription plans
+ * - Feature flags based on user's subscription plan (from users.plan_tier)
  * - Postiz UI preferences
  * 
  * Phase 5: UI Embedding - Context bridge between LeadMap and Postiz
@@ -11,8 +11,9 @@
 
 'use client'
 
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react'
+import { createContext, useContext, ReactNode, useMemo } from 'react'
 import { useWorkspace, type Workspace } from '@/app/hooks/useWorkspace'
+import { useApp } from '@/app/providers'
 
 interface PostizFeatureFlags {
   canSchedule: boolean
@@ -40,45 +41,19 @@ interface PostizProviderProps {
 
 export function PostizProvider({ children }: PostizProviderProps) {
   const { currentWorkspace, loading: workspaceLoading, refreshWorkspaces } = useWorkspace()
-  const [features, setFeatures] = useState<PostizFeatureFlags>({
-    canSchedule: true,
-    canUseEvergreen: false,
-    canUseRSS: false,
-    canUseAnalytics: true,
-    canUseAI: false,
-    maxSocialAccounts: 3,
-    maxPostsPerMonth: 50,
-  })
-  const [loading, setLoading] = useState(true)
+  const { profile } = useApp()
+  
+  // Get user's plan_tier from profile (users.plan_tier)
+  // Use the user's plan instead of workspace plan
+  const userPlanTier = useMemo(() => {
+    if (!profile?.plan_tier) return 'free'
+    return profile.plan_tier as 'free' | 'starter' | 'pro'
+  }, [profile?.plan_tier])
 
-  // Fetch workspace features based on plan tier
-  useEffect(() => {
-    const fetchFeatures = async () => {
-      if (!currentWorkspace) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        const response = await fetch(`/api/postiz/workspaces/${currentWorkspace.workspace_id}`)
-        if (!response.ok) {
-          throw new Error('Failed to fetch workspace details')
-        }
-
-        const { workspace } = await response.json()
-        
-        // Map workspace plan_tier to feature flags
-        const planFeatures = getFeaturesForPlan(workspace.plan_tier || 'free', workspace.features || {})
-        setFeatures(planFeatures)
-      } catch (error) {
-        console.error('Error fetching workspace features:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchFeatures()
-  }, [currentWorkspace])
+  // Calculate features based on user's plan_tier
+  const features = useMemo<PostizFeatureFlags>(() => {
+    return getFeaturesForPlan(userPlanTier, {})
+  }, [userPlanTier])
 
   const refreshWorkspace = async () => {
     await refreshWorkspaces()
@@ -87,7 +62,7 @@ export function PostizProvider({ children }: PostizProviderProps) {
   const value: PostizContextType = {
     workspace: currentWorkspace,
     workspaceId: currentWorkspace?.workspace_id || null,
-    loading: workspaceLoading || loading,
+    loading: workspaceLoading,
     features,
     refreshWorkspace,
   }
@@ -104,8 +79,8 @@ export function usePostiz() {
 }
 
 /**
- * Map workspace plan tier to feature flags
- * This integrates with LeadMap's subscription/plan logic
+ * Map user plan tier to feature flags
+ * Uses the user's plan_tier from the users table (LeadMap's subscription/plan logic)
  */
 function getFeaturesForPlan(
   planTier: 'free' | 'starter' | 'pro' | 'enterprise',
