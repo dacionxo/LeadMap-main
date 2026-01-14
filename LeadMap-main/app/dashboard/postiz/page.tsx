@@ -25,18 +25,7 @@ export default function PostizPage() {
     <DashboardLayout>
       <PostizProvider>
         <PostizWrapper>
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center space-y-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Loading Postiz...</p>
-                </div>
-              </div>
-            }
-          >
-            <PostizLaunches />
-          </Suspense>
+          <PostizLaunches />
         </PostizWrapper>
       </PostizProvider>
     </DashboardLayout>
