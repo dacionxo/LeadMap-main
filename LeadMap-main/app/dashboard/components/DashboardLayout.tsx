@@ -49,12 +49,14 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
         ))}
       </div>
 
-      <Suspense fallback={<div className="w-64" />}>
+      <Suspense fallback={<div className="w-[270px]" />}>
         <Sidebar />
       </Suspense>
-      <main className={`flex-1 overflow-y-auto relative z-10 bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300 ${
-        isOpen ? 'ml-64' : 'ml-16'
-      }`}>
+      <main
+        className={`flex-1 overflow-y-auto relative z-10 bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300 ${
+          isOpen ? 'ml-[270px]' : 'ml-[75px]'
+        }`}
+      >
         <Header />
         {/* Main Content */}
         <div className="relative z-10 p-6 lg:p-8">

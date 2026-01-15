@@ -131,7 +131,7 @@ export default function Sidebar() {
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col border-r border-gray-200/80 bg-white/90 dark:bg-gray-950/95 shadow-sm backdrop-blur-xl transition-[width] duration-300 ${
-        isOpen ? 'w-64' : 'w-18 md:w-16'
+        isOpen ? 'w-[270px]' : 'w-[75px]'
       }`}
     >
       {/* Brand / collapse */}
