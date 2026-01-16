@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useApp } from '@/app/providers'
-import { ChevronDown, User, CreditCard, FileText, LogOut, Search, Bell, Settings, Moon, Sun, Monitor } from 'lucide-react'
+import { Icon } from '@iconify/react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from '@/components/ThemeProvider'
+import { useSidebar } from './SidebarContext'
 
 export default function Header() {
   const { profile, signOut } = useApp()
@@ -80,180 +81,210 @@ export default function Header() {
     }
   }
 
+  const { toggle } = useSidebar()
+
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-2xl bg-gray-50/95 dark:bg-gray-900/95 border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
-      <div className="flex items-center justify-between px-6 py-3">
-        {/* Global Search Bar - Prominent */}
-        <div className="flex-1 max-w-2xl mr-8">
-          <form onSubmit={handleSearch} className="relative">
-            <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${searchFocused ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} />
-            <input
-              type="text"
-              placeholder="Search NextDeal... (prospects, deals, contacts, etc.)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              className="w-full pl-12 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 text-sm"
-            />
-            {searchQuery && (
-              <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded">
-                Enter
-              </kbd>
-            )}
-          </form>
-        </div>
+    <header className="sticky top-0 z-[2] bg-transparent dark:bg-transparent">
+      <nav className="px-2 dark:border-gray-700 rounded-none bg-transparent dark:bg-transparent py-4 sm:px-6">
+        <div className="mx-auto flex flex-wrap items-center justify-between">
+          {/* Mobile Menu Toggle */}
+          <span
+            onClick={toggle}
+            className="px-[15px] hover:text-primary dark:hover:text-primary text-link dark:text-darklink relative after:absolute after:w-10 after:h-10 after:rounded-full hover:after:bg-lightprimary after:bg-transparent rounded-full xl:hidden flex justify-center items-center cursor-pointer"
+          >
+            <Icon icon="tabler:menu-2" height={20} />
+          </span>
 
-        {/* Right Side Actions */}
-        <div className="flex items-center space-x-3">
-          {/* Trial Status */}
-          {getTrialStatus()}
-
-          {/* Notifications */}
-          <div className="relative" ref={notificationsRef}>
-            <button
-              onClick={() => {
-                setShowNotifications(!showNotifications)
-                setShowProfileMenu(false)
-              }}
-              className="relative p-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-            >
-              <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse border-2 border-white dark:border-gray-900"></span>
-            </button>
-
-            {/* Notifications Dropdown */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-gray-50 dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50 animate-scale-in max-h-96 overflow-y-auto">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                </div>
-                <div className="py-4">
-                  <div className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">No new notifications</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Profile Menu */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => {
-                setShowProfileMenu(!showProfileMenu)
-                setShowNotifications(false)
-              }}
-              className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-            >
-              <span className="text-sm font-bold text-white">
-                {profile?.name?.charAt(0).toUpperCase() || 'U'}
+          {/* Desktop Toggle and Search */}
+          <div className="xl:!block !hidden">
+            <div className="flex gap-0 items-center relative">
+              <span
+                onClick={toggle}
+                className="px-[15px] relative after:absolute after:w-10 after:h-10 after:rounded-full hover:after:bg-lightprimary after:bg-transparent text-link hover:text-primary dark:text-darklink dark:hover:text-primary rounded-full justify-center items-center cursor-pointer xl:flex hidden"
+              >
+                <Icon icon="tabler:menu-2" height={20} />
               </span>
-            </button>
 
-            {/* Profile Dropdown Menu */}
-            {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-gray-50 dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50 animate-scale-in">
-                {/* User Info */}
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold text-white">
-                        {profile?.name?.charAt(0).toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {profile?.name || 'User'}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {profile?.email || 'user@example.com'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Menu Items */}
-                <div className="py-2">
+              {/* Global Search Bar */}
+              <div className="flex-1 max-w-2xl mx-4">
+                <form onSubmit={handleSearch} className="relative">
                   <button
-                    onClick={() => {
-                      router.push('/dashboard/settings')
-                      setShowProfileMenu(false)
-                    }}
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all duration-200 group"
+                    type="button"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 px-[15px] hover:text-primary text-link dark:text-darklink dark:hover:text-primary relative after:absolute after:w-10 after:h-10 after:rounded-full hover:after:bg-lightprimary after:bg-transparent rounded-full flex justify-center items-center cursor-pointer"
                   >
-                    <User className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                    <span>Profile Settings</span>
+                    <Icon icon="solar:magnifer-line-duotone" height={20} />
                   </button>
-                  
-                  <button
-                    onClick={() => {
-                      router.push('/pricing')
-                      setShowProfileMenu(false)
-                    }}
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all duration-200 group"
-                  >
-                    <CreditCard className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                    <span>Billing & Plans</span>
-                  </button>
-
-                  {/* Theme Toggle */}
-                  <div className="px-4 py-2.5 border-t border-gray-200 dark:border-gray-700 mt-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Theme</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setTheme('light')}
-                        className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                          theme === 'light'
-                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                            : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        <Sun className="w-3.5 h-3.5" />
-                        <span>Light</span>
-                      </button>
-                      <button
-                        onClick={() => setTheme('dark')}
-                        className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                          theme === 'dark'
-                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                            : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        <Moon className="w-3.5 h-3.5" />
-                        <span>Dark</span>
-                      </button>
-                      <button
-                        onClick={() => setTheme('system')}
-                        className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                          theme === 'system'
-                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                            : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        <Monitor className="w-3.5 h-3.5" />
-                        <span>Auto</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-200 dark:border-gray-700 my-2" />
-                  
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 group"
-                  >
-                    <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
+                  <input
+                    type="text"
+                    placeholder="Search NextDeal..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
+                    className="w-full pl-12 pr-4 py-2 bg-transparent dark:bg-transparent border border-border dark:border-darkborder rounded-md text-link dark:text-darklink placeholder:text-link dark:placeholder:text-darklink focus:outline-none focus:ring-0 focus:border-primary dark:focus:border-primary transition-all duration-200 text-sm"
+                  />
+                </form>
               </div>
-            )}
+            </div>
           </div>
+
+          {/* Mobile Logo */}
+          <div className="block xl:hidden">
+            <img
+              src="/nextdeal-logo.png"
+              alt="NextDeal"
+              className="h-6 w-auto"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+              }}
+            />
+          </div>
+
+          {/* Right Side Actions */}
+          <div className="xl:!block !hidden md:!hidden">
+            <div className="flex gap-0 items-center">
+
+              {/* Trial Status */}
+              {getTrialStatus() && (
+                <div className="px-4">
+                  {getTrialStatus()}
+                </div>
+              )}
+
+              {/* Theme Toggle */}
+              {theme === "light" ? (
+                <div
+                  className="hover:text-primary px-4 dark:hover:text-primary focus:ring-0 rounded-full flex justify-center items-center cursor-pointer text-link dark:text-darklink group relative"
+                  onClick={() => setTheme('dark')}
+                >
+                  <span className="flex items-center justify-center relative after:absolute after:w-10 after:h-10 after:rounded-full after:-top-1/2 group-hover:after:bg-lightprimary">
+                    <Icon icon="tabler:moon" width="20" />
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className="hover:text-primary px-4 dark:hover:text-primary focus:ring-0 rounded-full flex justify-center items-center cursor-pointer text-link dark:text-darklink group relative"
+                  onClick={() => setTheme('light')}
+                >
+                  <span className="flex items-center justify-center relative after:absolute after:w-10 after:h-10 after:rounded-full after:-top-1/2 group-hover:after:bg-lightprimary">
+                    <Icon icon="solar:sun-bold-duotone" width="20" />
+                  </span>
+                </div>
+              )}
+
+              {/* Notifications */}
+              <div className="relative group/menu px-4" ref={notificationsRef}>
+                <button
+                  onClick={() => {
+                    setShowNotifications(!showNotifications)
+                    setShowProfileMenu(false)
+                  }}
+                  className="relative"
+                >
+                  <span className="relative after:absolute after:w-10 after:h-10 after:rounded-full hover:text-primary after:-top-1/2 hover:after:bg-lightprimary text-link dark:text-darklink rounded-full flex justify-center items-center cursor-pointer group-hover/menu:after:bg-lightprimary group-hover/menu:!text-primary">
+                    <Icon icon="tabler:bell-ringing" height={20} />
+                  </span>
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-screen sm:w-[360px] bg-white dark:bg-dark shadow-md dark:shadow-dark-md rounded-sm py-6 z-50">
+                    <div className="flex items-center px-6 justify-between">
+                      <h3 className="mb-0 text-lg font-semibold text-ld">Notification</h3>
+                    </div>
+                    <div className="px-6 py-4 max-h-80 overflow-y-auto">
+                      <p className="text-sm text-link dark:text-darklink">No new notifications</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Profile Menu */}
+              <div className="relative group/menu ps-4" ref={menuRef}>
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(!showProfileMenu)
+                    setShowNotifications(false)
+                  }}
+                  className="hover:text-primary hover:bg-lightprimary rounded-full flex justify-center items-center cursor-pointer group-hover/menu:bg-lightprimary group-hover/menu:text-primary"
+                >
+                  <div className="flex h-[35px] w-[35px] items-center justify-center rounded-full bg-primary text-xs font-bold text-white shadow-sm">
+                    {profile?.name?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                </button>
+
+                {/* Profile Dropdown Menu */}
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-screen sm:w-[360px] bg-white dark:bg-dark shadow-md dark:shadow-dark-md rounded-sm py-6 z-50">
+                    {/* User Info */}
+                    <div className="px-6">
+                      <h3 className="text-lg font-semibold text-ld">User Profile</h3>
+                      <div className="flex items-center gap-6 pb-5 border-b border-border dark:border-darkborder mt-5 mb-3">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-base font-bold text-white shadow-sm">
+                          {profile?.name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                          <h5 className="card-title text-sm mb-0.5 font-medium">
+                            {profile?.name || 'User'}
+                          </h5>
+                          <p className="card-subtitle font-normal text-muted mb-0 mt-1 flex items-center">
+                            <Icon icon="tabler:mail" className="text-base me-1 relative top-0.5" />
+                            {profile?.email || 'user@example.com'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="px-6 py-2">
+                      <button
+                        onClick={() => {
+                          router.push('/dashboard/settings')
+                          setShowProfileMenu(false)
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-link dark:text-darklink hover:text-primary bg-hover rounded-md transition-colors"
+                      >
+                        <Icon icon="solar:user-circle-linear" className="h-5 w-5" />
+                        <span>Profile Settings</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          router.push('/pricing')
+                          setShowProfileMenu(false)
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-link dark:text-darklink hover:text-primary bg-hover rounded-md transition-colors"
+                      >
+                        <Icon icon="solar:card-linear" className="h-5 w-5" />
+                        <span>Billing & Plans</span>
+                      </button>
+
+                      <div className="border-t border-border dark:border-darkborder my-2" />
+                      
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-error hover:bg-error/10 rounded-md transition-colors"
+                      >
+                        <Icon icon="tabler:power" className="h-5 w-5" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Toggle Icon */}
+          <span
+            className="h-10 w-10 flex xl:hidden hover:text-primary hover:bg-lightprimary rounded-full justify-center items-center cursor-pointer"
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+          >
+            <Icon icon="tabler:dots" height={21} />
+          </span>
         </div>
-      </div>
+      </nav>
     </header>
   )
 }
