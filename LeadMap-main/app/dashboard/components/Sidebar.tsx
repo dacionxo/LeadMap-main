@@ -120,7 +120,7 @@ export default function Sidebar() {
       style={{ transitionDuration: '.2s' }}
     >
       {/* Brand / collapse */}
-      <div className="flex min-h-[70px] items-center border-b border-[#e5e5e5] px-6 dark:border-[#333f55] brand-logo overflow-hidden">
+      <div className={`flex min-h-[70px] items-center border-b border-[#e5e5e5] dark:border-[#333f55] brand-logo overflow-hidden ${isOpen ? 'px-6' : 'px-5 xl:group-hover:px-6'}`}>
         {isOpen ? (
           <div className="flex w-full items-center justify-between gap-2">
             <button
@@ -163,7 +163,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <SimpleBar className="h-[calc(100vh_-_180px)]">
-        <nav className="sidebar-nav flex-1 px-4 py-4">
+        <nav className={`sidebar-nav flex-1 py-4 ${isOpen ? 'px-6' : 'px-4 xl:group-hover:px-6'}`}>
           {navSections.map((section, sectionIdx) => (
             <div key={sectionIdx} className="mb-3">
               {section.title && (
