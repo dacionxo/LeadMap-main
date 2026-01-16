@@ -13,10 +13,10 @@ const AppLinks = () => {
   return (
     <div className="relative group">
       {/* Desktop trigger */}
-      <p className="rounded-full text-link dark:text-darklink px-[15px] relative after:rounded-md after:absolute after:w-full after:h-9 hover:after:bg-lightprimary pb-0.5 justify-center items-center cursor-pointer group-hover:text-primary group-hover:after:bg-lightprimary xl:flex hidden">
-        <span className="text-sm">Apps</span>
-        <Icon icon="tabler:chevron-down" height={15} className="shrink-0" />
-      </p>
+      <button className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center cursor-pointer xl:flex hidden">
+        <span>Apps</span>
+        <Icon icon="tabler:chevron-down" height={15} className="shrink-0 ml-1" />
+      </button>
 
       {/* Mobile Trigger */}
       <span className="xl:hidden text-link dark:text-darklink flex rounded-full px-[15px] pb-0.5 justify-center items-center cursor-pointer group-hover:text-primary">
