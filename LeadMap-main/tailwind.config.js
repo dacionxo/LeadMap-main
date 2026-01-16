@@ -140,6 +140,7 @@ module.exports = {
         },
         darklink: '#7c8fac',
         lightprimary: 'rgba(17, 121, 252, 0.12)', // 12% opacity of primary color
+        lightsecondary: 'rgba(3, 102, 227, 0.12)', // 12% opacity of secondary color
         ld: '#e5e5e5', // border color used in Tailwindadmin
         dark: '#1c2536', // dark background color
       }

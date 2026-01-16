@@ -1,32 +1,13 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import {
-  LayoutDashboard,
-  Users,
-  Zap,
-  Clock,
-  FileText,
-  MapPin,
-  Mail,
-  Building2,
-  Briefcase,
-  ChevronLeft,
-  ChevronRight,
-  UserCircle,
-  Calendar,
-  BarChart3,
-  CheckCircle2,
-  Megaphone,
-  MessageCircle,
-  Share2
-} from 'lucide-react'
+import { Icon } from '@iconify/react'
 import { useApp } from '@/app/providers'
 import { useSidebar } from './SidebarContext'
 
 interface NavItem {
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: string
   href: string
   badge?: string
 }
@@ -39,48 +20,48 @@ interface NavSection {
 const navSections: NavSection[] = [
   {
     items: [
-      { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-      { label: 'Maps', icon: MapPin, href: '/dashboard/map' }
+      { label: 'Dashboard', icon: 'solar:widget-2-linear', href: '/dashboard' },
+      { label: 'Maps', icon: 'solar:map-point-linear', href: '/dashboard/map' }
     ]
   },
   {
     title: 'PROSPECT & ENRICH',
     items: [
-      { label: 'All Prospects', icon: Users, href: '/dashboard/prospect-enrich' },
-      { label: 'For Sale', icon: Building2, href: '/dashboard/prospect-enrich?filter=fsbo' },
-      { label: 'For Rent', icon: Building2, href: '/dashboard/prospect-enrich?filter=frbo' },
-      { label: 'Foreclosures', icon: Building2, href: '/dashboard/prospect-enrich?filter=foreclosure' },
-      { label: 'Probate', icon: FileText, href: '/dashboard/prospect-enrich?filter=probate' },
-      { label: 'Expired Listings', icon: Clock, href: '/dashboard/prospect-enrich?filter=expired' },
-      { label: 'Imports', icon: FileText, href: '/dashboard/prospect-enrich?filter=imports' },
-      { label: 'Trash', icon: FileText, href: '/dashboard/prospect-enrich?filter=trash' }
+      { label: 'All Prospects', icon: 'solar:users-group-rounded-linear', href: '/dashboard/prospect-enrich' },
+      { label: 'For Sale', icon: 'solar:home-2-linear', href: '/dashboard/prospect-enrich?filter=fsbo' },
+      { label: 'For Rent', icon: 'solar:home-2-linear', href: '/dashboard/prospect-enrich?filter=frbo' },
+      { label: 'Foreclosures', icon: 'solar:home-2-linear', href: '/dashboard/prospect-enrich?filter=foreclosure' },
+      { label: 'Probate', icon: 'solar:document-linear', href: '/dashboard/prospect-enrich?filter=probate' },
+      { label: 'Expired Listings', icon: 'solar:clock-circle-linear', href: '/dashboard/prospect-enrich?filter=expired' },
+      { label: 'Imports', icon: 'solar:document-linear', href: '/dashboard/prospect-enrich?filter=imports' },
+      { label: 'Trash', icon: 'solar:document-linear', href: '/dashboard/prospect-enrich?filter=trash' }
     ]
   },
   {
     title: 'CUSTOMER RELATIONSHIP MANAGEMENT',
     items: [
-      { label: 'Lists', icon: UserCircle, href: '/dashboard/lists' },
-      { label: 'Deals', icon: Briefcase, href: '/dashboard/crm/deals' },
-      { label: 'Calendar', icon: Calendar, href: '/dashboard/crm/calendar' }
+      { label: 'Lists', icon: 'solar:user-circle-linear', href: '/dashboard/lists' },
+      { label: 'Deals', icon: 'solar:case-linear', href: '/dashboard/crm/deals' },
+      { label: 'Calendar', icon: 'solar:calendar-linear', href: '/dashboard/crm/calendar' }
     ]
   },
   {
     title: 'MARKETING',
     items: [
-      { label: 'Social Planner', icon: Megaphone, href: '/dashboard/marketing' },
-      { label: 'Postiz', icon: Share2, href: '/dashboard/postiz' },
-      { label: 'Email Campaigns', icon: Mail, href: '/dashboard/email/campaigns' },
-      { label: 'Email Analytics', icon: BarChart3, href: '/dashboard/marketing/analytics' },
-      { label: 'Conversations', icon: MessageCircle, href: '/dashboard/conversations' }
+      { label: 'Social Planner', icon: 'solar:megaphone-linear', href: '/dashboard/marketing' },
+      { label: 'Postiz', icon: 'solar:share-linear', href: '/dashboard/postiz' },
+      { label: 'Email Campaigns', icon: 'solar:letter-linear', href: '/dashboard/email/campaigns' },
+      { label: 'Email Analytics', icon: 'solar:chart-2-linear', href: '/dashboard/marketing/analytics' },
+      { label: 'Conversations', icon: 'solar:dialog-linear', href: '/dashboard/conversations' }
     ]
   },
   {
     title: 'TOOLS & AUTOMATION',
     items: [
-      { label: 'Workflows', icon: Zap, href: '/dashboard/tools' },
-      { label: 'Tasks', icon: CheckCircle2, href: '/dashboard/tasks' },
-      { label: 'Analytics', icon: BarChart3, href: '/dashboard/crm/analytics' },
-      { label: 'Symphony', icon: BarChart3, href: '/dashboard/symphony' }
+      { label: 'Workflows', icon: 'solar:lightning-linear', href: '/dashboard/tools' },
+      { label: 'Tasks', icon: 'solar:check-circle-linear', href: '/dashboard/tasks' },
+      { label: 'Analytics', icon: 'solar:chart-2-linear', href: '/dashboard/crm/analytics' },
+      { label: 'Symphony', icon: 'solar:chart-2-linear', href: '/dashboard/symphony' }
     ]
   }
 ]
@@ -139,7 +120,7 @@ export default function Sidebar() {
         {isOpen ? (
           <div className="flex w-full items-center justify-between gap-2 brand-logo overflow-hidden">
             <button
-              className="group flex flex-1 items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 hover:bg-lightprimary-fallback hover:text-primary cursor-pointer transition-colors"
+              className="group flex flex-1 items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 hover:bg-lightprimary hover:text-primary cursor-pointer transition-colors"
               onClick={() => router.push('/dashboard')}
             >
               <img
@@ -160,7 +141,7 @@ export default function Sidebar() {
               className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#e5e5e5] bg-white text-link hover:bg-lightprimary hover:text-primary dark:border-[#333f55] dark:bg-dark dark:text-darklink dark:hover:bg-lightprimary"
               aria-label="Collapse sidebar"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <Icon icon="tabler:chevron-left" className="h-4 w-4" />
             </button>
           </div>
         ) : (
@@ -169,14 +150,14 @@ export default function Sidebar() {
               className="group flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-white shadow-md hover:shadow-lg hover:scale-105 transition"
               onClick={() => router.push('/dashboard')}
             >
-              <MapPin className="h-4 w-4" />
+              <Icon icon="solar:map-point-linear" className="h-4 w-4" />
             </button>
             <button
               onClick={toggle}
               className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#e5e5e5] bg-white text-link hover:bg-lightprimary hover:text-primary dark:border-[#333f55] dark:bg-dark dark:text-darklink dark:hover:bg-lightprimary"
               aria-label="Expand sidebar"
             >
-              <ChevronRight className="h-4 w-4" />
+              <Icon icon="tabler:chevron-right" className="h-4 w-4" />
             </button>
           </div>
         )}
@@ -195,7 +176,6 @@ export default function Sidebar() {
             )}
             <div className={isOpen ? 'space-y-0.5' : 'flex flex-col items-center gap-2'}>
               {section.items.map((item) => {
-                const Icon = item.icon
                 const active = isActive(item.href)
 
                 const handleClick = () => {
@@ -214,10 +194,10 @@ export default function Sidebar() {
                       className={`group flex w-full items-center gap-3 rounded-md p-3 text-start truncate cursor-pointer leading-normal transition-all duration-200 ease-in-out hover:translate-x-1 ${
                         active
                           ? 'text-white bg-primary hover:bg-primary hover:text-white font-medium'
-                          : 'text-link dark:text-darklink hover:text-primary dark:hover:text-primary bg-transparent hover:bg-lightprimary-fallback dark:hover:bg-lightprimary-fallback font-normal'
+                          : 'text-link dark:text-darklink hover:text-primary dark:hover:text-primary bg-transparent hover:bg-lightprimary dark:hover:bg-lightprimary font-normal'
                       }`}
                     >
-                      <Icon className="h-5 w-5 flex-shrink-0" />
+                      <Icon icon={item.icon} className="h-5 w-5 flex-shrink-0" />
                       <span className="truncate text-sm hide-menu flex-1">{item.label}</span>
                       {item.badge && (
                         <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold text-primary hide-menu">
@@ -239,7 +219,7 @@ export default function Sidebar() {
                       }`}
                       aria-label={item.label}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon icon={item.icon} className="h-4 w-4" />
                     </button>
                     <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 rounded-md bg-dark px-2 py-1 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-800">
                       {item.label}
