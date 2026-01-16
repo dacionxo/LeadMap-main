@@ -114,9 +114,10 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col border-r border-[#e5e5e5] bg-white dark:bg-dark shadow-sm transition-[width] duration-300 group ${
+      className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col border-r border-[#e5e5e5] bg-white dark:bg-dark shadow-sm transition-[width] ease-in group ${
         isOpen ? 'w-[270px]' : 'w-[75px] xl:hover:w-[270px] overflow-hidden xl:hover:overflow-visible'
       }`}
+      style={{ transitionDuration: '.2s' }}
     >
       {/* Brand / collapse */}
       <div className="flex min-h-[70px] items-center border-b border-[#e5e5e5] px-6 dark:border-[#333f55] brand-logo overflow-hidden">
@@ -166,7 +167,7 @@ export default function Sidebar() {
           {navSections.map((section, sectionIdx) => (
             <div key={sectionIdx} className="mb-3">
               {section.title && (
-                <div className="caption px-0 mb-0" style={{ marginTop: '24px', padding: '3px 0px', lineHeight: '26px' }}>
+                <div className="caption px-0 mb-0" style={{ marginTop: sectionIdx === 0 ? '0px' : '24px', padding: '3px 0px', lineHeight: '26px' }}>
                   <h5 className="text-link dark:text-darklink font-bold text-xs uppercase leading-[26px]">
                     {isOpen ? (
                       <span className="leading-21">{section.title}</span>
@@ -208,7 +209,7 @@ export default function Sidebar() {
                           : 'text-link dark:text-darklink hover:text-primary dark:hover:text-primary bg-transparent hover:bg-lightprimary dark:hover:bg-lightprimary font-normal'
                       }`}
                     >
-                      <Icon icon={item.icon} className="h-5 w-5 flex-shrink-0" />
+                      <Icon icon={item.icon} className="flex-shrink-0" height={21} width={21} />
                       <span className="truncate text-sm flex-1">{item.label}</span>
                       {item.badge && (
                         <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
@@ -230,7 +231,7 @@ export default function Sidebar() {
                       }`}
                       aria-label={item.label}
                     >
-                      <Icon icon={item.icon} className="h-4 w-4 xl:group-hover:h-5 xl:group-hover:w-5 flex-shrink-0" />
+                      <Icon icon={item.icon} className="flex-shrink-0" height={21} width={21} />
                       <span className="hidden xl:group-hover:block truncate text-sm ml-3 flex-1">{item.label}</span>
                     </button>
                     <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 rounded-md bg-dark px-2 py-1 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity duration-150 group-hover/item:opacity-100 dark:bg-gray-800 xl:hidden">
@@ -261,32 +262,20 @@ export default function Sidebar() {
       )}
 
       {/* User Section */}
-      <div className={`border-t border-[#e5e5e5] py-4 dark:border-[#333f55] ${isOpen ? 'px-4' : 'px-0.5 xl:group-hover:px-4'}`}>
-        <div className={`rounded-md bg-lightsecondary overflow-hidden ${isOpen ? 'px-4 py-4' : 'px-2 py-4 xl:group-hover:px-4'}`}>
-          <div className={`flex items-center ${isOpen ? 'gap-4' : 'justify-center xl:group-hover:justify-start xl:group-hover:gap-4'}`}>
+      <div className={`my-4 ${isOpen ? 'mx-6' : 'mx-0.5 xl:group-hover:mx-6'}`}>
+        <div className={`rounded-md bg-lightsecondary overflow-hidden transition-all duration-200 ease-in py-4 ${isOpen ? 'px-4' : 'px-2 xl:group-hover:px-4'}`}>
+          <div className={`flex items-center transition-all duration-200 ease-in ${isOpen ? 'gap-4' : 'justify-center xl:group-hover:justify-start xl:group-hover:gap-4'}`}>
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white shadow-sm">
               {profile?.name?.charAt(0).toUpperCase() || 'U'}
             </div>
-            {isOpen && (
-              <div className="min-w-0 flex-1 xl:hidden group-hover:!block">
-                <h3 className="truncate text-base font-semibold text-link dark:text-darklink">
-                  {profile?.name || 'User'}
-                </h3>
-                <p className="truncate text-xs font-normal text-[#737373] dark:text-darklink">
-                  {profile?.email || 'user@example.com'}
-                </p>
-              </div>
-            )}
-            {!isOpen && (
-              <div className="hidden xl:group-hover:block min-w-0 flex-1">
-                <h3 className="truncate text-base font-semibold text-link dark:text-darklink">
-                  {profile?.name || 'User'}
-                </h3>
-                <p className="truncate text-xs font-normal text-[#737373] dark:text-darklink">
-                  {profile?.email || 'user@example.com'}
-                </p>
-              </div>
-            )}
+            <div className={`min-w-0 flex-1 transition-all duration-200 ease-in ${isOpen ? 'block' : 'hidden xl:group-hover:block'}`}>
+              <h3 className="truncate text-base font-semibold text-link dark:text-darklink">
+                {profile?.name || 'User'}
+              </h3>
+              <p className="truncate text-xs font-normal text-[#737373] dark:text-darklink">
+                {profile?.email || 'user@example.com'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
