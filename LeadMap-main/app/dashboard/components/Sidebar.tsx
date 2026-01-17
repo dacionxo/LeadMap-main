@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Icon } from '@iconify/react'
 import { useApp } from '@/app/providers'
@@ -120,12 +121,12 @@ export default function Sidebar() {
       style={{ transitionDuration: '.2s' }}
     >
       {/* Brand / collapse */}
-      <div className={`flex min-h-[70px] items-center border-b border-[#e5e5e5] dark:border-[#333f55] brand-logo overflow-hidden ${isOpen ? 'px-6' : 'px-5 xl:group-hover:px-6'}`}>
+      <div className={`flex min-h-[70px] items-center brand-logo overflow-hidden ${isOpen ? 'px-6' : 'px-5 xl:group-hover:px-6'}`}>
         {isOpen ? (
           <div className="flex w-full items-center justify-between gap-2">
-            <button
-              className="group flex flex-1 items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 hover:bg-lightprimary hover:text-primary cursor-pointer transition-colors"
-              onClick={() => router.push('/dashboard')}
+            <Link
+              href="/dashboard"
+              className="group flex flex-1 items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 cursor-pointer transition-colors"
             >
               <img
                 src="/nextdeal-logo.png"
@@ -139,13 +140,13 @@ export default function Sidebar() {
               <span className="truncate text-sm font-semibold text-link dark:text-darklink">
                 NextDeal
               </span>
-            </button>
+            </Link>
           </div>
         ) : (
           <div className="flex w-full items-center justify-center">
-            <button
-              className="group flex items-center justify-center rounded-md px-2 py-1.5 hover:bg-lightprimary hover:text-primary cursor-pointer transition-colors"
-              onClick={() => router.push('/dashboard')}
+            <Link
+              href="/dashboard"
+              className="group flex items-center justify-center rounded-md px-2 py-1.5 cursor-pointer transition-colors"
             >
               <img
                 src="/nextdeal-logo.png"
@@ -156,14 +157,14 @@ export default function Sidebar() {
                   target.style.display = 'none'
                 }}
               />
-            </button>
+            </Link>
           </div>
         )}
       </div>
 
       {/* Navigation */}
       <SimpleBar className="h-[calc(100vh_-_180px)]">
-        <nav className={`sidebar-nav flex-1 py-4 ${isOpen ? 'px-6' : 'px-4 xl:group-hover:px-6'}`}>
+        <nav className={`sidebar-nav flex-1 py-0 ${isOpen ? 'px-6' : 'px-4 xl:group-hover:px-6'}`}>
           {navSections.map((section, sectionIdx) => (
             <div key={sectionIdx} className="mb-3">
               {section.title && (
@@ -263,9 +264,9 @@ export default function Sidebar() {
 
       {/* User Section */}
       <div className={`my-4 ${isOpen ? 'mx-6' : 'mx-0.5 xl:group-hover:mx-6'}`}>
-        <div className={`rounded-md bg-lightsecondary overflow-hidden transition-all duration-200 ease-in py-4 ${isOpen ? 'px-4' : 'px-2 xl:group-hover:px-4'}`}>
+        <div className={`rounded-md bg-lightsecondary overflow-hidden transition-all duration-200 ease-in py-2 ${isOpen ? 'px-4' : 'px-2 xl:group-hover:px-4'}`}>
           <div className={`flex items-center transition-all duration-200 ease-in ${isOpen ? 'gap-4' : 'justify-center xl:group-hover:justify-start xl:group-hover:gap-4'}`}>
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white shadow-sm">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white shadow-sm">
               {profile?.name?.charAt(0).toUpperCase() || 'U'}
             </div>
             <div className={`min-w-0 flex-1 transition-all duration-200 ease-in ${isOpen ? 'block' : 'hidden xl:group-hover:block'}`}>
