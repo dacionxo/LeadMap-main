@@ -30,28 +30,12 @@ interface CalendarEvent {
 }
 
 interface CalendarViewProps {
-  onEventClick?: (event: {
-    id: string
-    title: string
-    start: string
-    end: string
-    allDay?: boolean
-    backgroundColor?: string
-    borderColor?: string
-    extendedProps?: {
-      eventType?: string
-      location?: string
-      description?: string
-      relatedType?: string
-      relatedId?: string
-      status?: string
-    }
-  }) => void
+  onEventClick?: (event: CalendarEvent) => void
   onDateSelect?: (start: Date, end: Date) => void
   calendarType?: string | null
 }
 
-export default function CalendarView({ onEventClick, onDateSelect, calendarType }: CalendarViewProps) {
+export default function CalendarViewNew({ onEventClick, onDateSelect, calendarType }: CalendarViewProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [allEvents, setAllEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -370,24 +354,7 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
 
   const handleSelectEvent = (event: CalendarEvent) => {
     if (onEventClick) {
-      // Convert to format expected by EventModal
-      onEventClick({
-        id: event.id,
-        title: event.title,
-        start: event.start.toISOString(),
-        end: event.end.toISOString(),
-        allDay: event.allDay,
-        backgroundColor: event.resource?.backgroundColor,
-        borderColor: event.resource?.borderColor,
-        extendedProps: {
-          eventType: event.resource?.eventType,
-          location: event.resource?.location,
-          description: event.resource?.description,
-          relatedType: event.resource?.relatedType,
-          relatedId: event.resource?.relatedId,
-          status: event.resource?.status,
-        },
-      } as any)
+      onEventClick(event)
     }
   }
 
