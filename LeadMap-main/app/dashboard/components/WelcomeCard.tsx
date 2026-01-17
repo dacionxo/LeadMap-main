@@ -3,7 +3,7 @@
 import { Card } from '@/app/components/ui/card'
 import { Icon } from '@iconify/react'
 import Lottie from 'lottie-react'
-import onlinedoctor from '@/../public/animation/onlinedoctor.json'
+import onlinedoctor from '@/app/assets/animation/onlinedoctor.json'
 import { useEffect, useState } from 'react'
 import CountUp from './animated-components/CountUp'
 import { useApp } from '@/app/providers'
