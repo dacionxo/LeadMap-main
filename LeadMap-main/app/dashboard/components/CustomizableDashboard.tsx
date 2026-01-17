@@ -5,6 +5,7 @@ import { Plus, Settings2, Save, RefreshCw } from 'lucide-react'
 import { availableWidgets, WidgetContainer, DashboardWidget } from './DashboardWidgets'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useApp } from '@/app/providers'
+import { WelcomeCard } from './WelcomeCard'
 
 export default function CustomizableDashboard() {
   const { profile } = useApp()
@@ -463,6 +464,9 @@ export default function CustomizableDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Welcome Card */}
+      <WelcomeCard />
+
       {/* Header with Edit Mode Toggle */}
       <div className="flex items-center justify-between mb-6">
         <div>

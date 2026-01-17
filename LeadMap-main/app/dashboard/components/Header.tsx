@@ -266,18 +266,26 @@ export default function Header() {
 
                   {/* Profile Dropdown Menu */}
                   {showProfileMenu && (
-                    <div className="dropdown ui-dropdown ui-dropdown-animation absolute right-0 mt-2 z-50">
+                    <div className="dropdown ui-dropdown ui-dropdown-animation absolute right-0 mt-2 z-50 w-screen sm:w-[360px] py-6 px-0 rounded-sm">
                       {/* Header */}
-                      <div className="px-4 py-3 border-b border-border dark:border-darkborder">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-bold text-white shadow-sm">
+                      <div className="px-6">
+                        <h3 className="text-lg font-semibold text-ld">User Profile</h3>
+                        <div className="flex items-center gap-6 pb-5 border-b border-border dark:border-darkborder mt-5 mb-3">
+                          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-sm">
                             {profile?.name?.charAt(0).toUpperCase() || 'U'}
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <h5 className="text-sm font-medium text-ld truncate">
+                          <div>
+                            <h5 className="card-title text-sm mb-0.5 font-medium">
                               {profile?.name || 'User'}
                             </h5>
-                            <p className="text-xs text-muted truncate">
+                            <span className="card-subtitle text-muted font-normal">
+                              {profile?.role || 'Member'}
+                            </span>
+                            <p className="card-subtitle font-normal text-muted mb-0 mt-1 flex items-center">
+                              <Icon
+                                icon="tabler:mail"
+                                className="text-base me-1 relative top-0.5"
+                              />
                               {profile?.email || 'user@example.com'}
                             </p>
                           </div>
@@ -285,23 +293,25 @@ export default function Header() {
                       </div>
 
                       {/* Dropdown items */}
-                      <div className="py-1">
+                      <div className="max-h-64 overflow-y-auto">
                         <button
                           onClick={() => {
                             router.push('/dashboard/settings')
                             setShowProfileMenu(false)
                           }}
-                          className="ui-dropdown-item"
+                          className="px-6 py-3 flex justify-between items-center bg-hover group/link w-full cursor-pointer hover:bg-lightprimary"
                         >
-                          <div className="h-9 w-9 flex-shrink-0 rounded-md flex justify-center items-center bg-lightprimary">
-                            <Icon icon="solar:user-circle-linear" className="h-5 w-5 text-primary" />
+                          <div className="h-11 w-11 flex-shrink-0 rounded-md flex justify-center items-center bg-lightprimary">
+                            <Icon icon="solar:user-circle-linear" className="h-6 w-6 text-primary" />
                           </div>
-                          <div className="flex-1 min-w-0 text-left">
-                            <h5 className="text-sm font-medium">
-                              My Profile
-                            </h5>
-                            <div className="text-xs text-darklink">
-                              Account settings
+                          <div className="ps-4 flex justify-between w-full">
+                            <div className="w-3/4">
+                              <h5 className="mb-1 text-sm group-hover/link:text-primary">
+                                My Profile
+                              </h5>
+                              <div className="text-xs text-darklink">
+                                Account settings
+                              </div>
                             </div>
                           </div>
                         </button>
@@ -311,17 +321,19 @@ export default function Header() {
                             router.push('/dashboard')
                             setShowProfileMenu(false)
                           }}
-                          className="ui-dropdown-item"
+                          className="px-6 py-3 flex justify-between items-center bg-hover group/link w-full cursor-pointer hover:bg-lightprimary"
                         >
-                          <div className="h-9 w-9 flex-shrink-0 rounded-md flex justify-center items-center bg-lightprimary">
-                            <Icon icon="solar:notes-linear" className="h-5 w-5 text-primary" />
+                          <div className="h-11 w-11 flex-shrink-0 rounded-md flex justify-center items-center bg-lightprimary">
+                            <Icon icon="solar:notes-linear" className="h-6 w-6 text-primary" />
                           </div>
-                          <div className="flex-1 min-w-0 text-left">
-                            <h5 className="text-sm font-medium">
-                              My Notes
-                            </h5>
-                            <div className="text-xs text-darklink">
-                              My Daily Notes
+                          <div className="ps-4 flex justify-between w-full">
+                            <div className="w-3/4">
+                              <h5 className="mb-1 text-sm group-hover/link:text-primary">
+                                My Notes
+                              </h5>
+                              <div className="text-xs text-darklink">
+                                My Daily Notes
+                              </div>
                             </div>
                           </div>
                         </button>
@@ -331,24 +343,26 @@ export default function Header() {
                             router.push('/dashboard')
                             setShowProfileMenu(false)
                           }}
-                          className="ui-dropdown-item"
+                          className="px-6 py-3 flex justify-between items-center bg-hover group/link w-full cursor-pointer hover:bg-lightprimary"
                         >
-                          <div className="h-9 w-9 flex-shrink-0 rounded-md flex justify-center items-center bg-lightprimary">
-                            <Icon icon="solar:checklist-linear" className="h-5 w-5 text-primary" />
+                          <div className="h-11 w-11 flex-shrink-0 rounded-md flex justify-center items-center bg-lightprimary">
+                            <Icon icon="solar:checklist-linear" className="h-6 w-6 text-primary" />
                           </div>
-                          <div className="flex-1 min-w-0 text-left">
-                            <h5 className="text-sm font-medium">
-                              My Tasks
-                            </h5>
-                            <div className="text-xs text-darklink">
-                              To-do and Daily tasks
+                          <div className="ps-4 flex justify-between w-full">
+                            <div className="w-3/4">
+                              <h5 className="mb-1 text-sm group-hover/link:text-primary">
+                                My Tasks
+                              </h5>
+                              <div className="text-xs text-darklink">
+                                To-do and Daily tasks
+                              </div>
                             </div>
                           </div>
                         </button>
                       </div>
 
                       {/* Logout Button */}
-                      <div className="pt-1 px-4 pb-3 border-t border-border dark:border-darkborder">
+                      <div className="pt-2 px-7">
                         <button
                           onClick={handleSignOut}
                           className="w-full border border-primary text-primary hover:bg-primary hover:text-white rounded-md py-2 px-4 text-sm font-medium transition-colors"
