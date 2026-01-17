@@ -483,11 +483,11 @@
   }
 
   .ui-dropdown-item {
-    @apply flex w-full gap-3 cursor-pointer items-center justify-start px-4 py-2 text-sm text-ld hover:text-primary bg-hover focus:bg-hover focus:outline-hidden;
+    @apply flex w-full gap-3 cursor-pointer items-center justify-start px-4 py-2 text-sm text-ld hover:text-primary bg-hover focus:bg-hover focus:outline-none;
   }
 
   .ui-dropdown-animation {
-    @apply origin-top-right transition duration-100 ease-out focus:outline-hidden data-closed:scale-95 data-closed:opacity-0;
+    @apply origin-top-right transition duration-100 ease-out focus:outline-none data-closed:scale-95 data-closed:opacity-0;
   }
 
   .ui-form-control {
