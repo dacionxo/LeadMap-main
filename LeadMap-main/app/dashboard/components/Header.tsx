@@ -279,7 +279,7 @@ export default function Header() {
                               {profile?.name || 'User'}
                             </h5>
                             <span className="card-subtitle text-muted font-normal">
-                              {profile?.role || 'Member'}
+                              {profile?.plan_tier ? profile.plan_tier.charAt(0).toUpperCase() + profile.plan_tier.slice(1) : 'Member'}
                             </span>
                             <p className="card-subtitle font-normal text-muted mb-0 mt-1 flex items-center">
                               <Icon
