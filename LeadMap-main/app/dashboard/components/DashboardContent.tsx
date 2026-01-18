@@ -526,45 +526,50 @@ export default function DashboardContent() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3 2xl:gap-7.5">
             {metrics.map((metric, index) => {
-              const badgeVariant = metric.trend === 'up' ? 'lightSuccess' : metric.trend === 'down' ? 'lightError' : 'gray'
+              const isDecreasing = metric.trend === 'down'
+              const MetricIcon = metric.icon
               return (
                 <div 
                   key={metric.label} 
                   className="rounded-[10px] bg-white p-4 shadow-1 dark:bg-gray-dark dark:shadow-card md:p-6 xl:p-7.5 cursor-pointer hover:shadow-lg transition-shadow" 
                   onClick={() => router.push('/dashboard/prospect-enrich')}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col justify-between gap-4">
-                      <div>
-                        <h3 className="text-heading-6 font-bold text-dark dark:text-white">
-                          {metric.value}
-                        </h3>
-                        <p className="text-sm font-medium text-dark-6 dark:text-gray-400">
-                          {metric.label}
-                        </p>
-                      </div>
-                      {metric.change && (
-                        <div>
-                          <Badge variant={badgeVariant} className="rounded-md text-sm">
-                            {metric.trend === 'down' && <Icon icon="tabler:chevron-down" className="text-lg shrink-0 inline-block me-1" />}
-                            {metric.trend === 'up' && <Icon icon="tabler:chevron-up" className="text-lg shrink-0 inline-block me-1" />}
-                            {metric.change}
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                    <div className={cn(
-                      "p-3 rounded-lg",
-                      metric.bgColor === 'lightprimary' && "bg-lightprimary text-primary",
-                      metric.bgColor === 'lightsuccess' && "bg-lightsuccess text-success",
-                      metric.bgColor === 'lightwarning' && "bg-lightwarning text-warning",
-                      metric.bgColor === 'lighterror' && "bg-lighterror text-error",
-                      metric.bgColor === 'lightinfo' && "bg-lightinfo text-info",
-                      metric.bgColor === 'lightsecondary' && "bg-lightsecondary text-secondary",
-                      !metric.bgColor && "bg-lightprimary text-primary"
-                    )}>
-                      <Icon icon={metric.iconify || 'tabler:chart'} width={24} height={24} />
-                    </div>
+                  <div className={cn(
+                    "p-3 rounded-lg inline-block mb-4",
+                    metric.bgColor === 'lightprimary' && "bg-lightprimary text-primary",
+                    metric.bgColor === 'lightsuccess' && "bg-lightsuccess text-success",
+                    metric.bgColor === 'lightwarning' && "bg-lightwarning text-warning",
+                    metric.bgColor === 'lighterror' && "bg-lighterror text-error",
+                    metric.bgColor === 'lightinfo' && "bg-lightinfo text-info",
+                    metric.bgColor === 'lightsecondary' && "bg-lightsecondary text-secondary",
+                    !metric.bgColor && "bg-lightprimary text-primary"
+                  )}>
+                    <MetricIcon className="w-6 h-6" />
+                  </div>
+
+                  <div className="mt-6 flex items-end justify-between">
+                    <dl>
+                      <dt className="mb-1.5 text-heading-6 font-bold text-dark dark:text-white">
+                        {metric.value}
+                      </dt>
+                      <dd className="text-sm font-medium text-dark-6 dark:text-gray-400">{metric.label}</dd>
+                    </dl>
+
+                    {metric.change && (
+                      <dl className={cn(
+                        "text-sm font-medium",
+                        isDecreasing ? "text-red" : metric.trend === 'up' ? "text-green" : "text-dark-6"
+                      )}>
+                        <dt className="flex items-center gap-1.5">
+                          {metric.change}
+                          {isDecreasing && <Icon icon="tabler:chevron-down" className="w-4 h-4" />}
+                          {metric.trend === 'up' && <Icon icon="tabler:chevron-up" className="w-4 h-4" />}
+                        </dt>
+                        <dd className="sr-only">
+                          {metric.label} {isDecreasing ? "Decreased" : "Increased"} by {metric.change}
+                        </dd>
+                      </dl>
+                    )}
                   </div>
                 </div>
               )
