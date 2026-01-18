@@ -1,49 +1,40 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { 
-  X, 
-  GripVertical, 
-  Plus,
-  TrendingUp,
-  Users,
-  DollarSign,
-  Target,
-  Calendar,
-  Activity,
-  BarChart3,
-  Clock,
-  Sparkles,
-  Briefcase,
-  Mail,
-  Phone,
-  MapPin,
-  FileText,
-  Zap,
-  Building2,
-  ArrowRight,
-  Upload,
-  Search as SearchIcon,
-  CheckCircle2,
-  AlertCircle,
-  MessageSquare,
-  RefreshCw,
-  Percent,
-  Filter,
-  Layers,
-  PieChart,
-  LineChart,
-  TrendingDown,
-  GitBranch
-} from 'lucide-react'
-import { Card } from '@/app/components/ui/card'
+import React, { useState, useEffect } from 'react'
 import { Badge, BadgeProps } from '@/app/components/ui/badge'
+import { Card } from '@/app/components/ui/card'
+import { Icon } from '@iconify/react'
+import { motion } from 'framer-motion'
+import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  Briefcase,
+  Building2,
+  Calendar,
+  Clock,
+  DollarSign,
+  FileText,
+  GitBranch,
+  GripVertical,
+  LineChart,
+  Percent,
+  PieChart,
+  Search as SearchIcon,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Upload,
+  Users,
+  X,
+  Zap
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
-import { motion } from 'framer-motion'
-import { Icon } from '@iconify/react'
+import dynamic from 'next/dynamic'
+import { ApexOptions } from 'apexcharts'
+const Chart = dynamic(() => import('react-apexcharts'), { ssr: false })
 
 export interface DashboardWidget {
   id: string
@@ -68,7 +59,7 @@ export function WidgetContainer({ widget, onRemove, isEditable = false, data }: 
   const Icon = widget.icon
   
   // Components that have their own Card wrapper with title (1-to-1 TailwindAdmin match)
-  const hasOwnCard = widget.id === 'recent-activity' || widget.id === 'upcoming-tasks'
+  const hasOwnCard = widget.id === 'recent-activity' || widget.id === 'upcoming-tasks' || widget.id === 'pipeline-funnel' || widget.id === 'deal-stage-distribution'
   
   return (
     <div className={`relative ${hasOwnCard ? '' : 'bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6'} hover:shadow-lg transition-all duration-200 ${
@@ -246,67 +237,244 @@ function RecentActivityWidget({ widget, data }: { widget: DashboardWidget; data?
 }
 
 function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?: any }) {
-  const stages = data?.stages || [
-    { name: 'New Leads', value: 150, percentage: 100 },
-    { name: 'Contacted', value: 90, percentage: 60 },
-    { name: 'Qualified', value: 45, percentage: 30 },
-    { name: 'Proposal', value: 20, percentage: 13 },
-    { name: 'Closed', value: 8, percentage: 5 }
+  // Map API data to TailwindAdmin format or use defaults
+  const stagesData = data?.stages || [
+    { name: 'New', value: 1, percentage: 100 },
+    { name: 'Contacted', value: 1, percentage: 33 },
+    { name: 'Qualified', value: 1, percentage: 33 },
+    { name: 'Proposal', value: 0, percentage: 0 },
+    { name: 'Closed', value: 0, percentage: 0 }
   ]
-  
+
+  // Transform API data to match TailwindAdmin structure
+  const stages = stagesData.map((stage: any) => ({
+    name: stage.name,
+    value: stage.value || 0,
+    percentage: stage.percentage || 0
+  }))
+
+  // Find the maximum value for relative sizing
+  const maxValue = Math.max(...stages.map(s => s.value), 1)
+
+  // Color mapping for stages
+  const stageColors: Record<string, string> = {
+    'New': 'bg-primary',
+    'Contacted': 'bg-secondary',
+    'Qualified': 'bg-success',
+    'Proposal': 'bg-warning',
+    'Closed': 'bg-info'
+  }
+
   return (
-    <div className="space-y-2">
-      {stages.map((stage: any, index: number) => (
-        <div key={index} className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-700 dark:text-gray-300">{stage.name}</span>
-            <span className="text-gray-600 dark:text-gray-400">{stage.value} ({stage.percentage}%)</span>
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${stage.percentage}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
+    <Card className="h-full">
+      <div className="mb-5">
+        <h4 className="card-title">Pipeline Funnel</h4>
+        <p className="card-subtitle">Deal progression through stages</p>
+      </div>
+      <div className="flex flex-col gap-3">
+        {stages.map((stage: any, index: number) => {
+          const widthPercentage = maxValue > 0 ? (stage.value / maxValue) * 100 : 0
+          const color = stageColors[stage.name] || 'bg-primary'
+          
+          return (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              className="space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground dark:text-white">{stage.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground dark:text-white">{stage.value}</span>
+                  <span className="text-xs text-muted-foreground">({stage.percentage}%)</span>
+                </div>
+              </div>
+              <div className="relative w-full">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden" style={{ height: '32px' }}>
+                  <div
+                    className={`h-full ${color} rounded-md transition-all duration-500 flex items-center justify-end pr-3`}
+                    style={{ width: `${widthPercentage}%` }}
+                  >
+                    {widthPercentage > 10 && (
+                      <span className="text-xs font-medium text-white">{stage.value}</span>
+                    )}
+                  </div>
+                </div>
+                {/* Funnel shape effect - narrower at bottom */}
+                <div
+                  className="absolute top-0 left-0 h-full pointer-events-none"
+                  style={{
+                    clipPath: `polygon(0% 0%, ${100 - (index * 5)}% 0%, ${100 - ((index + 1) * 5)}% 100%, 0% 100%)`,
+                    opacity: 0.1
+                  }}
+                />
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+    </Card>
   )
 }
 
 function DealStageDistributionWidget({ widget, data }: { widget: DashboardWidget; data?: any }) {
-  const stages = data?.stages || [
-    { name: 'New', value: 45, color: 'bg-blue-500' },
-    { name: 'Contacted', value: 30, color: 'bg-purple-500' },
-    { name: 'Qualified', value: 20, color: 'bg-green-500' },
-    { name: 'Proposal', value: 5, color: 'bg-orange-500' }
+  // Map API data to TailwindAdmin format or use defaults
+  const stagesData = data?.stages || [
+    { name: 'New', value: 1, percentage: 33 },
+    { name: 'Contacted', value: 1, percentage: 33 },
+    { name: 'Qualified', value: 1, percentage: 33 },
+    { name: 'Proposal', value: 0, percentage: 0 }
   ]
+
+  // Transform API data to match TailwindAdmin structure
+  const stages = stagesData.map((stage: any) => ({
+    name: stage.name,
+    value: stage.value || 0,
+    percentage: stage.percentage || 0
+  }))
+
+  // Prepare chart data
+  const chartSeries = stages.map(s => s.value)
+  const chartLabels = stages.map(s => s.name)
   
-  const total = stages.reduce((sum: number, s: any) => sum + s.value, 0)
+  // Color mapping for stages
+  const stageColors = [
+    'var(--color-primary, #3b82f6)',
+    'var(--color-secondary, #49beff)',
+    'var(--color-success, #10b981)',
+    'var(--color-warning, #f59e0b)',
+    'var(--color-info, #3b82f6)'
+  ]
+
+  // Detect dark mode - use a state hook for reactivity
+  const [isDark, setIsDark] = useState(false)
   
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsDark(document.documentElement.classList.contains('dark'))
+      // Watch for dark mode changes
+      const observer = new MutationObserver(() => {
+        setIsDark(document.documentElement.classList.contains('dark'))
+      })
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+      })
+      return () => observer.disconnect()
+    }
+  }, [])
+
+  const ChartData: ApexOptions = {
+    series: chartSeries,
+    labels: chartLabels,
+    chart: {
+      height: 300,
+      type: 'pie',
+      fontFamily: 'inherit',
+      foreColor: isDark ? 'var(--color-white40, rgba(255, 255, 255, 0.4))' : 'var(--color-black40, rgba(0, 0, 0, 0.4))',
+    },
+    stroke: {
+      show: true,
+      colors: [isDark ? 'var(--color-dark, #1f2937)' : 'var(--color-white, #ffffff)'],
+      width: 2,
+    },
+    dataLabels: {
+      enabled: true,
+      formatter: function (val: number, opts: any) {
+        return opts.w.config.labels[opts.seriesIndex] + '\n' + val.toFixed(0) + '%'
+      },
+      style: {
+        fontSize: '12px',
+        fontWeight: 600,
+      },
+    },
+    legend: {
+      show: true,
+      position: 'bottom',
+      fontSize: '14px',
+      fontFamily: 'inherit',
+      fontWeight: 400,
+      labels: {
+        colors: isDark ? 'var(--color-white, #ffffff)' : 'var(--color-foreground, #1f2937)',
+      },
+      markers: {
+        width: 8,
+        height: 8,
+        radius: 4,
+      },
+    },
+    colors: stageColors.slice(0, stages.length),
+    tooltip: {
+      theme: isDark ? 'dark' : 'light',
+      fillSeriesColor: false,
+      y: {
+        formatter: function (val: number, opts: any) {
+          return opts.w.config.labels[opts.seriesIndex] + ': ' + val
+        }
+      }
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '0%',
+        },
+        expandOnClick: false,
+      },
+    },
+  }
+
   return (
-    <div className="space-y-3">
-      {stages.map((stage: any, index: number) => {
-        const percentage = total > 0 ? Math.round((stage.value / total) * 100) : 0
-        return (
-          <div key={index} className="flex items-center space-x-3">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-gray-700 dark:text-gray-300">{stage.name}</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">{stage.value}</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div 
-                  className={`${stage.color} h-2 rounded-full transition-all duration-500`}
-                  style={{ width: `${percentage}%` }}
-                />
-              </div>
-            </div>
-            <span className="text-xs text-gray-600 dark:text-gray-400 w-10 text-right">{percentage}%</span>
-          </div>
-        )
-      })}
-    </div>
+    <Card className="h-full">
+      <div className="mb-5">
+        <h4 className="card-title">Deal Stage Distribution</h4>
+        <p className="card-subtitle">Breakdown of deals by stage</p>
+      </div>
+      <div className="flex flex-col gap-6">
+        <div>
+          <Chart
+            options={ChartData}
+            series={ChartData.series}
+            type="pie"
+            height="300px"
+            width="100%"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          {stages.map((stage: any, index: number) => {
+            const color = stageColors[index] || stageColors[0]
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="py-2.5 border-b border-border dark:border-darkborder flex items-center justify-between last:border-0"
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: color }}
+                  ></span>
+                  <p className="text-sm font-medium text-foreground dark:text-white">
+                    {stage.name}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-foreground dark:text-white">
+                    {stage.value}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ({stage.percentage}%)
+                  </p>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+    </Card>
   )
 }
 
