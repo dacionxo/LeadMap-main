@@ -67,19 +67,22 @@ interface WidgetProps {
 export function WidgetContainer({ widget, onRemove, isEditable = false, data }: WidgetProps) {
   const Icon = widget.icon
   
+  // Components that have their own Card wrapper with title (1-to-1 TailwindAdmin match)
+  const hasOwnCard = widget.id === 'recent-activity' || widget.id === 'upcoming-tasks'
+  
   return (
-    <div className={`relative bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-200 ${
+    <div className={`relative ${hasOwnCard ? '' : 'bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6'} hover:shadow-lg transition-all duration-200 ${
       widget.size === 'large' ? 'col-span-2' : ''
     }`}>
       {isEditable && (
         <>
-          <div className="absolute top-2 left-2 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <div className="absolute top-2 left-2 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 z-10">
             <GripVertical className="w-4 h-4" />
           </div>
           {onRemove && (
             <button
               onClick={() => onRemove(widget.id)}
-              className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors z-10"
               aria-label="Remove widget"
             >
               <X className="w-4 h-4" />
@@ -87,12 +90,14 @@ export function WidgetContainer({ widget, onRemove, isEditable = false, data }: 
           )}
         </>
       )}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{widget.title}</h3>
+      {!hasOwnCard && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{widget.title}</h3>
+          </div>
         </div>
-      </div>
+      )}
       <widget.component widget={widget} data={data} />
     </div>
   )
@@ -162,7 +167,7 @@ function RecentActivityWidget({ widget, data }: { widget: DashboardWidget; data?
     { id: '3', type: 'lead', title: 'New prospects added', description: '150 new property listings imported', time: '1 day ago', icon: 'tabler:users' }
   ]
 
-  // Transform API data to match TailwindAdmin structure
+  // Transform API data to match TailwindAdmin structure exactly
   const activities = activitiesData.map((activity: any) => {
     // Map icon names to iconify format if needed
     let iconName = activity.icon
@@ -181,58 +186,62 @@ function RecentActivityWidget({ widget, data }: { widget: DashboardWidget; data?
       iconName = iconMap[iconName] || 'tabler:activity'
     }
 
-    // Map activity types to colors
+    // Map activity types to TailwindAdmin color classes
     const colorMap: Record<string, { bg: string; text: string }> = {
-      'enrichment': { bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' },
-      'campaign': { bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-400' },
-      'lead': { bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' },
-      'default': { bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' }
+      'enrichment': { bg: 'bg-lightprimary', text: 'text-primary' },
+      'campaign': { bg: 'bg-lightsuccess', text: 'text-success' },
+      'lead': { bg: 'bg-lightinfo dark:bg-darkinfo', text: 'text-info' },
+      'default': { bg: 'bg-lightprimary', text: 'text-primary' }
     }
     const colors = colorMap[activity.type] || colorMap.default
 
     return {
-      key: activity.id || activity.key,
+      key: activity.id?.toString() || activity.key,
       icon: iconName,
       title: activity.title,
       desc: activity.description || activity.desc || 'working on',
-      time: activity.time || activity.date || 'now',
+      time: activity.time || activity.date || '12:00 AM',
       bgColor: colors.bg,
       color: colors.text,
     }
   })
 
   return (
-    <SimpleBar className="max-h-[248px] pr-6">
-      <div className="flex flex-col gap-6">
-        {activities.map((item: any, i: number) => {
-          return (
-            <motion.div
-              key={item.key}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.5,
-                delay: i * 0.4,
-              }}
-              className="flex items-center justify-between"
-            >
-              <div className="flex gap-3 items-center">
-                <div
-                  className={`h-11 w-11 rounded-full ${item.bgColor} ${item.color} flex justify-center items-center`}
-                >
-                  <Icon icon={item.icon} className="text-xl" />
+    <Card>
+      <h4 className="card-title">Recent Activity</h4>
+      <p className="card-subtitle">Preparation for the upcoming activity</p>
+      <SimpleBar className="mt-10 max-h-[248px] pr-6">
+        <div className="flex flex-col gap-6">
+          {activities.map((item: any, i: number) => {
+            return (
+              <motion.div
+                key={item.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.5,
+                  delay: i * 0.4,
+                }}
+                className="flex items-center justify-between"
+              >
+                <div className="flex gap-3 items-center">
+                  <div
+                    className={`h-11 w-11 rounded-full ${item.bgColor} ${item.color} flex justify-center items-center`}
+                  >
+                    <Icon icon={item.icon} className="text-xl" />
+                  </div>
+                  <div>
+                    <h6 className="text-sm">{item.title}</h6>
+                    <p>{item.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h6 className="text-sm text-gray-900 dark:text-white">{item.title}</h6>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{item.time}</span>
-            </motion.div>
-          )
-        })}
-      </div>
-    </SimpleBar>
+                <span className="text-xs">{item.time}</span>
+              </motion.div>
+            )
+          })}
+        </div>
+      </SimpleBar>
+    </Card>
   )
 }
 
@@ -309,7 +318,7 @@ function TasksWidget({ widget, data }: { widget: DashboardWidget; data?: any }) 
     { id: 3, title: 'Schedule property viewing', due: 'In 2 days', priority: 'low', date: '23 August 2025', description: 'Schedule viewing for interested prospects', tasks: 0, comments: 1 }
   ]
 
-  // Transform API data to match TailwindAdmin structure
+  // Transform API data to match TailwindAdmin structure exactly
   const tasks = tasksData.map((task: any) => {
     // Map priority to status and badge color
     const statusMap: Record<string, { status: string; badgeColor: string }> = {
@@ -325,7 +334,7 @@ function TasksWidget({ widget, data }: { widget: DashboardWidget; data?: any }) 
     return {
       key: task.id?.toString() || task.key,
       status: task.status || statusInfo.status,
-      date: task.date || task.due || 'Today',
+      date: task.date || task.due || '21 August 2025',
       title: task.title,
       description: task.description || task.desc || '',
       tasks: task.tasks || 0,
@@ -335,51 +344,57 @@ function TasksWidget({ widget, data }: { widget: DashboardWidget; data?: any }) 
   })
 
   return (
-    <SimpleBar className="max-h-[500px]">
-      <div className="space-y-6">
-        {tasks.map((item: any, i: number) => (
-          <motion.div
-            key={item.key}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: i * 0.2 }}
-            className="pb-6 border-b last:border-none border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center justify-between">
-              <Badge
-                variant={item.badgeColor as BadgeProps["variant"]}
-                className="rounded-md py-1.5 text-sm"
-              >
-                {item.status}
-              </Badge>
-              <span className="text-sm text-gray-600 dark:text-gray-400">{item.date}</span>
-            </div>
-            <h6 className="mt-4 text-sm font-medium text-gray-900 dark:text-white">{item.title}</h6>
-            {item.description && (
-              <p className="pt-1 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
-            )}
-            <div className="flex gap-4 items-center mt-4">
-              <div className="flex gap-2 items-center text-sm text-gray-600 dark:text-gray-400">
-                <Icon
-                  icon="tabler:clipboard"
-                  className="text-lg text-blue-600 dark:text-blue-400"
-                  aria-label="task count"
-                />
-                <span>{`${item.tasks} Tasks`}</span>
-              </div>
-              <div className="flex gap-2 items-center text-sm text-gray-600 dark:text-gray-400">
-                <Icon
-                  icon="tabler:message-dots"
-                  className="text-lg text-blue-600 dark:text-blue-400"
-                  aria-label="comment count"
-                />
-                <span>{`${item.comments} Comments`}</span>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+    <Card className="h-full">
+      <div className="mb-5">
+        <h4 className="card-title">Tasks</h4>
+        <p className="card-subtitle">The power of prioritizing your tasks</p>
       </div>
-    </SimpleBar>
+      <SimpleBar className="max-h-[500px]">
+        <div className="space-y-6">
+          {tasks.map((item: any, i: number) => (
+            <motion.div
+              key={item.key}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: i * 0.2 }}
+              className="pb-6 border-b last:border-none border-border dark:border-darkborder"
+            >
+              <div className="flex items-center justify-between">
+                <Badge
+                  variant={item.badgeColor as BadgeProps["variant"]}
+                  className="rounded-md py-1.5 text-sm"
+                >
+                  {item.status}
+                </Badge>
+                <span className="text-sm">{item.date}</span>
+              </div>
+              <h6 className="mt-4 text-sm font-medium">{item.title}</h6>
+              {item.description && (
+                <p className="pt-1 line-clamp-2">{item.description}</p>
+              )}
+              <div className="flex gap-4 items-center mt-4">
+                <div className="flex gap-2 items-center">
+                  <Icon
+                    icon="tabler:clipboard"
+                    className="text-lg text-primary"
+                    aria-label="task count"
+                  />
+                  <span>{`${item.tasks} Tasks`}</span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <Icon
+                    icon="tabler:message-dots"
+                    className="text-lg text-primary"
+                    aria-label="comment count"
+                  />
+                  <span>{`${item.comments} Comments`}</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </SimpleBar>
+    </Card>
   )
 }
 

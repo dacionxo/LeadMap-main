@@ -1,5 +1,67 @@
 /* App page styles */
 
+/* TailwindAdmin utility classes */
+.card-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white;
+}
+
+.card-subtitle {
+  @apply text-sm text-gray-600 dark:text-gray-400 font-normal;
+}
+
+/* TailwindAdmin color classes */
+.bg-lightprimary {
+  background-color: color-mix(in oklab, var(--color-primary, #3b82f6) 12%, transparent);
+}
+
+.bg-lightsuccess {
+  background-color: color-mix(in oklab, var(--color-success, #10b981) 12%, transparent);
+}
+
+.bg-lightinfo {
+  background-color: color-mix(in oklab, var(--color-info, #3b82f6) 12%, transparent);
+}
+
+.bg-lightwarning {
+  background-color: color-mix(in oklab, var(--color-warning, #f59e0b) 12%, transparent);
+}
+
+.bg-lighterror {
+  background-color: color-mix(in oklab, var(--color-error, #ef4444) 12%, transparent);
+}
+
+.bg-darkinfo {
+  background-color: var(--color-muted, #f3f4f6);
+}
+
+.text-primary {
+  color: var(--color-primary, #3b82f6);
+}
+
+.text-success {
+  color: var(--color-success, #10b981);
+}
+
+.text-info {
+  color: var(--color-info, #3b82f6);
+}
+
+.text-warning {
+  color: var(--color-warning, #f59e0b);
+}
+
+.text-error {
+  color: var(--color-error, #ef4444);
+}
+
+.border-border {
+  border-color: var(--color-border, #e5e7eb);
+}
+
+.dark .border-darkborder {
+  border-color: var(--color-border, #e5e7eb);
+}
+
 /* React Big Calendar Styles */
 .rbc-event.event-azure {
   background-color: var(--color-primary, #3b82f6);
