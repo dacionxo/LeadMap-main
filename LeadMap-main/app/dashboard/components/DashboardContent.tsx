@@ -1,6 +1,5 @@
 'use client'
 
-import { Badge } from '@/app/components/ui/badge'
 import { cn } from '@/app/lib/utils'
 import { Icon } from '@iconify/react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
