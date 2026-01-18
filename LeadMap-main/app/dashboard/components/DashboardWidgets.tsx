@@ -2,47 +2,46 @@
 
 import { Badge, BadgeProps } from '@/app/components/ui/badge'
 import { Card } from '@/app/components/ui/card'
+import {
+    ChartConfig,
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/app/components/ui/chart'
 import { Icon } from '@iconify/react'
-import { ApexOptions } from 'apexcharts'
 import { motion } from 'framer-motion'
 import {
-  Activity,
-  ArrowRight,
-  BarChart3,
-  Briefcase,
-  Building2,
-  Calendar,
-  Clock,
-  DollarSign,
-  FileText,
-  GitBranch,
-  GripVertical,
-  LineChart,
-  Percent,
-  PieChart,
-  Search as SearchIcon,
-  Sparkles,
-  Target,
-  TrendingUp,
-  Upload,
-  Users,
-  X,
-  Zap
+    Activity,
+    ArrowRight,
+    BarChart3,
+    Briefcase,
+    Building2,
+    Calendar,
+    Clock,
+    DollarSign,
+    FileText,
+    GitBranch,
+    GripVertical,
+    LineChart,
+    Percent,
+    PieChart,
+    Search as SearchIcon,
+    Sparkles,
+    Target,
+    TrendingUp,
+    Upload,
+    Users,
+    X,
+    Zap
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
-import SimpleBar from 'simplebar-react'
-import 'simplebar-react/dist/simplebar.min.css'
-import { LabelList, Pie, PieChart as RechartsPieChart } from 'recharts'
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/app/components/ui/chart'
+import React from 'react'
 import { FunnelChart } from 'react-funnel-pipeline'
 import 'react-funnel-pipeline/dist/index.css'
+import { LabelList, Pie, PieChart as RechartsPieChart } from 'recharts'
+import SimpleBar from 'simplebar-react'
+import 'simplebar-react/dist/simplebar.min.css'
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false })
 
 export interface DashboardWidget {
