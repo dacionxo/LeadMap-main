@@ -254,7 +254,7 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
   }))
 
   // Find the maximum value for relative sizing
-  const maxValue = Math.max(...stages.map(s => s.value), 1)
+  const maxValue = Math.max(...stages.map((s: { name: string; value: number; percentage: number }) => s.value), 1)
 
   // Color mapping for stages
   const stageColors: Record<string, string> = {
