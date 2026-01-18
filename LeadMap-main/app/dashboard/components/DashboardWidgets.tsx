@@ -41,6 +41,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/app/components/ui/chart'
+import { FunnelChart } from 'react-funnel-pipeline'
+import 'react-funnel-pipeline/dist/index.css'
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false })
 
 export interface DashboardWidget {
@@ -253,24 +255,24 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
     { name: 'Closed', value: 0, percentage: 0 }
   ]
 
-  // Transform API data to match TailwindAdmin structure
-  const stages = stagesData.map((stage: any) => ({
-    name: stage.name,
-    value: stage.value || 0,
-    percentage: stage.percentage || 0
-  }))
+  // Transform API data to match react-funnel-pipeline format
+  // The FunnelChart expects an array of objects with 'name' and 'value' properties
+  const funnelData = stagesData
+    .filter((stage: any) => stage.value > 0) // Filter out stages with 0 values for better visualization
+    .map((stage: any) => ({
+      name: stage.name,
+      value: stage.value || 0
+    }))
 
-  // Find the maximum value for relative sizing
-  const maxValue = Math.max(...stages.map((s: { name: string; value: number; percentage: number }) => s.value), 1)
-
-  // Color mapping for stages
-  const stageColors: Record<string, string> = {
-    'New': 'bg-primary',
-    'Contacted': 'bg-secondary',
-    'Qualified': 'bg-success',
-    'Proposal': 'bg-warning',
-    'Closed': 'bg-info'
-  }
+  // Color palette matching TailwindAdmin theme
+  // react-funnel-pipeline expects hex color strings
+  const colorPalette = [
+    '#3b82f6',  // New - primary blue
+    '#49beff',  // Contacted - secondary blue
+    '#10b981',  // Qualified - green
+    '#f59e0b',  // Proposal - orange
+    '#8b5cf6'   // Closed - purple
+  ]
 
   return (
     <Card className="h-full">
@@ -278,49 +280,15 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
         <h4 className="card-title">Pipeline Funnel</h4>
         <p className="card-subtitle">Deal progression through stages</p>
       </div>
-      <div className="flex flex-col gap-3">
-        {stages.map((stage: any, index: number) => {
-          const widthPercentage = maxValue > 0 ? (stage.value / maxValue) * 100 : 0
-          const color = stageColors[stage.name] || 'bg-primary'
-          
-          return (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground dark:text-white">{stage.name}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-foreground dark:text-white">{stage.value}</span>
-                  <span className="text-xs text-muted-foreground">({stage.percentage}%)</span>
-                </div>
-              </div>
-              <div className="relative w-full">
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden" style={{ height: '32px' }}>
-                  <div
-                    className={`h-full ${color} rounded-md transition-all duration-500 flex items-center justify-end pr-3`}
-                    style={{ width: `${widthPercentage}%` }}
-                  >
-                    {widthPercentage > 10 && (
-                      <span className="text-xs font-medium text-white">{stage.value}</span>
-                    )}
-                  </div>
-                </div>
-                {/* Funnel shape effect - narrower at bottom */}
-                <div
-                  className="absolute top-0 left-0 h-full pointer-events-none"
-                  style={{
-                    clipPath: `polygon(0% 0%, ${100 - (index * 5)}% 0%, ${100 - ((index + 1) * 5)}% 100%, 0% 100%)`,
-                    opacity: 0.1
-                  }}
-                />
-              </div>
-            </motion.div>
-          )
-        })}
+      <div className="w-full">
+        <FunnelChart
+          data={funnelData.length > 0 ? funnelData : [{ name: 'No Data', value: 1 }]}
+          pallette={colorPalette}
+          showValues={true}
+          showNames={true}
+          chartWidth={undefined} // Use full width of container
+          chartHeight={400}
+        />
       </div>
     </Card>
   )
