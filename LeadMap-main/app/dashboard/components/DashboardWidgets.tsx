@@ -425,9 +425,10 @@ function DealStageDistributionWidget({ widget, data }: { widget: DashboardWidget
                   className='fill-link'
                   stroke='none'
                   fontSize={12}
-                  formatter={(value: keyof typeof chartConfig) =>
-                    chartConfig[value]?.label
-                  }
+                  formatter={(value: any) => {
+                    const key = value as keyof typeof chartConfig
+                    return chartConfig[key]?.label || value
+                  }}
                 />
               </Pie>
             </RechartsPieChart>
