@@ -484,69 +484,65 @@ export default function DashboardContent() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="bg-gray-900 dark:bg-gray-900 py-12 sm:py-16 rounded-lg">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-3">
-              <h2 className="text-lg font-semibold text-white dark:text-white">Key Metrics</h2>
-              <button
-                onClick={handleManualRefresh}
-                disabled={refreshing || loading}
-                className="p-1.5 text-gray-400 dark:text-gray-400 hover:text-white dark:hover:text-white hover:bg-gray-800 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Refresh data"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
-              {lastUpdated && (
-                <span className="text-xs text-gray-500 dark:text-gray-500">
-                  Updated: {lastUpdated.toLocaleTimeString()}
-                </span>
-              )}
-            </div>
-            <button
-              onClick={() => router.push('/dashboard/prospect-enrich')}
-              className="text-sm text-blue-400 dark:text-blue-400 hover:text-blue-300 dark:hover:text-blue-300 hover:underline flex items-center space-x-1"
-            >
-              <span>View All</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
+          {error}
+        </div>
+      )}
+      <div className="container mx-auto p-6">
+        {/* Grid of Cards */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40"></div>
+              </div>
+            ))}
           </div>
-          {error && (
-            <div className="mb-6 p-3 bg-red-900/20 dark:bg-red-900/20 border border-red-800 dark:border-red-800 rounded text-sm text-red-400 dark:text-red-400">
-              {error}
-            </div>
-          )}
-          {loading ? (
-            <dl className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-                <div key={i} className="mx-auto flex max-w-xs flex-col gap-y-4 animate-pulse">
-                  <dt className="text-base/7 text-gray-400 dark:text-gray-400 h-5 bg-gray-800 dark:bg-gray-800 rounded w-24 mx-auto"></dt>
-                  <dd className="order-first text-3xl font-semibold tracking-tight text-white dark:text-white sm:text-5xl h-12 bg-gray-800 dark:bg-gray-800 rounded w-32 mx-auto"></dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <dl className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
-              {metrics.map((metric) => (
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            {metrics.map((metric) => {
+              // Determine color based on metric type
+              const getValueColor = () => {
+                if (metric.label.includes('Total Prospects') || metric.label.includes('Active Deals')) return 'text-blue-600 dark:text-blue-400'
+                if (metric.label.includes('Active Listings') || metric.label.includes('Pipeline Value')) return 'text-green-600 dark:text-green-400'
+                if (metric.label.includes('Enriched Leads') || metric.label.includes('Conversion Rate')) return 'text-purple-600 dark:text-purple-400'
+                if (metric.label.includes('Avg Property Value')) return 'text-green-600 dark:text-green-400'
+                if (metric.label.includes('Expired Listings')) return 'text-red-600 dark:text-red-400'
+                if (metric.label.includes('Probate Leads')) return 'text-indigo-600 dark:text-indigo-400'
+                return 'text-orange-600 dark:text-orange-400'
+              }
+
+              // Format trend indicator
+              const getTrendIndicator = () => {
+                if (!metric.change && metric.trend === 'neutral') return null
+                if (!metric.change) return null
+                const isUp = metric.trend === 'up'
+                const isDown = metric.trend === 'down'
+                const arrow = isUp ? '↑' : isDown ? '↓' : ''
+                return `${arrow} ${metric.change} from last month`
+              }
+
+              const trendText = getTrendIndicator()
+
+              return (
                 <div 
                   key={metric.label} 
-                  className="mx-auto flex max-w-xs flex-col gap-y-4 cursor-pointer hover:opacity-80 transition-opacity"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition duration-300 cursor-pointer"
                   onClick={() => router.push('/dashboard/prospect-enrich')}
                 >
-                  <dt className="text-base/7 text-gray-400 dark:text-gray-400">{metric.label}</dt>
-                  <dd className="order-first text-3xl font-semibold tracking-tight text-white dark:text-white sm:text-5xl">
-                    {metric.value}
-                    {metric.change && (
-                      <span className={`ml-2 text-lg ${metric.trend === 'up' ? 'text-green-400 dark:text-green-400' : metric.trend === 'down' ? 'text-red-400 dark:text-red-400' : 'text-gray-400 dark:text-gray-400'}`}>
-                        {metric.change}
-                      </span>
-                    )}
-                  </dd>
+                  <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{metric.label}</h2>
+                  <p className={`text-3xl font-bold ${getValueColor()}`}>{metric.value}</p>
+                  {trendText && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{trendText}</p>
+                  )}
                 </div>
-              ))}
-            </dl>
-          )}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Quick Actions & Recent Activity */}
