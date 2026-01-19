@@ -67,7 +67,11 @@ export function WidgetContainer({ widget, onRemove, isEditable = false, data }: 
   const Icon = widget.icon
   
   // Components that have their own Card wrapper with title (1-to-1 TailwindAdmin match)
-  const hasOwnCard = widget.id === 'recent-activity' || widget.id === 'upcoming-tasks' || widget.id === 'pipeline-funnel' || widget.id === 'deal-stage-distribution'
+  const hasOwnCard = widget.id === 'recent-activity' || 
+                     widget.id === 'upcoming-tasks' || 
+                     widget.id === 'pipeline-funnel' || 
+                     widget.id === 'deal-stage-distribution' ||
+                     widget.type === 'metric' // Metric widgets have their own card styling
   
   return (
     <div className={`relative ${hasOwnCard ? '' : 'bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6'} hover:shadow-lg transition-all duration-200 ${
@@ -103,6 +107,59 @@ export function WidgetContainer({ widget, onRemove, isEditable = false, data }: 
 }
 
 // Widget Components - NextDeal Specific
+function ProspectMetricsWidget({ widget, data }: { widget: DashboardWidget; data?: any }) {
+  const value = data?.value || 0
+  const change = data?.change || '+0%'
+  const trend = data?.trend || 'neutral'
+  
+  // Determine color based on widget title - using TailwindAdmin color patterns
+  const getValueColor = () => {
+    const title = widget.title.toLowerCase()
+    if (title.includes('total prospects') || title.includes('active deals')) {
+      return 'text-primary'
+    }
+    if (title.includes('active listings') || title.includes('pipeline value')) {
+      return 'text-success'
+    }
+    if (title.includes('enriched leads') || title.includes('conversion rate')) {
+      return 'text-secondary'
+    }
+    if (title.includes('avg property value')) {
+      return 'text-warning'
+    }
+    if (title.includes('expired listings')) {
+      return 'text-error'
+    }
+    if (title.includes('probate leads')) {
+      return 'text-info'
+    }
+    if (title.includes('win rate')) {
+      return 'text-warning'
+    }
+    return 'text-body'
+  }
+
+  // Format trend indicator
+  const getTrendText = () => {
+    if (!change || change === '+0%' || trend === 'neutral') {
+      return '+0% from last month'
+    }
+    const arrow = trend === 'up' ? '↑' : trend === 'down' ? '↓' : ''
+    return `${arrow} ${change} from last month`
+  }
+
+  const formattedValue = typeof value === 'number' ? value.toLocaleString() : value
+  const trendText = getTrendText()
+
+  return (
+    <div className="rounded-[10px] bg-white dark:bg-gray-dark shadow-1 dark:shadow-card p-6 hover:shadow-lg transition-all duration-300">
+      <h2 className="text-xl font-semibold text-dark dark:text-white mb-2">{widget.title}</h2>
+      <p className={`text-3xl font-bold ${getValueColor()}`}>{formattedValue}</p>
+      <p className="text-sm text-body dark:text-gray-400 mt-2">{trendText}</p>
+    </div>
+  )
+}
+
 function QuickActionsWidget({ widget }: { widget: DashboardWidget; data?: any }) {
   const router = useRouter()
   
@@ -623,6 +680,108 @@ function SalesEfficiencyWidget({ widget, data }: { widget: DashboardWidget; data
 
 // Available Widgets Registry - NextDeal Specific
 export const availableWidgets: DashboardWidget[] = [
+  // Core Metrics
+  {
+    id: 'total-prospects',
+    type: 'metric',
+    title: 'Total Prospects',
+    icon: Users,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'prospects',
+    size: 'small'
+  },
+  {
+    id: 'active-listings',
+    type: 'metric',
+    title: 'Active Listings',
+    icon: Building2,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'prospects',
+    size: 'small'
+  },
+  {
+    id: 'enriched-leads',
+    type: 'metric',
+    title: 'Enriched Leads',
+    icon: Sparkles,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'prospects',
+    size: 'small'
+  },
+  {
+    id: 'avg-property-value',
+    type: 'metric',
+    title: 'Avg Property Value',
+    icon: DollarSign,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'metrics',
+    size: 'small'
+  },
+  {
+    id: 'expired-listings',
+    type: 'metric',
+    title: 'Expired Listings',
+    icon: Clock,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'prospects',
+    size: 'small'
+  },
+  {
+    id: 'probate-leads',
+    type: 'metric',
+    title: 'Probate Leads',
+    icon: FileText,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'prospects',
+    size: 'small'
+  },
+  // CRM Metrics
+  {
+    id: 'active-deals',
+    type: 'metric',
+    title: 'Active Deals',
+    icon: Briefcase,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'crm',
+    size: 'small'
+  },
+  {
+    id: 'pipeline-value',
+    type: 'metric',
+    title: 'Pipeline Value',
+    icon: DollarSign,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'crm',
+    size: 'small'
+  },
+  {
+    id: 'conversion-rate',
+    type: 'metric',
+    title: 'Conversion Rate',
+    icon: Percent,
+    component: ProspectMetricsWidget,
+    defaultEnabled: true,
+    category: 'crm',
+    size: 'small'
+  },
+  {
+    id: 'win-rate',
+    type: 'metric',
+    title: 'Win Rate',
+    icon: Target,
+    component: ProspectMetricsWidget,
+    defaultEnabled: false,
+    category: 'crm',
+    size: 'small'
+  },
   // Activity Widgets
   {
     id: 'recent-activity',
