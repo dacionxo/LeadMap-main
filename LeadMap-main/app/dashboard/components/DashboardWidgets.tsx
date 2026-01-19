@@ -86,7 +86,7 @@ export function WidgetContainer({ widget, onRemove, isEditable = false, data }: 
     widget.type === 'metric' // Metric widgets have their own card styling
 
   return (
-    <div className={`relative ${hasOwnCard ? '' : 'bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6'} hover:shadow-lg transition-all duration-200 ${widget.size === 'large' ? 'col-span-2' : ''
+    <div className={`relative h-full ${hasOwnCard ? '' : 'bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6'} hover:shadow-lg transition-all duration-200 ${widget.size === 'large' ? 'col-span-2' : ''
       }`}>
       {isEditable && (
         <>
@@ -155,7 +155,7 @@ function ProspectMetricsWidget({ widget, data }: { widget: DashboardWidget; data
   return (
     <div className="relative bg-white dark:bg-gray-900 rounded-lg border-[1.5px] border-teal-500 dark:border-teal-600 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden p-6">
       {/* Header Section */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white">
             {widget.title}
@@ -200,8 +200,8 @@ function ProspectMetricsWidget({ widget, data }: { widget: DashboardWidget; data
         </DropdownMenu>
       </div>
 
-      {/* Main Content Area */}
-      <div className="mt-4">
+      {/* Main Content Area - Centered */}
+      <div className="mt-4 text-center">
         <div className="mb-2">
           <p className="text-4xl font-bold text-gray-900 dark:text-white leading-tight tracking-tight">
             {formattedValue}

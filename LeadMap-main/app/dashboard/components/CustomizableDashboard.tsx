@@ -5,6 +5,11 @@ import { Plus, Settings2, Save, RefreshCw } from 'lucide-react'
 import { availableWidgets, WidgetContainer, DashboardWidget } from './DashboardWidgets'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useApp } from '@/app/providers'
+import { Responsive, WidthProvider } from 'react-grid-layout'
+import 'react-grid-layout/css/styles.css'
+import 'react-resizable/css/styles.css'
+
+const ResponsiveGridLayout = WidthProvider(Responsive)
 
 export default function CustomizableDashboard() {
   const { profile } = useApp()
@@ -12,6 +17,7 @@ export default function CustomizableDashboard() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [enabledWidgets, setEnabledWidgets] = useState<string[]>([])
   const [widgetPositions, setWidgetPositions] = useState<Record<string, number>>({})
+  const [layouts, setLayouts] = useState<any>({ lg: [] })
   const [showAddWidget, setShowAddWidget] = useState(false)
   const [widgetData, setWidgetData] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(true)
@@ -376,6 +382,31 @@ export default function CustomizableDashboard() {
     fetchWidgetData(false)
   }
 
+  const initializeLayouts = (widgetIds: string[]) => {
+    const defaultLayouts: any = { lg: [] }
+    widgetIds.forEach((widgetId, index) => {
+      const widget = availableWidgets.find(w => w.id === widgetId)
+      if (widget) {
+        const colCount = 12 // 12-column grid
+        const cols = widget.size === 'large' ? 6 : 4 // Large: 2 cols, Small/Medium: 1 col
+        const rows = widget.size === 'large' ? 4 : 3
+        const x = (index * cols) % colCount
+        const y = Math.floor((index * cols) / colCount) * rows
+        
+        defaultLayouts.lg.push({
+          i: widgetId,
+          x,
+          y,
+          w: cols,
+          h: rows,
+          minW: 4,
+          minH: 3,
+        })
+      }
+    })
+    setLayouts(defaultLayouts)
+  }
+
   const loadDashboardConfig = async () => {
     if (!profile?.id) return
 
@@ -391,12 +422,20 @@ export default function CustomizableDashboard() {
         const config = data.dashboard_config
         setEnabledWidgets(config.enabledWidgets || [])
         setWidgetPositions(config.positions || {})
+        // Load grid layouts if available
+        if (config.layouts) {
+          setLayouts(config.layouts)
+        } else {
+          // Initialize layouts from enabled widgets
+          initializeLayouts(config.enabledWidgets || [])
+        }
       } else {
         // Default configuration
         const defaultWidgets = availableWidgets
           .filter(w => w.defaultEnabled)
           .map(w => w.id)
         setEnabledWidgets(defaultWidgets)
+        initializeLayouts(defaultWidgets)
       }
     } catch (error) {
       console.error('Error loading dashboard config:', error)
@@ -405,6 +444,7 @@ export default function CustomizableDashboard() {
         .filter(w => w.defaultEnabled)
         .map(w => w.id)
       setEnabledWidgets(defaultWidgets)
+      initializeLayouts(defaultWidgets)
     }
   }
 
@@ -415,6 +455,7 @@ export default function CustomizableDashboard() {
       const config = {
         enabledWidgets,
         positions: widgetPositions,
+        layouts, // Save grid layouts
         updatedAt: new Date().toISOString()
       }
 
@@ -433,9 +474,38 @@ export default function CustomizableDashboard() {
     }
   }
 
+  const handleLayoutChange = (layout: any, layouts: any) => {
+    setLayouts(layouts)
+  }
+
   const addWidget = (widgetId: string) => {
     if (!enabledWidgets.includes(widgetId)) {
-      setEnabledWidgets([...enabledWidgets, widgetId])
+      const newEnabledWidgets = [...enabledWidgets, widgetId]
+      setEnabledWidgets(newEnabledWidgets)
+      
+      // Add new widget to layout
+      const widget = availableWidgets.find(w => w.id === widgetId)
+      if (widget) {
+        const newLayouts = { ...layouts }
+        if (!newLayouts.lg) newLayouts.lg = []
+        
+        // Find position for new widget (place at end)
+        const cols = widget.size === 'large' ? 6 : 4
+        const rows = widget.size === 'large' ? 4 : 3
+        const maxY = Math.max(...newLayouts.lg.map((item: any) => item.y + item.h), 0)
+        
+        newLayouts.lg.push({
+          i: widgetId,
+          x: 0,
+          y: maxY,
+          w: cols,
+          h: rows,
+          minW: 4,
+          minH: 3,
+        })
+        
+        setLayouts(newLayouts)
+      }
     }
     setShowAddWidget(false)
   }
@@ -445,7 +515,15 @@ export default function CustomizableDashboard() {
     const newPositions = { ...widgetPositions }
     delete newPositions[widgetId]
     setWidgetPositions(newPositions)
+    
+    // Remove widget from layout
+    const newLayouts = { ...layouts }
+    if (newLayouts.lg) {
+      newLayouts.lg = newLayouts.lg.filter((item: any) => item.i !== widgetId)
+      setLayouts(newLayouts)
+    }
   }
+
 
   const getEnabledWidgets = () => {
     return availableWidgets
@@ -570,17 +648,29 @@ export default function CustomizableDashboard() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={layouts}
+          onLayoutChange={handleLayoutChange}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          rowHeight={80}
+          isDraggable={isEditMode}
+          isResizable={isEditMode}
+          margin={[16, 16]}
+          containerPadding={[0, 0]}
+        >
           {getEnabledWidgets().map(widget => (
-            <WidgetContainer
-              key={widget.id}
-              widget={widget}
-              onRemove={isEditMode ? removeWidget : undefined}
-              isEditable={isEditMode}
-              data={widgetData[widget.id]}
-            />
+            <div key={widget.id} className="h-full">
+              <WidgetContainer
+                widget={widget}
+                onRemove={isEditMode ? removeWidget : undefined}
+                isEditable={isEditMode}
+                data={widgetData[widget.id]}
+              />
+            </div>
           ))}
-        </div>
+        </ResponsiveGridLayout>
       )}
 
       {getEnabledWidgets().length === 0 && (
