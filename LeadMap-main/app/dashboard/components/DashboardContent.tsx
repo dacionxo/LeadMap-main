@@ -489,59 +489,143 @@ export default function DashboardContent() {
           {error}
         </div>
       )}
-      <div className="container mx-auto p-6">
-        {/* Grid of Cards */}
+      
+      {/* Stats Cards Grid */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 animate-pulse">
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
-                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40"></div>
+              <div key={i} className="rounded-[10px] bg-white dark:bg-gray-dark shadow-1 dark:shadow-card p-6 animate-pulse">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                  <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
               </div>
             ))}
-          </div>
+          </>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {metrics.map((metric) => {
-              // Determine color based on metric type
-              const getValueColor = () => {
-                if (metric.label.includes('Total Prospects') || metric.label.includes('Active Deals')) return 'text-blue-600 dark:text-blue-400'
-                if (metric.label.includes('Active Listings') || metric.label.includes('Pipeline Value')) return 'text-green-600 dark:text-green-400'
-                if (metric.label.includes('Enriched Leads') || metric.label.includes('Conversion Rate')) return 'text-purple-600 dark:text-purple-400'
-                if (metric.label.includes('Avg Property Value')) return 'text-green-600 dark:text-green-400'
-                if (metric.label.includes('Expired Listings')) return 'text-red-600 dark:text-red-400'
-                if (metric.label.includes('Probate Leads')) return 'text-indigo-600 dark:text-indigo-400'
-                return 'text-orange-600 dark:text-orange-400'
+          metrics.map((metric) => {
+            const Icon = metric.icon
+            
+            // Determine colors based on metric type
+            const getCardStyles = () => {
+              if (metric.label.includes('Total Prospects') || metric.label.includes('Active Deals')) {
+                return {
+                  iconBg: 'bg-blue-50 dark:bg-blue-900/20',
+                  iconColor: 'text-blue-600 dark:text-blue-400',
+                  valueColor: 'text-blue-600 dark:text-blue-400',
+                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
+                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }
               }
-
-              // Format trend indicator
-              const getTrendIndicator = () => {
-                if (!metric.change && metric.trend === 'neutral') return null
-                if (!metric.change) return null
-                const isUp = metric.trend === 'up'
-                const isDown = metric.trend === 'down'
-                const arrow = isUp ? '↑' : isDown ? '↓' : ''
-                return `${arrow} ${metric.change} from last month`
+              if (metric.label.includes('Active Listings') || metric.label.includes('Pipeline Value')) {
+                return {
+                  iconBg: 'bg-green-50 dark:bg-green-900/20',
+                  iconColor: 'text-green-600 dark:text-green-400',
+                  valueColor: 'text-green-600 dark:text-green-400',
+                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
+                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }
               }
+              if (metric.label.includes('Enriched Leads') || metric.label.includes('Conversion Rate')) {
+                return {
+                  iconBg: 'bg-purple-50 dark:bg-purple-900/20',
+                  iconColor: 'text-purple-600 dark:text-purple-400',
+                  valueColor: 'text-purple-600 dark:text-purple-400',
+                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
+                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }
+              }
+              if (metric.label.includes('Avg Property Value')) {
+                return {
+                  iconBg: 'bg-orange-50 dark:bg-orange-900/20',
+                  iconColor: 'text-orange-600 dark:text-orange-400',
+                  valueColor: 'text-orange-600 dark:text-orange-400',
+                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
+                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }
+              }
+              if (metric.label.includes('Expired Listings')) {
+                return {
+                  iconBg: 'bg-red-50 dark:bg-red-900/20',
+                  iconColor: 'text-red-600 dark:text-red-400',
+                  valueColor: 'text-red-600 dark:text-red-400',
+                  badgeBg: metric.trend === 'up' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
+                           metric.trend === 'down' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }
+              }
+              if (metric.label.includes('Probate Leads')) {
+                return {
+                  iconBg: 'bg-indigo-50 dark:bg-indigo-900/20',
+                  iconColor: 'text-indigo-600 dark:text-indigo-400',
+                  valueColor: 'text-indigo-600 dark:text-indigo-400',
+                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
+                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }
+              }
+              return {
+                iconBg: 'bg-gray-50 dark:bg-gray-700',
+                iconColor: 'text-gray-600 dark:text-gray-400',
+                valueColor: 'text-gray-900 dark:text-white',
+                badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                         metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
+                         'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+              }
+            }
 
-              const trendText = getTrendIndicator()
+            const styles = getCardStyles()
+            const trendIcon = metric.trend === 'up' ? '↑' : metric.trend === 'down' ? '↓' : ''
+            const displayChange = metric.change || '+0%'
 
-              return (
-                <div 
-                  key={metric.label} 
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition duration-300 cursor-pointer"
-                  onClick={() => router.push('/dashboard/prospect-enrich')}
-                >
-                  <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{metric.label}</h2>
-                  <p className={`text-3xl font-bold ${getValueColor()}`}>{metric.value}</p>
-                  {trendText && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{trendText}</p>
-                  )}
+            return (
+              <div
+                key={metric.label}
+                className="rounded-[10px] bg-white dark:bg-gray-dark shadow-1 dark:shadow-card p-6 hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700"
+                onClick={() => router.push('/dashboard/prospect-enrich')}
+              >
+                {/* Header with Icon */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${styles.iconBg}`}>
+                    <Icon className={`w-6 h-6 ${styles.iconColor}`} />
+                  </div>
                 </div>
-              )
-            })}
-          </div>
+
+                {/* Value */}
+                <div className="mb-2">
+                  <h3 className={`text-3xl font-bold ${styles.valueColor} leading-tight`}>
+                    {metric.value}
+                  </h3>
+                </div>
+
+                {/* Label */}
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+                  {metric.label}
+                </p>
+
+                {/* Trend Indicator */}
+                <div className="flex items-center gap-1">
+                  <span className={`text-sm font-medium ${
+                    metric.trend === 'up' ? 'text-green-600 dark:text-green-400' : 
+                    metric.trend === 'down' ? 'text-red-600 dark:text-red-400' : 
+                    'text-gray-600 dark:text-gray-400'
+                  }`}>
+                    {trendIcon} {displayChange}
+                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-500">
+                    from last month
+                  </span>
+                </div>
+              </div>
+            )
+          })
         )}
       </div>
 
