@@ -155,49 +155,54 @@ function ProspectMetricsWidget({ widget, data }: { widget: DashboardWidget; data
   return (
     <div className="relative bg-white dark:bg-gray-900 rounded-lg border-[1.5px] border-teal-500 dark:border-teal-600 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden p-6">
       {/* Header Section */}
-      <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="relative flex items-center justify-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+        {/* Filter button - positioned on left */}
+        <button
+          onClick={handleFilterClick}
+          className="absolute left-0 p-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+          aria-label="Filter"
+        >
+          <Filter className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+        </button>
+
+        {/* Title - centered */}
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white text-center">
             {widget.title}
           </h3>
-          <button
-            onClick={handleFilterClick}
-            className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-            aria-label="Filter"
-          >
-            <Filter className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
-        {/* Three-dot menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              aria-label="Widget options"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreVertical className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>Widget Options</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleFilterClick}>
-              <Filter className="w-4 h-4 mr-2" />
-              Filter Data
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings2 className="w-4 h-4 mr-2" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Three-dot menu - positioned on right */}
+        <div className="absolute right-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                aria-label="Widget options"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Widget Options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleFilterClick}>
+                <Filter className="w-4 h-4 mr-2" />
+                Filter Data
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings2 className="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Main Content Area - Centered */}
