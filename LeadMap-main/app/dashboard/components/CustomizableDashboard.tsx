@@ -388,8 +388,33 @@ export default function CustomizableDashboard() {
       const widget = availableWidgets.find(w => w.id === widgetId)
       if (widget) {
         const colCount = 12 // 12-column grid
-        const cols = widget.size === 'large' ? 6 : 4 // Large: 2 cols, Small/Medium: 1 col
-        const rows = widget.size === 'large' ? 3 : 2 // Reduced heights: Large: 3 rows, Small/Medium: 2 rows
+        // Determine widget dimensions based on size and type
+        let cols = 4 // Default: 1 column (4/12)
+        let rows = 3 // Default: 3 rows
+        
+        if (widget.size === 'large') {
+          cols = 6 // Large: 2 columns (6/12)
+          rows = 4 // Large widgets need more height
+        } else if (widget.size === 'medium') {
+          cols = 4 // Medium: 1 column (4/12)
+          rows = 4 // Medium widgets (charts, activity) need more height
+        } else {
+          // Small widgets (metrics)
+          cols = 4
+          rows = 2 // Small widgets are compact
+        }
+        
+        // Special cases for specific widgets
+        if (widget.id === 'recent-activity' || widget.id === 'upcoming-tasks') {
+          rows = 5 // Activity widgets need more vertical space
+        } else if (widget.id === 'pipeline-funnel' || widget.id === 'deal-stage-distribution') {
+          rows = 5 // Chart widgets need more height
+        } else if (widget.id === 'quick-actions') {
+          rows = 3 // Quick actions can be more compact
+        } else if (widget.id === 'performance-overview') {
+          rows = 5 // Performance chart needs more space
+        }
+        
         const x = (index * cols) % colCount
         const y = Math.floor((index * cols) / colCount) * rows
         
@@ -489,9 +514,32 @@ export default function CustomizableDashboard() {
         const newLayouts = { ...layouts }
         if (!newLayouts.lg) newLayouts.lg = []
         
-        // Find position for new widget (place at end)
-        const cols = widget.size === 'large' ? 6 : 4
-        const rows = widget.size === 'large' ? 3 : 2 // Reduced heights: Large: 3 rows, Small/Medium: 2 rows
+        // Determine widget dimensions based on size and type
+        let cols = 4
+        let rows = 3
+        
+        if (widget.size === 'large') {
+          cols = 6
+          rows = 4
+        } else if (widget.size === 'medium') {
+          cols = 4
+          rows = 4
+        } else {
+          cols = 4
+          rows = 2
+        }
+        
+        // Special cases for specific widgets
+        if (widget.id === 'recent-activity' || widget.id === 'upcoming-tasks') {
+          rows = 5
+        } else if (widget.id === 'pipeline-funnel' || widget.id === 'deal-stage-distribution') {
+          rows = 5
+        } else if (widget.id === 'quick-actions') {
+          rows = 3
+        } else if (widget.id === 'performance-overview') {
+          rows = 5
+        }
+        
         const maxY = Math.max(...newLayouts.lg.map((item: any) => item.y + item.h), 0)
         
         newLayouts.lg.push({
@@ -654,10 +702,10 @@ export default function CustomizableDashboard() {
           onLayoutChange={handleLayoutChange}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
           cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-          rowHeight={70}
+          rowHeight={90}
           isDraggable={isEditMode}
           isResizable={isEditMode}
-          margin={[8, 8]}
+          margin={[12, 12]}
           containerPadding={[0, 0]}
         >
           {getEnabledWidgets().map(widget => (

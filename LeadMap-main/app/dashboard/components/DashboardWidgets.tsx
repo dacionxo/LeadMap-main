@@ -316,7 +316,7 @@ function RecentActivityWidget({ widget, data }: { widget: DashboardWidget; data?
         <h4 className="card-title">Recent Activity</h4>
         <p className="card-subtitle">Preparation for the upcoming activity</p>
       </div>
-      <SimpleBar className="flex-1 max-h-[200px] pr-4">
+      <SimpleBar className="flex-1 max-h-[320px] pr-4">
         <div className="flex flex-col gap-4">
           {activities.map((item: any, i: number) => {
             return (
@@ -386,14 +386,14 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
         <h4 className="card-title">Pipeline Funnel</h4>
         <p className="card-subtitle">Deal progression through stages</p>
       </div>
-      <div className="w-full flex-1 flex items-center">
+      <div className="w-full flex-1 flex items-center min-h-0">
         <FunnelChart
           data={funnelData.length > 0 ? funnelData : [{ name: 'No Data', value: 1 }]}
           pallette={colorPalette}
           showValues={true}
           showNames={true}
           chartWidth={undefined} // Use full width of container
-          chartHeight={200}
+          chartHeight={280}
         />
       </div>
     </Card>
@@ -485,7 +485,7 @@ function DealStageDistributionWidget({ widget, data }: { widget: DashboardWidget
         <p className="card-subtitle">Breakdown of deals by stage</p>
       </div>
       <div className="flex flex-col gap-3 flex-1 min-h-0">
-        <div className="h-[150px]">
+        <div className="h-[180px]">
           <ChartContainer
             config={chartConfig}
             className='h-full [&_.recharts-text]:fill-background'>
@@ -508,7 +508,7 @@ function DealStageDistributionWidget({ widget, data }: { widget: DashboardWidget
             </RechartsPieChart>
           </ChartContainer>
         </div>
-        <div className="flex flex-col gap-2 overflow-y-auto max-h-[120px]">
+        <div className="flex flex-col gap-2 overflow-y-auto max-h-[140px]">
           {stages.map((stage: any, index: number) => {
             const colorMap = [
               'var(--color-chart-1, #3b82f6)',
@@ -593,7 +593,7 @@ function TasksWidget({ widget, data }: { widget: DashboardWidget; data?: any }) 
         <h4 className="card-title">Tasks</h4>
         <p className="card-subtitle">The power of prioritizing your tasks</p>
       </div>
-      <SimpleBar className="flex-1 max-h-[200px]">
+      <SimpleBar className="flex-1 max-h-[320px]">
         <div className="space-y-4">
           {tasks.map((item: any, i: number) => (
             <motion.div
