@@ -234,27 +234,32 @@ function QuickActionsWidget({ widget }: { widget: DashboardWidget; data?: any })
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {actions.map((action) => {
-        const Icon = action.icon
-        return (
-          <button
-            key={action.id}
-            onClick={() => router.push(action.href)}
-            className="p-3 text-left bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 group"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div className={`p-2 rounded-lg bg-gradient-to-br ${action.gradient} shadow-md group-hover:scale-110 transition-transform duration-200`}>
-                <Icon className="w-4 h-4 text-white" />
+    <Card className="h-full flex flex-col">
+      <div className="mb-3">
+        <h4 className="card-title">Quick Actions</h4>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-1">
+        {actions.map((action) => {
+          const Icon = action.icon
+          return (
+            <button
+              key={action.id}
+              onClick={() => router.push(action.href)}
+              className="p-2 text-left bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 group"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className={`p-2 rounded-lg bg-gradient-to-br ${action.gradient} shadow-md group-hover:scale-110 transition-transform duration-200`}>
+                  <Icon className="w-4 h-4 text-white" />
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-1 transition-all duration-200" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-1 transition-all duration-200" />
-            </div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{action.title}</h4>
-            <p className="text-xs text-gray-600 dark:text-gray-400">{action.description}</p>
-          </button>
-        )
-      })}
-    </div>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{action.title}</h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400">{action.description}</p>
+            </button>
+          )
+        })}
+      </div>
+    </Card>
   )
 }
 
@@ -306,11 +311,13 @@ function RecentActivityWidget({ widget, data }: { widget: DashboardWidget; data?
   })
 
   return (
-    <Card>
-      <h4 className="card-title">Recent Activity</h4>
-      <p className="card-subtitle">Preparation for the upcoming activity</p>
-      <SimpleBar className="mt-10 max-h-[248px] pr-6">
-        <div className="flex flex-col gap-6">
+    <Card className="h-full flex flex-col">
+      <div className="mb-3">
+        <h4 className="card-title">Recent Activity</h4>
+        <p className="card-subtitle">Preparation for the upcoming activity</p>
+      </div>
+      <SimpleBar className="flex-1 max-h-[200px] pr-4">
+        <div className="flex flex-col gap-4">
           {activities.map((item: any, i: number) => {
             return (
               <motion.div
@@ -374,19 +381,19 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
   ]
 
   return (
-    <Card className="h-full">
-      <div className="mb-5">
+    <Card className="h-full flex flex-col">
+      <div className="mb-3">
         <h4 className="card-title">Pipeline Funnel</h4>
         <p className="card-subtitle">Deal progression through stages</p>
       </div>
-      <div className="w-full">
+      <div className="w-full flex-1 flex items-center">
         <FunnelChart
           data={funnelData.length > 0 ? funnelData : [{ name: 'No Data', value: 1 }]}
           pallette={colorPalette}
           showValues={true}
           showNames={true}
           chartWidth={undefined} // Use full width of container
-          chartHeight={400}
+          chartHeight={200}
         />
       </div>
     </Card>
@@ -472,16 +479,16 @@ function DealStageDistributionWidget({ widget, data }: { widget: DashboardWidget
   } satisfies ChartConfig
 
   return (
-    <Card className="h-full">
-      <div className="mb-5">
+    <Card className="h-full flex flex-col">
+      <div className="mb-3">
         <h4 className="card-title">Deal Stage Distribution</h4>
         <p className="card-subtitle">Breakdown of deals by stage</p>
       </div>
-      <div className="flex flex-col gap-6">
-        <div>
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+        <div className="h-[150px]">
           <ChartContainer
             config={chartConfig}
-            className='[&_.recharts-text]:fill-background'>
+            className='h-full [&_.recharts-text]:fill-background'>
             <RechartsPieChart>
               <ChartTooltip
                 content={<ChartTooltipContent nameKey='visitors' hideLabel />}
@@ -501,7 +508,7 @@ function DealStageDistributionWidget({ widget, data }: { widget: DashboardWidget
             </RechartsPieChart>
           </ChartContainer>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 overflow-y-auto max-h-[120px]">
           {stages.map((stage: any, index: number) => {
             const colorMap = [
               'var(--color-chart-1, #3b82f6)',
@@ -581,13 +588,13 @@ function TasksWidget({ widget, data }: { widget: DashboardWidget; data?: any }) 
   })
 
   return (
-    <Card className="h-full">
-      <div className="mb-5">
+    <Card className="h-full flex flex-col">
+      <div className="mb-3">
         <h4 className="card-title">Tasks</h4>
         <p className="card-subtitle">The power of prioritizing your tasks</p>
       </div>
-      <SimpleBar className="max-h-[500px]">
-        <div className="space-y-6">
+      <SimpleBar className="flex-1 max-h-[200px]">
+        <div className="space-y-4">
           {tasks.map((item: any, i: number) => (
             <motion.div
               key={item.key}
@@ -644,26 +651,31 @@ function ManualActionsWidget({ widget, data }: { widget: DashboardWidget; data?:
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="text-center p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Phone</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">{actions.phone}</p>
-        </div>
-        <div className="text-center p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">SMS</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">{actions.sms}</p>
-        </div>
-        <div className="text-center p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">{actions.total}</p>
-        </div>
+    <Card className="h-full flex flex-col">
+      <div className="mb-3">
+        <h4 className="card-title">Manual Actions</h4>
       </div>
-      <button className="w-full text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-center space-x-1">
-        <span>Go to Manual Actions</span>
-        <ArrowRight className="w-4 h-4" />
-      </button>
-    </div>
+      <div className="flex-1 space-y-3">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Phone</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{actions.phone}</p>
+          </div>
+          <div className="text-center p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">SMS</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{actions.sms}</p>
+          </div>
+          <div className="text-center p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{actions.total}</p>
+          </div>
+        </div>
+        <button className="w-full text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-center space-x-1">
+          <span>Go to Manual Actions</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </Card>
   )
 }
 
