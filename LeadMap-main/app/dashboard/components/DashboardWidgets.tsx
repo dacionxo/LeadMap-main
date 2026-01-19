@@ -1,5 +1,6 @@
 'use client'
 
+import { KpiStatCard } from './KpiStatCard'
 import { Badge, BadgeProps } from '@/app/components/ui/badge'
 import { Card } from '@/app/components/ui/card'
 import {
@@ -107,18 +108,40 @@ function ProspectMetricsWidget({ widget, data }: { widget: DashboardWidget; data
   const value = data?.value || 0
   const change = data?.change || '+0%'
   const trend = data?.trend || 'neutral'
+  const accent = data?.accent || 'primary'
+  const icon = widget.icon
   
+  // Use KpiStatCard in compact variant (no card wrapper since it's inside WidgetContainer)
   return (
     <div className="space-y-2">
-      <div className="text-2xl font-bold text-gray-900 dark:text-white">{typeof value === 'number' ? value.toLocaleString() : value}</div>
-      <div className={`text-xs flex items-center space-x-1 ${
-        trend === 'up' ? 'text-green-600 dark:text-green-400' : 
-        trend === 'down' ? 'text-red-600 dark:text-red-400' : 
-        'text-gray-600 dark:text-gray-400'
-      }`}>
-        <TrendingUp className={`w-3 h-3 ${trend === 'down' ? 'rotate-180' : ''}`} />
-        <span>{change} from last month</span>
-      </div>
+      {icon && (
+        <div className={`inline-block p-3 rounded-lg mb-2 ${
+          accent === 'primary' ? 'bg-lightprimary text-primary' :
+          accent === 'success' ? 'bg-lightsuccess text-success' :
+          accent === 'warning' ? 'bg-lightwarning text-warning' :
+          accent === 'error' ? 'bg-lighterror text-error' :
+          accent === 'info' ? 'bg-lightinfo text-info' :
+          'bg-lightprimary text-primary'
+        }`}>
+          {React.createElement(icon, { className: 'w-6 h-6' })}
+        </div>
+      )}
+      <div className="text-2xl font-bold text-dark dark:text-white card-title">{typeof value === 'number' ? value.toLocaleString() : value}</div>
+      <div className="text-sm text-dark-6 dark:text-gray-400 card-subtitle">{widget.title}</div>
+      {change && (
+        <div className="flex items-center gap-2 mt-2">
+          <Badge 
+            variant={trend === 'up' ? 'lightSuccess' : trend === 'down' ? 'lightError' : 'gray'} 
+            className="rounded-full text-sm font-semibold px-2.5 py-1"
+          >
+            <span className="flex items-center gap-1">
+              <TrendingUp className={`w-3.5 h-3.5 ${trend === 'down' ? 'rotate-180' : ''}`} />
+              {change}
+            </span>
+          </Badge>
+          <span className="text-sm text-gray-500 dark:text-gray-400">from last month</span>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { KpiStatCard, type KpiAccent } from './KpiStatCard'
 import { cn } from '@/app/lib/utils'
 import { Icon } from '@iconify/react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -525,86 +526,29 @@ export default function DashboardContent() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3 2xl:gap-7.5">
             {metrics.map((metric, index) => {
-              const isDecreasing = metric.trend === 'down'
-              // Calculate percentage for donut chart (0-100)
-              const numericValue = typeof metric.value === 'number' 
-                ? metric.value 
-                : parseInt(metric.value.toString().replace(/[^0-9]/g, '')) || 0
-              const chartPercentage = Math.min(Math.max((numericValue % 100) || 35, 10), 90) // Ensure visible segment
-              const chartColor = metric.bgColor === 'lightprimary' ? '#5d87ff' :
-                                metric.bgColor === 'lightsuccess' ? '#22c55e' :
-                                metric.bgColor === 'lightwarning' ? '#f59e0b' :
-                                metric.bgColor === 'lighterror' ? '#ef4444' :
-                                metric.bgColor === 'lightinfo' ? '#8754ec' :
-                                metric.bgColor === 'lightsecondary' ? '#49beff' :
-                                '#5d87ff'
+              // Map bgColor to KpiAccent
+              const accentMap: Record<string, KpiAccent> = {
+                'lightprimary': 'primary',
+                'lightsuccess': 'success',
+                'lightwarning': 'warning',
+                'lighterror': 'error',
+                'lightinfo': 'info',
+                'lightsecondary': 'secondary',
+              }
+              const accent = accentMap[metric.bgColor || 'lightprimary'] || 'primary'
               
               return (
-                <div 
-                  key={metric.label} 
-                  className="rounded-[10px] bg-white p-4 shadow-1 dark:bg-gray-dark dark:shadow-card md:p-6 xl:p-7.5 cursor-pointer hover:shadow-lg transition-shadow" 
+                <KpiStatCard
+                  key={metric.label}
+                  title={metric.label}
+                  value={metric.value}
+                  deltaText={metric.change}
+                  trend={metric.trend || 'neutral'}
+                  accent={accent}
+                  icon={metric.icon}
+                  chartVariant="donut"
                   onClick={() => router.push('/dashboard/prospect-enrich')}
-                >
-                  <div className="flex items-center justify-between">
-                    {/* Left Section - Text Content */}
-                    <div className="flex-1">
-                      <div className="mb-1.5">
-                        <h3 className="text-4xl font-bold text-dark dark:text-white leading-tight">
-                          {metric.value}
-                        </h3>
-                      </div>
-                      <p className="text-base font-medium text-dark-6 dark:text-gray-400 mb-3">
-                        {metric.label}
-                      </p>
-                      {metric.change && (
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold",
-                            isDecreasing 
-                              ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400" 
-                              : metric.trend === 'up'
-                              ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                              : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                          )}>
-                            {metric.trend === 'up' && <Icon icon="tabler:chevron-up" className="w-3.5 h-3.5" />}
-                            {isDecreasing && <Icon icon="tabler:chevron-down" className="w-3.5 h-3.5" />}
-                            {metric.change}
-                          </span>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            from last month
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right Section - Donut Chart */}
-                    <div className="flex-shrink-0 ml-4">
-                      <svg width="80" height="80" className="transform -rotate-90">
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="32"
-                          fill="none"
-                          stroke="#e5e7eb"
-                          strokeWidth="12"
-                          className="dark:stroke-gray-700"
-                        />
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="32"
-                          fill="none"
-                          stroke={chartColor}
-                          strokeWidth="12"
-                          strokeDasharray={`${2 * Math.PI * 32}`}
-                          strokeDashoffset={`${2 * Math.PI * 32 * (1 - chartPercentage / 100)}`}
-                          strokeLinecap="round"
-                          className="transition-all duration-500"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+                />
               )
             })}
           </div>
