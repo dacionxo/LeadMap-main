@@ -389,7 +389,7 @@ export default function CustomizableDashboard() {
       if (widget) {
         const colCount = 12 // 12-column grid
         const cols = widget.size === 'large' ? 6 : 4 // Large: 2 cols, Small/Medium: 1 col
-        const rows = widget.size === 'large' ? 4 : 3
+        const rows = widget.size === 'large' ? 3 : 2 // Reduced heights: Large: 3 rows, Small/Medium: 2 rows
         const x = (index * cols) % colCount
         const y = Math.floor((index * cols) / colCount) * rows
         
@@ -400,7 +400,7 @@ export default function CustomizableDashboard() {
           w: cols,
           h: rows,
           minW: 4,
-          minH: 3,
+          minH: 2,
         })
       }
     })
@@ -491,7 +491,7 @@ export default function CustomizableDashboard() {
         
         // Find position for new widget (place at end)
         const cols = widget.size === 'large' ? 6 : 4
-        const rows = widget.size === 'large' ? 4 : 3
+        const rows = widget.size === 'large' ? 3 : 2 // Reduced heights: Large: 3 rows, Small/Medium: 2 rows
         const maxY = Math.max(...newLayouts.lg.map((item: any) => item.y + item.h), 0)
         
         newLayouts.lg.push({
@@ -501,7 +501,7 @@ export default function CustomizableDashboard() {
           w: cols,
           h: rows,
           minW: 4,
-          minH: 3,
+          minH: 2,
         })
         
         setLayouts(newLayouts)
@@ -654,10 +654,10 @@ export default function CustomizableDashboard() {
           onLayoutChange={handleLayoutChange}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
           cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-          rowHeight={80}
+          rowHeight={70}
           isDraggable={isEditMode}
           isResizable={isEditMode}
-          margin={[16, 16]}
+          margin={[8, 8]}
           containerPadding={[0, 0]}
         >
           {getEnabledWidgets().map(widget => (

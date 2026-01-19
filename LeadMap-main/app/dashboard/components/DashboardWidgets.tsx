@@ -153,9 +153,9 @@ function ProspectMetricsWidget({ widget, data }: { widget: DashboardWidget; data
   }
 
   return (
-    <div className="relative bg-white dark:bg-gray-900 rounded-lg border-[1.5px] border-teal-500 dark:border-teal-600 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden p-6">
+    <div className="relative bg-white dark:bg-gray-900 rounded-lg border-[1.5px] border-teal-500 dark:border-teal-600 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden p-4">
       {/* Header Section */}
-      <div className="relative flex items-center justify-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="relative flex items-center justify-center mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
         {/* Filter button - positioned on left */}
         <button
           onClick={handleFilterClick}
@@ -206,13 +206,13 @@ function ProspectMetricsWidget({ widget, data }: { widget: DashboardWidget; data
       </div>
 
       {/* Main Content Area - Centered */}
-      <div className="mt-4 text-center">
-        <div className="mb-2">
-          <p className="text-4xl font-bold text-gray-900 dark:text-white leading-tight tracking-tight">
+      <div className="mt-3 text-center">
+        <div className="mb-1">
+          <p className="text-3xl font-bold text-gray-900 dark:text-white leading-tight tracking-tight">
             {formattedValue}
           </p>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
           {trendText}
         </p>
       </div>
