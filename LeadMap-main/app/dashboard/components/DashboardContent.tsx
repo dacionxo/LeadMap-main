@@ -7,14 +7,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import {
   ArrowRight,
   BarChart3,
-  Briefcase,
-  Building2,
   CheckCircle2,
-  Clock,
-  DollarSign,
-  FileText,
-  Percent,
-  RefreshCw,
   Search as SearchIcon,
   Sparkles,
   Target,
@@ -34,18 +27,6 @@ interface QuickAction {
   gradient: string
 }
 
-interface MetricCard {
-  label: string
-  value: string | number
-  icon: React.ComponentType<{ className?: string }>
-  color: string
-  gradient: string
-  change?: string
-  trend?: 'up' | 'down' | 'neutral'
-  iconify?: string
-  bgColor?: string
-  txtColor?: string
-}
 
 interface RecentActivity {
   id: string
@@ -98,14 +79,12 @@ const quickActions: QuickAction[] = [
 export default function DashboardContent() {
   const router = useRouter()
   const supabase = useMemo(() => createClientComponentClient(), [])
-  const [metrics, setMetrics] = useState<MetricCard[]>([])
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fetchingRef = useRef(false)
-  const previousDataRef = useRef<Record<string, number>>({})
   const autoRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto-refresh every 5 minutes
@@ -161,7 +140,7 @@ export default function DashboardContent() {
       }
       setError(null)
       
-      // Fetch all leads with retry logic
+      // Fetch all leads for recent activities
       let allLeads: any[] = []
       let allError: any = null
       let retries = 3
@@ -184,222 +163,6 @@ export default function DashboardContent() {
       }
       
       if (allError) throw allError
-
-      const total = allLeads?.length || 0
-      const active = allLeads?.filter(l => l.active === true).length || 0
-      const expired = allLeads?.filter(l => 
-        l.status && (l.status.toLowerCase().includes('expired') || 
-        l.status.toLowerCase().includes('sold') || 
-        l.status.toLowerCase().includes('off market'))
-      ).length || 0
-      
-      // Fetch probate leads with error handling
-      let probate = 0
-      try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5s timeout
-        const probateResponse = await fetch('/api/probate-leads', { 
-          cache: 'no-store',
-          signal: controller.signal
-        })
-        clearTimeout(timeoutId)
-        if (probateResponse.ok) {
-          const probateData = await probateResponse.json()
-          probate = probateData?.leads?.length || 0
-        }
-      } catch (err) {
-        console.warn('Error fetching probate leads:', err)
-      }
-
-      // Calculate enriched count
-      const enriched = allLeads?.filter(l => 
-        (l.ai_investment_score !== null && l.ai_investment_score !== undefined) ||
-        l.agent_email || l.agent_phone || l.agent_name
-      ).length || 0
-
-      // Calculate total value with validation
-      const totalValue = allLeads?.reduce((sum, l) => {
-        const price = typeof l.list_price === 'number' ? l.list_price : parseFloat(l.list_price || '0') || 0
-        return sum + price
-      }, 0) || 0
-      const avgValue = total > 0 ? Math.round(totalValue / total) : 0
-
-      // Fetch deals for CRM metrics
-      let deals: any[] = []
-      try {
-        const { data: dealsData, error: dealsError } = await supabase
-          .from('deals')
-          .select('id, stage, value, created_at, updated_at')
-          .order('created_at', { ascending: false })
-        
-        if (!dealsError && dealsData) {
-          deals = dealsData
-        }
-      } catch (err) {
-        console.warn('Error fetching deals:', err)
-      }
-
-      // Calculate CRM metrics
-      const activeDeals = deals?.filter(d => !['closed_won', 'closed_lost'].includes(d.stage)).length || 0
-      const pipelineValue = deals?.reduce((sum, d) => {
-        const value = typeof d.value === 'number' ? d.value : parseFloat(d.value?.toString() || '0') || 0
-        return sum + value
-      }, 0) || 0
-      const closedDeals = deals?.filter(d => d.stage === 'closed_won').length || 0
-      const totalDeals = deals?.length || 0
-      const conversionRate = totalDeals > 0 ? Math.round((closedDeals / totalDeals) * 100) : 0
-
-      // Calculate trends from previous data
-      const previous = previousDataRef.current
-      const calculateTrend = (current: number, previous: number): { change: string; trend: 'up' | 'down' | 'neutral' } => {
-        if (!previous || previous === 0) {
-          return { change: '', trend: 'neutral' }
-        }
-        const percentChange = Math.round(((current - previous) / previous) * 100)
-        if (Math.abs(percentChange) < 1) {
-          return { change: '', trend: 'neutral' }
-        }
-        return {
-          change: `${percentChange > 0 ? '+' : ''}${percentChange}%`,
-          trend: percentChange > 0 ? 'up' : 'down'
-        }
-      }
-
-      const totalTrend = calculateTrend(total, previous.total || 0)
-      const activeTrend = calculateTrend(active, previous.active || 0)
-      const enrichedTrend = calculateTrend(enriched, previous.enriched || 0)
-      const avgValueTrend = calculateTrend(avgValue, previous.avgValue || 0)
-      const expiredTrend = calculateTrend(expired, previous.expired || 0)
-      const probateTrend = calculateTrend(probate, previous.probate || 0)
-
-      // Calculate CRM trends
-      const activeDealsTrend = calculateTrend(activeDeals, previous.activeDeals || 0)
-      const pipelineValueTrend = calculateTrend(pipelineValue, previous.pipelineValue || 0)
-      const conversionRateTrend = calculateTrend(conversionRate, previous.conversionRate || 0)
-
-      // Store current data for next trend calculation
-      previousDataRef.current = {
-        total,
-        active,
-        enriched,
-        avgValue,
-        expired,
-        probate,
-        activeDeals,
-        pipelineValue,
-        conversionRate
-      }
-
-      setMetrics([
-        {
-          label: 'Total Prospects',
-          value: total.toLocaleString(),
-          icon: Users,
-          color: 'text-blue-400',
-          gradient: 'from-blue-500 to-cyan-500',
-          change: totalTrend.change,
-          trend: totalTrend.trend,
-          iconify: 'tabler:users',
-          bgColor: 'lightprimary',
-          txtColor: 'primary'
-        },
-        {
-          label: 'Active Listings',
-          value: active.toLocaleString(),
-          icon: Building2,
-          color: 'text-green-400',
-          gradient: 'from-green-500 to-emerald-500',
-          change: activeTrend.change,
-          trend: activeTrend.trend,
-          iconify: 'tabler:building',
-          bgColor: 'lightsuccess',
-          txtColor: 'success'
-        },
-        {
-          label: 'Enriched Leads',
-          value: enriched.toLocaleString(),
-          icon: Sparkles,
-          color: 'text-purple-400',
-          gradient: 'from-purple-500 to-indigo-500',
-          change: enrichedTrend.change,
-          trend: enrichedTrend.trend,
-          iconify: 'tabler:sparkles',
-          bgColor: 'lightsecondary',
-          txtColor: 'secondary'
-        },
-        {
-          label: 'Avg Property Value',
-          value: `$${(avgValue / 1000).toFixed(0)}K`,
-          icon: DollarSign,
-          color: 'text-orange-400',
-          gradient: 'from-orange-500 to-red-500',
-          change: avgValueTrend.change,
-          trend: avgValueTrend.trend,
-          iconify: 'tabler:currency-dollar',
-          bgColor: 'lightwarning',
-          txtColor: 'warning'
-        },
-        {
-          label: 'Expired Listings',
-          value: expired.toLocaleString(),
-          icon: Clock,
-          color: 'text-red-400',
-          gradient: 'from-red-500 to-pink-500',
-          change: expiredTrend.change,
-          trend: expiredTrend.trend,
-          iconify: 'tabler:clock',
-          bgColor: 'lighterror',
-          txtColor: 'error'
-        },
-        {
-          label: 'Probate Leads',
-          value: probate.toLocaleString(),
-          icon: FileText,
-          color: 'text-indigo-400',
-          gradient: 'from-indigo-500 to-purple-500',
-          change: probateTrend.change,
-          trend: probateTrend.trend,
-          iconify: 'tabler:file-text',
-          bgColor: 'lightinfo',
-          txtColor: 'info'
-        },
-        {
-          label: 'Active Deals',
-          value: activeDeals.toLocaleString(),
-          icon: Briefcase,
-          color: 'text-blue-400',
-          gradient: 'from-blue-500 to-cyan-500',
-          change: activeDealsTrend.change,
-          trend: activeDealsTrend.trend,
-          iconify: 'tabler:briefcase',
-          bgColor: 'lightprimary',
-          txtColor: 'primary'
-        },
-        {
-          label: 'Pipeline Value',
-          value: `$${(pipelineValue / 1000).toFixed(0)}K`,
-          icon: DollarSign,
-          color: 'text-green-400',
-          gradient: 'from-green-500 to-emerald-500',
-          change: pipelineValueTrend.change,
-          trend: pipelineValueTrend.trend,
-          iconify: 'tabler:currency-dollar',
-          bgColor: 'lightsuccess',
-          txtColor: 'success'
-        },
-        {
-          label: 'Conversion Rate',
-          value: `${conversionRate}%`,
-          icon: Percent,
-          color: 'text-purple-400',
-          gradient: 'from-purple-500 to-indigo-500',
-          change: conversionRateTrend.change,
-          trend: conversionRateTrend.trend,
-          iconify: 'tabler:percentage',
-          bgColor: 'lightsecondary',
-          txtColor: 'secondary'
-        }
-      ])
 
       // Generate recent activities from actual data
       const activities: RecentActivity[] = []
@@ -467,9 +230,6 @@ export default function DashboardContent() {
     }
   }
 
-  const handleManualRefresh = () => {
-    fetchDashboardData(false)
-  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -483,151 +243,11 @@ export default function DashboardContent() {
         </p>
       </div>
 
-      {/* Metrics Grid */}
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
-      
-      {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
-        {loading ? (
-          <>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-              <div key={i} className="rounded-[10px] bg-white dark:bg-gray-dark shadow-1 dark:shadow-card p-6 animate-pulse">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                  <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
-                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
-              </div>
-            ))}
-          </>
-        ) : (
-          metrics.map((metric) => {
-            const Icon = metric.icon
-            
-            // Determine colors based on metric type
-            const getCardStyles = () => {
-              if (metric.label.includes('Total Prospects') || metric.label.includes('Active Deals')) {
-                return {
-                  iconBg: 'bg-blue-50 dark:bg-blue-900/20',
-                  iconColor: 'text-blue-600 dark:text-blue-400',
-                  valueColor: 'text-blue-600 dark:text-blue-400',
-                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
-                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }
-              }
-              if (metric.label.includes('Active Listings') || metric.label.includes('Pipeline Value')) {
-                return {
-                  iconBg: 'bg-green-50 dark:bg-green-900/20',
-                  iconColor: 'text-green-600 dark:text-green-400',
-                  valueColor: 'text-green-600 dark:text-green-400',
-                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
-                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }
-              }
-              if (metric.label.includes('Enriched Leads') || metric.label.includes('Conversion Rate')) {
-                return {
-                  iconBg: 'bg-purple-50 dark:bg-purple-900/20',
-                  iconColor: 'text-purple-600 dark:text-purple-400',
-                  valueColor: 'text-purple-600 dark:text-purple-400',
-                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
-                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }
-              }
-              if (metric.label.includes('Avg Property Value')) {
-                return {
-                  iconBg: 'bg-orange-50 dark:bg-orange-900/20',
-                  iconColor: 'text-orange-600 dark:text-orange-400',
-                  valueColor: 'text-orange-600 dark:text-orange-400',
-                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
-                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }
-              }
-              if (metric.label.includes('Expired Listings')) {
-                return {
-                  iconBg: 'bg-red-50 dark:bg-red-900/20',
-                  iconColor: 'text-red-600 dark:text-red-400',
-                  valueColor: 'text-red-600 dark:text-red-400',
-                  badgeBg: metric.trend === 'up' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
-                           metric.trend === 'down' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }
-              }
-              if (metric.label.includes('Probate Leads')) {
-                return {
-                  iconBg: 'bg-indigo-50 dark:bg-indigo-900/20',
-                  iconColor: 'text-indigo-600 dark:text-indigo-400',
-                  valueColor: 'text-indigo-600 dark:text-indigo-400',
-                  badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                           metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
-                           'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }
-              }
-              return {
-                iconBg: 'bg-gray-50 dark:bg-gray-700',
-                iconColor: 'text-gray-600 dark:text-gray-400',
-                valueColor: 'text-gray-900 dark:text-white',
-                badgeBg: metric.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                         metric.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
-                         'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-              }
-            }
-
-            const styles = getCardStyles()
-            const trendIcon = metric.trend === 'up' ? '↑' : metric.trend === 'down' ? '↓' : ''
-            const displayChange = metric.change || '+0%'
-
-            return (
-              <div
-                key={metric.label}
-                className="rounded-[10px] bg-white dark:bg-gray-dark shadow-1 dark:shadow-card p-6 hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700"
-                onClick={() => router.push('/dashboard/prospect-enrich')}
-              >
-                {/* Header with Icon */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${styles.iconBg}`}>
-                    <Icon className={`w-6 h-6 ${styles.iconColor}`} />
-                  </div>
-                </div>
-
-                {/* Value */}
-                <div className="mb-2">
-                  <h3 className={`text-3xl font-bold ${styles.valueColor} leading-tight`}>
-                    {metric.value}
-                  </h3>
-                </div>
-
-                {/* Label */}
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
-                  {metric.label}
-                </p>
-
-                {/* Trend Indicator */}
-                <div className="flex items-center gap-1">
-                  <span className={`text-sm font-medium ${
-                    metric.trend === 'up' ? 'text-green-600 dark:text-green-400' : 
-                    metric.trend === 'down' ? 'text-red-600 dark:text-red-400' : 
-                    'text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {trendIcon} {displayChange}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-500">
-                    from last month
-                  </span>
-                </div>
-              </div>
-            )
-          })
-        )}
-      </div>
 
       {/* Quick Actions & Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
