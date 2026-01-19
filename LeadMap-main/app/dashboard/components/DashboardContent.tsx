@@ -1,8 +1,8 @@
 'use client'
 
-import { KpiStatCard, type KpiAccent } from './KpiStatCard'
 import { cn } from '@/app/lib/utils'
 import { Icon } from '@iconify/react'
+import { KpiCompactCard } from './KpiCompactCard'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import {
   ArrowRight,
@@ -526,27 +526,40 @@ export default function DashboardContent() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3 2xl:gap-7.5">
             {metrics.map((metric, index) => {
-              // Map bgColor to KpiAccent
-              const accentMap: Record<string, KpiAccent> = {
-                'lightprimary': 'primary',
-                'lightsuccess': 'success',
-                'lightwarning': 'warning',
-                'lighterror': 'error',
-                'lightinfo': 'info',
-                'lightsecondary': 'secondary',
+              // Parse deltaPct from change string (e.g., "+2.5%" or "-1%")
+              const parseDeltaPct = (changeStr: string | undefined): number => {
+                if (!changeStr) return 0
+                const match = changeStr.match(/([+-]?\d+(?:\.\d+)?)/)
+                return match ? parseFloat(match[1]) : 0
               }
-              const accent = accentMap[metric.bgColor || 'lightprimary'] || 'primary'
-              
+              const deltaPct = parseDeltaPct(metric.change)
+
+              // Calculate ringValue (0-100) from metric value
+              const numericValue = typeof metric.value === 'number' 
+                ? metric.value 
+                : parseInt(metric.value.toString().replace(/[^0-9]/g, '')) || 0
+              const ringValue = Math.min(Math.max((numericValue % 100) || 35, 10), 90) // Ensure visible segment
+
+              // Map bgColor to ringColor
+              const ringColorMap: Record<string, string> = {
+                lightprimary: '#5d87ff',
+                lightsuccess: '#22c55e',
+                lightwarning: '#f59e0b',
+                lighterror: '#ef4444',
+                lightinfo: '#8754ec',
+                lightsecondary: '#49beff'
+              }
+              const ringColor = ringColorMap[metric.bgColor || 'lightprimary'] || '#5d87ff'
+
               return (
-                <KpiStatCard
+                <KpiCompactCard
                   key={metric.label}
-                  title={metric.label}
                   value={metric.value}
-                  deltaText={metric.change}
-                  trend={metric.trend || 'neutral'}
-                  accent={accent}
-                  icon={metric.icon}
-                  chartVariant="donut"
+                  label={metric.label}
+                  deltaPct={deltaPct}
+                  deltaLabel="from last month"
+                  ringValue={ringValue}
+                  ringColor={ringColor}
                   onClick={() => router.push('/dashboard/prospect-enrich')}
                 />
               )
