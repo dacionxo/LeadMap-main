@@ -5,7 +5,7 @@ import { Plus, Settings2, Save, RefreshCw } from 'lucide-react'
 import { availableWidgets, WidgetContainer, DashboardWidget } from './DashboardWidgets'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useApp } from '@/app/providers'
-import { Responsive, WidthProvider } from 'react-grid-layout'
+import { Responsive, WidthProvider } from 'react-grid-layout/legacy'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 
