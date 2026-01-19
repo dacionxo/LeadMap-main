@@ -2,7 +2,7 @@
 
 import { cn } from '@/app/lib/utils'
 import { Icon } from '@iconify/react'
-import { KpiCompactCard } from './KpiCompactCard'
+import { ElDisclosure, ElDialog, ElDropdown, ElSelect } from '@tailwindplus/elements/react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import {
   ArrowRight,
@@ -484,88 +484,69 @@ export default function DashboardContent() {
       </div>
 
       {/* Metrics Grid */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Key Metrics</h2>
+      <div className="bg-gray-900 dark:bg-gray-900 py-12 sm:py-16 rounded-lg">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-3">
+              <h2 className="text-lg font-semibold text-white dark:text-white">Key Metrics</h2>
+              <button
+                onClick={handleManualRefresh}
+                disabled={refreshing || loading}
+                className="p-1.5 text-gray-400 dark:text-gray-400 hover:text-white dark:hover:text-white hover:bg-gray-800 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+              {lastUpdated && (
+                <span className="text-xs text-gray-500 dark:text-gray-500">
+                  Updated: {lastUpdated.toLocaleTimeString()}
+                </span>
+              )}
+            </div>
             <button
-              onClick={handleManualRefresh}
-              disabled={refreshing || loading}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refresh data"
+              onClick={() => router.push('/dashboard/prospect-enrich')}
+              className="text-sm text-blue-400 dark:text-blue-400 hover:text-blue-300 dark:hover:text-blue-300 hover:underline flex items-center space-x-1"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span>View All</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
-            {lastUpdated && (
-              <span className="text-xs text-gray-500 dark:text-gray-500">
-                Updated: {lastUpdated.toLocaleTimeString()}
-              </span>
-            )}
           </div>
-          <button
-            onClick={() => router.push('/dashboard/prospect-enrich')}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
-          >
-            <span>View All</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
-            {error}
-          </div>
-        )}
-        {loading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3 2xl:gap-7.5">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-              <div key={i} className="rounded-[10px] bg-white p-4 shadow-1 dark:bg-gray-dark dark:shadow-card md:p-6 xl:p-7.5 animate-pulse">
-                <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3 2xl:gap-7.5">
-            {metrics.map((metric, index) => {
-              // Parse deltaPct from change string (e.g., "+2.5%" or "-1%")
-              const parseDeltaPct = (changeStr: string | undefined): number => {
-                if (!changeStr) return 0
-                const match = changeStr.match(/([+-]?\d+(?:\.\d+)?)/)
-                return match ? parseFloat(match[1]) : 0
-              }
-              const deltaPct = parseDeltaPct(metric.change)
-
-              // Calculate ringValue (0-100) from metric value
-              const numericValue = typeof metric.value === 'number' 
-                ? metric.value 
-                : parseInt(metric.value.toString().replace(/[^0-9]/g, '')) || 0
-              const ringValue = Math.min(Math.max((numericValue % 100) || 35, 10), 90) // Ensure visible segment
-
-              // Map bgColor to ringColor
-              const ringColorMap: Record<string, string> = {
-                lightprimary: '#5d87ff',
-                lightsuccess: '#22c55e',
-                lightwarning: '#f59e0b',
-                lighterror: '#ef4444',
-                lightinfo: '#8754ec',
-                lightsecondary: '#49beff'
-              }
-              const ringColor = ringColorMap[metric.bgColor || 'lightprimary'] || '#5d87ff'
-
-              return (
-                <KpiCompactCard
-                  key={metric.label}
-                  value={metric.value}
-                  label={metric.label}
-                  deltaPct={deltaPct}
-                  deltaLabel="from last month"
-                  ringValue={ringValue}
-                  ringColor={ringColor}
+          {error && (
+            <div className="mb-6 p-3 bg-red-900/20 dark:bg-red-900/20 border border-red-800 dark:border-red-800 rounded text-sm text-red-400 dark:text-red-400">
+              {error}
+            </div>
+          )}
+          {loading ? (
+            <dl className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+                <div key={i} className="mx-auto flex max-w-xs flex-col gap-y-4 animate-pulse">
+                  <dt className="text-base/7 text-gray-400 dark:text-gray-400 h-5 bg-gray-800 dark:bg-gray-800 rounded w-24 mx-auto"></dt>
+                  <dd className="order-first text-3xl font-semibold tracking-tight text-white dark:text-white sm:text-5xl h-12 bg-gray-800 dark:bg-gray-800 rounded w-32 mx-auto"></dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <dl className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
+              {metrics.map((metric) => (
+                <div 
+                  key={metric.label} 
+                  className="mx-auto flex max-w-xs flex-col gap-y-4 cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => router.push('/dashboard/prospect-enrich')}
-                />
-              )
-            })}
-          </div>
-        )}
+                >
+                  <dt className="text-base/7 text-gray-400 dark:text-gray-400">{metric.label}</dt>
+                  <dd className="order-first text-3xl font-semibold tracking-tight text-white dark:text-white sm:text-5xl">
+                    {metric.value}
+                    {metric.change && (
+                      <span className={`ml-2 text-lg ${metric.trend === 'up' ? 'text-green-400 dark:text-green-400' : metric.trend === 'down' ? 'text-red-400 dark:text-red-400' : 'text-gray-400 dark:text-gray-400'}`}>
+                        {metric.change}
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
       </div>
 
       {/* Quick Actions & Recent Activity */}
