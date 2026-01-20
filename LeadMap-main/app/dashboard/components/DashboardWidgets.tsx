@@ -329,8 +329,9 @@ function RecentActivityWidget({ widget, data }: { widget: DashboardWidget; data?
   return (
     <Card className="h-full flex flex-col">
       <div className="mb-3">
-        <h4 className="card-title">Recent Activity</h4>
-        <p className="card-subtitle">Preparation for the upcoming activity</p>
+        <h4 className="card-title text-center">Recent Activity</h4>
+        <p className="card-subtitle text-center">Preparation for the upcoming activity</p>
+        <div className="border-b border-border dark:border-darkborder mt-3"></div>
       </div>
       <SimpleBar className="flex-1 max-h-[320px] pr-4">
         <div className="flex flex-col gap-4">
@@ -497,8 +498,9 @@ function DealStageDistributionWidget({ widget, data }: { widget: DashboardWidget
   return (
     <Card className="h-full flex flex-col">
       <div className="mb-3">
-        <h4 className="card-title">Deal Stage Distribution</h4>
-        <p className="card-subtitle">Breakdown of deals by stage</p>
+        <h4 className="card-title text-center">Deal Stage Distribution</h4>
+        <p className="card-subtitle text-center">Breakdown of deals by stage</p>
+        <div className="border-b border-border dark:border-darkborder mt-3"></div>
       </div>
       <div className="flex flex-col gap-3 flex-1 min-h-0">
         <div className="h-[180px]">
@@ -606,8 +608,9 @@ function TasksWidget({ widget, data }: { widget: DashboardWidget; data?: any }) 
   return (
     <Card className="h-full flex flex-col">
       <div className="mb-3">
-        <h4 className="card-title">Tasks</h4>
-        <p className="card-subtitle">The power of prioritizing your tasks</p>
+        <h4 className="card-title text-center">Tasks</h4>
+        <p className="card-subtitle text-center">The power of prioritizing your tasks</p>
+        <div className="border-b border-border dark:border-darkborder mt-3"></div>
       </div>
       <SimpleBar className="flex-1 max-h-[320px]">
         <div className="space-y-4">
