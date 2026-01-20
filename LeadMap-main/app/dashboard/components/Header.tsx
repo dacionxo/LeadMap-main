@@ -46,6 +46,7 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
   const [mobileMenu, setMobileMenu] = useState('')
   const menuRef = useRef<HTMLDivElement>(null)
   const notificationsRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLHeaderElement>(null)
 
   useEffect(() => {
     const el = scrollContainerRef?.current
@@ -53,6 +54,9 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
     const handleScroll = () => {
       const y = el ? el.scrollTop : window.scrollY
       setIsSticky(y > 50)
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Header.tsx:54',message:'Scroll event',data:{scrollY:y,isSticky:y>50,scrollContainer:el?true:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
     }
 
     // Run once on mount so state is correct if already scrolled
@@ -63,6 +67,25 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
 
     return () => target.removeEventListener('scroll', handleScroll)
   }, [scrollContainerRef])
+
+  useEffect(() => {
+    // #region agent log
+    if (headerRef.current) {
+      const headerEl = headerRef.current;
+      const computedStyle = window.getComputedStyle(headerEl);
+      const position = computedStyle.position;
+      const top = computedStyle.top;
+      const parentEl = headerEl.parentElement;
+      const parentComputed = parentEl ? window.getComputedStyle(parentEl) : null;
+      const parentOverflow = parentComputed?.overflow || 'N/A';
+      const parentOverflowY = parentComputed?.overflowY || 'N/A';
+      const grandparentEl = parentEl?.parentElement;
+      const grandparentComputed = grandparentEl ? window.getComputedStyle(grandparentEl) : null;
+      const grandparentOverflow = grandparentComputed?.overflow || 'N/A';
+      fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Header.tsx:66',message:'Header computed styles check',data:{position,top,parentOverflow,parentOverflowY,grandparentOverflow,hasStickyClass:headerEl.className.includes('sticky')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,D'})}).catch(()=>{});
+    }
+    // #endregion
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -103,6 +126,7 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
   return (
     <>
       <header
+        ref={headerRef}
         className={`sticky top-0 z-[100] transition-all ${
           isSticky
             ? 'bg-white dark:bg-dark shadow-md dark:shadow-dark-md'
