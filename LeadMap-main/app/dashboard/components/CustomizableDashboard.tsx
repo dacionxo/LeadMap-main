@@ -467,53 +467,6 @@ export default function CustomizableDashboard() {
     if (!enabledWidgets.includes(widgetId)) {
       const newEnabledWidgets = [...enabledWidgets, widgetId]
       setEnabledWidgets(newEnabledWidgets)
-      
-      // Add new widget to layout
-      const widget = availableWidgets.find(w => w.id === widgetId)
-      if (widget) {
-        const newLayouts = { ...layouts }
-        if (!newLayouts.lg) newLayouts.lg = []
-        
-        // Determine widget dimensions based on size and type
-        let cols = 4
-        let rows = 3
-        
-        if (widget.size === 'large') {
-          cols = 6
-          rows = 4
-        } else if (widget.size === 'medium') {
-          cols = 4
-          rows = 4
-        } else {
-          cols = 4
-          rows = 2
-        }
-        
-        // Special cases for specific widgets
-        if (widget.id === 'recent-activity' || widget.id === 'upcoming-tasks') {
-          rows = 5
-        } else if (widget.id === 'pipeline-funnel' || widget.id === 'deal-stage-distribution') {
-          rows = 5
-        } else if (widget.id === 'quick-actions') {
-          rows = 3
-        } else if (widget.id === 'performance-overview') {
-          rows = 5
-        }
-        
-        const maxY = Math.max(...newLayouts.lg.map((item: any) => item.y + item.h), 0)
-        
-        newLayouts.lg.push({
-          i: widgetId,
-          x: 0,
-          y: maxY,
-          w: cols,
-          h: rows,
-          minW: 4,
-          minH: 2,
-        })
-        
-        setLayouts(newLayouts)
-      }
     }
     setShowAddWidget(false)
   }
