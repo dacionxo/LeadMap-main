@@ -48,9 +48,7 @@ import {
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import React from 'react'
-import { FunnelChart } from 'react-funnel-pipeline'
-import 'react-funnel-pipeline/dist/index.css'
+import React, { useEffect, useRef, useState } from 'react'
 import { LabelList, Pie, PieChart as RechartsPieChart } from 'recharts'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
@@ -369,6 +367,33 @@ function RecentActivityWidget({ widget, data }: { widget: DashboardWidget; data?
 }
 
 function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?: any }) {
+  const chartContainerRef = useRef<HTMLDivElement>(null)
+  const [chartWidth, setChartWidth] = useState<number>(400)
+  const [FunnelChartComponent, setFunnelChartComponent] = useState<React.ComponentType<any> | null>(null)
+
+  // Dynamically import FunnelChart to avoid SSR issues
+  useEffect(() => {
+    import('react-funnel-pipeline').then((module) => {
+      setFunnelChartComponent(() => module.FunnelChart)
+      // Import CSS
+      import('react-funnel-pipeline/dist/index.css')
+    })
+  }, [])
+
+  // Calculate chart width based on container
+  useEffect(() => {
+    const updateWidth = () => {
+      if (chartContainerRef.current) {
+        const width = chartContainerRef.current.offsetWidth
+        setChartWidth(Math.max(width - 32, 300)) // Subtract padding, minimum 300px
+      }
+    }
+
+    updateWidth()
+    window.addEventListener('resize', updateWidth)
+    return () => window.removeEventListener('resize', updateWidth)
+  }, [])
+
   // Map API data to TailwindAdmin format or use defaults
   const stagesData = data?.stages || [
     { name: 'New', value: 1, percentage: 100 },
@@ -404,17 +429,26 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
         <p className="card-subtitle text-center">Deal progression through stages</p>
         <div className="border-b border-border dark:border-darkborder mt-3"></div>
       </div>
-      <div className="w-full flex-1 flex items-center justify-center min-h-0">
-        <div className="w-full flex justify-center">
-          <FunnelChart
-            data={funnelData.length > 0 ? funnelData : [{ name: 'No Data', value: 1 }]}
-            pallette={colorPalette}
-            showValues={true}
-            showNames={true}
-            chartWidth={undefined} // Use full width of container
-            chartHeight={280}
-          />
-        </div>
+      <div 
+        ref={chartContainerRef}
+        className="w-full flex-1 flex items-center justify-center min-h-0 p-4"
+      >
+        {FunnelChartComponent && funnelData.length > 0 ? (
+          <div className="w-full flex justify-center">
+            <FunnelChartComponent
+              data={funnelData}
+              pallette={colorPalette}
+              showValues={true}
+              showNames={true}
+              chartWidth={chartWidth}
+              chartHeight={280}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Loading chart...
+          </div>
+        )}
       </div>
     </Card>
   )
