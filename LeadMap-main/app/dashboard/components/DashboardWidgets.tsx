@@ -389,7 +389,9 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
   useEffect(() => {
     const updateWidth = () => {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardWidgets.tsx:386',message:'updateWidth called',data:{hasRef:!!chartContainerRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      const logData1 = {location:'DashboardWidgets.tsx:386',message:'updateWidth called',data:{hasRef:!!chartContainerRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
+      console.log('[DEBUG]', logData1);
+      fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData1)}).catch(()=>{});
       // #endregion
       if (chartContainerRef.current) {
         const width = chartContainerRef.current.offsetWidth
@@ -400,15 +402,21 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
         const paddingRight = parseInt(computedStyle.paddingRight) || 0
         const newWidth = Math.max(width - 32, 300)
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardWidgets.tsx:394',message:'Width measurements',data:{offsetWidth:width,clientWidth,scrollWidth,paddingLeft,paddingRight,calculatedWidth:newWidth,parentWidth:chartContainerRef.current.parentElement?.offsetWidth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        const logData2 = {location:'DashboardWidgets.tsx:394',message:'Width measurements',data:{offsetWidth:width,clientWidth,scrollWidth,paddingLeft,paddingRight,calculatedWidth:newWidth,parentWidth:chartContainerRef.current.parentElement?.offsetWidth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
+        console.log('[DEBUG] Width measurements:', logData2);
+        fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData2)}).catch(()=>{});
         // #endregion
         setChartWidth(newWidth)
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardWidgets.tsx:397',message:'chartWidth state updated',data:{newWidth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        const logData3 = {location:'DashboardWidgets.tsx:397',message:'chartWidth state updated',data:{newWidth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
+        console.log('[DEBUG] chartWidth updated:', logData3);
+        fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData3)}).catch(()=>{});
         // #endregion
       } else {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardWidgets.tsx:399',message:'Ref not available in updateWidth',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        const logData4 = {location:'DashboardWidgets.tsx:399',message:'Ref not available in updateWidth',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
+        console.log('[DEBUG]', logData4);
+        fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData4)}).catch(()=>{});
         // #endregion
       }
     }
@@ -474,7 +482,9 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
           <div className="w-full flex justify-center">
             {/* #region agent log */}
             {(() => {
-              fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardWidgets.tsx:441',message:'Rendering FunnelChart',data:{chartWidth,hasComponent:!!FunnelChartComponent,dataLength:funnelData.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+              const logData5 = {location:'DashboardWidgets.tsx:441',message:'Rendering FunnelChart',data:{chartWidth,hasComponent:!!FunnelChartComponent,dataLength:funnelData.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'};
+              console.log('[DEBUG] Rendering FunnelChart:', logData5);
+              fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData5)}).catch(()=>{});
               return null;
             })()}
             {/* #endregion */}
