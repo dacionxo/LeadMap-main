@@ -385,7 +385,7 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
     })
   }, [])
 
-  // Calculate chart width based on container
+  // Calculate chart width based on container - using ResizeObserver for proper tracking
   useEffect(() => {
     const updateWidth = () => {
       // #region agent log
@@ -394,15 +394,18 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
       fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData1)}).catch(()=>{});
       // #endregion
       if (chartContainerRef.current) {
-        const width = chartContainerRef.current.offsetWidth
-        const clientWidth = chartContainerRef.current.clientWidth
+        // Use clientWidth (content area) instead of offsetWidth for better accuracy
+        const containerWidth = chartContainerRef.current.clientWidth
+        const offsetWidth = chartContainerRef.current.offsetWidth
         const scrollWidth = chartContainerRef.current.scrollWidth
         const computedStyle = window.getComputedStyle(chartContainerRef.current)
         const paddingLeft = parseInt(computedStyle.paddingLeft) || 0
         const paddingRight = parseInt(computedStyle.paddingRight) || 0
-        const newWidth = Math.max(width - 32, 300)
+        // Use the full clientWidth without subtracting padding (chartWidth is max-width)
+        // Ensure minimum width for readability
+        const newWidth = Math.max(containerWidth, 400)
         // #region agent log
-        const logData2 = {location:'DashboardWidgets.tsx:394',message:'Width measurements',data:{offsetWidth:width,clientWidth,scrollWidth,paddingLeft,paddingRight,calculatedWidth:newWidth,parentWidth:chartContainerRef.current.parentElement?.offsetWidth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
+        const logData2 = {location:'DashboardWidgets.tsx:394',message:'Width measurements',data:{offsetWidth,clientWidth:containerWidth,scrollWidth,paddingLeft,paddingRight,calculatedWidth:newWidth,parentWidth:chartContainerRef.current.parentElement?.clientWidth,cardWidth:chartContainerRef.current.closest('.h-full')?.clientWidth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
         console.log('[DEBUG] Width measurements:', logData2);
         fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData2)}).catch(()=>{});
         // #endregion
@@ -424,12 +427,30 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardWidgets.tsx:404',message:'Width calculation effect mounted',data:{hasRef:!!chartContainerRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
+    
+    // Initial call
     updateWidth()
-    // Use setTimeout to ensure DOM is fully rendered
-    const timeoutId = setTimeout(updateWidth, 100)
+    
+    // Use ResizeObserver for proper container size tracking (Hypothesis A, B, F)
+    let resizeObserver: ResizeObserver | null = null
+    if (chartContainerRef.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        updateWidth()
+      })
+      resizeObserver.observe(chartContainerRef.current)
+    }
+    
+    // Fallback: setTimeout and window resize (for older browsers)
+    const timeoutId1 = setTimeout(updateWidth, 100)
+    const timeoutId2 = setTimeout(updateWidth, 500) // Extra delay to ensure layout is complete
     window.addEventListener('resize', updateWidth)
+    
     return () => {
-      clearTimeout(timeoutId)
+      if (resizeObserver && chartContainerRef.current) {
+        resizeObserver.unobserve(chartContainerRef.current)
+      }
+      clearTimeout(timeoutId1)
+      clearTimeout(timeoutId2)
       window.removeEventListener('resize', updateWidth)
     }
   }, [])
@@ -471,15 +492,11 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
       </div>
       <div 
         ref={chartContainerRef}
-        className="w-full flex-1 flex items-center justify-center min-h-0 p-4"
-        onLoad={() => {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/27ffd39f-e797-4d31-a671-175bf76a4f27',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardWidgets.tsx:434',message:'Container div loaded',data:{width:chartContainerRef.current?.offsetWidth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
-        }}
+        className="w-full flex-1 min-h-0 p-4"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
         {FunnelChartComponent && funnelData.length > 0 ? (
-          <div className="w-full flex justify-center">
+          <>
             {/* #region agent log */}
             {(() => {
               const logData5 = {location:'DashboardWidgets.tsx:441',message:'Rendering FunnelChart',data:{chartWidth,hasComponent:!!FunnelChartComponent,dataLength:funnelData.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'};
@@ -488,15 +505,18 @@ function PipelineFunnelWidget({ widget, data }: { widget: DashboardWidget; data?
               return null;
             })()}
             {/* #endregion */}
-            <FunnelChartComponent
-              data={funnelData}
-              pallette={colorPalette}
-              showValues={true}
-              showNames={true}
-              chartWidth={chartWidth}
-              chartHeight={280}
-            />
-          </div>
+            {/* Remove nested flex container that might constrain width (Hypothesis E) */}
+            <div style={{ width: '100%', maxWidth: `${chartWidth}px`, margin: '0 auto' }}>
+              <FunnelChartComponent
+                data={funnelData}
+                pallette={colorPalette}
+                showValues={true}
+                showNames={true}
+                chartWidth={chartWidth}
+                chartHeight={280}
+              />
+            </div>
+          </>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
             Loading chart...
