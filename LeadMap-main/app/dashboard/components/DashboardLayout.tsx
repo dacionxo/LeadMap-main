@@ -31,13 +31,13 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   }, [])
 
   return (
-    <div className="flex min-h-screen relative overflow-x-hidden">
+    <div className="flex h-screen relative overflow-x-hidden">
       <Suspense fallback={<div className="w-[270px]" />}>
         <Sidebar />
       </Suspense>
       <main
         ref={mainRef as any}
-        className={`flex-1 overflow-y-auto relative z-10 bg-white dark:bg-dark min-h-screen transition-all duration-300 ${
+        className={`flex-1 overflow-y-auto relative z-10 bg-white dark:bg-dark h-full transition-all duration-300 ${
           isOpen ? 'ml-[270px]' : 'ml-[75px]'
         }`}
       >
