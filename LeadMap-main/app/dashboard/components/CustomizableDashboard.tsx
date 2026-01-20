@@ -463,10 +463,6 @@ export default function CustomizableDashboard() {
     }
   }
 
-  const handleLayoutChange = (layout: any, layouts: any) => {
-    setLayouts(layouts)
-  }
-
   const addWidget = (widgetId: string) => {
     if (!enabledWidgets.includes(widgetId)) {
       const newEnabledWidgets = [...enabledWidgets, widgetId]
