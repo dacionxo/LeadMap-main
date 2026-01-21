@@ -62,7 +62,6 @@ export default function DashboardOverview({
               <Button 
                 variant={'info'} 
                 onClick={onCustomize}
-                className='self-start mt-2'
                 style={{ backgroundColor: '#FFFFFF', borderColor: '#FFFFFF', color: '#1C2536' }}
               >
                 Customize
