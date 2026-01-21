@@ -19,7 +19,7 @@ import ApolloPagination from './components/ApolloPagination'
 import LeadDetailModal from './components/LeadDetailModal'
 import ImportLeadsModal from './components/ImportLeadsModal'
 import VirtualizedListingsTable from './components/VirtualizedListingsTable'
-import ProspectCheckboxTable from './components/ProspectCheckboxTable'
+import ProspectHoverTable from './components/ProspectHoverTable'
 import AddToListModal from './components/AddToListModal'
 import AddToCampaignModal from './components/AddToCampaignModal'
 import { useProspectData, Listing, FilterType, getPrimaryCategory } from './hooks/useProspectData'
@@ -2077,7 +2077,7 @@ function ProspectEnrichInner() {
                       >
                         {/* Checkbox Table Content - Using shadcn/ui Table with Checkbox */}
                         {/* When activeCategory is 'all', pass listings prop to use aggregated data instead of fetching from single table */}
-                        <ProspectCheckboxTable
+                        <ProspectHoverTable
                           tableName={activeCategory === 'all' ? undefined : resolvedTableName}
                           listings={activeCategory === 'all' ? filteredListings : undefined}
                           filters={{
@@ -2201,7 +2201,7 @@ function ProspectEnrichInner() {
                       >
                         {/* Checkbox Table Content - Using shadcn/ui Table with Checkbox */}
                         {/* When activeCategory is 'all', pass listings prop to use aggregated data instead of fetching from single table */}
-                        <ProspectCheckboxTable
+                        <ProspectHoverTable
                           tableName={activeCategory === 'all' ? undefined : resolvedTableName}
                           listings={activeCategory === 'all' ? filteredListings : undefined}
                           filters={{
