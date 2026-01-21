@@ -439,8 +439,8 @@ export default function ProspectHoverTable({
                         <div className="flex gap-3 items-center">
                           <MapPin className="h-4 w-4 text-bodytext" />
                           <div className="truncat line-clamp-2 max-w-56">
-                            <h6 className="text-base">{street}</h6>
-                            <p className="text-sm text-bodytext">{cityStateZip}</p>
+                            <h6 className="text-sm font-medium">{street}</h6>
+                            <p className="text-xs text-bodytext">{cityStateZip}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -554,7 +554,7 @@ export default function ProspectHoverTable({
                     
                     {columns.includes('last_sale_date') && (
                       <TableCell className="whitespace-nowrap">
-                        <p className="text-bodytext text-base">
+                        <p className="text-base">
                           {listing.last_sale_date ? new Date(listing.last_sale_date).toLocaleDateString() : '-'}
                         </p>
                       </TableCell>
