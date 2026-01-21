@@ -63,6 +63,7 @@ export default function DashboardOverview({
                 variant={'info'} 
                 onClick={onCustomize}
                 style={{ backgroundColor: '#FFFFFF', borderColor: '#FFFFFF', color: '#1C2536' }}
+                className='flex items-center justify-center'
               >
                 Customize
               </Button>
