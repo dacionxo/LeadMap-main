@@ -28,7 +28,7 @@ export default function DashboardOverview({
         <div className='grid grid-cols-12 gap-6'>
           <div className='md:col-span-6 col-span-12'>
             <div className='flex items-center gap-3 mt-2'>
-              <h5 className='text-lg' style={{ color: '#f6f7fb' }}>
+              <h5 className='text-lg' style={{ color: '#FFFFFF', textShadow: '0 0 0.5px rgba(0,0,0,0.3), 0 0 0.5px rgba(0,0,0,0.3)' }}>
                 Dashboard Overview
               </h5>
               {onRefresh && (
@@ -36,19 +36,19 @@ export default function DashboardOverview({
                   onClick={onRefresh}
                   disabled={refreshing}
                   className="p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ color: '#f6f7fb' }}
+                  style={{ color: '#FFFFFF', textShadow: '0 0 0.5px rgba(0,0,0,0.3), 0 0 0.5px rgba(0,0,0,0.3)' }}
                   title="Refresh data"
                 >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} style={{ color: '#f6f7fb' }} />
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} style={{ color: '#FFFFFF', filter: 'drop-shadow(0 0 0.5px rgba(0,0,0,0.3))' }} />
                 </button>
               )}
               {lastUpdated && (
-                <p className='text-xs' style={{ color: '#f6f7fb', opacity: 0.9 }}>
+                <p className='text-xs' style={{ color: '#FFFFFF', opacity: 0.9, textShadow: '0 0 0.5px rgba(0,0,0,0.3), 0 0 0.5px rgba(0,0,0,0.3)' }}>
                   Last updated: {lastUpdated.toLocaleTimeString()}
                 </p>
               )}
             </div>
-            <p className='text-sm font-medium py-5' style={{ color: '#f6f7fb', opacity: 0.9 }}>
+            <p className='text-sm font-medium py-5' style={{ color: '#FFFFFF', opacity: 0.9, textShadow: '0 0 0.5px rgba(0,0,0,0.3), 0 0 0.5px rgba(0,0,0,0.3)' }}>
               Track your prospects, campaigns, and deals in one place. Customize your dashboard to see what matters most.
             </p>
             {error && (
