@@ -471,6 +471,21 @@ export default function ProspectHoverTable({
                     className="group/row bg-hover dark:bg-transparent cursor-pointer"
                     onClick={() => onListingClick?.(listing)}
                   >
+                    {showSelectionColumn && (
+                      <TableCell className="px-3">
+                        <button
+                          type="button"
+                          className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-ld focus:border-ld focus:outline-none"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleRowSelectionChange(listing)
+                          }}
+                          aria-label={`Select listing ${listing.street || listing.listing_id}`}
+                        >
+                          <Checkbox checked={isRowSelected(listing)} />
+                        </button>
+                      </TableCell>
+                    )}
                     {columns.includes('address') && (
                       <TableCell className="whitespace-nowrap">
                         <div className="flex gap-3 items-center">

@@ -1326,6 +1326,16 @@ function ProspectEnrichInner() {
                   setSelectedListingId(listing.listing_id)
                   setShowLeadModal(true)
                 }}
+                selectedIds={selectedIds}
+                onSelect={(listingId, selected) => {
+                  const newSelected = new Set(selectedIds)
+                  if (selected) {
+                    newSelected.add(listingId)
+                  } else {
+                    newSelected.delete(listingId)
+                  }
+                  setSelectedIds(newSelected)
+                }}
                 crmContactIds={crmContactIds}
                 onSave={handleSaveProspect}
                 category={activeCategory}
