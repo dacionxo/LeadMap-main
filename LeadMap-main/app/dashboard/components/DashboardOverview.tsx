@@ -28,7 +28,7 @@ export default function DashboardOverview({
         <div className='grid grid-cols-12 gap-6'>
           <div className='md:col-span-6 col-span-12'>
             <div className='flex items-center gap-3 mt-2'>
-              <h5 className='text-lg' style={{ color: '#FFFFFF' }}>
+              <h5 className='text-lg' style={{ color: '#FFFFFF', textShadow: '0.2px 0.2px 0.2px rgba(0, 0, 0, 0.4)' }}>
                 Dashboard Overview
               </h5>
               {onRefresh && (
@@ -43,12 +43,12 @@ export default function DashboardOverview({
                 </button>
               )}
               {lastUpdated && (
-                <p className='text-xs' style={{ color: '#FFFFFF', opacity: 0.9 }}>
+                <p className='text-xs' style={{ color: '#FFFFFF', opacity: 0.9, textShadow: '0.2px 0.2px 0.2px rgba(0, 0, 0, 0.4)' }}>
                   Last updated: {lastUpdated.toLocaleTimeString()}
                 </p>
               )}
             </div>
-            <p className='text-sm font-medium py-5' style={{ color: '#FFFFFF', opacity: 0.9 }}>
+            <p className='text-sm font-medium py-5' style={{ color: '#FFFFFF', opacity: 0.9, textShadow: '0.2px 0.2px 0.2px rgba(0, 0, 0, 0.4)' }}>
               Track your prospects, campaigns, and deals in one place. Customize your dashboard to see what matters most.
             </p>
             {error && (
