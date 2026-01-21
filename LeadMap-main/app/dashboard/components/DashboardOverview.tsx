@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { Settings2, RefreshCw } from 'lucide-react'
-import Image from 'next/image'
 import { Card } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
 
@@ -25,23 +24,13 @@ export default function DashboardOverview({
 }: DashboardOverviewProps) {
   return (
     <>
-      <Card className='bg-lightprimary dark:bg-lightprimary shadow-none pb-0 mt-[30px] rounded-lg'>
-        <div className='grid grid-cols-12 gap-6'>
+      <Card className='bg-lightprimary dark:bg-lightprimary shadow-none pb-0 mt-[30px] rounded-lg p-3'>
+        <div className='grid grid-cols-12 gap-4'>
           <div className='md:col-span-6 col-span-12'>
-            <h5 className='text-lg mt-2'>
+            <h5 className='text-lg mt-0'>
               Dashboard Overview
             </h5>
-            {onRefresh && (
-              <button
-                onClick={onRefresh}
-                disabled={refreshing}
-                className="ml-2 p-1 text-ld hover:text-primary hover:bg-lightprimary rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed align-middle"
-                title="Refresh data"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
-            )}
-            <p className='text-ld opacity-75 text-sm font-medium py-5'>
+            <p className='text-ld opacity-75 text-sm font-medium py-3'>
               Track your prospects, campaigns, and deals in one place. Customize your dashboard to see what matters most.
             </p>
             {lastUpdated && (
@@ -54,18 +43,21 @@ export default function DashboardOverview({
                 {error}
               </div>
             )}
+          </div>
+          <div className='md:col-span-6 col-span-12 flex items-center justify-end gap-2'>
+            {onRefresh && (
+              <button
+                onClick={onRefresh}
+                disabled={refreshing}
+                className="p-1 text-ld hover:text-primary hover:bg-lightprimary rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed align-middle"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+            )}
             {onCustomize && !isEditMode && (
               <Button variant={'info'}>Customize</Button>
             )}
-          </div>
-          <div className='md:col-span-6 col-span-12'>
-            <Image
-              src='/images/backgrounds/track-bg.png'
-              alt='banner'
-              width={400}
-              height={240}
-              className='ms-auto'
-            />
           </div>
         </div>
       </Card>
