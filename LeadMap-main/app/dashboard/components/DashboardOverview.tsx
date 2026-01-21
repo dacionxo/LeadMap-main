@@ -58,7 +58,13 @@ export default function DashboardOverview({
           </div>
           <div className='md:col-span-6 col-span-12 flex items-center justify-end gap-2'>
             {onCustomize && !isEditMode && (
-              <Button variant={'info'}>Customize</Button>
+              <Button 
+                variant={'info'} 
+                onClick={onCustomize}
+                className='self-start mt-2'
+              >
+                Customize
+              </Button>
             )}
           </div>
         </div>
