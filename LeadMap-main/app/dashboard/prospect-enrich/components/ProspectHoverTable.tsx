@@ -391,7 +391,7 @@ export default function ProspectHoverTable({
 
   // EXACT 1:1 MATCH TO TAILWINDADMIN'S HOVERTABLE STRUCTURE
   return (
-    <div className="border rounded-md border-ld overflow-hidden">
+    <div className="border rounded-lg border-ld overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -448,7 +448,7 @@ export default function ProspectHoverTable({
                     
                     {columns.includes('price') && (
                       <TableCell className="whitespace-nowrap">
-                        <h6 className="text-base">{formatPrice(listing.list_price)}</h6>
+                        <p className="text-base">{formatPrice(listing.list_price)}</p>
                       </TableCell>
                     )}
                     
@@ -467,88 +467,88 @@ export default function ProspectHoverTable({
                     {columns.includes('score') && (
                       <TableCell className="whitespace-nowrap">
                         {listing.ai_investment_score !== null && listing.ai_investment_score !== undefined ? (
-                          <h6 className="text-base">{listing.ai_investment_score.toFixed(1)}</h6>
+                          <p className="text-base">{listing.ai_investment_score.toFixed(1)}</p>
                         ) : (
-                          <h6 className="text-base">-</h6>
+                          <p className="text-base">-</p>
                         )}
                       </TableCell>
                     )}
                     
                     {columns.includes('beds') && (
                       <TableCell className="whitespace-nowrap">
-                        <h6 className="text-base">{listing.beds ?? '-'}</h6>
+                        <p className="text-base">{listing.beds ?? '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('full_baths') && (
                       <TableCell className="whitespace-nowrap">
-                        <h6 className="text-base">{formatBaths(listing.full_baths)}</h6>
+                        <p className="text-base">{formatBaths(listing.full_baths)}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('sqft') && (
                       <TableCell className="whitespace-nowrap">
-                        <h6 className="text-base">{listing.sqft ? listing.sqft.toLocaleString() : '-'}</h6>
+                        <p className="text-base">{listing.sqft ? listing.sqft.toLocaleString() : '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('description') && (
                       <TableCell>
-                        <p className="text-bodytext text-base">{getDescription(listing)}</p>
+                        <p className="text-base">{getDescription(listing)}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('agent_name') && (
                       <TableCell className="whitespace-nowrap">
                         {" "}
-                        <p className="text-bodytext text-base">{listing.agent_name || '-'}</p>
+                        <p className="text-base">{listing.agent_name || '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('agent_email') && (
                       <TableCell className="whitespace-nowrap">
                         {" "}
-                        <p className="text-bodytext text-base">{listing.agent_email || '-'}</p>
+                        <p className="text-base">{listing.agent_email || '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('agent_phone') && (
                       <TableCell className="whitespace-nowrap">
                         {" "}
-                        <p className="text-bodytext text-base">{listing.agent_phone || '-'}</p>
+                        <p className="text-base">{listing.agent_phone || '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('agent_phone_2') && (
                       <TableCell className="whitespace-nowrap">
                         {" "}
-                        <p className="text-bodytext text-base">{listing.agent_phone_2 || '-'}</p>
+                        <p className="text-base">{listing.agent_phone_2 || '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('listing_agent_phone_2') && (
                       <TableCell className="whitespace-nowrap">
                         {" "}
-                        <p className="text-bodytext text-base">{listing.listing_agent_phone_2 || '-'}</p>
+                        <p className="text-base">{listing.listing_agent_phone_2 || '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('listing_agent_phone_5') && (
                       <TableCell className="whitespace-nowrap">
                         {" "}
-                        <p className="text-bodytext text-base">{listing.listing_agent_phone_5 || '-'}</p>
+                        <p className="text-base">{listing.listing_agent_phone_5 || '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('year_built') && (
                       <TableCell className="whitespace-nowrap">
-                        <h6 className="text-base">{listing.year_built ?? '-'}</h6>
+                        <p className="text-base">{listing.year_built ?? '-'}</p>
                       </TableCell>
                     )}
                     
                     {columns.includes('last_sale_price') && (
                       <TableCell className="whitespace-nowrap">
-                        <h6 className="text-base">{formatPrice(listing.last_sale_price)}</h6>
+                        <p className="text-base">{formatPrice(listing.last_sale_price)}</p>
                       </TableCell>
                     )}
                     
