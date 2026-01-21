@@ -190,7 +190,7 @@ function ProspectMetricsWidget({ widget, data }: { widget: DashboardWidget; data
 
   return (
     <div 
-      className="relative bg-white dark:bg-gray-900 rounded-lg shadow-[0_0.125rem_0.25rem_rgba(0,0,0,0.075)] transition-all duration-200 overflow-hidden p-4" 
+      className="relative bg-white dark:bg-gray-900 rounded-lg border border-ld shadow-[0_0.125rem_0.25rem_rgba(0,0,0,0.075)] transition-all duration-200 overflow-hidden p-4" 
       ref={metricsRef}
     >
       {/* Header Section */}
