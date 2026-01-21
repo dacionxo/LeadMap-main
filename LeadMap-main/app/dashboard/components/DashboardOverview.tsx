@@ -27,17 +27,29 @@ export default function DashboardOverview({
       <Card className='bg-lightprimary dark:bg-lightprimary shadow-none pb-0 mt-[30px] rounded-xl'>
         <div className='grid grid-cols-12 gap-6'>
           <div className='md:col-span-6 col-span-12'>
-            <h5 className='text-lg mt-2'>
-              Dashboard Overview
-            </h5>
+            <div className='flex items-center gap-3 mt-2'>
+              <h5 className='text-lg'>
+                Dashboard Overview
+              </h5>
+              {onRefresh && (
+                <button
+                  onClick={onRefresh}
+                  disabled={refreshing}
+                  className="p-1 text-ld hover:text-primary hover:bg-lightprimary rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh data"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </button>
+              )}
+              {lastUpdated && (
+                <p className='text-xs text-ld opacity-60'>
+                  Last updated: {lastUpdated.toLocaleTimeString()}
+                </p>
+              )}
+            </div>
             <p className='text-ld opacity-75 text-sm font-medium py-5'>
               Track your prospects, campaigns, and deals in one place. Customize your dashboard to see what matters most.
             </p>
-            {lastUpdated && (
-              <p className='text-xs text-ld opacity-60 mb-4 pb-2'>
-                Last updated: {lastUpdated.toLocaleTimeString()}
-              </p>
-            )}
             {error && (
               <div className="mb-4 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
                 {error}
@@ -45,16 +57,6 @@ export default function DashboardOverview({
             )}
           </div>
           <div className='md:col-span-6 col-span-12 flex items-center justify-end gap-2'>
-            {onRefresh && (
-              <button
-                onClick={onRefresh}
-                disabled={refreshing}
-                className="p-1 text-ld hover:text-primary hover:bg-lightprimary rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed align-middle"
-                title="Refresh data"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
-            )}
             {onCustomize && !isEditMode && (
               <Button variant={'info'}>Customize</Button>
             )}
