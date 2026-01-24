@@ -1335,8 +1335,7 @@ function ProspectEnrichInner() {
             showPagination={true}
                         />
                       </div>
-      </div>
-      )}
+        </div>
 
         {/* Lead Detail Modal */}
         {showLeadModal && selectedListingId && (
