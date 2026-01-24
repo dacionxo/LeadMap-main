@@ -77,13 +77,13 @@ function ProspectEnrichInner() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   
-  // Get sidebar state - must be called unconditionally (React rules)
-  // Since we're inside DashboardLayout which provides SidebarProvider, this should work
-  const { isOpen: isSidebarOpen } = useSidebar()
-  
   useEffect(() => {
     setMounted(true)
   }, [])
+  
+  // Inner component that uses sidebar - must be inside DashboardLayout
+  function ProspectContent() {
+    const { isOpen: isSidebarOpen } = useSidebar()
   
   // View State
   const [activeView, setActiveView] = useState<ViewType>('analytics')
@@ -1278,7 +1278,17 @@ function ProspectEnrichInner() {
   }
   
   return (
-      <DashboardLayout>
+    <DashboardLayout>
+      <ProspectContent />
+    </DashboardLayout>
+  )
+  
+  // Inner component that uses sidebar - must be inside DashboardLayout
+  function ProspectContent() {
+    const { isOpen: isSidebarOpen } = useSidebar()
+    
+    return (
+      <>
       {/* TailwindAdmin Hover Table - 1:1 Match to /shadcn-tables/hover */}
       <div className="fixed top-[80px] bottom-0 flex flex-col transition-all duration-300" style={{ left: isSidebarOpen ? '270px' : '75px', right: 0 }}>
         <div className="border-0 bg-white dark:bg-dark card no-inset no-ring undefined dark:shadow-dark-md shadow-md p-0 flex-1 flex flex-col overflow-hidden h-full w-full">
@@ -1411,8 +1421,9 @@ function ProspectEnrichInner() {
             isDark={isDark}
           />
         )}
-      </DashboardLayout>
-  )
+      </>
+    )
+  }
 }
 
 // Wrapper component that doesn't use useSearchParams
