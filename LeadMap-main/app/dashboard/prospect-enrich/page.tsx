@@ -1261,6 +1261,10 @@ function ProspectEnrichInner() {
     }
   }, [sortBy])
 
+  if (!mounted) {
+    return <DashboardLayout><div className="h-[calc(100vh-80px)]" /></DashboardLayout>
+  }
+  
   return (
       <DashboardLayout>
       {/* TailwindAdmin Hover Table - 1:1 Match to /shadcn-tables/hover */}
@@ -1326,7 +1330,8 @@ function ProspectEnrichInner() {
             showPagination={true}
                         />
                       </div>
-        </div>
+      </div>
+      )}
 
         {/* Lead Detail Modal */}
         {showLeadModal && selectedListingId && (
