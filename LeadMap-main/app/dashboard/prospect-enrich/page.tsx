@@ -1262,7 +1262,7 @@ function ProspectEnrichInner() {
   return (
       <DashboardLayout>
       {/* TailwindAdmin Hover Table - 1:1 Match to /shadcn-tables/hover */}
-      <div className="w-full py-[30px] md:px-[30px] px-5 h-[calc(100vh-120px)] flex flex-col">
+      <div className="w-full pt-0 pb-[30px] md:px-[30px] px-5 h-[calc(100vh-140px)] flex flex-col -mt-[30px]">
         <div className="border-0 bg-white dark:bg-dark card no-inset no-ring undefined dark:shadow-dark-md shadow-md p-0 flex-1 flex flex-col overflow-hidden">
           <ProspectHoverTable
                           tableName={activeCategory === 'all' ? undefined : resolvedTableName}
