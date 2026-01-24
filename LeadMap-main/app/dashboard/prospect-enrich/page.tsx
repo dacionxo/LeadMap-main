@@ -76,6 +76,9 @@ function ProspectEnrichInner() {
   const { profile } = useApp()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  
+  // Get sidebar state - must be called unconditionally (React rules)
+  // Since we're inside DashboardLayout which provides SidebarProvider, this should work
   const { isOpen: isSidebarOpen } = useSidebar()
   
   useEffect(() => {
@@ -1267,7 +1270,11 @@ function ProspectEnrichInner() {
   }, [sortBy])
 
   if (!mounted) {
-    return <DashboardLayout><div className="h-[calc(100vh-80px)]" /></DashboardLayout>
+    return (
+      <DashboardLayout>
+        <div className="h-[calc(100vh-80px)]" />
+      </DashboardLayout>
+    )
   }
   
   return (

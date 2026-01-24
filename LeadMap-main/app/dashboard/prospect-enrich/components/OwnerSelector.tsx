@@ -68,7 +68,7 @@ export default function OwnerSelector({ supabase, value, onChange }: OwnerSelect
       }
 
       // Only log error if it has actual content (message or code)
-      if (error && (error.message || error.code || error.hint)) {
+      if (error && (error.message || (error as any)?.code || error.hint)) {
         console.error('Error loading users:', error)
       }
 
