@@ -1269,20 +1269,6 @@ function ProspectEnrichInner() {
     }
   }, [sortBy])
 
-  if (!mounted) {
-    return (
-      <DashboardLayout>
-        <div className="h-[calc(100vh-80px)]" />
-      </DashboardLayout>
-    )
-  }
-  
-  return (
-    <DashboardLayout>
-      <ProspectContent />
-    </DashboardLayout>
-  )
-  
   // Inner component that uses sidebar - must be inside DashboardLayout
   function ProspectContent() {
     const { isOpen: isSidebarOpen } = useSidebar()
@@ -1424,6 +1410,20 @@ function ProspectEnrichInner() {
       </>
     )
   }
+
+  if (!mounted) {
+    return (
+      <DashboardLayout>
+        <div className="h-[calc(100vh-80px)]" />
+      </DashboardLayout>
+    )
+  }
+  
+  return (
+    <DashboardLayout>
+      <ProspectContent />
+    </DashboardLayout>
+  )
 }
 
 // Wrapper component that doesn't use useSearchParams
