@@ -24,31 +24,30 @@ export default function DashboardOverview({
 }: DashboardOverviewProps) {
   return (
     <>
-      <Card className='pb-0 mt-[30px] rounded-xl' style={{ backgroundColor: '#6e80ff', boxShadow: '0 0.125rem 0.25rem rgba(0,0,0,0.075)' }}>
+      <Card className='pb-0 mt-[30px] rounded-xl bg-white' style={{ boxShadow: '0 0.125rem 0.25rem rgba(0,0,0,0.075)' }}>
         <div className='grid grid-cols-12 gap-6'>
           <div className='md:col-span-6 col-span-12'>
             <div className='flex items-center gap-3 mt-2'>
-              <h5 className='text-lg' style={{ color: '#FFFFFF', textShadow: '0 0 0.5px rgba(0,0,0,0.3), 0 0 0.5px rgba(0,0,0,0.3)' }}>
+              <h5 className='text-lg text-black'>
                 Dashboard Overview
               </h5>
               {onRefresh && (
                 <button
                   onClick={onRefresh}
                   disabled={refreshing}
-                  className="p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ color: '#FFFFFF', textShadow: '0 0 0.5px rgba(0,0,0,0.3), 0 0 0.5px rgba(0,0,0,0.3)' }}
+                  className="p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black"
                   title="Refresh data"
                 >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} style={{ color: '#FFFFFF', filter: 'drop-shadow(0 0 0.5px rgba(0,0,0,0.3))' }} />
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''} text-black`} />
                 </button>
               )}
               {lastUpdated && (
-                <p className='text-xs' style={{ color: '#FFFFFF', opacity: 0.9, textShadow: '0 0 0.5px rgba(0,0,0,0.3), 0 0 0.5px rgba(0,0,0,0.3)' }}>
+                <p className='text-xs text-black opacity-70'>
                   Last updated: {lastUpdated.toLocaleTimeString()}
                 </p>
               )}
             </div>
-            <p className='text-sm font-medium py-5' style={{ color: '#FFFFFF', opacity: 0.9, textShadow: '0 0 0.5px rgba(0,0,0,0.3), 0 0 0.5px rgba(0,0,0,0.3)' }}>
+            <p className='text-sm font-medium py-5 text-black opacity-80'>
               Track your prospects, campaigns, and deals in one place. Customize your dashboard to see what matters most.
             </p>
             {error && (
@@ -62,8 +61,7 @@ export default function DashboardOverview({
               <Button
                 variant={'info'}
                 onClick={onCustomize}
-                style={{ backgroundColor: '#FFFFFF', borderColor: '#FFFFFF', color: '#1C2536' }}
-                className='flex items-center justify-center hover:shadow-lg transition-all duration-200'
+                className='flex items-center justify-center hover:shadow-lg transition-all duration-200 bg-primary text-white border-primary'
               >
                 Customize
               </Button>

@@ -43,14 +43,14 @@ function TypingAnimationMotion({ userName }: { userName?: string }) {
     return () => clearTimeout(timeout)
   }, [j, i, isDeleting, words])
 
-  return <h5 className="text-lg lg:whitespace-nowrap" style={{ color: '#050b0a' }}>Welcome {text}</h5>
+  return <h5 className="text-lg lg:whitespace-nowrap text-black">Welcome {text}</h5>
 }
 
 export const WelcomeCard = () => {
   const { profile } = useApp()
 
   return (
-    <Card className="overflow-hidden shadow-[0_0.125rem_0.25rem_rgba(0,0,0,0.075)] relative h-full rounded-xl" style={{ backgroundColor: '#d6e2e0' }}>
+    <Card className="overflow-hidden shadow-[0_0.125rem_0.25rem_rgba(0,0,0,0.075)] relative h-full rounded-xl bg-white">
       <div className="grid grid-cols-12 h-full">
         <div className="md:col-span-7 col-span-12 content-center">
           <div className="flex flex-col gap-8">
@@ -65,30 +65,28 @@ export const WelcomeCard = () => {
             </div>
             <div className="flex gap-6 items-center">
               <div className="pe-6 rtl:pe-auto rtl:ps-6 border-e border-black border-opacity-20 dark:border-darkborder">
-                <h3 className="flex items-start mb-0 text-3xl" style={{ color: '#050b0a' }}>
+                <h3 className="flex items-start mb-0 text-3xl text-black">
                   <span>
                     $<CountUp to={2340} />
                   </span>
                   <Icon
                     icon="tabler:arrow-up-right"
-                    className="text-base"
-                    style={{ color: '#050b0a' }}
+                    className="text-base text-black"
                   />
                 </h3>
-                <p className="text-sm mt-1" style={{ color: '#050b0a' }}>Today's Sales</p>
+                <p className="text-sm mt-1 text-black">Today's Sales</p>
               </div>
               <div>
-                <h3 className="flex items-start mb-0 text-3xl" style={{ color: '#050b0a' }}>
+                <h3 className="flex items-start mb-0 text-3xl text-black">
                   <span>
                     <CountUp to={35} />%
                   </span>
                   <Icon
                     icon="tabler:arrow-up-right"
-                    className="text-base"
-                    style={{ color: '#050b0a' }}
+                    className="text-base text-black"
                   />
                 </h3>
-                <p className="text-sm mt-1" style={{ color: '#050b0a' }}>Overall Performance</p>
+                <p className="text-sm mt-1 text-black">Overall Performance</p>
               </div>
             </div>
           </div>
