@@ -59,7 +59,8 @@ export default function ProspectSearchHeader({
   return (
     <div className={cn(
       "bg-white dark:bg-dark border-b border-ld",
-      "flex flex-col gap-3.5 px-6 py-3.5"
+      "flex flex-col gap-3.5 px-6 py-3.5",
+      "m-0"
     )}>
       {/* Top Row: Title and Primary Actions */}
       <div className="flex items-center justify-between">

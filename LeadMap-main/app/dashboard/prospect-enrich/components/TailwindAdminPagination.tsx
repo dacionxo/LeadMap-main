@@ -13,7 +13,7 @@ interface TailwindAdminPaginationProps {
   isDark?: boolean
 }
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
+const PAGE_SIZE_OPTIONS = [30, 60, 90] as const
 
 export default function TailwindAdminPagination({
   currentPage,

@@ -190,7 +190,7 @@ export default function ProspectHoverTable({
   const [loading, setLoading] = useState(true)
   const [totalCount, setTotalCount] = useState(0)
   const [internalCurrentPage, setInternalCurrentPage] = useState(1)
-  const [internalPageSize, setInternalPageSize] = useState(10)
+  const [internalPageSize, setInternalPageSize] = useState(30)
 
   const currentPage = pagination?.currentPage ?? internalCurrentPage
   const pageSize = pagination?.pageSize ?? internalPageSize
