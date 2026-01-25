@@ -3,13 +3,19 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MoreVertical, Trash2, Edit2, Download, ArrowRight } from 'lucide-react'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { Button } from '@/app/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/app/components/ui/dropdown-menu'
+import { Badge } from '@/app/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table'
+import { Checkbox } from '@/app/components/ui/checkbox'
+import { cn } from '@/app/lib/utils'
+import { Users, Building2 } from 'lucide-react'
 
 interface List {
   id: string
   name: string
-  type?: 'people' | 'properties' // Optional for backward compatibility
-  count?: number
+  type?: 'people' | 'properties'
+  item_count?: number
   created_at?: string
   updated_at?: string
   user_id?: string
@@ -18,39 +24,60 @@ interface List {
 interface ListsTableProps {
   lists: List[]
   onRefresh: () => void
-  supabase: SupabaseClient
+  type?: 'people' | 'properties'
 }
 
-export default function ListsTable({ lists, onRefresh, supabase }: ListsTableProps) {
+export default function ListsTable({ lists, onRefresh, type }: ListsTableProps) {
   const router = useRouter()
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const handleDelete = async (listId: string) => {
-    if (!confirm('Are you sure you want to delete this list?')) return
+  const handleDelete = async (listId: string, listName: string) => {
+    if (!confirm(`Are you sure you want to delete "${listName}"? This action cannot be undone.`)) {
+      return
+    }
     
     try {
-      const { error } = await supabase
-        .from('lists')
-        .delete()
-        .eq('id', listId)
+      setDeletingId(listId)
+      const response = await fetch(`/api/lists/${listId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
-      if (error) {
-        console.error('Error deleting list:', error)
-        alert('Failed to delete list')
-      } else {
+      const data = await response.json()
+
+      if (response.ok) {
         onRefresh()
+      } else {
+        alert(data.error || 'Failed to delete list')
       }
     } catch (err) {
       console.error('Error:', err)
       alert('Failed to delete list')
+    } finally {
+      setDeletingId(null)
+      setMenuOpen(null)
     }
-    setMenuOpen(null)
   }
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A'
     const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffSecs = Math.floor(diffMs / 1000)
+    const diffMins = Math.floor(diffSecs / 60)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffSecs < 60) return `${diffSecs} second${diffSecs !== 1 ? 's' : ''} ago`
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric', 
@@ -60,121 +87,90 @@ export default function ListsTable({ lists, onRefresh, supabase }: ListsTablePro
 
   const handleExportCSV = async (listId: string, listName: string) => {
     try {
-      // Fetch list items first from list_memberships table
-      const { data: listItems, error: itemsError } = await supabase
-        .from('list_memberships')
-        .select('*')
-        .eq('list_id', listId)
+      // Fetch all list items (we'll get all pages)
+      const response = await fetch(`/api/lists/${listId}/paginated?page=1&pageSize=1000`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
 
-      if (itemsError) {
-        console.error('Error fetching list items:', itemsError)
-        alert('Failed to export list')
+      if (!response.ok) {
+        alert('Failed to fetch list items for export')
         return
       }
 
-      if (!listItems || listItems.length === 0) {
+      const data = await response.json()
+      const items = data.data || []
+
+      if (items.length === 0) {
         alert('No items to export')
         return
       }
 
-      // Fetch actual listing data
-      const listingItems = listItems.filter(item => item.item_type === 'listing')
-      const contactItems = listItems.filter(item => item.item_type === 'contact')
-      
-      const allListings: any[] = []
+      // Determine headers based on list type
+      const list = lists.find(l => l.id === listId)
+      const isPropertiesList = list?.type === 'properties' || type === 'properties'
 
-      // Fetch listings
-      if (listingItems.length > 0) {
-        const itemIds = listingItems.map(item => item.item_id).filter(Boolean)
+      let headers: string[]
+      let rows: string[][]
+
+      if (isPropertiesList) {
+        // Properties list - export listing data
+        headers = [
+          'Listing ID', 'Address', 'City', 'State', 'Zip Code', 'Price', 
+          'Beds', 'Baths', 'Sqft', 'Status', 'Agent Name', 'Agent Email', 
+          'Agent Phone', 'Score', 'Year Built', 'Last Sale Price', 'Last Sale Date', 'Property URL'
+        ]
         
-        // Try listing_id first
-        const { data: listingsById } = await supabase
-          .from('listings')
-          .select('*')
-          .in('listing_id', itemIds)
-
-        if (listingsById) {
-          allListings.push(...listingsById)
-        }
-
-        // Try property_url for missing ones
-        const foundIds = new Set(listingsById?.map(l => l.listing_id) || [])
-        const missingIds = itemIds.filter(id => !foundIds.has(id))
+        rows = items.map((item: any) => [
+          item.listing_id || '',
+          item.street || '',
+          item.city || '',
+          item.state || '',
+          item.zip_code || '',
+          item.list_price?.toString() || '',
+          item.beds?.toString() || '',
+          item.full_baths?.toString() || '',
+          item.sqft?.toString() || '',
+          item.status || '',
+          item.agent_name || '',
+          item.agent_email || '',
+          item.agent_phone || '',
+          item.ai_investment_score?.toString() || '',
+          item.year_built?.toString() || '',
+          item.last_sale_price?.toString() || '',
+          item.last_sale_date || '',
+          item.property_url || ''
+        ])
+      } else {
+        // People list - export contact data
+        headers = [
+          'Name', 'Email', 'Phone', 'Company', 'Job Title', 
+          'Address', 'City', 'State', 'Zip Code', 'Source'
+        ]
         
-        if (missingIds.length > 0) {
-          const { data: listingsByUrl } = await supabase
-            .from('listings')
-            .select('*')
-            .in('property_url', missingIds)
-
-          if (listingsByUrl) {
-            const existingIds = new Set(allListings.map(l => l.listing_id))
-            const newListings = listingsByUrl.filter(l => !existingIds.has(l.listing_id))
-            allListings.push(...newListings)
-          }
-        }
+        rows = items.map((item: any) => [
+          `${item.first_name || ''} ${item.last_name || ''}`.trim() || item.agent_name || '',
+          item.email || item.agent_email || '',
+          item.phone || item.agent_phone || '',
+          item.company || '',
+          item.job_title || '',
+          item.address || item.street || '',
+          item.city || '',
+          item.state || '',
+          item.zip_code || '',
+          item.source || ''
+        ])
       }
 
-      // Fetch contacts
-      if (contactItems.length > 0) {
-        const contactIds = contactItems.map(item => item.item_id)
-        const { data: contacts } = await supabase
-          .from('contacts')
-          .select('*')
-          .in('id', contactIds)
-
-        if (contacts) {
-          // Convert contacts to listing-like format
-          contacts.forEach(contact => {
-            allListings.push({
-              listing_id: contact.id,
-              street: contact.address,
-              city: contact.city,
-              state: contact.state,
-              zip_code: contact.zip_code,
-              agent_name: contact.first_name && contact.last_name 
-                ? `${contact.first_name} ${contact.last_name}` 
-                : contact.first_name || contact.last_name,
-              agent_email: contact.email,
-              agent_phone: contact.phone
-            })
-          })
-        }
-      }
-
-      // Convert to CSV with proper headers
-      const headers = [
-        'Listing ID', 'Address', 'City', 'State', 'Zip Code', 'Price', 
-        'Beds', 'Baths', 'Sqft', 'Status', 'Agent Name', 'Agent Email', 
-        'Agent Phone', 'Score', 'Year Built', 'Last Sale Price', 'Last Sale Date'
-      ]
-      
-      const rows = allListings.map(listing => [
-        listing.listing_id || '',
-        listing.street || '',
-        listing.city || '',
-        listing.state || '',
-        listing.zip_code || '',
-        listing.list_price?.toString() || '',
-        listing.beds?.toString() || '',
-        listing.full_baths?.toString() || '',
-        listing.sqft?.toString() || '',
-        listing.status || '',
-        listing.agent_name || '',
-        listing.agent_email || '',
-        listing.agent_phone || '',
-        listing.ai_investment_score?.toString() || '',
-        listing.year_built?.toString() || '',
-        listing.last_sale_price?.toString() || '',
-        listing.last_sale_date || ''
-      ])
-
+      // Create CSV content
       const csvContent = [
         headers.join(','),
         ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       ].join('\n')
 
-      // Download CSV
+      // Download file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -198,30 +194,11 @@ export default function ListsTable({ lists, onRefresh, supabase }: ListsTablePro
 
   if (lists.length === 0) {
     return (
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.95) 100%)',
-        borderRadius: '12px',
-        padding: '64px',
-        textAlign: 'center',
-        boxShadow: '0 4px 12px -2px rgba(99, 102, 241, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05)',
-        border: '1px solid rgba(99, 102, 241, 0.1)',
-        backdropFilter: 'blur(10px)'
-      }}>
-        <div style={{
-          color: '#000000',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          fontSize: '16px',
-          fontWeight: 500,
-          marginBottom: '8px'
-        }}>
+      <div className="rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-boxdark p-12 text-center">
+        <div className="text-bodydark dark:text-bodydark2 font-medium mb-2">
           No lists found
         </div>
-        <div style={{
-          color: '#000000',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          fontSize: '14px',
-          opacity: 0.7
-        }}>
+        <div className="text-sm text-bodydark2 dark:text-bodydark2/70">
           Create your first list to get started
         </div>
       </div>
@@ -229,345 +206,143 @@ export default function ListsTable({ lists, onRefresh, supabase }: ListsTablePro
   }
 
   return (
-    <div style={{
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'transparent',
-      overflow: 'hidden'
-    }}>
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'auto',
-        position: 'relative'
-      }}>
-        <table style={{
-          width: '100%',
-          borderCollapse: 'separate',
-          borderSpacing: 0,
-          tableLayout: 'fixed'
-        }}>
-        <thead style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%)',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <tr style={{
-            background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.98) 0%, rgba(241, 245, 249, 0.95) 100%)',
-            borderBottom: '2px solid rgba(0, 0, 0, 0.1)'
-          }}>
-            <th style={{
-              padding: '16px 24px',
-              textAlign: 'left',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              List Name
-            </th>
-            <th style={{
-              padding: '16px 24px',
-              textAlign: 'right',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              # Of Records
-            </th>
-            <th style={{
-              padding: '16px 24px',
-              textAlign: 'left',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              Last Modified
-            </th>
-            <th style={{
-              padding: '16px 24px',
-              textAlign: 'center',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              width: '120px'
-            }}>
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {lists.map((list) => (
-            <tr
-              key={list.id}
-              style={{
-                borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                backgroundColor: hoveredRow === list.id 
-                  ? 'rgba(0, 0, 0, 0.02)' 
-                  : 'transparent',
-                cursor: 'pointer',
-                position: 'relative'
-              }}
-              onMouseEnter={() => setHoveredRow(list.id)}
-              onMouseLeave={() => setHoveredRow(null)}
-            >
-              <td 
-                onClick={() => router.push(`/dashboard/lists/${list.id}`)}
-                style={{
-                  padding: '16px 24px',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  fontSize: '14px',
-                  color: '#6366f1',
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  cursor: 'pointer',
-                  textDecoration: 'none',
-                  transition: 'color 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#4f46e5'
-                  e.currentTarget.style.textDecoration = 'underline'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#6366f1'
-                  e.currentTarget.style.textDecoration = 'none'
-                }}
-              >
-                {list.name}
-              </td>
-              <td style={{
-                padding: '16px 24px',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '14px',
-                color: '#000000',
-                fontWeight: 500,
-                textAlign: 'right'
-              }}>
-                {list.count || 0}
-              </td>
-              <td style={{
-                padding: '16px 24px',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '14px',
-                color: '#000000'
-              }}>
-                {formatDate(list.updated_at || list.created_at)}
-              </td>
-              <td style={{
-                padding: '16px 24px',
-                textAlign: 'center',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}>
-                {/* Export CSV Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleExportCSV(list.id, list.name)
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '6px',
-                    border: 'none',
-                    background: 'transparent',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    color: '#000000',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent'
-                  }}
-                  title="Export as CSV"
+    <div className="rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-boxdark overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50 dark:bg-gray-800/50">
+              <TableHead className="w-12">
+                <Checkbox />
+              </TableHead>
+              <TableHead className="text-base font-semibold py-4">
+                LIST NAME
+              </TableHead>
+              <TableHead className="text-base font-semibold py-4 text-right">
+                # OF RECORDS
+              </TableHead>
+              <TableHead className="text-base font-semibold py-4">
+                TYPE
+              </TableHead>
+              <TableHead className="text-base font-semibold py-4">
+                CREATED BY
+              </TableHead>
+              <TableHead className="text-base font-semibold py-4">
+                LAST MODIFIED
+              </TableHead>
+              <TableHead className="text-base font-semibold py-4 text-right">
+                ACTIONS
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {lists.map((list) => {
+              const isHovered = hoveredRow === list.id
+              const isDeleting = deletingId === list.id
+              const listType = list.type || type || 'properties'
+              
+              return (
+                <TableRow
+                  key={list.id}
+                  className={cn(
+                    "cursor-pointer transition-colors",
+                    isHovered && "bg-gray-50 dark:bg-gray-800/30"
+                  )}
+                  onMouseEnter={() => setHoveredRow(list.id)}
+                  onMouseLeave={() => setHoveredRow(null)}
+                  onClick={() => router.push(`/dashboard/lists/${list.id}`)}
                 >
-                  <Download size={18} />
-                </button>
-
-                {/* Add to Pipeline Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleAddToPipeline(list.id)
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '6px',
-                    border: 'none',
-                    background: 'transparent',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    color: '#000000',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent'
-                  }}
-                  title="Add to Pipeline"
-                >
-                  <ArrowRight size={18} />
-                </button>
-
-                {/* Three Dots Menu */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setMenuOpen(menuOpen === list.id ? null : list.id)
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '6px',
-                    border: 'none',
-                    background: 'transparent',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    color: '#000000',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent'
-                  }}
-                  title="More options"
-                >
-                  <MoreVertical size={18} />
-                </button>
-                
-                {menuOpen === list.id && (
-                  <>
-                    <div
-                      style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        zIndex: 99
-                      }}
-                      onClick={() => setMenuOpen(null)}
-                    />
-                    <div style={{
-                      position: 'absolute',
-                      right: '24px',
-                      top: '100%',
-                      marginTop: '4px',
-                      background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.95) 100%)',
-                      borderRadius: '10px',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-                      border: '1px solid rgba(99, 102, 241, 0.1)',
-                      zIndex: 100,
-                      minWidth: '180px',
-                      overflow: 'hidden',
-                      backdropFilter: 'blur(10px)'
-                    }}>
-                      <button
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox />
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-medium text-primary hover:text-primary/80 cursor-pointer transition-colors">
+                      {list.name}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="text-sm font-semibold text-black dark:text-white font-mono">
+                      {list.item_count || 0}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={listType === 'people' ? "lightPrimary" : "lightWarning"}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {listType === 'people' ? (
+                        <Users className="h-3 w-3" />
+                      ) : (
+                        <Building2 className="h-3 w-3" />
+                      )}
+                      {listType === 'people' ? 'Prospects' : 'Properties'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-bodydark dark:text-bodydark2">
+                    You
+                  </TableCell>
+                  <TableCell className="text-sm text-bodydark dark:text-bodydark2">
+                    {formatDate(list.updated_at || list.created_at)}
+                  </TableCell>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setMenuOpen(null)
-                          // TODO: Implement edit
-                          alert('Edit functionality coming soon')
+                          handleExportCSV(list.id, list.name)
                         }}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '12px 16px',
-                          border: 'none',
-                          background: 'transparent',
-                          cursor: 'pointer',
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                          fontSize: '14px',
-                          color: '#000000',
-                          transition: 'background-color 0.15s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'transparent'
-                        }}
+                        title="Download CSV"
+                        className="h-8 w-8"
                       >
-                        <Edit2 size={16} />
-                        Edit List
-                      </button>
-                      <div style={{
-                        height: '1px',
-                        background: 'rgba(0, 0, 0, 0.1)',
-                        margin: '4px 0'
-                      }} />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(list.id)
-                        }}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '12px 16px',
-                          border: 'none',
-                          background: 'transparent',
-                          cursor: 'pointer',
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                          fontSize: '14px',
-                          color: '#ef4444',
-                          transition: 'background-color 0.15s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'transparent'
-                        }}
-                      >
-                        <Trash2 size={16} />
-                        Delete List
-                      </button>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <DropdownMenu open={menuOpen === list.id} onOpenChange={(open) => setMenuOpen(open ? list.id : null)}>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                            }}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            className="flex gap-2 items-center cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setMenuOpen(null)
+                              // TODO: Implement edit
+                              alert('Edit functionality coming soon')
+                            }}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="flex gap-2 items-center cursor-pointer text-red-600 focus:text-red-600"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDelete(list.id, list.name)
+                            }}
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )

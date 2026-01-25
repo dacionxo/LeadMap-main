@@ -1,17 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Filter, Upload } from 'lucide-react'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { X, Filter, Upload, Loader2 } from 'lucide-react'
+import { Button } from '@/app/components/ui/button'
+import { Input } from '@/app/components/ui/input'
+import { Label } from '@/app/components/ui/label'
 
 interface CreateListModalProps {
   type?: 'people' | 'properties'
   onClose: () => void
   onCreated: () => void
-  supabase: SupabaseClient
+  supabase?: any // Kept for backward compatibility but not used
 }
 
-export default function CreateListModal({ type = 'properties', onClose, onCreated, supabase }: CreateListModalProps) {
+export default function CreateListModal({ type = 'properties', onClose, onCreated }: CreateListModalProps) {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,30 +36,28 @@ export default function CreateListModal({ type = 'properties', onClose, onCreate
       setLoading(true)
       setError(null)
 
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      const { data, error: insertError } = await supabase
-        .from('lists')
-        .insert([
-          {
-            name: name.trim(),
-            type: type,
-            user_id: user?.id
-          }
-        ])
-        .select()
-        .single()
+      const response = await fetch('/api/lists', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          type: type,
+        }),
+      })
 
-      if (insertError) {
-        console.error('Error creating list:', insertError)
-        setError(insertError.message || 'Failed to create list')
-        return
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create list')
       }
 
       onCreated()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error:', err)
-      setError('An unexpected error occurred')
+      setError(err.message || 'An unexpected error occurred')
     } finally {
       setLoading(false)
     }
@@ -72,329 +72,142 @@ export default function CreateListModal({ type = 'properties', onClose, onCreate
     <>
       {/* Backdrop */}
       <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 1000,
-          opacity: isOpen ? 1 : 0,
-          transition: 'opacity 0.3s ease',
-          backdropFilter: 'blur(4px)'
-        }}
+        className={`
+          fixed inset-0 bg-black/50 backdrop-blur-sm z-50
+          transition-opacity duration-300
+          ${isOpen ? 'opacity-100' : 'opacity-0'}
+        `}
         onClick={handleClose}
       />
       
       {/* Drawer */}
       <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: '480px',
-          maxWidth: '90vw',
-          background: '#ffffff',
-          boxShadow: '-4px 0 24px rgba(0, 0, 0, 0.15)',
-          zIndex: 1001,
-          display: 'flex',
-          flexDirection: 'column',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflow: 'hidden'
-        }}
+        className={`
+          fixed top-0 right-0 bottom-0 w-full max-w-[480px] 
+          bg-white dark:bg-boxdark shadow-2xl z-50
+          flex flex-col overflow-hidden
+          transition-transform duration-300 ease-out
+          ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+        `}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{
-          padding: '24px',
-          borderBottom: '1px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <h2 style={{
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            fontSize: '20px',
-            fontWeight: 600,
-            color: '#1e293b',
-            margin: 0
-          }}>
+        <div className="flex items-center justify-between p-6 border-b border-stroke dark:border-strokedark">
+          <h2 className="text-xl font-semibold text-black dark:text-white">
             New List
           </h2>
           <button
             onClick={handleClose}
-            style={{
-              padding: '8px',
-              border: 'none',
-              background: 'transparent',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              color: '#64748b',
-              transition: 'all 0.15s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#f1f5f9'
-              e.currentTarget.style.color = '#1e293b'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = '#64748b'
-            }}
+            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-bodydark2 hover:text-black dark:hover:text-white transition-colors"
           >
-            <X size={20} />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Form Content */}
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: '24px'
-        }}>
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <div className="flex-1 overflow-auto p-6 space-y-6">
             {/* Name Input */}
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{
-                marginBottom: '8px'
-              }}>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value)
-                    setError(null)
-                  }}
-                  placeholder="Enter list name"
-                  autoFocus
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: error ? '2px solid #ef4444' : '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    background: '#ffffff',
-                    color: '#1e293b',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '16px',
-                    outline: 'none',
-                    transition: 'all 0.15s ease',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#6366f1'
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = error ? '#ef4444' : '#d1d5db'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                />
-              </div>
+            <div>
+              <Label htmlFor="list-name" className="mb-2 block">
+                List Name
+              </Label>
+              <Input
+                id="list-name"
+                type="text"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  setError(null)
+                }}
+                placeholder="Enter list name"
+                autoFocus
+                disabled={loading}
+                className={error ? 'border-red-500' : ''}
+              />
               {error && (
-                <div style={{
-                  marginTop: '8px',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  fontSize: '12px',
-                  color: '#ef4444'
-                }}>
-                  {error}
-                </div>
+                <p className="mt-2 text-sm text-red-500">{error}</p>
               )}
             </div>
 
-
             {/* Separator */}
-            <hr style={{
-              border: 'none',
-              borderTop: '1px solid #e2e8f0',
-              margin: '24px 0'
-            }} />
+            <hr className="border-stroke dark:border-strokedark" />
 
             {/* Add record from section */}
             <div>
-              <p style={{
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#1e293b',
-                margin: '0 0 16px 0'
-              }}>
+              <Label className="mb-4 block text-sm font-medium text-black dark:text-white">
                 Add record from
-              </p>
+              </Label>
 
               {/* Filter Option */}
-              <div style={{
-                marginBottom: '16px',
-                padding: '16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                background: '#ffffff'
-              }}>
-                <p style={{
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#1e293b',
-                  margin: '0 0 8px 0'
-                }}>
+              <div className="mb-4 p-4 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark">
+                <Label className="mb-2 block text-sm font-medium text-black dark:text-white">
                   Filter
-                </p>
-                <button
+                </Label>
+                <Button
                   type="button"
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    background: '#ffffff',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    // TODO: Implement filter selection
+                    alert('Filter selection coming soon')
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#f8fafc'
-                    e.currentTarget.style.borderColor = '#cbd5e1'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#ffffff'
-                    e.currentTarget.style.borderColor = '#d1d5db'
-                  }}
+                  disabled={loading}
                 >
-                  <Filter size={16} />
+                  <Filter className="h-4 w-4 mr-2" />
                   Select filter
-                </button>
+                </Button>
               </div>
 
               {/* CSV Option */}
-              <div style={{
-                padding: '16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                background: '#ffffff'
-              }}>
-                <p style={{
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#1e293b',
-                  margin: '0 0 8px 0'
-                }}>
+              <div className="p-4 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark">
+                <Label className="mb-2 block text-sm font-medium text-black dark:text-white">
                   CSV
-                </p>
-                <button
+                </Label>
+                <Button
                   type="button"
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    background: '#ffffff',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    // TODO: Implement CSV upload
+                    alert('CSV upload coming soon')
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#f8fafc'
-                    e.currentTarget.style.borderColor = '#cbd5e1'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#ffffff'
-                    e.currentTarget.style.borderColor = '#d1d5db'
-                  }}
+                  disabled={loading}
                 >
-                  <Upload size={16} />
+                  <Upload className="h-4 w-4 mr-2" />
                   Upload CSV
-                </button>
+                </Button>
               </div>
             </div>
-          </form>
-        </div>
+          </div>
 
-        {/* Footer Actions */}
-        <div style={{
-          padding: '24px',
-          borderTop: '1px solid #e2e8f0',
-          display: 'flex',
-          gap: '12px',
-          justifyContent: 'flex-end'
-        }}>
-          <button
-            type="button"
-            onClick={handleClose}
-            style={{
-              padding: '10px 20px',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              background: '#ffffff',
-              color: '#64748b',
-              cursor: 'pointer',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              fontSize: '14px',
-              fontWeight: 500,
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#f8fafc'
-              e.currentTarget.style.borderColor = '#cbd5e1'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#ffffff'
-              e.currentTarget.style.borderColor = '#d1d5db'
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              padding: '10px 20px',
-              border: 'none',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: '#ffffff',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              fontSize: '14px',
-              fontWeight: 600,
-              transition: 'all 0.15s ease',
-              opacity: loading ? 0.6 : 1,
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)'
-              }
-            }}
-          >
-            {loading ? 'Creating...' : 'Create'}
-          </button>
-        </div>
+          {/* Footer Actions */}
+          <div className="p-6 border-t border-stroke dark:border-strokedark flex gap-3 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading || !name.trim()}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create'
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </>
   )
 }
-
