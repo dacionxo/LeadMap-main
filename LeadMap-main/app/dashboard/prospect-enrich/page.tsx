@@ -8,7 +8,7 @@ import { postEnrichLeads } from '@/lib/api'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Map } from 'lucide-react'
+import { Map as MapIcon } from 'lucide-react'
 import DashboardLayout from '../components/DashboardLayout'
 import { useSidebar } from '../components/SidebarContext'
 import AddToCampaignModal from './components/AddToCampaignModal'
@@ -107,7 +107,7 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
               <div className="flex-1 flex items-center justify-center bg-white dark:bg-dark">
                 <div className="text-center p-12">
                   <div className="w-32 h-32 mb-6 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center text-5xl mx-auto">
-                    <Map className="h-16 w-16 text-white" />
+                    <MapIcon className="h-16 w-16 text-white" />
                   </div>
                   <h2 className="text-2xl font-semibold text-black dark:text-white mb-3">
                     Map View
