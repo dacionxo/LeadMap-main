@@ -428,12 +428,12 @@ export default function ProspectFilterSidebar({
     )}>
       {/* Summary Stats - Total / Net New / Saved (reference: segmented control, label over count) */}
       <div className={cn(
-        "px-4 py-3 border-b border-ld",
+        "px-4 py-2 border-b border-ld",
         "bg-white dark:bg-dark"
       )}>
         <div
           className={cn(
-            "rounded-xl p-1 flex",
+            "rounded-xl p-0.5 flex",
             "bg-gray-100 dark:bg-gray-800/80",
             "shadow-sm"
           )}
@@ -448,11 +448,11 @@ export default function ProspectFilterSidebar({
             tabIndex={viewType === 'total' ? 0 : -1}
             onClick={() => onViewTypeChange?.('total')}
             className={cn(
-              "flex-1 min-w-0 flex flex-col items-center justify-center py-2.5 px-3 transition-all duration-200",
+              "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
               "rounded-l-lg rounded-r-md",
               viewType === 'total'
-                ? "bg-[#eef5fb] dark:bg-blue-900/30 shadow-sm"
-                : "bg-transparent hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
+                ? "bg-white dark:bg-gray-700 shadow-sm"
+                : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
             )}
           >
             <span
@@ -467,7 +467,7 @@ export default function ProspectFilterSidebar({
             </span>
             <span
               className={cn(
-                "text-sm mt-0.5",
+                "text-sm mt-0",
                 viewType === 'total'
                   ? "text-gray-600 dark:text-gray-300"
                   : "text-gray-500 dark:text-gray-400"
@@ -484,11 +484,11 @@ export default function ProspectFilterSidebar({
             tabIndex={viewType === 'net_new' ? 0 : -1}
             onClick={() => onViewTypeChange?.('net_new')}
             className={cn(
-              "flex-1 min-w-0 flex flex-col items-center justify-center py-2.5 px-3 transition-all duration-200",
+              "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
               "rounded-md",
               viewType === 'net_new'
-                ? "bg-[#eef5fb] dark:bg-blue-900/30 shadow-sm"
-                : "bg-transparent hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
+                ? "bg-white dark:bg-gray-700 shadow-sm"
+                : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
             )}
           >
             <span
@@ -503,7 +503,7 @@ export default function ProspectFilterSidebar({
             </span>
             <span
               className={cn(
-                "text-sm mt-0.5",
+                "text-sm mt-0",
                 viewType === 'net_new'
                   ? "text-gray-600 dark:text-gray-300"
                   : "text-gray-500 dark:text-gray-400"
@@ -520,11 +520,11 @@ export default function ProspectFilterSidebar({
             tabIndex={viewType === 'saved' ? 0 : -1}
             onClick={() => onViewTypeChange?.('saved')}
             className={cn(
-              "flex-1 min-w-0 flex flex-col items-center justify-center py-2.5 px-3 transition-all duration-200",
+              "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
               "rounded-r-lg rounded-l-md",
               viewType === 'saved'
-                ? "bg-[#eef5fb] dark:bg-blue-900/30 shadow-sm"
-                : "bg-transparent hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
+                ? "bg-white dark:bg-gray-700 shadow-sm"
+                : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
             )}
           >
             <span
@@ -539,7 +539,7 @@ export default function ProspectFilterSidebar({
             </span>
             <span
               className={cn(
-                "text-sm mt-0.5",
+                "text-sm mt-0",
                 viewType === 'saved'
                   ? "text-gray-600 dark:text-gray-300"
                   : "text-gray-500 dark:text-gray-400"
