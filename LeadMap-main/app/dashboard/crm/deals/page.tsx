@@ -4,13 +4,13 @@ import DashboardLayout from '../../components/DashboardLayout'
 import { useSidebar } from '../../components/SidebarContext'
 import { Plus, Search } from 'lucide-react'
 
-export default function DealsPage() {
+/** Must be inside DashboardLayout (useSidebar). */
+function DealsPageContent() {
   const { isOpen: isSidebarOpen } = useSidebar()
 
   return (
-    <DashboardLayout>
-      {/* Option C: -mt-[30px] cancels DashboardLayout container's py-[30px] top so this block sits flush under the Navbar. Only /dashboard/crm/deals. */}
-      <div className="-mt-[30px]">
+    <div className="-mt-[30px]">
+      {/* Option C: cancels DashboardLayout container's py-[30px] top so this block sits flush under the Navbar. Only /dashboard/crm/deals. */}
         {/* Fixed: flush under navbar (top-[50px]), attached left and right (left after sidebar, right: 0). Matches prospect-enrich pattern. */}
         <div
           className="fixed top-[50px] bottom-0 flex flex-col bg-slate-50 dark:bg-dark transition-all duration-300"
@@ -41,7 +41,14 @@ export default function DealsPage() {
           <div className="h-px w-full shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden="true" role="separator" />
           <div className="min-h-0 flex-1 p-6" />
         </div>
-      </div>
+    </div>
+  )
+}
+
+export default function DealsPage() {
+  return (
+    <DashboardLayout>
+      <DealsPageContent />
     </DashboardLayout>
   )
 }
