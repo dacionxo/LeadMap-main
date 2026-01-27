@@ -451,8 +451,8 @@ export default function ProspectFilterSidebar({
               "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
               "rounded-l-lg rounded-r-md",
               viewType === 'total'
-                ? "bg-white dark:bg-gray-700 shadow-sm"
-                : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                ? "bg-[#ECF3FE] dark:bg-blue-900/30 shadow-sm"
+                : "bg-white dark:bg-gray-800 hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
             )}
           >
             <span
@@ -487,8 +487,8 @@ export default function ProspectFilterSidebar({
               "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
               "rounded-md",
               viewType === 'net_new'
-                ? "bg-white dark:bg-gray-700 shadow-sm"
-                : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                ? "bg-[#ECF3FE] dark:bg-blue-900/30 shadow-sm"
+                : "bg-white dark:bg-gray-800 hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
             )}
           >
             <span
@@ -523,8 +523,8 @@ export default function ProspectFilterSidebar({
               "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
               "rounded-r-lg rounded-l-md",
               viewType === 'saved'
-                ? "bg-white dark:bg-gray-700 shadow-sm"
-                : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                ? "bg-[#ECF3FE] dark:bg-blue-900/30 shadow-sm"
+                : "bg-white dark:bg-gray-800 hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
             )}
           >
             <span
