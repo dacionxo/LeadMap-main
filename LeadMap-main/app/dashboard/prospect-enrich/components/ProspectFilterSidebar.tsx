@@ -24,6 +24,19 @@ interface FilterGroup {
 
 type ViewType = 'total' | 'net_new' | 'saved'
 
+/** Format count in compact form: 9600 -> "9.6K", 0 -> "0", 1500000 -> "1.5M" */
+function formatCompactCount(n: number): string {
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000
+    return m % 1 === 0 ? `${m}M` : `${m.toFixed(1)}M`
+  }
+  if (n >= 1_000) {
+    const k = n / 1_000
+    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`
+  }
+  return n.toLocaleString()
+}
+
 interface ProspectFilterSidebarProps {
   filters: Record<string, any>
   onFiltersChange: (filters: Record<string, any>) => void
@@ -413,78 +426,129 @@ export default function ProspectFilterSidebar({
       "bg-white dark:bg-dark border-r border-ld",
       "shadow-sm"
     )}>
-      {/* Summary Stats - Now Clickable Filter Buttons */}
+      {/* Summary Stats - Total / Net New / Saved (reference: segmented control, label over count) */}
       <div className={cn(
         "px-4 py-3 border-b border-ld",
-        "flex gap-2",
         "bg-white dark:bg-dark"
       )}>
-        <button
-          onClick={() => onViewTypeChange?.('total')}
+        <div
           className={cn(
-            "flex-1 flex flex-col items-center justify-center px-3 py-2.5 rounded-lg border transition-all duration-200",
-            viewType === 'total'
-              ? "bg-primary border-primary text-white shadow-md"
-              : "bg-white dark:bg-boxdark border-stroke dark:border-strokedark text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+            "rounded-xl p-1 flex",
+            "bg-gray-100 dark:bg-gray-800/80",
+            "shadow-sm"
           )}
+          role="tablist"
+          aria-label="View type: Total, Net New, Saved"
         >
-          <div className={cn(
-            "text-xl font-bold",
-            viewType === 'total' ? "text-white" : "text-dark dark:text-white"
-          )}>
-            {totalCount.toLocaleString()}
-          </div>
-          <div className={cn(
-            "text-xs mt-1",
-            viewType === 'total' ? "text-white/90" : "text-bodytext dark:text-white/70"
-          )}>
-            Total
-          </div>
-        </button>
-        <button
-          onClick={() => onViewTypeChange?.('net_new')}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center px-3 py-2.5 rounded-lg border transition-all duration-200",
-            viewType === 'net_new'
-              ? "bg-primary border-primary text-white shadow-md"
-              : "bg-white dark:bg-boxdark border-stroke dark:border-strokedark text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
-          )}
-        >
-          <div className={cn(
-            "text-xl font-bold",
-            viewType === 'net_new' ? "text-white" : "text-dark dark:text-white"
-          )}>
-            {netNewCount.toLocaleString()}
-          </div>
-          <div className={cn(
-            "text-xs mt-1",
-            viewType === 'net_new' ? "text-white/90" : "text-bodytext dark:text-white/70"
-          )}>
-            Net New
-          </div>
-        </button>
-        <button
-          onClick={() => onViewTypeChange?.('saved')}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center px-3 py-2.5 rounded-lg border transition-all duration-200",
-            viewType === 'saved'
-              ? "bg-primary border-primary text-white shadow-md"
-              : "bg-white dark:bg-boxdark border-stroke dark:border-strokedark text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
-          )}
-        >
-          <div className={cn(
-            "text-xl font-bold",
-            viewType === 'saved' ? "text-white" : "text-dark dark:text-white"
-          )}>
-            {savedCount.toLocaleString()}
-          </div>
-          <div className={cn(
-            "text-xs mt-1",
-            viewType === 'saved' ? "text-white/90" : "text-bodytext dark:text-white/70"
-          )}>
-            Saved
-          </div>
-        </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewType === 'total' ? 'true' : 'false'}
+            aria-label={`Total: ${formatCompactCount(totalCount)} prospects`}
+            tabIndex={viewType === 'total' ? 0 : -1}
+            onClick={() => onViewTypeChange?.('total')}
+            className={cn(
+              "flex-1 min-w-0 flex flex-col items-center justify-center py-2.5 px-3 transition-all duration-200",
+              "rounded-l-lg rounded-r-md",
+              viewType === 'total'
+                ? "bg-[#eef5fb] dark:bg-blue-900/30 shadow-sm"
+                : "bg-transparent hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
+            )}
+          >
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                viewType === 'total'
+                  ? "text-[#3273dc] dark:text-blue-400"
+                  : "text-gray-800 dark:text-gray-200"
+              )}
+            >
+              Total
+            </span>
+            <span
+              className={cn(
+                "text-sm mt-0.5",
+                viewType === 'total'
+                  ? "text-gray-600 dark:text-gray-300"
+                  : "text-gray-500 dark:text-gray-400"
+              )}
+            >
+              {formatCompactCount(totalCount)}
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewType === 'net_new' ? 'true' : 'false'}
+            aria-label={`Net New: ${formatCompactCount(netNewCount)} prospects`}
+            tabIndex={viewType === 'net_new' ? 0 : -1}
+            onClick={() => onViewTypeChange?.('net_new')}
+            className={cn(
+              "flex-1 min-w-0 flex flex-col items-center justify-center py-2.5 px-3 transition-all duration-200",
+              "rounded-md",
+              viewType === 'net_new'
+                ? "bg-[#eef5fb] dark:bg-blue-900/30 shadow-sm"
+                : "bg-transparent hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
+            )}
+          >
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                viewType === 'net_new'
+                  ? "text-[#3273dc] dark:text-blue-400"
+                  : "text-gray-800 dark:text-gray-200"
+              )}
+            >
+              Net New
+            </span>
+            <span
+              className={cn(
+                "text-sm mt-0.5",
+                viewType === 'net_new'
+                  ? "text-gray-600 dark:text-gray-300"
+                  : "text-gray-500 dark:text-gray-400"
+              )}
+            >
+              {formatCompactCount(netNewCount)}
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewType === 'saved' ? 'true' : 'false'}
+            aria-label={`Saved: ${formatCompactCount(savedCount)} prospects`}
+            tabIndex={viewType === 'saved' ? 0 : -1}
+            onClick={() => onViewTypeChange?.('saved')}
+            className={cn(
+              "flex-1 min-w-0 flex flex-col items-center justify-center py-2.5 px-3 transition-all duration-200",
+              "rounded-r-lg rounded-l-md",
+              viewType === 'saved'
+                ? "bg-[#eef5fb] dark:bg-blue-900/30 shadow-sm"
+                : "bg-transparent hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
+            )}
+          >
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                viewType === 'saved'
+                  ? "text-[#3273dc] dark:text-blue-400"
+                  : "text-gray-800 dark:text-gray-200"
+              )}
+            >
+              Saved
+            </span>
+            <span
+              className={cn(
+                "text-sm mt-0.5",
+                viewType === 'saved'
+                  ? "text-gray-600 dark:text-gray-300"
+                  : "text-gray-500 dark:text-gray-400"
+              )}
+            >
+              {formatCompactCount(savedCount)}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Type Selector */}
