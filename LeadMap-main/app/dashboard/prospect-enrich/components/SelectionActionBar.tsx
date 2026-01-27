@@ -116,8 +116,10 @@ export default function SelectionActionBar({
       aria-label={`${selectedCount} ${label}. Actions for selected prospects.`}
       className={cn(
         'flex items-center gap-4 px-4 py-3',
+        'w-full max-w-5xl mx-auto',
+        'rounded-xl',
         'bg-[var(--primary-background-color,#ffffff)] dark:bg-[#1c2536]',
-        'border-t border-[var(--layout-border-color,#d0d4e4)] dark:border-white/10',
+        'border border-[var(--layout-border-color,#d0d4e4)] dark:border-white/10',
         'shadow-[var(--box-shadow-small,0px_4px_8px_rgba(0,0,0,0.2))]'
       )}
       style={{ minHeight: 'var(--spacing-xl, 32px)' }}

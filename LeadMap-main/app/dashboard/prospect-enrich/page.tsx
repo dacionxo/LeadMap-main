@@ -273,9 +273,9 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
           </div>
         </div>
       </div>
-      {/* SelectionActionBar: fixed at bottom when one or more prospects selected */}
+      {/* SelectionActionBar: fixed at bottom, centered, not edge-to-edge */}
       {props.selectedIds.size > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-30">
+        <div className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 md:px-6">
           <SelectionActionBar
             selectedCount={props.selectedIds.size}
             onClose={() => props.setSelectedIds(new Set())}
