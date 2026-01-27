@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 import { useSidebar } from '../../components/SidebarContext'
-import { Plus, Search, ChevronDown, Filter } from 'lucide-react'
+import { Plus, Search, ChevronDown, Filter, Layers, LayoutGrid, List, Save } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -26,6 +26,8 @@ function DealsPageContent() {
   const { isOpen: isSidebarOpen } = useSidebar()
   const [totalDeals, setTotalDeals] = useState<number | null>(null)
   const [deals, setDeals] = useState<DealRow[]>([])
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const btnClass = 'inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-dark border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 text-sm'
 
   // Dynamically track user's saved deals via /api/crm/deals
   useEffect(() => {
@@ -73,6 +75,8 @@ function DealsPageContent() {
           className="fixed top-[50px] bottom-0 flex flex-col bg-slate-50 dark:bg-dark transition-all duration-300 mt-5"
           style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
         >
+          {/* Horizontal divider under the navbar */}
+          <div className="h-px w-full shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden="true" role="separator" />
           {/* Header — white bg, top border; Deals +50px right, Add New Deal + Search +50px right */}
           <header className="shrink-0 bg-white dark:bg-dark border-t border-slate-200 dark:border-slate-700 pl-[74px] pr-[74px] py-5">
             <div className="flex items-center justify-between">
@@ -97,22 +101,61 @@ function DealsPageContent() {
           </header>
           <div className="h-px w-full shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden="true" role="separator" />
 
-          {/* Bar: Total deals (left) | Sort by: Date Created, Filter (right) — 1:1 from design */}
-          <div className="shrink-0 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 pl-[74px] pr-[74px] py-3.5">
-            <p className="text-base text-slate-800 dark:text-slate-200">
-              Total: <span className="font-bold">{displayTotal}</span> deals
-            </p>
+          {/* Bar: Total (left) | All Pipelines, All deals, Search, view toggles, Save (left of Sort) | Sort, Filter (right) */}
+          <div className="shrink-0 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-slate-50 dark:bg-slate-900/50 pl-[74px] pr-[74px] py-3.5">
+            <div className="flex items-center gap-3 flex-wrap">
+              <p className="text-base text-slate-800 dark:text-slate-200">
+                Total: <span className="font-bold">{displayTotal}</span> deals
+              </p>
+              <button type="button" className={btnClass} aria-haspopup="listbox" aria-expanded="false">
+                <Layers className="h-4 w-4" />
+                All Pipelines
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <button type="button" className={btnClass} aria-haspopup="listbox" aria-expanded="false">
+                <LayoutGrid className="h-4 w-4" />
+                All deals
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden />
+                <input
+                  type="search"
+                  placeholder="Search deals"
+                  className="w-40 pl-9 pr-3 py-2 rounded-full bg-white dark:bg-dark border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                />
+              </div>
+              <div className="flex items-center rounded-full border border-slate-200 dark:border-slate-600 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200' : 'bg-white dark:bg-dark text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                  aria-label="List view"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200' : 'bg-white dark:bg-dark text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+              </div>
+              <button type="button" className={btnClass}>
+                <Save className="h-4 w-4" />
+                Save as new view
+              </button>
+            </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-dark border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 text-sm"
-              >
+              <button type="button" className={btnClass}>
                 Sort by: Date Created
                 <ChevronDown className="h-4 w-4" />
               </button>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-dark border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 text-sm"
+                className={btnClass}
               >
                 Filter
                 <span className="relative inline-flex">
