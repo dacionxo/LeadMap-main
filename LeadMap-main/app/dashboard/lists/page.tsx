@@ -1,17 +1,17 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import DashboardLayout from '../components/DashboardLayout'
-import { Plus, Search, Users, Building2, Filter, Settings, Download, MoreVertical, Info, Trash2, Edit, X, Upload, ChevronDown, Loader2, LayoutGrid, Map } from 'lucide-react'
-import ImportListModal from './components/ImportListModal'
-import CreateListModal from './components/CreateListModal'
-import ListsTable from './components/ListsTable'
 import { Button } from '@/app/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/app/components/ui/dropdown-menu'
 import { Input } from '@/app/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/app/components/ui/dropdown-menu'
 import { cn } from '@/app/lib/utils'
+import { Building2, ChevronDown, Info, LayoutGrid, Loader2, Map, Plus, Search, Settings, Upload, Users, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import DashboardLayout from '../components/DashboardLayout'
+import CreateListModal from './components/CreateListModal'
+import ImportListModal from './components/ImportListModal'
+import ListsTable from './components/ListsTable'
 
 interface List {
   id: string
@@ -100,6 +100,15 @@ export default function ListsPage() {
     // Saved = lists that have items (item_count > 0)
     return lists.filter(list => (list.item_count || 0) > 0).length
   }, [lists])
+
+  // Format count for display (e.g., 9600 -> "9.6K")
+  const formatCount = useCallback((count: number): string => {
+    if (count >= 1000) {
+      const k = count / 1000
+      return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`
+    }
+    return count.toString()
+  }, [])
 
   // Filter lists based on viewType
   const filteredByViewType = useMemo(() => {
@@ -267,42 +276,87 @@ export default function ListsPage() {
 
             {/* Filter Buttons: Total, Net New, Saved */}
             {lists.length > 0 && (
-              <div className="flex gap-2 mb-4">
+              <div className="flex mb-4 bg-white dark:bg-boxdark rounded-xl overflow-hidden border border-stroke dark:border-strokedark">
                 <button
                   onClick={() => setViewType('total')}
                   className={cn(
-                    "flex-1 flex flex-col items-center justify-center px-4 py-3 rounded-lg border transition-all duration-200",
+                    "flex-1 flex flex-col items-center justify-center px-4 py-3 transition-all duration-200",
                     viewType === 'total'
-                      ? "bg-primary border-primary text-white shadow-md"
-                      : "bg-white dark:bg-boxdark border-stroke dark:border-strokedark text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+                      ? "bg-[#EBF8FF]"
+                      : "bg-white dark:bg-boxdark hover:bg-gray-50 dark:hover:bg-gray-800"
                   )}
                 >
-                  <div className="text-2xl font-bold">{totalCount.toLocaleString()}</div>
-                  <div className="text-xs mt-1 opacity-90">Total</div>
+                  <div className={cn(
+                    "text-sm font-semibold mb-1",
+                    viewType === 'total' ? "text-[#2563EB]" : "text-[#333333] dark:text-gray-300"
+                  )}>
+                    Total
+                  </div>
+                  {viewType === 'total' ? (
+                    <div className="bg-[#EBF8FF] px-2 py-0.5 rounded-full">
+                      <span className="text-sm font-medium text-[#38A3FF]">
+                        {formatCount(totalCount)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-normal text-[#6B7280] dark:text-gray-400">
+                      {formatCount(totalCount)}
+                    </div>
+                  )}
                 </button>
                 <button
                   onClick={() => setViewType('net_new')}
                   className={cn(
-                    "flex-1 flex flex-col items-center justify-center px-4 py-3 rounded-lg border transition-all duration-200",
+                    "flex-1 flex flex-col items-center justify-center px-4 py-3 transition-all duration-200",
                     viewType === 'net_new'
-                      ? "bg-primary border-primary text-white shadow-md"
-                      : "bg-white dark:bg-boxdark border-stroke dark:border-strokedark text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+                      ? "bg-[#EBF8FF]"
+                      : "bg-white dark:bg-boxdark hover:bg-gray-50 dark:hover:bg-gray-800"
                   )}
                 >
-                  <div className="text-2xl font-bold">{netNewCount.toLocaleString()}</div>
-                  <div className="text-xs mt-1 opacity-90">Net New</div>
+                  <div className={cn(
+                    "text-sm font-semibold mb-1",
+                    viewType === 'net_new' ? "text-[#2563EB]" : "text-[#333333] dark:text-gray-300"
+                  )}>
+                    Net New
+                  </div>
+                  {viewType === 'net_new' ? (
+                    <div className="bg-[#EBF8FF] px-2 py-0.5 rounded-full">
+                      <span className="text-sm font-medium text-[#38A3FF]">
+                        {formatCount(netNewCount)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-normal text-[#6B7280] dark:text-gray-400">
+                      {formatCount(netNewCount)}
+                    </div>
+                  )}
                 </button>
                 <button
                   onClick={() => setViewType('saved')}
                   className={cn(
-                    "flex-1 flex flex-col items-center justify-center px-4 py-3 rounded-lg border transition-all duration-200",
+                    "flex-1 flex flex-col items-center justify-center px-4 py-3 transition-all duration-200",
                     viewType === 'saved'
-                      ? "bg-primary border-primary text-white shadow-md"
-                      : "bg-white dark:bg-boxdark border-stroke dark:border-strokedark text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+                      ? "bg-[#EBF8FF]"
+                      : "bg-white dark:bg-boxdark hover:bg-gray-50 dark:hover:bg-gray-800"
                   )}
                 >
-                  <div className="text-2xl font-bold">{savedCount.toLocaleString()}</div>
-                  <div className="text-xs mt-1 opacity-90">Saved</div>
+                  <div className={cn(
+                    "text-sm font-semibold mb-1",
+                    viewType === 'saved' ? "text-[#2563EB]" : "text-[#333333] dark:text-gray-300"
+                  )}>
+                    Saved
+                  </div>
+                  {viewType === 'saved' ? (
+                    <div className="bg-[#EBF8FF] px-2 py-0.5 rounded-full">
+                      <span className="text-sm font-medium text-[#38A3FF]">
+                        {formatCount(savedCount)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-normal text-[#6B7280] dark:text-gray-400">
+                      {formatCount(savedCount)}
+                    </div>
+                  )}
                 </button>
               </div>
             )}
@@ -393,6 +447,7 @@ export default function ListsPage() {
                           <button
                             onClick={() => setShowViewOptions(false)}
                             className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-bodydark2 hover:text-black dark:hover:text-white transition-colors"
+                            aria-label="Close view options"
                           >
                             <X className="h-4 w-4" />
                           </button>
