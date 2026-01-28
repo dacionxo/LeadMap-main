@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 import { useSidebar } from '../../components/SidebarContext'
-import { Plus, Search, ChevronDown, Filter, Layers, LayoutGrid, List, Save } from 'lucide-react'
+import { Plus, Search, ChevronDown, Filter, Layers, LayoutGrid, List, Save, Briefcase } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -109,11 +109,26 @@ function DealsPageContent() {
     return stageMap[stage.toLowerCase()] || stage
   }
 
-  const getStageBadgeVariant = (stage: string): 'lightWarning' | 'lightSuccess' | 'lightSecondary' | 'lightPrimary' => {
+  const getStageBadgeVariant = (stage: string): 'lightWarning' | 'lightSuccess' | 'lightSecondary' | 'lightPrimary' | 'lightInfo' | 'lightError' => {
     const normalized = stage.toLowerCase()
-    if (normalized === 'closed_won') return 'lightSuccess'
-    if (normalized === 'closed_lost') return 'lightSecondary'
-    return 'lightWarning' // For new, contacted, qualified, proposal, negotiation
+    // Different color for each stage
+    if (normalized === 'new') return 'lightPrimary' // Blue for new leads
+    if (normalized === 'contacted') return 'lightInfo' // Light blue for contacted
+    if (normalized === 'qualified') return 'lightWarning' // Yellow/amber for qualified
+    if (normalized === 'proposal') return 'lightError' // Red/pink for proposal
+    if (normalized === 'negotiation') return 'lightPrimary' // Blue for negotiation
+    if (normalized === 'closed_won') return 'lightSuccess' // Green for closed won
+    if (normalized === 'closed_lost') return 'lightSecondary' // Gray for closed lost
+    return 'lightWarning' // Default fallback
+  }
+
+  const getStageBadgeClassName = (stage: string): string => {
+    const normalized = stage.toLowerCase()
+    // Use custom classes for stages that need unique colors
+    if (normalized === 'negotiation') {
+      return 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200 border-0'
+    }
+    return '' // Use variant for others
   }
 
   const getOwnerDisplayName = (deal: DealRow): string => {
@@ -222,62 +237,68 @@ function DealsPageContent() {
                   <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10 py-[10.4px]">
+                      <TableHead className="w-10">
                         <Checkbox
                           checked={allSelected}
                           onCheckedChange={(c) => toggleAllSelection(c === true)}
                           aria-label="Select all"
                         />
                       </TableHead>
-                      <TableHead className="py-[10.4px] whitespace-nowrap">Deal</TableHead>
-                      <TableHead className="py-[10.4px] whitespace-nowrap">Property</TableHead>
-                      <TableHead className="py-[10.4px] whitespace-nowrap">Value</TableHead>
-                      <TableHead className="py-[10.4px] whitespace-nowrap">Stage</TableHead>
-                      <TableHead className="py-[10.4px] whitespace-nowrap">Pipeline</TableHead>
-                      <TableHead className="py-[10.4px] whitespace-nowrap">Owner</TableHead>
-                      <TableHead className="py-[10.4px] whitespace-nowrap">Close date</TableHead>
+                      <TableHead className="whitespace-nowrap">Deal</TableHead>
+                      <TableHead className="whitespace-nowrap">Property</TableHead>
+                      <TableHead className="whitespace-nowrap">Value</TableHead>
+                      <TableHead className="whitespace-nowrap">Stage</TableHead>
+                      <TableHead className="whitespace-nowrap">Pipeline</TableHead>
+                      <TableHead className="whitespace-nowrap">Owner</TableHead>
+                      <TableHead className="whitespace-nowrap">Close date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {deals.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-ld dark:text-white/50 py-8">
-                          No deals yet. Create one to get started.
+                        <TableCell colSpan={8} className="p-0">
+                          <div className="flex flex-col items-center justify-center py-16 px-4 bg-slate-50 dark:bg-slate-900/50">
+                            <Briefcase className="h-12 w-12 text-slate-400 dark:text-slate-500 mb-4" />
+                            <p className="text-slate-500 dark:text-slate-400 text-base">No deals found.</p>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : (
                       deals.map((d) => (
                         <TableRow key={d.id}>
-                          <TableCell className="w-10 py-[10.4px]">
+                          <TableCell className="w-10">
                             <Checkbox
                               checked={selectedDeals.has(d.id)}
                               onCheckedChange={() => toggleSelection(d.id)}
                               aria-label={`Select "${d.title || 'Untitled deal'}"`}
                             />
                           </TableCell>
-                          <TableCell className="text-bodytext dark:text-white/90 py-[10.4px] whitespace-nowrap">{d.title || 'Untitled deal'}</TableCell>
-                          <TableCell className="text-bodytext dark:text-white/80 py-[10.4px] whitespace-nowrap">{d.property_address || '—'}</TableCell>
-                          <TableCell className="text-bodytext dark:text-white/80 py-[10.4px] whitespace-nowrap">{formatCurrency(d.value)}</TableCell>
-                          <TableCell className="py-[10.4px] whitespace-nowrap">
+                          <TableCell className="text-gray-900 dark:text-white whitespace-nowrap">{d.title || 'Untitled deal'}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400 whitespace-nowrap">{d.property_address || '—'}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatCurrency(d.value)}</TableCell>
+                          <TableCell className="whitespace-nowrap">
                             {d.stage ? (
-                              <Badge variant={getStageBadgeVariant(d.stage)} className="text-xs">
+                              <Badge 
+                                variant={getStageBadgeVariant(d.stage)} 
+                                className={`text-xs ${getStageBadgeClassName(d.stage)}`}
+                              >
                                 {getStageDisplayName(d.stage)}
                               </Badge>
                             ) : (
-                              <span className="text-bodytext dark:text-white/80">—</span>
+                              <span className="text-gray-600 dark:text-gray-400">—</span>
                             )}
                           </TableCell>
-                          <TableCell className="py-[10.4px] whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap">
                             {d.pipeline?.name ? (
                               <Badge variant="lightWarning" className="text-xs">
                                 {d.pipeline.name}
                               </Badge>
                             ) : (
-                              <span className="text-bodytext dark:text-white/80">—</span>
+                              <span className="text-gray-600 dark:text-gray-400">—</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-bodytext dark:text-white/80 py-[10.4px] whitespace-nowrap">{getOwnerDisplayName(d)}</TableCell>
-                          <TableCell className="text-bodytext dark:text-white/80 py-[10.4px] whitespace-nowrap">{formatDate(d.expected_close_date)}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400 whitespace-nowrap">{getOwnerDisplayName(d)}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatDate(d.expected_close_date)}</TableCell>
                         </TableRow>
                       ))
                     )}
