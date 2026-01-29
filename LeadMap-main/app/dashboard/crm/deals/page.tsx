@@ -16,6 +16,7 @@ import { Checkbox } from '@/app/components/ui/checkbox'
 import { Badge } from '@/app/components/ui/badge'
 import EditDealModal from './components/EditDealModal'
 import DealsSelectionActionBar from './components/DealsSelectionActionBar'
+import DealsKanban from './components/DealsKanban'
 
 type DealRow = {
   id: string
@@ -45,7 +46,7 @@ function DealsPageContent() {
   const { isOpen: isSidebarOpen } = useSidebar()
   const [totalDeals, setTotalDeals] = useState<number | null>(null)
   const [deals, setDeals] = useState<DealRow[]>([])
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban')
   const [selectedDeals, setSelectedDeals] = useState<Set<string>>(new Set())
   const [editingDeal, setEditingDeal] = useState<DealRow | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -232,9 +233,9 @@ function DealsPageContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200' : 'bg-white dark:bg-dark text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                  aria-label="Grid view"
+                  onClick={() => setViewMode('kanban')}
+                  className={`p-2 ${viewMode === 'kanban' ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200' : 'bg-white dark:bg-dark text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                  aria-label="Kanban view"
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </button>
@@ -257,7 +258,8 @@ function DealsPageContent() {
             </div>
           </div>
 
-          {/* Table — TailwindAdmin shadcn-tables/checkbox 1:1; container rebuilt to match reference */}
+          {/* Table or Kanban */}
+          {viewMode === 'list' ? (
           <div className="min-h-0 flex-1 p-4 overflow-auto">
             <div className="border-0 bg-white dark:bg-dark card no-inset no-ring dark:shadow-dark-md shadow-md p-0">
               <div className="pt-4 p-6">
@@ -358,6 +360,47 @@ function DealsPageContent() {
               </div>
             </div>
           </div>
+          ) : (
+          <div className="min-h-0 flex-1 flex flex-col overflow-hidden">
+            <DealsKanban
+              deals={deals as any}
+              stages={['Lead', 'Sales Qualified', 'Meeting Booked', 'Negotiation', 'Contract Sent', 'Closed Won']}
+              onDealClick={(d) => {
+                setEditingDeal(d)
+                setIsEditModalOpen(true)
+              }}
+              onDealUpdate={async (dealId, updates) => {
+                try {
+                  const res = await fetch(`/api/crm/deals/${dealId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(updates),
+                  })
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}))
+                    throw new Error(err.error || 'Failed to update deal')
+                  }
+                  const listRes = await fetch('/api/crm/deals?page=1&pageSize=50&sortBy=created_at&sortOrder=desc', { credentials: 'include' })
+                  const listJson = await listRes.json()
+                  if (listRes.ok) {
+                    setTotalDeals(listJson.pagination?.total ?? 0)
+                    setDeals(Array.isArray(listJson.data) ? listJson.data : [])
+                  }
+                } catch (e) {
+                  console.error('Error updating deal:', e)
+                  throw e
+                }
+              }}
+              onDealDelete={async () => {}}
+              pipelines={pipelines}
+              onAddDeal={() => {
+                setEditingDeal(null)
+                setIsEditModalOpen(true)
+              }}
+            />
+          </div>
+          )}
         </div>
 
       {/* Create / Edit Deal Modal */}
