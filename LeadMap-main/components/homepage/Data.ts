@@ -1,0 +1,25 @@
+const img1 = '/images/landingpage/demos/demo-main.jpg'
+const img2 = '/images/landingpage/demos/demo-dark.jpg'
+const img3 = '/images/landingpage/demos/demo-horizontal.jpg'
+const img4 = '/images/landingpage/demos/demo-mini.jpg'
+const img5 = '/images/landingpage/demos/demo-rtl.jpg'
+const defaultdemo = '/images/landingpage/demos/demo-default.jpg'
+
+const img6 = '/images/landingpage/apps/app-calendar.jpg'
+const img7 = '/images/landingpage/apps/app-chat.jpg'
+const img8 = '/images/landingpage/apps/app-contact.jpg'
+const img9 = '/images/landingpage/apps/app-user-profile.jpg'
+const img10 = '/images/landingpage/apps/app-note.jpg'
+const img11 = '/images/landingpage/apps/app-blog.jpg'
+const img12 = '/images/landingpage/apps/app-shop.jpg'
+const img13 = '/images/landingpage/apps/app-productlist.jpg'
+const img14 = '/images/landingpage/apps/app-invoice.jpg'
+const img15 = '/images/landingpage/apps/app-blog-detail.jpg'
+const img16 = '/images/landingpage/apps/app-product-detail.jpg'
+const img17 = '/images/landingpage/apps/app-kanban.jpg'
+
+export const review1 = '/images/profile/user-2.jpg'
+export const review2 = '/images/profile/user-3.jpg'
+export const review3 = '/images/profile/user-4.jpg'
+
+export { img1, img2, img3, img4, img5, defaultdemo, img6, img7, img8, img9, img10, img11, img12, img13, img14, img15, img16, img17 }
