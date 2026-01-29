@@ -51,11 +51,11 @@ export const DemosSection = () => {
           <div className="lg:w-5/12 w-full">
             <div className=" py-12 px-6 justify-center rounded-2xl bg-lightprimary dark:bg-lightprimary">
               <Image
-                src="/favicon.svg"
-                alt="image"
-                width={52}
-                height={52}
-                className="mx-auto"
+                src="/images/logos/nextdeal-logo.png"
+                alt="NextDeal"
+                width={180}
+                height={32}
+                className="mx-auto h-8 w-auto"
               />
               <h2 className="py-4 font-bold text-link dark:text-white text-center text-2xl sm:text-3xl md:text-40 leading-normal">
                 New Demos

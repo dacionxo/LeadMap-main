@@ -6,21 +6,12 @@ import Link from 'next/link'
 const FullLogo = () => {
   return (
     <Link href="/">
-      {/* Dark Logo */}
       <Image
-        src="/images/logos/dark-logo.svg"
+        src="/images/logos/nextdeal-logo.png"
         alt="NextDeal"
         width={204}
         height={36}
-        className="block dark:hidden rtl:scale-x-[-1]"
-      />
-      {/* Light Logo */}
-      <Image
-        src="/images/logos/light-logo.svg"
-        alt="NextDeal"
-        width={204}
-        height={36}
-        className="hidden dark:block rtl:scale-x-[-1]"
+        className="h-9 w-auto rtl:scale-x-[-1]"
       />
     </Link>
   )
