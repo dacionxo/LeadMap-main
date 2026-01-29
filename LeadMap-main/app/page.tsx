@@ -1,4 +1,5 @@
 import HomeLayout from '@/components/homepage/HomeLayout'
+import { BenefitsSection } from '@/components/homepage/BenefitsSection'
 import { DemosSection } from '@/components/homepage/DemosSection'
 import { FAQ } from '@/components/homepage/FAQ'
 import { FeatureBanner } from '@/components/homepage/FeatureBanner'
