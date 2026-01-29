@@ -100,7 +100,7 @@ export const CustomFooter = () => {
       <div className="container-md px-4 py-10 border-t border-border dark:border-darkborder">
         <div className="flex justify-between items-center flex-wrap">
           <div className="flex items-center gap-4">
-            <Image src="/images/logos/nextdeal-logo.png" alt="NextDeal" width={120} height={21} className="h-5 w-auto" />
+            <Image src="/images/logos/nextdeal-logo.png" alt="NextDeal" width={140} height={25} className="h-6 w-auto" />
             <p className="text-base text-lightmuted dark:text-darklink">
               All rights reserved by NextDeal.
             </p>

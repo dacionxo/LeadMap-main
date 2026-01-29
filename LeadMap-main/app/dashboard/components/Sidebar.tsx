@@ -130,9 +130,9 @@ export default function Sidebar() {
               className="group flex flex-1 items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 cursor-pointer transition-colors"
             >
               <img
-                src="/nextdeal-logo.png"
+                src="/images/logos/nextdeal-logo.png"
                 alt="NextDeal"
-                className="h-6 w-auto"
+                className="h-8 w-auto"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
                   target.style.display = 'none'
@@ -150,9 +150,9 @@ export default function Sidebar() {
               className="group flex items-center justify-center rounded-md px-2 py-1.5 cursor-pointer transition-colors"
             >
               <img
-                src="/nextdeal-logo.png"
+                src="/images/logos/nextdeal-logo.png"
                 alt="NextDeal"
-                className="h-8 w-auto max-w-[40px] object-contain"
+                className="h-9 w-auto max-w-[48px] object-contain"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
                   target.style.display = 'none'

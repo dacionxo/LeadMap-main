@@ -53,9 +53,9 @@ export const DemosSection = () => {
               <Image
                 src="/images/logos/nextdeal-logo.png"
                 alt="NextDeal"
-                width={180}
-                height={32}
-                className="mx-auto h-8 w-auto"
+                width={220}
+                height={40}
+                className="mx-auto h-10 w-auto"
               />
               <h2 className="py-4 font-bold text-link dark:text-white text-center text-2xl sm:text-3xl md:text-40 leading-normal">
                 New Demos

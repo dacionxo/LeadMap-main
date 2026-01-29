@@ -186,9 +186,9 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
             {/* Mobile Logo */}
             <div className="block xl:hidden">
               <img
-                src="/nextdeal-logo.png"
+                src="/images/logos/nextdeal-logo.png"
                 alt="NextDeal"
-                className="h-6 w-auto"
+                className="h-8 w-auto"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
                   target.style.display = 'none'
