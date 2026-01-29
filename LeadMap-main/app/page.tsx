@@ -5,7 +5,6 @@ import { FeatureBanner } from '@/components/homepage/FeatureBanner'
 import { Features } from '@/components/homepage/Features'
 import { HeroSection } from '@/components/homepage/HeroSection'
 import { InfoStrip } from '@/components/homepage/InfoStrip'
-import { Leadership } from '@/components/homepage/Leadership'
 import { Licenseuse } from '@/components/homepage/Licenseuse'
 import { PowerfulTemplates } from '@/components/homepage/PowerfulTemplates'
 import { TeamWorks } from '@/components/homepage/TeamWorks'
@@ -26,7 +25,6 @@ export default async function Home() {
       <HeroSection />
       <DemosSection />
       <TeamWorks />
-      <Leadership />
       <InfoStrip />
       <PowerfulTemplates />
       <Testimonials />
