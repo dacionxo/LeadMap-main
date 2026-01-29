@@ -197,9 +197,9 @@ export default function SignUpPage() {
           <div className="xl:col-span-4 lg:col-span-5 col-span-12 sm:px-12 p-5">
             <div className="flex h-screen items-center px-3 lg:justify-start justify-center">
               <div className="max-w-[420px] w-full mx-auto">
-                <h3 className="text-2xl font-bold">Welcome to LeadMap</h3>
+                <h3 className="text-2xl font-bold">Welcome to NextDeal</h3>
                 <p className="text-darklink text-sm font-medium">
-                  Your Admin Dashboard
+                  Manage Deals and leads in one place
                 </p>
 
                 {/* Social buttons - TailwindAdmin style, LeadMap OAuth */}
