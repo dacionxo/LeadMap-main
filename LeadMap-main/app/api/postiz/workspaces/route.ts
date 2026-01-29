@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
     let workspaces = await getUserWorkspaces(user.id)
 
     // If user has no workspaces, automatically create a default workspace
-    // This ensures all LeadMap users can use Postiz without manual setup
-    // Uses the same user.id from Supabase auth.users that LeadMap uses throughout
+    // This ensures all NextDeal users can use Postiz without manual setup
+    // Uses the same user.id from Supabase auth.users that NextDeal uses throughout
     if (!workspaces || workspaces.length === 0) {
       try {
         // Verify email is still present (should be checked above, but double-check)
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         console.log(`[GET /api/postiz/workspaces] Attempting to create default workspace for user ${user.id} (${userEmail})`)
         
         const workspaceId = await createDefaultWorkspaceForUser(
-          user.id, // Same UUID from auth.users that LeadMap uses everywhere
+          user.id, // Same UUID from auth.users that NextDeal uses everywhere
           userEmail
         )
         

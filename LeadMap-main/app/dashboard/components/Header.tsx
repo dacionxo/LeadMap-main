@@ -18,7 +18,7 @@ interface MessageType {
 
 const MessagesLink: MessageType[] = [
   {
-    title: 'Welcome to LeadMap!',
+    title: 'Welcome to NextDeal!',
     subtitle: 'Get started with your first lead',
   },
   {

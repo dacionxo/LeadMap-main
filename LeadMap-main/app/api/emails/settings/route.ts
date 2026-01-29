@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     // Merge user settings with global defaults
     const settings = {
-      from_name: userSettings?.from_name || globalSettings?.from_name || process.env.EMAIL_DEFAULT_FROM_NAME || 'LeadMap',
+      from_name: userSettings?.from_name || globalSettings?.from_name || process.env.EMAIL_DEFAULT_FROM_NAME || 'NextDeal',
       reply_to: userSettings?.reply_to || globalSettings?.reply_to || process.env.EMAIL_DEFAULT_REPLY_TO || null,
       default_footer: userSettings?.default_footer_html || globalSettings?.default_footer_html || process.env.EMAIL_DEFAULT_FOOTER || '',
       unsubscribe_footer: userSettings?.unsubscribe_footer_html || globalSettings?.unsubscribe_footer_html || '',

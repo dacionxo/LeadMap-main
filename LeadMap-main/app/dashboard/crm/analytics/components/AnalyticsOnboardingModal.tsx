@@ -82,7 +82,7 @@ export default function AnalyticsOnboardingModal({
             Sell smarter with advanced analytics
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Take the guesswork out of sales. Use data-driven insights and reporting to understand your performance, identify the biggest bottlenecks in your funnel, and close more deals with LeadMap Analytics.
+            Take the guesswork out of sales. Use data-driven insights and reporting to understand your performance, identify the biggest bottlenecks in your funnel, and close more deals with NextDeal Analytics.
           </p>
 
           {/* Features List */}
@@ -104,7 +104,7 @@ export default function AnalyticsOnboardingModal({
                   <Zap className="w-5 h-5" />
                 </div>
                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Use seamlessly with other LeadMap tools to simplify workflows and automate reporting
+                  Use seamlessly with other NextDeal tools to simplify workflows and automate reporting
                 </span>
               </li>
               <li className="flex items-start space-x-3">

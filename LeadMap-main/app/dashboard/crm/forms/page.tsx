@@ -231,7 +231,7 @@ export default function FormsPage() {
               Capture more qualified leads with form enrichment
             </h2>
             <p className="text-lg text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-              Shorten your existing website forms, autofill known fields, and enrich every form submission with LeadMap data.
+              Shorten your existing website forms, autofill known fields, and enrich every form submission with NextDeal data.
             </p>
             
             <div className="flex items-center justify-center gap-4">

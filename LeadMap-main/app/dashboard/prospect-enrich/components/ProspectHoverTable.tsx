@@ -4,7 +4,7 @@
  * ProspectHoverTable Component
  * 
  * A 1-to-1 visual replica of TailwindAdmin's HoverTable component,
- * adapted for LeadMap's prospect data while preserving all API routes.
+ * adapted for NextDeal's prospect data while preserving all API routes.
  * 
  * Key Features:
  * - Exact visual match to TailwindAdmin's /shadcn-tables/hover

@@ -81,7 +81,7 @@ export default function SubscriptionGateModal({
           {/* Message */}
           <div className="space-y-3 text-gray-600">
             <p className="text-base leading-relaxed">
-              We hope you were able to spend the time exploring how LeadMap can help you save time and grow your business.
+              We hope you were able to spend the time exploring how NextDeal can help you save time and grow your business.
             </p>
             <p className="text-base leading-relaxed font-medium">
               Upgrade to one of our plans to continue.

@@ -8,7 +8,7 @@ export default function TrialExpired() {
 
   const plans = [
     {
-      name: 'LeadMap Pro',
+      name: 'NextDeal Pro',
       price: '$150',
       period: '/month',
       description: 'All features, one simple price',
@@ -123,7 +123,7 @@ export default function TrialExpired() {
         {/* Benefits Section */}
         <div className="bg-gray-800 rounded-lg p-8 mb-8">
           <h3 className="text-2xl font-bold text-white text-center mb-6">
-            Why Choose LeadMap?
+            Why Choose NextDeal?
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">

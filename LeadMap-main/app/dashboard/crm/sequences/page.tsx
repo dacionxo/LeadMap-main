@@ -447,7 +447,7 @@ export default function SequencesPage() {
       {/* Onboarding Modal */}
       <OnboardingModal
         title="Email Sequences made easy"
-        description="Set up automated email sequences and track engagement for your entire outreach campaign with LeadMap Email Sequences. Create multi-step sequences that nurture leads and drive conversions."
+        description="Set up automated email sequences and track engagement for your entire outreach campaign with NextDeal Email Sequences. Create multi-step sequences that nurture leads and drive conversions."
         features={[
           {
             icon: <BarChart3 className="w-5 h-5" />,
@@ -455,7 +455,7 @@ export default function SequencesPage() {
           },
           {
             icon: <Zap className="w-5 h-5" />,
-            text: "Use seamlessly with other LeadMap tools to automate your sales workflow"
+            text: "Use seamlessly with other NextDeal tools to automate your sales workflow"
           },
           {
             icon: <Mail className="w-5 h-5" />,

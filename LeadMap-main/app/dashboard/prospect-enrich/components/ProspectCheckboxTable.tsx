@@ -4,7 +4,7 @@
  * ProspectCheckboxTable Component
  * 
  * A modern table component using shadcn/ui Table with Checkbox functionality.
- * Based on TailwindAdmin's CheckboxTable design, adapted for LeadMap's prospect data.
+ * Based on TailwindAdmin's CheckboxTable design, adapted for NextDeal's prospect data.
  * 
  * Key Features:
  * - Server-side pagination via /api/listings/paginated endpoint

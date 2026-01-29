@@ -100,7 +100,7 @@ export async function POST(
       console.warn('Error fetching email settings, using defaults:', error)
       // Use default settings if fetch fails
       emailSettings = {
-        from_name: 'LeadMap',
+        from_name: 'NextDeal',
         reply_to: undefined,
         default_footer_html: '',
         unsubscribe_footer_html: '',

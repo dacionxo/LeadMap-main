@@ -106,7 +106,7 @@ function BillingPageContent() {
                   Your trial has ended
                 </h3>
                 <p className="text-sm text-yellow-700">
-                  Subscribe to continue using LeadMap
+                  Subscribe to continue using NextDeal
                 </p>
               </div>
             </div>

@@ -504,7 +504,7 @@ export default function TasksPage() {
         {/* Onboarding Modal */}
         <OnboardingModal
           title="Task management made easy"
-          description="Organize your workflow and track activities for your entire sales cycle with LeadMap Tasks. Create tasks for calls, emails, LinkedIn outreach, and more to stay on top of your pipeline."
+          description="Organize your workflow and track activities for your entire sales cycle with NextDeal Tasks. Create tasks for calls, emails, LinkedIn outreach, and more to stay on top of your pipeline."
           features={[
             {
               icon: <BarChart3 className="w-5 h-5" />,
@@ -512,7 +512,7 @@ export default function TasksPage() {
             },
             {
               icon: <Zap className="w-5 h-5" />,
-              text: "Use seamlessly with other LeadMap tools to simplify workflows"
+              text: "Use seamlessly with other NextDeal tools to simplify workflows"
             },
             {
               icon: <CheckSquare className="w-5 h-5" />,

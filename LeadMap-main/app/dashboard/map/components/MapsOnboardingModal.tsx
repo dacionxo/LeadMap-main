@@ -82,7 +82,7 @@ export default function MapsOnboardingModal({
             Visualize your property leads on a map
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Explore properties visually, filter by location, and identify the best opportunities in your target areas. Use LeadMap Maps to see all your leads, expired listings, and prospects in one interactive view.
+            Explore properties visually, filter by location, and identify the best opportunities in your target areas. Use NextDeal Maps to see all your leads, expired listings, and prospects in one interactive view.
           </p>
 
           {/* Features List */}

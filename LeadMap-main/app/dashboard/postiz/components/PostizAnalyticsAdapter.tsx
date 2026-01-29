@@ -1,7 +1,7 @@
 /**
  * Postiz Analytics Adapter
  * 
- * Adapter component that bridges LeadMap's API structure with Postiz's
+ * Adapter component that bridges NextDeal's API structure with Postiz's
  * PlatformAnalytics component structure. This provides a compatible interface
  * for Postiz-style analytics UI.
  * 

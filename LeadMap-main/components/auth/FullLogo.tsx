@@ -9,7 +9,7 @@ const FullLogo = () => {
       {/* Dark Logo */}
       <Image
         src="/images/logos/dark-logo.svg"
-        alt="LeadMap"
+        alt="NextDeal"
         width={204}
         height={36}
         className="block dark:hidden rtl:scale-x-[-1]"
@@ -17,7 +17,7 @@ const FullLogo = () => {
       {/* Light Logo */}
       <Image
         src="/images/logos/light-logo.svg"
-        alt="LeadMap"
+        alt="NextDeal"
         width={204}
         height={36}
         className="hidden dark:block rtl:scale-x-[-1]"

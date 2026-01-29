@@ -287,7 +287,7 @@ export default function PrivacyPage() {
                           <div className="bg-gradient-to-br from-pink-500 via-purple-500 to-green-500 rounded-xl p-6 text-white cursor-pointer hover:shadow-xl transition-all transform hover:scale-[1.02]">
                             <div className="mb-3">
                               <span className="text-xs font-semibold uppercase tracking-wider opacity-90">
-                                LeadMap AI
+                                NextDeal AI
                               </span>
                             </div>
                             <h4 className="text-2xl font-bold mb-2 leading-tight">

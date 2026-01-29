@@ -2,7 +2,7 @@
  * Enhanced Postiz Launches Component
  * 
  * Complete post scheduling and management UI compatible with Postiz's native UI.
- * Integrates with the LeadMap dashboard while maintaining Postiz's design language.
+ * Integrates with the NextDeal dashboard while maintaining Postiz's design language.
  * 
  * Phase 8: Native Postiz UI Component Integration
  */

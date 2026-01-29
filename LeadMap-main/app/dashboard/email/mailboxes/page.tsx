@@ -96,8 +96,8 @@ export default function MailboxesPage() {
         body: JSON.stringify({
           mailboxId: id,
           to: mailbox.email, // Send test to self
-          subject: 'Test Email from LeadMap',
-          html: '<p>This is a test email from your LeadMap mailbox configuration.</p><p>If you received this, your mailbox is working correctly!</p>'
+          subject: 'Test Email from NextDeal',
+          html: '<p>This is a test email from your NextDeal mailbox configuration.</p><p>If you received this, your mailbox is working correctly!</p>'
         })
       })
 

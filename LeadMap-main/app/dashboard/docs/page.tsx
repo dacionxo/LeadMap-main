@@ -19,7 +19,7 @@ export default async function DocsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-white">Documentation</h1>
-        <p className="text-gray-400">Learn how to use LeadMap effectively.</p>
+        <p className="text-gray-400">Learn how to use NextDeal effectively.</p>
         <div className="space-y-4">
           <div className="p-6 bg-gray-800 rounded-xl border border-gray-700">
             <h2 className="text-lg font-semibold text-white mb-2">Getting Started</h2>

@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
           } else if (msgLower.includes('support') || msgLower.includes('contact') || msgLower.includes('help')) {
             assistantResponse = "For support, you can reach out via email at support@leadmap.com or use the help section in your dashboard."
           } else {
-            assistantResponse = "I can help with LeadMap questions! Try asking about features, pricing, how to upgrade, or how to use the platform."
+            assistantResponse = "I can help with NextDeal questions! Try asking about features, pricing, how to upgrade, or how to use the platform."
           }
         }
       }

@@ -731,7 +731,7 @@ async function processRecipient(
     } catch (error) {
       console.warn('Error fetching email settings, using defaults:', error)
       emailSettings = {
-        from_name: 'LeadMap',
+        from_name: 'NextDeal',
         reply_to: undefined,
         default_footer_html: '',
         unsubscribe_footer_html: '',

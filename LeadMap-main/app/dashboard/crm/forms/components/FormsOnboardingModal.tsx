@@ -82,7 +82,7 @@ export default function FormsOnboardingModal({
             Form enrichment made easy
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Shorten your existing website forms, autofill known fields, and enrich every form submission with LeadMap data. Use LeadMap Forms to capture more qualified leads and streamline your lead generation process.
+            Shorten your existing website forms, autofill known fields, and enrich every form submission with NextDeal data. Use NextDeal Forms to capture more qualified leads and streamline your lead generation process.
           </p>
 
           {/* Features List */}
@@ -104,7 +104,7 @@ export default function FormsOnboardingModal({
                   <Zap className="w-5 h-5" />
                 </div>
                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Use seamlessly with other LeadMap tools to automate your lead capture workflow
+                  Use seamlessly with other NextDeal tools to automate your lead capture workflow
                 </span>
               </li>
               <li className="flex items-start space-x-3">

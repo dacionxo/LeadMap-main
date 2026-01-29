@@ -150,12 +150,12 @@ function LoginPageContent() {
           <div className="xl:col-span-4 lg:col-span-5 col-span-12 sm:px-12 p-5">
             <div className="flex h-screen items-center px-3 lg:justify-start justify-center">
               <div className="max-w-[420px] w-full mx-auto">
-                <h3 className="text-2xl font-bold">Welcome to LeadMap</h3>
-                <p className="text-link dark:text-darklink text-sm font-medium">
-                  Your Admin Dashboard
+                <h3 className="text-2xl font-bold">Welcome to NextDeal</h3>
+                <p className="text-link dark:text-darklink text-sm font-medium italic">
+                  Manage Deals and leads in one place
                 </p>
 
-                {/* Social / OAuth buttons - TailwindAdmin layout, LeadMap providers */}
+                {/* Social / OAuth buttons - TailwindAdmin layout, NextDeal providers */}
                 <div className="flex justify-between gap-8 my-6">
                   <button
                     type="button"
@@ -202,7 +202,7 @@ function LoginPageContent() {
                   <hr className="grow border-gray-300 dark:border-gray-600" />
                 </div>
 
-                {/* Email / Password form - LeadMap auth, TailwindAdmin-style layout */}
+                {/* Email / Password form - NextDeal auth, TailwindAdmin-style layout */}
                 <form className="mt-6" onSubmit={handleLogin}>
                   <div className="mb-4">
                     <div className="mb-2 block">
@@ -298,7 +298,7 @@ function LoginPageContent() {
                 </form>
 
                 <div className="flex gap-2 text-base font-medium mt-6 items-center justify-center text-gray-600 dark:text-gray-400">
-                  <p>New to LeadMap?</p>
+                  <p>New to NextDeal?</p>
                   <Link href="/signup" className="text-primary text-sm font-medium">
                     Create an account
                   </Link>

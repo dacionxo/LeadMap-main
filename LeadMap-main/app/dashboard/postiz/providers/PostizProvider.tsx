@@ -6,7 +6,7 @@
  * - Feature flags based on user's subscription plan (from users.plan_tier)
  * - Postiz UI preferences
  * 
- * Phase 5: UI Embedding - Context bridge between LeadMap and Postiz
+ * Phase 5: UI Embedding - Context bridge between NextDeal and Postiz
  */
 
 'use client'
@@ -80,7 +80,7 @@ export function usePostiz() {
 
 /**
  * Map user plan tier to feature flags
- * Uses the user's plan_tier from the users table (LeadMap's subscription/plan logic)
+ * Uses the user's plan_tier from the users table (NextDeal's subscription/plan logic)
  */
 function getFeaturesForPlan(
   planTier: 'free' | 'starter' | 'pro' | 'enterprise',

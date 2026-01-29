@@ -40,7 +40,7 @@ export function useWorkspace(): WorkspaceContext {
   const [error, setError] = useState<string | null>(null)
 
   const fetchWorkspaces = async (retryCount = 0): Promise<void> => {
-    // Use the user from useApp context (same user ID as LeadMap)
+    // Use the user from useApp context (same user ID as NextDeal)
     // Don't reset state if user is null during auth initialization - wait for user to be available
     if (!user) {
       // Only reset if we've already tried and user is still null (not during initial load)
@@ -59,7 +59,7 @@ export function useWorkspace(): WorkspaceContext {
       setLoading(true)
       setError(null)
 
-      // Fetch workspaces using the same user ID that LeadMap uses
+      // Fetch workspaces using the same user ID that NextDeal uses
       // Include credentials to ensure cookies (auth tokens) are sent with the request
       const response = await fetch('/api/postiz/workspaces', {
         cache: 'no-store', // Ensure fresh data
@@ -168,7 +168,7 @@ export function useWorkspace(): WorkspaceContext {
 
   useEffect(() => {
     // Only fetch workspaces when user is available (from useApp context)
-    // Uses the same user.id from Supabase auth that LeadMap uses throughout
+    // Uses the same user.id from Supabase auth that NextDeal uses throughout
     if (!user) {
       setWorkspaces([])
       setCurrentWorkspaceId(null)

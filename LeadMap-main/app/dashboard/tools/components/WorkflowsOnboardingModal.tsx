@@ -104,7 +104,7 @@ export default function WorkflowsOnboardingModal({
                   <Zap className="w-5 h-5" />
                 </div>
                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Use seamlessly with other LeadMap tools to create powerful automation chains
+                  Use seamlessly with other NextDeal tools to create powerful automation chains
                 </span>
               </li>
               <li className="flex items-start space-x-3">

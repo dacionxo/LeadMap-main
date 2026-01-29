@@ -2,7 +2,7 @@
  * Postiz Integration Entry Point
  * 
  * Phase 5: UI Embedding - Main page for Postiz social media planner
- * This page mounts Postiz's native UI components inside LeadMap's DashboardLayout.
+ * This page mounts Postiz's native UI components inside NextDeal's DashboardLayout.
  * 
  * Routes:
  * - /dashboard/postiz - Main dashboard (launches/posts overview)
