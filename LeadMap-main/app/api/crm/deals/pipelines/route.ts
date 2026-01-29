@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const { data: pipelines, error } = await supabase
+    let { data: pipelines, error } = await supabase
       .from('deal_pipelines')
       .select('*')
       .eq('user_id', user.id)
@@ -53,29 +53,52 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // If no pipelines exist, create a default one
+    // If no pipelines exist, create a templated default for this user
     if (!pipelines || pipelines.length === 0) {
       const defaultStages = ['New Lead', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Under Contract', 'Closed Won', 'Closed Lost']
-      
-      const { data: defaultPipeline, error: createError } = await supabase
-        .from('deal_pipelines')
-        .insert([{
-          user_id: user.id,
-          name: 'Default Pipeline',
-          description: 'Default sales pipeline',
-          stages: defaultStages,
-          is_default: true,
-        }])
-        .select()
-        .single()
+      let defaultPipeline: { id: string; name: string; stages: string[]; is_default?: boolean } | null = null
 
-      if (createError) {
-        console.error('Error creating default pipeline:', createError)
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const { data: created, error: createError } = await supabase
+          .from('deal_pipelines')
+          .insert([{
+            user_id: user.id,
+            name: 'Default Pipeline',
+            description: 'Default sales pipeline',
+            stages: defaultStages,
+            is_default: true,
+          }])
+          .select()
+          .single()
+
+        if (!createError && created) {
+          defaultPipeline = created
+          break
+        }
+        console.error('Error creating default pipeline (attempt %d):', attempt + 1, createError)
       }
 
       return NextResponse.json({
         data: defaultPipeline ? [defaultPipeline] : [],
       })
+    }
+
+    // Ensure at least one pipeline is default (for users who had pipelines before default existed)
+    const hasDefault = pipelines.some((p: { is_default?: boolean }) => p.is_default)
+    if (!hasDefault && pipelines.length > 0) {
+      const first = pipelines[0]
+      await supabase
+        .from('deal_pipelines')
+        .update({ is_default: true })
+        .eq('id', first.id)
+        .eq('user_id', user.id)
+      const { data: updated } = await supabase
+        .from('deal_pipelines')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false })
+      if (updated) pipelines = updated
     }
 
     return NextResponse.json({ data: pipelines || [] })

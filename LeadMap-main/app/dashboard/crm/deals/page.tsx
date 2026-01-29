@@ -49,6 +49,8 @@ function DealsPageContent() {
   const [selectedDeals, setSelectedDeals] = useState<Set<string>>(new Set())
   const [editingDeal, setEditingDeal] = useState<DealRow | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [pipelines, setPipelines] = useState<Array<{ id: string; name: string; stages: string[]; is_default?: boolean }>>([])
+  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
   const btnClass = 'inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-dark border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 text-sm'
 
   const toggleSelection = (id: string) => {
@@ -65,7 +67,7 @@ function DealsPageContent() {
   }
   const allSelected = deals.length > 0 && selectedDeals.size === deals.length
 
-  // Dynamically track user's saved deals via /api/crm/deals
+  // Fetch deals, pipelines, and users
   useEffect(() => {
     let cancelled = false
     async function fetchDeals() {
@@ -88,6 +90,27 @@ function DealsPageContent() {
       }
     }
     fetchDeals()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const [pipeRes, usersRes] = await Promise.all([
+          fetch('/api/crm/deals/pipelines', { credentials: 'include' }),
+          fetch('/api/crm/deals/users', { credentials: 'include' }),
+        ])
+        if (cancelled) return
+        const pipeJson = await pipeRes.json()
+        const usersJson = await usersRes.json()
+        if (pipeRes.ok && pipeJson.data) setPipelines(Array.isArray(pipeJson.data) ? pipeJson.data : [])
+        if (usersRes.ok && usersJson.data) setUsers(Array.isArray(usersJson.data) ? usersJson.data : [])
+      } catch (e) {
+        if (!cancelled) console.error('Error fetching pipelines/users:', e)
+      }
+    }
+    load()
     return () => { cancelled = true }
   }, [])
 
@@ -161,6 +184,10 @@ function DealsPageContent() {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
+                  onClick={() => {
+                    setEditingDeal(null)
+                    setIsEditModalOpen(true)
+                  }}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-sm font-medium bg-indigo-500 hover:bg-indigo-600 transition-colors"
                 >
                   Add New Deal
@@ -333,47 +360,55 @@ function DealsPageContent() {
           </div>
         </div>
 
-      {/* Edit Deal Modal */}
-      {editingDeal && (
-        <EditDealModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false)
-            setEditingDeal(null)
-          }}
-          onSave={async (updatedDeal) => {
-            if (!editingDeal) return
-            try {
-              const res = await fetch(`/api/crm/deals/${editingDeal.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(updatedDeal),
-              })
-              if (res.ok) {
-                // Refresh deals list
-                const dealsRes = await fetch('/api/crm/deals?page=1&pageSize=50&sortBy=created_at&sortOrder=desc', { credentials: 'include' })
-                const dealsJson = await dealsRes.json()
-                if (dealsRes.ok) {
-                  setTotalDeals(dealsJson.pagination?.total ?? 0)
-                  setDeals(Array.isArray(dealsJson.data) ? dealsJson.data : [])
-                }
-                setIsEditModalOpen(false)
-                setEditingDeal(null)
-              } else {
-                const error = await res.json()
-                alert(error.error || 'Failed to update deal')
+      {/* Create / Edit Deal Modal */}
+      <EditDealModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditingDeal(null)
+        }}
+        onSave={async (payload) => {
+          try {
+            const isCreate = !editingDeal
+            const url = isCreate ? '/api/crm/deals' : `/api/crm/deals/${editingDeal!.id}`
+            const method = isCreate ? 'POST' : 'PUT'
+            const res = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                title: payload.title,
+                value: payload.value ?? null,
+                stage: payload.stage ?? 'new',
+                probability: payload.probability ?? 0,
+                expected_close_date: payload.expected_close_date ?? null,
+                pipeline_id: payload.pipeline_id ?? null,
+                owner_id: payload.owner_id ?? null,
+                notes: payload.notes ?? null,
+              }),
+            })
+            if (res.ok) {
+              const dealsRes = await fetch('/api/crm/deals?page=1&pageSize=50&sortBy=created_at&sortOrder=desc', { credentials: 'include' })
+              const dealsJson = await dealsRes.json()
+              if (dealsRes.ok) {
+                setTotalDeals(dealsJson.pagination?.total ?? 0)
+                setDeals(Array.isArray(dealsJson.data) ? dealsJson.data : [])
               }
-            } catch (error) {
-              console.error('Error updating deal:', error)
-              alert('Failed to update deal')
+              setIsEditModalOpen(false)
+              setEditingDeal(null)
+            } else {
+              const err = await res.json().catch(() => ({}))
+              alert(err.error || (isCreate ? 'Failed to create deal' : 'Failed to update deal'))
             }
-          }}
-          deal={editingDeal}
-          pipelines={[]}
-          users={[]}
-        />
-      )}
+          } catch (e) {
+            console.error('Error saving deal:', e)
+            alert('Failed to save deal')
+          }
+        }}
+        deal={editingDeal}
+        pipelines={pipelines}
+        users={users}
+      />
 
       {/* Selection Action Bar */}
       <DealsSelectionActionBar

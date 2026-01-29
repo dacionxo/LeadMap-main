@@ -9,9 +9,10 @@ import {
   DialogTitle,
 } from '@/app/components/ui/dialog'
 import DatePicker from './DatePicker'
+import { useApp } from '@/app/providers'
 
 interface Deal {
-  id: string
+  id?: string
   title: string
   value?: number | null
   stage: string
@@ -27,6 +28,7 @@ interface Pipeline {
   id: string
   name: string
   stages: string[]
+  is_default?: boolean
 }
 
 interface User {
@@ -54,6 +56,7 @@ export default function EditDealModal({
   pipelines = [],
   users = [],
 }: EditDealModalProps) {
+  const { user } = useApp()
   const [formData, setFormData] = useState<Partial<Deal>>({
     title: '',
     value: null,
@@ -66,6 +69,8 @@ export default function EditDealModal({
     notes: '',
   })
   const [loading, setLoading] = useState(false)
+
+  const defaultPipeline = pipelines.find((p) => (p as Pipeline).is_default) || pipelines[0]
 
   useEffect(() => {
     if (deal) {
@@ -80,8 +85,20 @@ export default function EditDealModal({
         probability: deal.probability || 0,
         notes: deal.notes || '',
       })
+    } else {
+      setFormData({
+        title: '',
+        value: null,
+        stage: 'new',
+        expected_close_date: null,
+        property_address: null,
+        pipeline_id: defaultPipeline?.id ?? null,
+        owner_id: user?.id ?? null,
+        probability: 0,
+        notes: '',
+      })
     }
-  }, [deal])
+  }, [deal, isOpen, defaultPipeline?.id, user?.id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,11 +117,11 @@ export default function EditDealModal({
   const selectedOwner = users.find((u) => u.id === formData.owner_id)
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg">
         <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
           <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-            Edit Deal
+            {deal ? 'Edit Deal' : 'Create Deal'}
           </DialogTitle>
           <button
             onClick={onClose}
@@ -143,6 +160,7 @@ export default function EditDealModal({
                   onChange={(e) => setFormData({ ...formData, pipeline_id: e.target.value || null })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   aria-label="Pipeline"
+                  required={!deal}
                 >
                   <option value="">Select pipeline...</option>
                   {pipelines.map((p) => (
@@ -163,6 +181,7 @@ export default function EditDealModal({
                   value={formData.stage || 'new'}
                   onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  aria-label="Stage"
                 >
                   {STAGES.map((stage) => (
                     <option key={stage} value={stage}>
@@ -247,7 +266,7 @@ export default function EditDealModal({
                   <option value="">Select owner...</option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name || u.email}
+                      {u.id === user?.id ? `${u.name || u.email} (You)` : (u.name || u.email)}
                     </option>
                   ))}
                 </select>
@@ -297,7 +316,7 @@ export default function EditDealModal({
               disabled={loading}
               className="ml-6 px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Saving...' : 'Done'}
+              {loading ? 'Saving...' : deal ? 'Done' : 'Create Deal'}
             </button>
           </div>
         </form>
