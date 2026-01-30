@@ -348,6 +348,15 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
     }
   }, [fetchEvents, settingsLoaded])
 
+  // Refetch events when sync completes (e.g. after Google connect) so imported events show in user calendar
+  useEffect(() => {
+    const handleSyncComplete = () => {
+      fetchEvents()
+    }
+    window.addEventListener('calendarSyncComplete', handleSyncComplete)
+    return () => window.removeEventListener('calendarSyncComplete', handleSyncComplete)
+  }, [fetchEvents])
+
   const handleSelectSlot = (slotInfo: SlotInfo) => {
     if (onDateSelect) {
       onDateSelect(slotInfo.start, slotInfo.end)

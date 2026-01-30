@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
           external_calendar_id: calendarId,
           sync_status: 'synced',
           last_synced_at: new Date().toISOString(),
-          attendees: attendees.length > 0 ? JSON.stringify(attendees) : null,
+          attendees: attendees.length > 0 ? attendees : [],
           organizer_email: googleEvent.organizer?.email || null,
           organizer_name: googleEvent.organizer?.displayName || null,
           recurrence_rule: recurrenceRule,

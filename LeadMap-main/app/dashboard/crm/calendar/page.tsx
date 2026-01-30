@@ -50,13 +50,25 @@ function CalendarPageContent() {
     }
     checkOnboardingStatus()
 
-    // Check for OAuth callback success/error in URL params
+    // When user returns from Google OAuth with calendar_connected: sync events into user calendar, then refresh
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('calendar_connected')) {
-      // Refresh settings after successful connection
       checkOnboardingStatus()
-      // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname)
+      // Trigger manual sync so Google events import into user calendar (safety net if callback sync timed out)
+      fetch('/api/calendar/sync/manual', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      })
+        .then((res) => {
+          if (res.ok) {
+            window.dispatchEvent(new CustomEvent('calendarSyncComplete'))
+          }
+        })
+        .catch((err) => console.error('Calendar sync after connect:', err))
+        .finally(() => {
+          window.history.replaceState({}, '', window.location.pathname)
+        })
     }
   }, [])
 

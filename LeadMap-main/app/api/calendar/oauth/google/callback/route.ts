@@ -217,24 +217,40 @@ export async function GET(request: NextRequest) {
       .eq('email', userEmail)
       .single()
 
-    // Sync existing events from Google Calendar in the background
+    // Sync existing events from Google Calendar into user's calendar (Supabase calendar_events)
+    // We await the initial sync so events appear in the user calendar before redirect (world-class UX)
     if (savedConnection?.id && access_token) {
-      // Don't await - let it run in the background
-      fetch(`${baseUrl}/api/calendar/sync/google`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          connectionId: savedConnection.id,
-          accessToken: access_token,
-          calendarId: calendarId,
-        }),
-      }).catch((error) => {
-        console.error('Error triggering Google Calendar sync:', error)
-        // Don't fail the OAuth flow if sync fails
+      const syncUrl = `${baseUrl}/api/calendar/sync/google`
+      const syncBody = JSON.stringify({
+        userId: user.id,
+        connectionId: savedConnection.id,
+        accessToken: access_token,
+        calendarId: calendarId,
       })
+      const syncTimeoutMs = 90_000 // 90s max so serverless doesn't kill the request
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), syncTimeoutMs)
+      try {
+        const syncRes = await fetch(syncUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: syncBody,
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+        if (!syncRes.ok) {
+          const errText = await syncRes.text()
+          console.error('Google Calendar initial sync failed:', syncRes.status, errText)
+        }
+      } catch (syncErr: any) {
+        clearTimeout(timeoutId)
+        if (syncErr?.name === 'AbortError') {
+          console.warn('Google Calendar initial sync timed out; user can sync manually on calendar page.')
+        } else {
+          console.error('Error during Google Calendar initial sync:', syncErr)
+        }
+        // Don't block redirect; calendar page will trigger manual sync as fallback
+      }
     }
 
     // Redirect to calendar page with success

@@ -8,11 +8,13 @@ export const runtime = 'nodejs'
 
 /**
  * GET /api/calendar/events
- * Fetch calendar events for the authenticated user
- * 
+ * Fetch calendar events for the authenticated user.
+ * Includes both native (in-app) events and events synced from Google Calendar
+ * (all stored in calendar_events with user_id = authenticated user).
+ *
  * All times are stored and returned in UTC (ISO 8601 format).
  * The frontend is responsible for converting to the user's timezone for display.
- * 
+ *
  * Query params:
  * - start: ISO date string (start of range) in UTC
  * - end: ISO date string (end of range) in UTC
