@@ -242,6 +242,9 @@ export default function DealsKanban({
             {deal.title || 'Untitled deal'}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
+            {deal.property_address || 'Property address unavailable'}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Estimated Close Value: {fmtCurrency(ecv)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
