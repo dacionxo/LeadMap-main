@@ -236,13 +236,13 @@ export async function GET(request: NextRequest) {
     const dealsWithListingIds = (deals || []).filter((deal: any) => deal.listing_id)
     const uniqueListingIds = Array.from(new Set(dealsWithListingIds.map((deal: any) => deal.listing_id)))
     
-    // Build a map of listing_id -> property_address
+    // Build maps: listing_id -> property_address, listing_id -> list_price (property value)
     const propertyAddressMap = new Map<string, string | null>()
+    const propertyValueMap = new Map<string, number | null>()
     
     if (uniqueListingIds.length > 0) {
       const tableNames = ['listings', 'expired_listings', 'fsbo_leads', 'frbo_leads', 'imports', 'foreclosure_listings']
       
-      // Helper function to build address from property data
       const buildAddress = (listing: any): string | null => {
         const addressParts = []
         if (listing.street) addressParts.push(listing.street)
@@ -257,44 +257,62 @@ export async function GET(request: NextRequest) {
         return addressParts.length > 0 ? addressParts.join(', ') : null
       }
 
-      // Fetch from all tables in parallel
       for (const tableName of tableNames) {
         try {
-          // Query by listing_id
-          const { data: listings } = await supabase
+          const colsWithPrice = 'listing_id, street, city, state, zip_code, property_url, list_price'
+          let listings: any[] = []
+          const { data: byId, error: errId } = await supabase
             .from(tableName)
-            .select('listing_id, street, city, state, zip_code, property_url')
+            .select(colsWithPrice)
             .in('listing_id', uniqueListingIds)
             .limit(1000)
+          if (!errId && byId) listings = byId
+          if (errId && (errId.code === '42703' || /list_price|column.*exist/i.test(errId.message || ''))) {
+            const { data: byIdFallback } = await supabase
+              .from(tableName)
+              .select('listing_id, street, city, state, zip_code, property_url')
+              .in('listing_id', uniqueListingIds)
+              .limit(1000)
+            if (byIdFallback) listings = byIdFallback
+          }
 
-          if (listings && listings.length > 0) {
+          if (listings.length > 0) {
             listings.forEach((listing: any) => {
-              if (listing.listing_id && !propertyAddressMap.has(listing.listing_id)) {
-                propertyAddressMap.set(listing.listing_id, buildAddress(listing))
-              }
+              const id = listing.listing_id
+              if (!id) return
+              if (!propertyAddressMap.has(id)) propertyAddressMap.set(id, buildAddress(listing))
+              const pv = listing.list_price != null ? Number(listing.list_price) : null
+              if (pv != null && !isNaN(pv) && !propertyValueMap.has(id)) propertyValueMap.set(id, pv)
             })
           }
 
-          // Also try by property_url for any listing_ids that look like URLs
           const urlListingIds = uniqueListingIds.filter((id: string) => id && id.startsWith('http'))
           if (urlListingIds.length > 0) {
-            const { data: listingsByUrl } = await supabase
+            const { data: listingsByUrl, error: errUrl } = await supabase
               .from(tableName)
-              .select('listing_id, property_url, street, city, state, zip_code')
+              .select('listing_id, property_url, street, city, state, zip_code, list_price')
               .in('property_url', urlListingIds)
               .limit(1000)
-
-            if (listingsByUrl && listingsByUrl.length > 0) {
-              listingsByUrl.forEach((listing: any) => {
-                // Map by property_url since that's what we searched for
-                if (listing.property_url && !propertyAddressMap.has(listing.property_url)) {
-                  propertyAddressMap.set(listing.property_url, buildAddress(listing))
-                }
+            let byUrl: any[] = listingsByUrl || []
+            if (errUrl && (errUrl.code === '42703' || /list_price|column.*exist/i.test(errUrl.message || ''))) {
+              const { data: fallback } = await supabase
+                .from(tableName)
+                .select('listing_id, property_url, street, city, state, zip_code')
+                .in('property_url', urlListingIds)
+                .limit(1000)
+              byUrl = fallback || []
+            }
+            if (byUrl.length > 0) {
+              byUrl.forEach((listing: any) => {
+                const url = listing.property_url
+                if (!url) return
+                if (!propertyAddressMap.has(url)) propertyAddressMap.set(url, buildAddress(listing))
+                const pv = listing.list_price != null ? Number(listing.list_price) : null
+                if (pv != null && !isNaN(pv) && !propertyValueMap.has(url)) propertyValueMap.set(url, pv)
               })
             }
           }
         } catch (err: any) {
-          // Table might not exist, continue to next table
           if (err.code !== 'PGRST116' && !err.message?.includes('does not exist')) {
             console.warn(`Error querying ${tableName}:`, err.message)
           }
@@ -324,18 +342,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Map property addresses and owner information back to deals
+    // Map property address, property value (list_price), and owner back to deals
     const dealsWithProperties = (deals || []).map((deal: any) => {
       const result: any = { ...deal }
       
-      // Add property address if listing_id exists
       if (deal.listing_id) {
         result.property_address = propertyAddressMap.get(deal.listing_id) || null
+        result.property_value = propertyValueMap.get(deal.listing_id) ?? null
       } else {
         result.property_address = null
+        result.property_value = null
       }
       
-      // Add owner information if owner_id exists
       if (deal.owner_id) {
         const owner = ownerMap.get(deal.owner_id)
         if (owner) {

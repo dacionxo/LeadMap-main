@@ -25,6 +25,9 @@ interface Deal {
   pipeline_id?: string | null
   listing_id?: string | null
   property_address?: string | null
+  /** From listing list_price (read-only). */
+  property_value?: number | null
+  forecast_value?: number | null
   last_interaction?: string | null
   updated_at?: string | null
 }
@@ -40,7 +43,17 @@ interface DealsKanbanProps {
 }
 
 const BOARD_BG = '#F5F5F5'
-const DESC_PLACEHOLDER = 'Lorem ipsum dolor sit amet, libre unst consectetur adispicing elit.'
+
+function fmtCurrency(v: number | null | undefined): string {
+  if (v == null || isNaN(v)) return '—'
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
+}
+
+function fmtDate(s: string | null | undefined): string {
+  if (!s) return '—'
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
 const STAGE_KEYS = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] as const
 
@@ -171,9 +184,9 @@ export default function DealsKanban({
 
   function Card({ deal }: { deal: Deal }) {
     const tag = getLabelForDeal(deal)
-    const desc = deal.description || deal.notes || deal.property_address || DESC_PLACEHOLDER
     const comments = 0
     const activity = Math.round(deal.probability ?? 0)
+    const ecv = deal.forecast_value ?? deal.value
 
     return (
       <div
@@ -228,8 +241,14 @@ export default function DealsKanban({
           <p className="font-bold text-sm text-gray-900 dark:text-white leading-tight pr-8">
             {deal.title || 'Untitled deal'}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-snug">
-            {desc}
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            E.C.V: {fmtCurrency(ecv)}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Estimated close date: {fmtDate(deal.expected_close_date)}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Property value: {fmtCurrency(deal.property_value)}
           </p>
         </div>
         <div className="mt-auto px-3 pb-3 flex items-center justify-between gap-2">
