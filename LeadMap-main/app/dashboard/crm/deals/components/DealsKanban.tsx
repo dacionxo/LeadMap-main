@@ -181,7 +181,7 @@ export default function DealsKanban({
         onDragStart={() => handleDragStart(deal)}
         onDragEnd={handleDragEnd}
         onClick={() => onDealClick(deal)}
-        className="rounded-lg overflow-hidden cursor-grab active:cursor-grabbing bg-white dark:bg-dark flex flex-col border border-slate-200 dark:border-slate-600 shadow-sm"
+        className="rounded-lg overflow-hidden cursor-grab active:cursor-grabbing bg-white dark:bg-dark flex flex-col border border-slate-200 dark:border-slate-600 shadow-md dark:shadow-dark-md"
       >
         <div className="p-3 flex flex-col gap-2 relative">
           <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
@@ -271,7 +271,7 @@ export default function DealsKanban({
             onDrop={() => handleDrop(i)}
           >
             <div
-              className="rounded-lg px-3 py-2.5 flex items-center justify-between gap-2 mb-3 border border-slate-200 dark:border-slate-600"
+              className="rounded-lg px-3 py-2.5 flex items-center justify-between gap-2 mb-3 border border-slate-200 dark:border-slate-600 shadow-md dark:shadow-dark-md"
               style={{ backgroundColor: col.bg }}
             >
               <div className="flex items-center gap-2 min-w-0">
