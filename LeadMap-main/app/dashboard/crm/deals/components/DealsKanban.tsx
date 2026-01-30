@@ -38,11 +38,34 @@ const CARD_BG = '#FFFFFF'
 const CARD_SHADOW = '0 1px 3px rgba(0,0,0,0.08)'
 const DESC_PLACEHOLDER = 'Lorem ipsum dolor sit amet, libre unst consectetur adispicing elit.'
 
-const COLUMNS: { id: string; label: string; bg: string; stageKeys: string[] }[] = [
-  { id: 'in_progress', label: 'In Progress', bg: '#8B5CF6', stageKeys: ['new', 'contacted', 'qualified', 'proposal'] },
-  { id: 'reviewed', label: 'Reviewed', bg: '#F97316', stageKeys: ['negotiation'] },
-  { id: 'completed', label: 'Completed', bg: '#22C55E', stageKeys: ['closed_won', 'closed_lost'] },
-]
+const STAGE_KEYS = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] as const
+
+const STAGE_DISPLAY: Record<string, string> = {
+  new: 'Lead',
+  contacted: 'Contacted',
+  qualified: 'Qualified',
+  proposal: 'Proposal',
+  negotiation: 'Negotiation',
+  closed_won: 'Closed Won',
+  closed_lost: 'Closed Lost',
+}
+
+const STAGE_HEADER_BG: Record<string, string> = {
+  new: '#4F46E5',
+  contacted: '#7C3AED',
+  qualified: '#C026D3',
+  proposal: '#E11D48',
+  negotiation: '#F59E0B',
+  closed_won: '#059669',
+  closed_lost: '#475569',
+}
+
+const COLUMNS = STAGE_KEYS.map((key) => ({
+  id: key,
+  label: STAGE_DISPLAY[key],
+  bg: STAGE_HEADER_BG[key],
+  stageKey: key,
+}))
 
 const LABELS: { label: string; bg: string; text: string }[] = [
   { label: 'Important', bg: '#EDE9FE', text: '#6D28D9' },
@@ -72,13 +95,12 @@ function normalizeStage(s: string): string {
 
 function columnForStage(stage: string): number {
   const n = normalizeStage(stage)
-  if (COLUMNS[0].stageKeys.includes(n)) return 0
-  if (COLUMNS[1].stageKeys.includes(n)) return 1
-  return 2
+  const i = (STAGE_KEYS as readonly string[]).indexOf(n)
+  return i >= 0 ? i : 0
 }
 
 function stageForColumn(col: number): string {
-  return COLUMNS[col].stageKeys[0]
+  return COLUMNS[col].stageKey
 }
 
 function getLabelForDeal(deal: Deal): { label: string; bg: string; text: string } {
@@ -120,7 +142,7 @@ export default function DealsKanban({
 }: DealsKanbanProps) {
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null)
 
-  const buckets: Deal[][] = [[], [], []]
+  const buckets: Deal[][] = STAGE_KEYS.map(() => [])
   for (const d of deals) {
     const col = columnForStage(d.stage)
     buckets[col].push(d)
@@ -216,7 +238,7 @@ export default function DealsKanban({
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className="flex-shrink-0 rounded-lg px-2 py-0.5 text-xs font-semibold text-white bg-white/20"
+                  className="flex-shrink-0 rounded-lg px-2 py-0.5 text-xs font-semibold bg-white text-gray-900"
                   aria-hidden
                 >
                   {list.length}
