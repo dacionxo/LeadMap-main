@@ -1,7 +1,7 @@
 'use client'
 
 import { Card } from '@/app/components/ui/card'
-import { ChevronLeft, ChevronRight, HelpCircle, RefreshCw, Search, Settings, X } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import moment from 'moment'
 import { useCallback, useEffect, useState } from 'react'
 import { Calendar, momentLocalizer, SlotInfo, View } from 'react-big-calendar'
@@ -10,6 +10,13 @@ import CalendarHelpModal from './CalendarHelpModal'
 
 moment.locale('en')
 const localizer = momentLocalizer(moment)
+
+const CALENDAR_VIEW_MAP: Record<string, View> = {
+  month: 'month',
+  week: 'week',
+  day: 'day',
+  agenda: 'agenda',
+}
 
 interface CalendarEvent {
   id: string
@@ -79,18 +86,12 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
     }
   }, [])
 
-  // Apply default view from settings
+  // Start on month view; only use a different view when the user has changed their default in settings
   useEffect(() => {
-    if (settings?.default_view) {
-      const viewMap: Record<string, View> = {
-        month: 'month',
-        week: 'week',
-        day: 'day',
-        agenda: 'agenda',
-      }
-      const mappedView = viewMap[settings.default_view] || 'month'
-      setView(mappedView)
-    }
+    const preferredView = settings?.default_view && CALENDAR_VIEW_MAP[settings.default_view]
+      ? CALENDAR_VIEW_MAP[settings.default_view]
+      : 'month'
+    setView(preferredView)
   }, [settings?.default_view])
 
   const fetchSettings = async () => {
@@ -519,165 +520,6 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
 
   return (
     <div className="flex flex-col h-full min-h-[800px] bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={goToToday}
-            className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-          >
-            Today
-          </button>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigateDate('prev')}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => navigateDate('next')}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white min-w-[180px]">
-            {getCurrentMonthYear()}
-          </h2>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Search */}
-          <div className="relative">
-            {searchQuery ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search calendar events..."
-                  className="calendar-search-input px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  title="Clear search"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  const input = document.querySelector('.calendar-search-input') as HTMLInputElement
-                  if (input) {
-                    input.focus()
-                  } else {
-                    setSearchQuery('')
-                    setTimeout(() => {
-                      const newInput = document.querySelector('.calendar-search-input') as HTMLInputElement
-                      if (newInput) {
-                        newInput.focus()
-                      }
-                    }, 0)
-                  }
-                }}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                title="Search calendar events (Press /)"
-              >
-                <Search className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          
-          <button
-            onClick={() => setShowHelp(true)}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-            title="Help (Press ?)"
-          >
-            <HelpCircle className="w-4 h-4" />
-          </button>
-          
-          <button
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('openCalendarSettings'))
-              }
-            }}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-
-          {/* View Selector */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 ml-2">
-            <button
-              onClick={() => changeView('month')}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
-                view === 'month'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => changeView('week')}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
-                view === 'week'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => changeView('day')}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
-                view === 'day'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Day
-            </button>
-            <button
-              onClick={() => changeView('agenda')}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
-                view === 'agenda'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Agenda
-            </button>
-          </div>
-
-          <button
-            onClick={fetchEvents}
-            disabled={loading}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
-            title="Refresh events"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-
-          <button
-            onClick={handleSync}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-            title="Sync calendars"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
       {/* Calendar Container */}
       <div className="flex-1 overflow-auto bg-white dark:bg-gray-900">
         <Card className="min-h-[900px]">
