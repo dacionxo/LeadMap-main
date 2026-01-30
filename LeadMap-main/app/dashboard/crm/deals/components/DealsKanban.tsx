@@ -242,13 +242,13 @@ export default function DealsKanban({
             {deal.title || 'Untitled deal'}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            E.C.V: {fmtCurrency(ecv)}
+            Estimated Close Value: {fmtCurrency(ecv)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Estimated close date: {fmtDate(deal.expected_close_date)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Property value: {fmtCurrency(deal.property_value)}
+            Listed Property Value: {fmtCurrency(deal.property_value)}
           </p>
         </div>
         <div className="mt-auto px-3 pb-3 flex items-center justify-between gap-2">
