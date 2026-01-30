@@ -1,18 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import DashboardLayout from '../../components/DashboardLayout'
+import { useSidebar } from '../../components/SidebarContext'
 import CalendarView from './components/CalendarView'
 import CalendarOnboardingView from './components/CalendarOnboardingView'
 import EventModal from './components/EventModal'
 import CreateEventModal from './components/CreateEventModal'
 import CalendarSettingsPanel from './components/CalendarSettingsPanel'
 import ConnectCalendarModal from './components/ConnectCalendarModal'
-import { Plus } from 'lucide-react'
 
-export default function CalendarPage() {
-  const router = useRouter()
+/** Calendar content: full-bleed under navbar, must be inside DashboardLayout (useSidebar). */
+function CalendarPageContent() {
+  const { isOpen: isSidebarOpen } = useSidebar()
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -181,24 +181,16 @@ export default function CalendarPage() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-2rem)]">
-        {/* Floating Action Button - Only show when not in onboarding */}
-        {!showOnboarding && (
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="fixed bottom-8 right-8 z-50 flex items-center justify-center w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
-            title="Create New Event"
-          >
-            <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
-          </button>
-        )}
-
-        {/* Calendar Container */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+    <div className="-mt-[10px]">
+      {/* Fixed full-bleed: top under navbar, bottom to window, left/right to window edges (like deals) */}
+      <div
+        className="fixed top-[50px] bottom-0 flex flex-col bg-slate-50 dark:bg-gray-900 transition-all duration-300"
+        style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
+      >
+        <div className="h-px w-full shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden="true" role="separator" />
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {showOnboarding === null ? (
-            // Loading state
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center flex-1">
               <div className="flex flex-col items-center gap-2">
                 <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm text-gray-500">Loading calendar...</span>
@@ -210,7 +202,6 @@ export default function CalendarPage() {
               onConnectCalendar={handleConnectCalendar}
             />
           ) : (
-            // Show FullCalendar with provider-specific styling
             <CalendarView
               onEventClick={handleEventClick}
               onDateSelect={handleDateSelect}
@@ -218,76 +209,80 @@ export default function CalendarPage() {
             />
           )}
         </div>
-
-        {/* Event Detail Modal */}
-        {selectedEvent && (
-          <EventModal
-            event={selectedEvent}
-            onClose={() => setSelectedEvent(null)}
-            onEdit={handleEventEdit}
-            onDelete={handleEventDelete}
-          />
-        )}
-
-        {/* Create Event Modal */}
-        <CreateEventModal
-          isOpen={isCreateModalOpen}
-          onClose={() => {
-            setIsCreateModalOpen(false)
-            setCreateModalDate(undefined)
-            setCreateModalEndDate(undefined)
-          }}
-          initialDate={createModalDate}
-          initialEndDate={createModalEndDate}
-          onSuccess={handleEventCreated}
-        />
-
-        {/* Edit Event Modal */}
-        <CreateEventModal
-          isOpen={isEditModalOpen}
-          eventId={editingEventId || undefined}
-          onClose={() => {
-            setIsEditModalOpen(false)
-            setEditingEventId(null)
-          }}
-          onSuccess={() => {
-            window.location.reload()
-          }}
-        />
-
-        {/* Calendar Settings Panel */}
-        <CalendarSettingsPanel
-          isOpen={isSettingsOpen}
-          onClose={() => {
-            setIsSettingsOpen(false)
-            // Re-check onboarding status after settings are saved
-            // in case onboarding was marked complete
-            const checkOnboarding = async () => {
-              try {
-                const response = await fetch('/api/calendar/settings', {
-                  credentials: 'include',
-                })
-                if (response.ok) {
-                  const data = await response.json()
-                  const onboardingComplete = data.settings?.calendar_onboarding_complete ?? false
-                  setShowOnboarding(!onboardingComplete)
-                }
-              } catch (error) {
-                console.error('Error checking onboarding status:', error)
-              }
-            }
-            checkOnboarding()
-          }}
-        />
-
-        {/* Connect Calendar Modal */}
-        <ConnectCalendarModal
-          isOpen={isConnectCalendarModalOpen}
-          onClose={() => setIsConnectCalendarModalOpen(false)}
-          onConnect={handleCalendarConnected}
-          onUseNative={handleUseNativeCalendar}
-        />
       </div>
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <EventModal
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onEdit={handleEventEdit}
+          onDelete={handleEventDelete}
+        />
+      )}
+
+      {/* Create Event Modal */}
+      <CreateEventModal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false)
+          setCreateModalDate(undefined)
+          setCreateModalEndDate(undefined)
+        }}
+        initialDate={createModalDate}
+        initialEndDate={createModalEndDate}
+        onSuccess={handleEventCreated}
+      />
+
+      {/* Edit Event Modal */}
+      <CreateEventModal
+        isOpen={isEditModalOpen}
+        eventId={editingEventId || undefined}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditingEventId(null)
+        }}
+        onSuccess={() => {
+          window.location.reload()
+        }}
+      />
+
+      {/* Calendar Settings Panel */}
+      <CalendarSettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={() => {
+          setIsSettingsOpen(false)
+          const checkOnboarding = async () => {
+            try {
+              const response = await fetch('/api/calendar/settings', { credentials: 'include' })
+              if (response.ok) {
+                const data = await response.json()
+                const onboardingComplete = data.settings?.calendar_onboarding_complete ?? false
+                setShowOnboarding(!onboardingComplete)
+              }
+            } catch (error) {
+              console.error('Error checking onboarding status:', error)
+            }
+          }
+          checkOnboarding()
+        }}
+      />
+
+      {/* Connect Calendar Modal */}
+      <ConnectCalendarModal
+        isOpen={isConnectCalendarModalOpen}
+        onClose={() => setIsConnectCalendarModalOpen(false)}
+        onConnect={handleCalendarConnected}
+        onUseNative={handleUseNativeCalendar}
+      />
+    </div>
+  )
+}
+
+export default function CalendarPage() {
+  return (
+    <DashboardLayout>
+      <CalendarPageContent />
     </DashboardLayout>
   )
 }
