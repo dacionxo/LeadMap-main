@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Icon } from '@iconify/react'
@@ -76,6 +77,13 @@ export default function Sidebar() {
   const searchParams = useSearchParams()
   const { profile, signOut } = useApp()
   const { isOpen, toggle } = useSidebar()
+
+  // Collapsible sections: track which are expanded (default all true)
+  const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({})
+  const toggleSection = (sectionIdx: number) => {
+    setExpandedSections((prev) => ({ ...prev, [sectionIdx]: !prev[sectionIdx] }))
+  }
+  const isSectionExpanded = (sectionIdx: number) => expandedSections[sectionIdx] !== false
 
   const handleSignOut = async () => {
     await signOut()
@@ -162,13 +170,30 @@ export default function Sidebar() {
       {/* Navigation */}
       <SimpleBar className="h-[calc(100vh_-_180px)]">
         <nav className={`sidebar-nav flex-1 py-0 ${isOpen ? 'px-6' : 'px-4 xl:group-hover:px-6'}`}>
-          {navSections.map((section, sectionIdx) => (
+          {navSections.map((section, sectionIdx) => {
+            const expanded = isSectionExpanded(sectionIdx)
+            const hasTitle = !!section.title
+            return (
             <div key={sectionIdx} className="mb-3">
-              {section.title && (
-                <div className="caption px-0 mb-0" style={{ marginTop: sectionIdx === 0 ? '0px' : '24px', padding: '3px 0px', lineHeight: '26px' }}>
-                  <h5 className="text-link dark:text-darklink font-bold text-xs uppercase leading-[26px]">
+              {hasTitle && (
+                <button
+                  type="button"
+                  onClick={() => hasTitle && toggleSection(sectionIdx)}
+                  className="caption px-0 mb-0 w-full text-left focus:outline-none focus:ring-0"
+                  style={{ marginTop: sectionIdx === 0 ? '0px' : '24px', padding: '3px 0px', lineHeight: '26px' }}
+                  aria-expanded={expanded ? 'true' : 'false'}
+                >
+                  <h5 className="text-link dark:text-darklink font-bold text-xs uppercase leading-[26px] flex items-center gap-1.5">
                     {isOpen ? (
-                      <span className="leading-21">{section.title}</span>
+                      <>
+                        <Icon
+                          icon={expanded ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'}
+                          className="flex-shrink-0 transition-transform text-link dark:text-darklink"
+                          height={14}
+                          width={14}
+                        />
+                        <span className="leading-21">{section.title}</span>
+                      </>
                     ) : (
                       <>
                         <span className="hidden xl:group-hover:inline leading-21">{section.title}</span>
@@ -182,8 +207,9 @@ export default function Sidebar() {
                       </>
                     )}
                   </h5>
-                </div>
+                </button>
               )}
+            {(!hasTitle || expanded) && (
             <div className={isOpen ? 'space-y-0.5' : 'flex flex-col items-center gap-2 xl:group-hover:items-start xl:group-hover:gap-0.5 xl:group-hover:space-y-0.5'}>
               {section.items.map((item) => {
                 const active = isActive(item.href)
@@ -239,8 +265,10 @@ export default function Sidebar() {
                 )
               })}
             </div>
+            )}
           </div>
-        ))}
+            )
+          })}
         </nav>
       </SimpleBar>
 
