@@ -210,6 +210,7 @@ module.exports = {
         'btn-shadow': 'rgba(0, 0, 0, 0.05) 0 9px 17.5px',
         '1': '0px 1px 2px 0px rgba(84, 87, 118, 0.12)',
         'card': '0px 1px 2px 0px rgba(0, 0, 0, 0.12)',
+        'glow': '0 0 20px -5px rgba(99, 102, 241, 0.4)',
       },
       keyframes: {
         'accordion-down': {
@@ -220,10 +221,20 @@ module.exports = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-4px)' },
+        },
+        'pulse-glow': {
+          '0%, 100%': { opacity: '0.8', transform: 'scale(1)' },
+          '50%': { opacity: '1', transform: 'scale(1.05)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        float: 'float 3s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },

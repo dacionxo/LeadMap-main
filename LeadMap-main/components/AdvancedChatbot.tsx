@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Send, X, Bot, User } from 'lucide-react'
+import AISparkleIcon from './AISparkleIcon'
 import { askAssistant } from '@/lib/api'
 
 interface Message {
@@ -124,19 +125,27 @@ export default function AdvancedChatbot({ isOpen, onClose }: AdvancedChatbotProp
     <div className="fixed inset-0 z-50 flex items-end justify-end p-4">
       <div className="bg-black/50 fixed inset-0" onClick={onClose} />
       <div className="relative bg-neutral-light dark:bg-neutral-dark border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-lg h-[700px] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <Bot className="w-4 h-4 text-white" />
+        {/* Header - AI Assistant with sparkle icon */}
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative shrink-0">
+              <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-white bg-green-500 dark:border-gray-900" />
+              </span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 shadow-lg shadow-indigo-500/20">
+                <AISparkleIcon size={24} variant="full" useCurrentColor animate={isThinking} className="text-white" />
+              </div>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">NextDeal AI</h3>
-              <p className="text-xs text-primary dark:text-primary-400">Instant • Free • Smart</p>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Assistant</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Always active</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close chat"
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
