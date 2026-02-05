@@ -1,55 +1,57 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Eye, EyeOff, CheckCircle } from 'lucide-react'
-import { executeWithRateLimit } from '@/lib/auth/rate-limit'
-import FullLogo from '@/components/auth/FullLogo'
-import LeftSidebarPart from '@/components/auth/LeftSidebarPart'
-import { Input } from '@/app/components/ui/input'
-import { Label } from '@/app/components/ui/label'
-import { Button } from '@/app/components/ui/button'
-import { Checkbox } from '@/app/components/ui/checkbox'
+import { Button } from "@/app/components/ui/button";
+import { Checkbox } from "@/app/components/ui/checkbox";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import FullLogo from "@/components/auth/FullLogo";
+import LeftSidebarPart from "@/components/auth/LeftSidebarPart";
+import { executeWithRateLimit } from "@/lib/auth/rate-limit";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { CheckCircle, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { Suspense, useEffect, useState } from "react";
 
 function LoginPageContent() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [rememberMe, setRememberMe] = useState(true)
-  const [showPassword, setShowPassword] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const supabase = createClientComponentClient()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const savedEmail = localStorage.getItem('nextdeal_saved_email')
+    if (typeof window === "undefined") return;
+    const savedEmail = localStorage.getItem("nextdeal_saved_email");
     if (savedEmail) {
-      setEmail(savedEmail)
-      setRememberMe(true)
+      setEmail(savedEmail);
+      setRememberMe(true);
     }
-    const passwordReset = searchParams.get('password_reset')
-    if (passwordReset === 'success') {
-      setSuccessMessage('Your password has been reset successfully. Please log in with your new password.')
-      router.replace('/login', { scroll: false })
+    const passwordReset = searchParams.get("password_reset");
+    if (passwordReset === "success") {
+      setSuccessMessage(
+        "Your password has been reset successfully. Please log in with your new password."
+      );
+      router.replace("/login", { scroll: false });
     }
-  }, [searchParams, router])
+  }, [searchParams, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    setSuccessMessage('')
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
     try {
       const { data, error } = await executeWithRateLimit(
         `login:${email}`,
         async () => {
-          return await supabase.auth.signInWithPassword({ email, password })
+          return await supabase.auth.signInWithPassword({ email, password });
         },
         {
           maxRequests: 100,
@@ -59,83 +61,104 @@ function LoginPageContent() {
           backoffMultiplier: 2,
           maxRetries: 3,
         }
-      )
-      if (error) throw error
-      if (typeof window !== 'undefined') {
+      );
+      if (error) throw error;
+      if (typeof window !== "undefined") {
         if (rememberMe) {
-          localStorage.setItem('nextdeal_saved_email', email)
+          localStorage.setItem("nextdeal_saved_email", email);
         } else {
-          localStorage.removeItem('nextdeal_saved_email')
+          localStorage.removeItem("nextdeal_saved_email");
         }
       }
-      router.push('/dashboard/map')
+      router.push("/dashboard/map");
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : String(err)
-      if (errMsg?.includes('rate limit') || errMsg?.includes('Request rate limit')) {
-        setError('Too many requests. Please wait a moment and try again.')
-      } else if (errMsg?.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please try again.')
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (
+        errMsg?.includes("rate limit") ||
+        errMsg?.includes("Request rate limit")
+      ) {
+        setError("Too many requests. Please wait a moment and try again.");
+      } else if (errMsg?.includes("Invalid login credentials")) {
+        setError("Invalid email or password. Please try again.");
       } else {
-        setError(errMsg || 'An error occurred. Please try again.')
+        setError(errMsg || "An error occurred. Please try again.");
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleOAuthSignIn = async (provider: 'google' | 'azure') => {
-    if (typeof window === 'undefined') return
-    setLoading(true)
-    setError('')
+  const handleOAuthSignIn = async (provider: "google" | "azure") => {
+    if (typeof window === "undefined") return;
+    setLoading(true);
+    setError("");
     try {
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-        throw new Error('Supabase configuration is missing. Please contact support.')
+        throw new Error(
+          "Supabase configuration is missing. Please contact support."
+        );
       }
-      const redirectUrl = `${window.location.origin}/api/auth/callback`
+      const redirectUrl = `${window.location.origin}/api/auth/callback`;
       const oauthOptions: {
-        redirectTo: string
-        queryParams?: Record<string, string>
-        scopes?: string
-      } = { redirectTo: redirectUrl }
-      if (provider === 'google') {
-        oauthOptions.queryParams = { access_type: 'offline', prompt: 'consent' }
-      } else if (provider === 'azure') {
-        oauthOptions.scopes = 'offline_access'
+        redirectTo: string;
+        queryParams?: Record<string, string>;
+        scopes?: string;
+      } = { redirectTo: redirectUrl };
+      if (provider === "google") {
+        oauthOptions.queryParams = {
+          access_type: "offline",
+          prompt: "consent",
+        };
+      } else if (provider === "azure") {
+        oauthOptions.scopes = "offline_access";
       }
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: oauthOptions,
-      })
-      if (error) throw error
+      });
+      if (error) throw error;
       if (!data?.url) {
-        setLoading(false)
-        return
+        setLoading(false);
+        return;
       }
-      if (!data.url.startsWith('https://')) {
-        throw new Error('Invalid OAuth redirect URL received - must use HTTPS')
+      if (!data.url.startsWith("https://")) {
+        throw new Error("Invalid OAuth redirect URL received - must use HTTPS");
       }
-      window.location.href = data.url
+      window.location.href = data.url;
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : String(err)
-      if (errMsg.includes('rate limit') || errMsg.includes('Request rate limit')) {
-        setError('Too many requests. Please wait a moment and try again.')
-      } else if (errMsg.includes('redirect_uri_mismatch') || errMsg.includes('redirect')) {
-        setError('OAuth configuration error. Please contact support.')
-      } else if (errMsg.includes('invalid_client') || errMsg.includes('client')) {
-        setError('OAuth provider not configured. Please contact support.')
-      } else if (errMsg.includes('network') || errMsg.includes('fetch')) {
-        setError('Network error. Please check your connection and try again.')
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (
+        errMsg.includes("rate limit") ||
+        errMsg.includes("Request rate limit")
+      ) {
+        setError("Too many requests. Please wait a moment and try again.");
+      } else if (
+        errMsg.includes("redirect_uri_mismatch") ||
+        errMsg.includes("redirect")
+      ) {
+        setError("OAuth configuration error. Please contact support.");
+      } else if (
+        errMsg.includes("invalid_client") ||
+        errMsg.includes("client")
+      ) {
+        setError("OAuth provider not configured. Please contact support.");
+      } else if (errMsg.includes("network") || errMsg.includes("fetch")) {
+        setError("Network error. Please check your connection and try again.");
       } else {
-        setError(`Unable to sign in with ${provider === 'google' ? 'Google' : 'Microsoft'}. ${errMsg}`)
+        setError(
+          `Unable to sign in with ${provider === "google" ? "Google" : "Microsoft"}. ${errMsg}`
+        );
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleOrganizationLogin = () => {
-    setError('Organization login is coming soon. Please use email or OAuth providers.')
-  }
+    setError(
+      "Organization login is coming soon. Please use email or OAuth providers."
+    );
+  };
 
   return (
     <>
@@ -159,7 +182,7 @@ function LoginPageContent() {
                 <div className="flex justify-between gap-8 my-6">
                   <button
                     type="button"
-                    onClick={() => handleOAuthSignIn('google')}
+                    onClick={() => handleOAuthSignIn("google")}
                     disabled={loading}
                     className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 flex gap-2 items-center w-full rounded-md text-center justify-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
                   >
@@ -173,7 +196,7 @@ function LoginPageContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleOAuthSignIn('azure')}
+                    onClick={() => handleOAuthSignIn("azure")}
                     disabled={loading}
                     className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 flex gap-2 items-center w-full rounded-md text-center justify-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
                   >
@@ -198,7 +221,9 @@ function LoginPageContent() {
                 {/* Divider */}
                 <div className="flex items-center justify-center gap-2">
                   <hr className="grow border-gray-300 dark:border-gray-600" />
-                  <p className="text-base text-gray-600 dark:text-gray-400 font-medium">or sign in with</p>
+                  <p className="text-base text-gray-600 dark:text-gray-400 font-medium">
+                    or sign in with
+                  </p>
                   <hr className="grow border-gray-300 dark:border-gray-600" />
                 </div>
 
@@ -214,9 +239,9 @@ function LoginPageContent() {
                       placeholder="Work Email"
                       value={email}
                       onChange={(e) => {
-                        setEmail(e.target.value)
-                        setError('')
-                        setSuccessMessage('')
+                        setEmail(e.target.value);
+                        setError("");
+                        setSuccessMessage("");
                       }}
                       autoComplete="email"
                       className="border border-gray-300 dark:border-gray-600 rounded-md bg-transparent dark:bg-transparent w-full text-sm focus:border-primary dark:focus:border-primary focus:ring-0"
@@ -230,13 +255,13 @@ function LoginPageContent() {
                     <div className="relative">
                       <Input
                         id="password"
-                        type={showPassword ? 'text' : 'password'}
+                        type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => {
-                          setPassword(e.target.value)
-                          setError('')
-                          setSuccessMessage('')
+                          setPassword(e.target.value);
+                          setError("");
+                          setSuccessMessage("");
                         }}
                         autoComplete="current-password"
                         className="border border-gray-300 dark:border-gray-600 rounded-md bg-transparent dark:bg-transparent w-full text-sm pr-10 focus:border-primary dark:focus:border-primary focus:ring-0"
@@ -248,7 +273,11 @@ function LoginPageContent() {
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400"
                         aria-label="Show/Hide password"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -256,12 +285,16 @@ function LoginPageContent() {
                   {successMessage && (
                     <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-start gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
-                      <p className="text-green-700 dark:text-green-300 text-xs">{successMessage}</p>
+                      <p className="text-green-700 dark:text-green-300 text-xs">
+                        {successMessage}
+                      </p>
                     </div>
                   )}
                   {error && (
                     <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                      <p className="text-red-700 dark:text-red-300 text-xs">{error}</p>
+                      <p className="text-red-700 dark:text-red-300 text-xs">
+                        {error}
+                      </p>
                     </div>
                   )}
 
@@ -270,14 +303,22 @@ function LoginPageContent() {
                       <Checkbox
                         id="remember"
                         checked={rememberMe}
-                        onCheckedChange={(checked) => setRememberMe(checked === true)}
+                        onCheckedChange={(checked) =>
+                          setRememberMe(checked === true)
+                        }
                         className="cursor-pointer"
                       />
-                      <Label htmlFor="remember" className="opacity-90 font-normal cursor-pointer mb-0">
+                      <Label
+                        htmlFor="remember"
+                        className="opacity-90 font-normal cursor-pointer mb-0"
+                      >
                         Remember this Device
                       </Label>
                     </div>
-                    <Link href="/forgot-password" className="text-primary text-sm font-medium">
+                    <Link
+                      href="/forgot-password"
+                      className="text-primary text-sm font-medium"
+                    >
                       Forgot Password ?
                     </Link>
                   </div>
@@ -292,14 +333,17 @@ function LoginPageContent() {
                         Signing in...
                       </>
                     ) : (
-                      'Sign in'
+                      "Sign in"
                     )}
                   </Button>
                 </form>
 
                 <div className="flex gap-2 text-base font-medium mt-6 items-center justify-center text-gray-600 dark:text-gray-400">
                   <p>New to NextDeal?</p>
-                  <Link href="/signup" className="text-primary text-sm font-medium">
+                  <Link
+                    href="/signup"
+                    className="text-primary text-sm font-medium"
+                  >
                     Create an account
                   </Link>
                 </div>
@@ -309,7 +353,7 @@ function LoginPageContent() {
         </div>
       </div>
     </>
-  )
+  );
 }
 
 export default function LoginPage() {
@@ -326,5 +370,5 @@ export default function LoginPage() {
     >
       <LoginPageContent />
     </Suspense>
-  )
+  );
 }

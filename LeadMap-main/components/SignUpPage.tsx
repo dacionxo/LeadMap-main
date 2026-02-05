@@ -1,63 +1,69 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { handleOAuthSignIn as handleOAuthSignInUtil } from '@/lib/auth/oauth'
-import { sendVerificationEmail } from '@/lib/auth/verification'
-import FullLogo from '@/components/auth/FullLogo'
-import LeftSidebarPart from '@/components/auth/LeftSidebarPart'
-import { Label } from '@/app/components/ui/label'
-import { Input } from '@/app/components/ui/input'
-import { Button } from '@/app/components/ui/button'
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import FullLogo from "@/components/auth/FullLogo";
+import LeftSidebarPart from "@/components/auth/LeftSidebarPart";
+import { handleOAuthSignIn as handleOAuthSignInUtil } from "@/lib/auth/oauth";
+import { sendVerificationEmail } from "@/lib/auth/verification";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 
 export default function SignUpPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [emailSent, setEmailSent] = useState(false)
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  const router = useRouter();
+  const supabase = createClientComponentClient();
 
   const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    setEmailSent(false)
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setEmailSent(false);
 
     try {
-      const checkResponse = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const checkResponse = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, name }),
-      })
-      const checkResult = await checkResponse.json()
+      });
+      const checkResult = await checkResponse.json();
 
       if (checkResult.exists && checkResult.verified) {
-        setError(checkResult.error || 'This email is already registered. Please log in instead.')
-        setLoading(false)
-        return
+        setError(
+          checkResult.error ||
+            "This email is already registered. Please log in instead."
+        );
+        setLoading(false);
+        return;
       }
 
       if (checkResult.exists && !checkResult.verified) {
-        const resendResponse = await fetch('/api/auth/resend-verification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const resendResponse = await fetch("/api/auth/resend-verification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
-        })
-        const resendResult = await resendResponse.json()
+        });
+        const resendResult = await resendResponse.json();
         if (resendResponse.ok) {
-          setEmailSent(true)
-          setError('')
+          setEmailSent(true);
+          setError("");
         } else {
-          setError(resendResult.error || 'Unable to resend verification email. Please try again later.')
+          setError(
+            resendResult.error ||
+              "Unable to resend verification email. Please try again later."
+          );
         }
-        setLoading(false)
-        return
+        setLoading(false);
+        return;
       }
 
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -67,119 +73,131 @@ export default function SignUpPage() {
           data: { name },
           emailRedirectTo: `${window.location.origin}/api/auth/callback`,
         },
-      })
+      });
 
       if (signUpError) {
-        const errorMessage = signUpError.message?.toLowerCase() || ''
-        const errorCode = signUpError.code || ''
+        const errorMessage = signUpError.message?.toLowerCase() || "";
+        const errorCode = signUpError.code || "";
         if (
-          errorMessage.includes('already registered') ||
-          errorMessage.includes('user already registered') ||
-          errorMessage.includes('already exists') ||
-          errorMessage.includes('already confirmed') ||
-          errorMessage.includes('email already confirmed') ||
-          errorMessage.includes('email address is already registered') ||
-          errorMessage.includes('user with this email already exists') ||
-          errorCode === 'user_already_registered' ||
-          errorCode === 'email_already_exists'
+          errorMessage.includes("already registered") ||
+          errorMessage.includes("user already registered") ||
+          errorMessage.includes("already exists") ||
+          errorMessage.includes("already confirmed") ||
+          errorMessage.includes("email already confirmed") ||
+          errorMessage.includes("email address is already registered") ||
+          errorMessage.includes("user with this email already exists") ||
+          errorCode === "user_already_registered" ||
+          errorCode === "email_already_exists"
         ) {
           throw new Error(
-            'An account with this email already exists. Please sign in instead or use a different email address.'
-          )
+            "An account with this email already exists. Please sign in instead or use a different email address."
+          );
         }
         if (signUpError.status === 422 || signUpError.status === 400) {
           if (
-            errorMessage.includes('email') &&
-            (errorMessage.includes('taken') || errorMessage.includes('exists'))
+            errorMessage.includes("email") &&
+            (errorMessage.includes("taken") || errorMessage.includes("exists"))
           ) {
             throw new Error(
-              'An account with this email already exists. Please sign in instead or use a different email address.'
-            )
+              "An account with this email already exists. Please sign in instead or use a different email address."
+            );
           }
         }
-        throw signUpError
+        throw signUpError;
       }
 
       if (data.user) {
         if (!data.user.email) {
-          throw new Error('User account created but email address is missing. Please contact support.')
+          throw new Error(
+            "User account created but email address is missing. Please contact support."
+          );
         }
         const emailResult = await sendVerificationEmail({
           userId: data.user.id,
           email: data.user.email,
           name,
-        })
+        });
         if (!emailResult.success) {
-          console.error('Failed to send verification email:', emailResult.error)
+          console.error(
+            "Failed to send verification email:",
+            emailResult.error
+          );
           setError(
-            `Account created, but we couldn't send the verification email. ${emailResult.error || 'Please try again later or contact support.'}`
-          )
+            `Account created, but we couldn't send the verification email. ${emailResult.error || "Please try again later or contact support."}`
+          );
         }
         if (data.user && !data.session) {
-          setEmailSent(true)
+          setEmailSent(true);
         } else if (data.session) {
-          const response = await fetch('/api/users/create-profile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/users/create-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               userId: data.user.id,
               email: data.user.email!,
               name,
             }),
-          })
-          const result = await response.json()
+          });
+          const result = await response.json();
           if (!response.ok) {
-            throw new Error(result.error || 'Failed to create user profile')
+            throw new Error(result.error || "Failed to create user profile");
           }
-          router.push('/dashboard/map')
+          router.push("/dashboard/map");
         }
       }
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'An error occurred. Please try again.'
+        err instanceof Error
+          ? err.message
+          : "An error occurred. Please try again.";
       if (
-        message.includes('rate limit') ||
-        message.includes('Request rate limit')
+        message.includes("rate limit") ||
+        message.includes("Request rate limit")
       ) {
-        setError('Too many requests. Please wait a moment and try again.')
+        setError("Too many requests. Please wait a moment and try again.");
       } else if (
-        message.includes('already registered') ||
-        message.includes('already exists')
+        message.includes("already registered") ||
+        message.includes("already exists")
       ) {
         setError(
-          message || 'An account with this email already exists. Please sign in instead.'
-        )
-      } else if (message.includes('Invalid email')) {
-        setError('Please enter a valid email address.')
-      } else if (message.includes('Password')) {
-        setError('Password must be at least 6 characters long.')
+          message ||
+            "An account with this email already exists. Please sign in instead."
+        );
+      } else if (message.includes("Invalid email")) {
+        setError("Please enter a valid email address.");
+      } else if (message.includes("Password")) {
+        setError("Password must be at least 6 characters long.");
       } else {
-        setError(message)
+        setError(message);
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleOAuthSignIn = async (provider: 'google' | 'azure') => {
-    if (typeof window === 'undefined') return
-    setLoading(true)
-    setError('')
+  const handleOAuthSignIn = async (provider: "google" | "azure") => {
+    if (typeof window === "undefined") return;
+    setLoading(true);
+    setError("");
     try {
-      const redirectUrl = `${window.location.origin}/api/auth/callback`
-      const result = await handleOAuthSignInUtil(supabase, provider, redirectUrl)
+      const redirectUrl = `${window.location.origin}/api/auth/callback`;
+      const result = await handleOAuthSignInUtil(
+        supabase,
+        provider,
+        redirectUrl
+      );
       if (!result.success) {
-        setError(result.error || 'OAuth sign-in failed')
+        setError(result.error || "OAuth sign-in failed");
       }
     } catch (err) {
-      console.error(`[OAuth] ${provider} sign-in failed:`, err)
+      console.error(`[OAuth] ${provider} sign-in failed:`, err);
       setError(
-        `Unable to sign in with ${provider === 'google' ? 'Google' : 'Microsoft'}. Please try again.`
-      )
+        `Unable to sign in with ${provider === "google" ? "Google" : "Microsoft"}. Please try again.`
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <>
@@ -206,7 +224,7 @@ export default function SignUpPage() {
                 <div className="flex justify-between gap-8 my-6">
                   <button
                     type="button"
-                    onClick={() => handleOAuthSignIn('google')}
+                    onClick={() => handleOAuthSignIn("google")}
                     disabled={loading}
                     className="px-4 py-2.5 border border-ld flex gap-2 items-center w-full rounded-md text-center justify-center text-ld text-primary-ld disabled:opacity-50"
                   >
@@ -220,7 +238,7 @@ export default function SignUpPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleOAuthSignIn('azure')}
+                    onClick={() => handleOAuthSignIn("azure")}
                     disabled={loading}
                     className="px-4 py-2.5 border border-ld flex gap-2 items-center w-full rounded-md text-center justify-center text-ld text-primary-ld disabled:opacity-50"
                   >
@@ -236,7 +254,9 @@ export default function SignUpPage() {
                 </div>
                 <div className="flex items-center justify-center gap-2">
                   <hr className="grow border-ld" />
-                  <p className="text-base text-ld font-medium">or sign up with</p>
+                  <p className="text-base text-ld font-medium">
+                    or sign up with
+                  </p>
                   <hr className="grow border-ld" />
                 </div>
 
@@ -247,19 +267,22 @@ export default function SignUpPage() {
                         Verification email sent!
                       </h2>
                       <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                        We&apos;ve sent a verification link to{' '}
-                        <strong className="text-gray-900 dark:text-white">{email}</strong>
+                        We&apos;ve sent a verification link to{" "}
+                        <strong className="text-gray-900 dark:text-white">
+                          {email}
+                        </strong>
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Check your inbox (and spam folder). Click the link to sign in.
+                        Check your inbox (and spam folder). Click the link to
+                        sign in.
                       </p>
                     </div>
                     <div className="text-center">
                       <button
                         type="button"
                         onClick={() => {
-                          setEmailSent(false)
-                          setError('')
+                          setEmailSent(false);
+                          setError("");
                         }}
                         className="text-sm text-primary hover:underline font-medium"
                       >
@@ -324,7 +347,7 @@ export default function SignUpPage() {
                       </div>
                     )}
                     <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Loading...' : 'Sign Up'}
+                      {loading ? "Loading..." : "Sign Up"}
                     </Button>
                   </form>
                 )}
@@ -344,5 +367,5 @@ export default function SignUpPage() {
         </div>
       </div>
     </>
-  )
+  );
 }

@@ -235,14 +235,34 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
               <Icon icon="tabler:menu-2" height={20} />
             </span>
 
-            {/* Desktop: sidebar toggle only (no AdminOS / logo) */}
-            <div className="xl:!block !hidden">
+            {/* Desktop: sidebar toggle + Search, Apps, Calendar, Campaigns, Unibox (left side) */}
+            <div className="xl:!flex !hidden items-center gap-0 relative">
               <span
                 onClick={toggleSidebar}
-                className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center cursor-pointer xl:flex hidden relative"
+                className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center cursor-pointer relative"
               >
                 <Icon icon="tabler:menu-2" height={20} />
               </span>
+              <Search />
+              <AppLinks />
+              <Link
+                href="/dashboard/crm/calendar"
+                className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center"
+              >
+                Calendar
+              </Link>
+              <Link
+                href="/dashboard/email/campaigns"
+                className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center"
+              >
+                Campaigns
+              </Link>
+              <Link
+                href="/dashboard/unibox"
+                className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center"
+              >
+                Unibox
+              </Link>
             </div>
 
             {/* Mobile Logo */}
@@ -258,30 +278,8 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
               />
             </div>
 
-            {/* Right: Search, Apps, Calendar, Campaigns, Unibox, then Theme, Notifications, Profile */}
+            {/* Right: Theme, Notifications, Profile */}
             <div className="hidden xl:flex flex-1 items-center justify-end gap-0">
-              <div className="flex gap-0 items-center mr-2">
-                <Search />
-                <AppLinks />
-                <Link
-                  href="/dashboard/crm/calendar"
-                  className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center"
-                >
-                  Calendar
-                </Link>
-                <Link
-                  href="/dashboard/email/campaigns"
-                  className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center"
-                >
-                  Campaigns
-                </Link>
-                <Link
-                  href="/dashboard/unibox"
-                  className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center"
-                >
-                  Unibox
-                </Link>
-              </div>
               <div className="flex gap-0 items-center">
                 {/* Theme Toggle */}
                 {theme === "light" ? (
