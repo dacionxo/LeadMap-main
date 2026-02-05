@@ -12,9 +12,12 @@ import {
   Download,
   History,
   Home,
+  Mail,
   Minus,
   MoreHorizontal,
   PieChart,
+  PlusCircle,
+  RefreshCw,
   Search,
   Settings2,
   Timer,
@@ -61,6 +64,14 @@ interface WidgetData {
     priority?: string;
     completed?: boolean;
   }>;
+  "campaign-performance"?: {
+    totalSent?: number;
+    sentChange?: string;
+    openRate?: string;
+    openChange?: string;
+    volume?: number[];
+    highlight?: number;
+  };
 }
 
 interface DashboardOverviewModernProps {
@@ -188,6 +199,38 @@ export default function DashboardOverviewModern({
     { id: "t4", title: "Weekly team sync", completed: false },
   ];
   const displayTasks = tasks.length > 0 ? tasks : defaultTasks;
+
+  const pendingTasksCount = displayTasks.filter(
+    (t) => !(t as { completed?: boolean }).completed
+  ).length;
+  const taskCompletionPercent = displayTasks.length
+    ? Math.min(
+        100,
+        Math.round(
+          ((displayTasks.length - pendingTasksCount) / displayTasks.length) * 100
+        )
+      )
+    : 0;
+
+  const campaignPerformance = data["campaign-performance"] ?? {};
+  const campaignMetrics = {
+    totalSent:
+      typeof campaignPerformance.totalSent === "number"
+        ? campaignPerformance.totalSent
+        : Number(campaignPerformance.totalSent) || 1245,
+    sentChange: campaignPerformance.sentChange ?? "+12%",
+    openRate: campaignPerformance.openRate ?? "68.4%",
+    openChange: campaignPerformance.openChange ?? "+5%",
+    volume: campaignPerformance.volume ?? [30, 25, 40, 20, 35, 10, 5],
+    highlight: campaignPerformance.highlight ?? 94,
+  };
+
+  const lastUpdatedLabel = lastUpdated
+    ? `Updated ${lastUpdated.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      })}`
+    : "UPDATED JUST NOW";
 
   const userName = profile?.name ?? "Alex Rivera";
   const activeListingsCount = activeListings;
@@ -539,110 +582,306 @@ export default function DashboardOverviewModern({
 
       {/* Recent Activity */}
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <History className="w-5 h-5 text-primary" />
-          Recent Activity
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-              Notifications
-            </h3>
-            <div className="space-y-4">
-              {displayNotifications.map((n, idx) => (
-                <div key={n.id} className="flex gap-3 items-start">
-                  <div
-                    className={`mt-0.5 h-2 w-2 rounded-full flex-shrink-0 ${
-                      idx === 0
-                        ? "bg-blue-500"
-                        : idx === 1
-                          ? "bg-green-500"
-                          : "bg-gray-300 dark:bg-gray-600"
-                    }`}
-                  />
-                  <div>
-                    <p className="text-sm text-gray-900 dark:text-white font-medium leading-none">
-                      {n.title}
-                    </p>
-                    {n.description && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {n.description}
-                      </p>
-                    )}
-                    {n.time && (
-                      <p className="text-[10px] text-gray-500 mt-1">{n.time}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
+        <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <History className="w-5 h-5 text-primary" />
+                Recent Activity
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Your high-level metrics and updates for today.
+              </p>
             </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col min-h-[240px] lg:min-h-0">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                Tasks
-              </h3>
+            <div className="flex items-center gap-3 flex-wrap justify-end">
               <Link
-                href="/dashboard/tasks"
-                className="text-xs text-primary font-medium hover:underline"
+                href="/dashboard/activity"
+                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
               >
-                + Add
+                View All
               </Link>
-            </div>
-            <div className="flex-1 overflow-y-auto dashboard-overview-scrollbar pr-2 space-y-3">
-              {displayTasks.map((t) => (
-                <label
-                  key={t.id}
-                  className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg cursor-pointer transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    defaultChecked={!!(t as { completed?: boolean }).completed}
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-offset-0"
-                  />
-                  <span
-                    className={
-                      (t as { completed?: boolean }).completed
-                        ? "text-sm text-gray-400 dark:text-gray-500 line-through"
-                        : "text-sm text-gray-900 dark:text-white"
-                    }
+              <div className="h-4 w-px bg-gray-300 dark:bg-gray-700" />
+              <div className="flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5">
+                <span className="text-[11px] text-gray-600 dark:text-gray-300 font-semibold mr-2 tracking-wide">
+                  {lastUpdatedLabel.toUpperCase()}
+                </span>
+                {onRefresh && (
+                  <button
+                    onClick={onRefresh}
+                    disabled={loading}
+                    className="text-gray-500 dark:text-gray-300 hover:text-primary transition-colors disabled:opacity-50"
+                    title="Refresh activity"
                   >
-                    {t.title}
-                  </span>
-                </label>
-              ))}
+                    <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                  </button>
+                )}
+              </div>
+              <button
+                className="p-2 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-300 transition-colors"
+                aria-label="Customize activity preferences"
+                title="Customize activity preferences"
+              >
+                <Settings2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                Email Activity
-              </h3>
-              <div className="flex items-center gap-1 text-xs text-green-600 font-medium bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
-                <ArrowUp className="w-3 h-3" /> 14%
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-gray-100 dark:divide-gray-800">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Notifications
+                </h3>
+                <button
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                  aria-label="Notification actions"
+                  title="Notification actions"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
               </div>
-            </div>
-            <div className="flex-1 flex items-end justify-between gap-1">
-              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                (day, i) => {
-                  const heights = [40, 65, 85, 55, 95, 25, 15];
+              <div className="space-y-0 relative">
+                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-700 z-0" />
+                {displayNotifications.map((n, idx) => {
+                  const accent =
+                    ["bg-blue-500", "bg-green-500", "bg-gray-300 dark:bg-gray-600", "bg-purple-400"][idx] ??
+                    "bg-blue-500";
                   return (
-                    <div
-                      key={day}
-                      className="w-full rounded-sm hover:opacity-80 transition-opacity relative group bg-primary/10 dark:bg-primary/20"
-                      style={{ height: heights[i] + "%" }}
-                    >
-                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        {day}
-                      </span>
+                    <div key={n.id ?? idx} className="relative pl-6 py-3 group">
+                      <div
+                        className={`absolute left-0 top-4 w-3.5 h-3.5 rounded-full ${accent} border-[3px] border-white dark:border-gray-900 shadow-sm`}
+                      />
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                            {n.title}
+                          </p>
+                          {n.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              {n.description}
+                            </p>
+                          )}
+                        </div>
+                        {n.time && (
+                          <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap ml-2">
+                            {n.time}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
-                }
-              )}
+                })}
+              </div>
+              <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+                <Link
+                  href="/dashboard/notifications"
+                  className="text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-1"
+                >
+                  View all notifications <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
-            <div className="mt-4 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>Sent: 245</span>
-              <span>Open: 68%</span>
+
+            <div className="p-6 bg-gray-50/60 dark:bg-gray-800/40">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Pending Tasks
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold px-2 py-0.5 rounded-full">
+                    {pendingTasksCount} Left
+                  </span>
+                  <Link
+                    href="/dashboard/tasks"
+                    className="text-gray-500 dark:text-gray-400 hover:text-primary transition"
+                    aria-label="Add new task"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+              <div className="mb-5">
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="text-gray-500 dark:text-gray-400 font-medium">
+                    Daily Goal
+                  </span>
+                  <span className="text-gray-900 dark:text-white font-bold">
+                    {taskCompletionPercent}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-primary h-1.5 rounded-full"
+                    style={{ width: `${taskCompletionPercent}%` }}
+                  />
+                </div>
+              </div>
+              <div className="space-y-3 dashboard-overview-scrollbar max-h-[260px] overflow-y-auto pr-1">
+                {displayTasks.map((t) => {
+                  const completed = !!(t as { completed?: boolean }).completed;
+                  const meta =
+                    (t as { due?: string; priority?: string }).due ||
+                    (t as { priority?: string }).priority;
+                  const isOverdue = meta?.toLowerCase() === "overdue";
+                  return (
+                    <label
+                      key={t.id}
+                      className={`flex items-start gap-3 group cursor-pointer p-2 -mx-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors ${
+                        completed ? "opacity-70" : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        defaultChecked={completed}
+                        className="form-checkbox h-4 w-4 text-primary rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:checked:bg-primary focus:ring-primary mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <span
+                          className={`text-sm font-medium block ${
+                            completed
+                              ? "text-gray-400 dark:text-gray-500 line-through"
+                              : "text-gray-900 dark:text-white group-hover:text-primary transition-colors"
+                          }`}
+                        >
+                          {t.title}
+                        </span>
+                        {meta ? (
+                          <span
+                            className={`text-xs ${
+                              isOverdue
+                                ? "text-red-500 font-semibold"
+                                : "text-gray-500 dark:text-gray-400"
+                            }`}
+                          >
+                            {isOverdue ? "Overdue" : meta}
+                          </span>
+                        ) : null}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900 dark:text-white">Active Campaigns</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Email performance summary</p>
+                    </div>
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                    aria-label="Campaign options"
+                    title="Campaign options"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Sent</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">
+                      {campaignMetrics.totalSent.toLocaleString()}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                        {campaignMetrics.sentChange}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Open Rate</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">
+                      {campaignMetrics.openRate}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                        {campaignMetrics.openChange}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="flex justify-between items-end mb-2 px-1">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    Activity Volume
+                  </span>
+                  <span className="text-xs text-primary bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full font-medium">
+                    Last 7 Days
+                  </span>
+                </div>
+                <div className="h-24 w-full bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent rounded-lg border border-blue-100 dark:border-blue-900/30 overflow-hidden relative">
+                  <svg
+                    className="absolute bottom-0 left-0 right-0 w-full h-full"
+                    preserveAspectRatio="none"
+                    viewBox="0 0 100 50"
+                  >
+                    <defs>
+                      <linearGradient id="recent-activity-gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M0,50 L0,30 C10,25 20,40 30,20 C40,5 50,30 60,15 C70,25 80,10 90,20 L100,10 L100,50 Z"
+                      fill="url(#recent-activity-gradient)"
+                      stroke="none"
+                    />
+                    <path
+                      d="M0,30 C10,25 20,40 30,20 C40,5 50,30 60,15 C70,25 80,10 90,20 L100,10"
+                      fill="none"
+                      stroke="#3b82f6"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                  <div className="absolute top-[20%] left-[60%] w-2.5 h-2.5 bg-primary rounded-full border-2 border-white dark:border-gray-800 shadow-md transform -translate-x-1/2 -translate-y-1/2 z-10" />
+                  <div className="absolute top-[5%] left-[60%] transform -translate-x-1/2 bg-gray-900 text-white text-xs py-0.5 px-2 rounded opacity-90 shadow-lg">
+                    {campaignMetrics.highlight}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 dark:bg-gray-800/60 border-t border-gray-100 dark:border-gray-800 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2 overflow-hidden">
+                <div className="h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-800 bg-gray-300 flex items-center justify-center text-xs text-white font-medium">
+                  JD
+                </div>
+                <div className="h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-800 bg-purple-400 flex items-center justify-center text-xs text-white font-medium">
+                  AK
+                </div>
+                <div className="h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-800 bg-blue-400 flex items-center justify-center text-xs text-white font-medium">
+                  MR
+                </div>
+              </div>
+              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">3 users active now</span>
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Link
+                href="/dashboard/map"
+                className="flex-1 sm:flex-none text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2"
+              >
+                Manage Listings
+              </Link>
+              <Link
+                href="/dashboard/engage"
+                className="flex-1 sm:flex-none text-sm font-medium bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 px-4 py-2 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+              >
+                Review All <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </div>
