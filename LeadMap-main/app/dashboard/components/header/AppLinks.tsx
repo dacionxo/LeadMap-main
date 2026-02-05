@@ -3,129 +3,123 @@
 import { Icon } from '@iconify/react'
 import Link from 'next/link'
 
-interface appsLinkType {
+interface AppTile {
   href: string
-  title: string
-  subtext: string
-  avatar: string
+  label: string
+  icon: string
+  bgClass: string
+  iconClass: string
 }
 
-const appsLink: appsLinkType[] = [
+const APP_TILES: AppTile[] = [
   {
     href: '/dashboard',
-    title: 'Dashboard',
-    subtext: 'Main dashboard',
-    avatar: '/images/svgs/icon-dd-cart.svg',
-  },
-  {
-    href: '/dashboard/map',
-    title: 'Map View',
-    subtext: 'Location tracking',
-    avatar: '/images/svgs/icon-dd-invoice.svg',
+    label: 'Dashboard',
+    icon: 'solar:widget-2-linear',
+    bgClass: 'bg-purple-100 dark:bg-purple-900/30',
+    iconClass: 'text-purple-600 dark:text-purple-400',
   },
   {
     href: '/dashboard/crm/calendar',
-    title: 'Calendar App',
-    subtext: 'Get dates',
-    avatar: '/images/svgs/icon-dd-date.svg',
-  },
-  {
-    href: '/dashboard/crm/deals',
-    title: 'Deals',
-    subtext: 'Pipeline & opportunities',
-    avatar: '/images/svgs/icon-dd-cart.svg',
+    label: 'Calendar',
+    icon: 'solar:calendar-linear',
+    bgClass: 'bg-green-100 dark:bg-green-900/30',
+    iconClass: 'text-green-600 dark:text-green-400',
   },
   {
     href: '/dashboard/unibox',
-    title: 'Unibox',
-    subtext: 'Get new emails',
-    avatar: '/images/svgs/icon-dd-message-box.svg',
+    label: 'Unibox',
+    icon: 'solar:letter-linear',
+    bgClass: 'bg-orange-100 dark:bg-orange-900/30',
+    iconClass: 'text-orange-600 dark:text-orange-400',
+  },
+  {
+    href: '/dashboard/map',
+    label: 'Map View',
+    icon: 'solar:map-point-linear',
+    bgClass: 'bg-red-100 dark:bg-red-900/30',
+    iconClass: 'text-red-600 dark:text-red-400',
+  },
+  {
+    href: '/dashboard/crm/deals',
+    label: 'Deals',
+    icon: 'solar:card-linear',
+    bgClass: 'bg-purple-100 dark:bg-purple-900/30',
+    iconClass: 'text-purple-600 dark:text-purple-400',
+  },
+  {
+    href: '/dashboard',
+    label: 'More',
+    icon: 'solar:add-circle-linear',
+    bgClass: 'bg-gray-100 dark:bg-gray-700/50',
+    iconClass: 'text-gray-600 dark:text-gray-400',
   },
 ]
 
-const AppLinks = () => {
+export default function AppLinks() {
   return (
     <div className="dropdown-wrapper group">
-      {/* Desktop trigger - matching exact structure of Chat/Calendar/Email */}
       <button
         type="button"
         className="text-sm text-link dark:text-darklink dark:hover:text-primary px-4 h-10 hover:text-primary flex items-center justify-center xl:flex hidden"
+        aria-label="Open apps menu"
+        aria-haspopup="true"
       >
         <span>Apps</span>
         <Icon icon="tabler:chevron-down" height={15} className="shrink-0 ml-1" />
       </button>
 
-      {/* Mobile Trigger */}
       <span className="xl:hidden text-link dark:text-darklink flex rounded-full px-[15px] pb-0.5 justify-center items-center cursor-pointer group-hover:text-primary">
         <Icon icon="tabler:apps" className="shrink-0" height={20} />
       </span>
 
-      {/* Desktop Dropdown - matching Tailwindadmin structure */}
-      <div className="sm:w-[900px] z-[101] w-screen dropdown top-[28px] xl:invisible xl:group-hover:visible visible absolute shadow-md bg-white dark:bg-dark rounded-sm dark:shadow-dark-md">
-        <div className="xl:relative xl:translate-none xl:h-auto xl:bg-transparent xl:z-[0] xl:w-[900px] hidden xl:block">
-          <div className="md:h-auto h-[calc(100vh_-_50px)] bg-white dark:bg-dark shadow-md dark:shadow-dark-md rounded-sm overflow-hidden">
-            <div className="grid grid-cols-12 w-full max-h-[600px] overflow-y-auto">
-              <div className="col-span-12 flex items-stretch px-5 py-5">
-                <div className="grid grid-cols-12 gap-3 w-full">
-                  {appsLink.map((links, index) => (
-                    <div
-                      className="col-span-12 xl:col-span-6 flex items-stretch"
-                      key={index}
-                    >
-                      <ul>
-                        <li>
-                          <Link
-                            href={links.href}
-                            className="flex gap-3 items-center hover:text-primary group relative"
-                          >
-                            <span className="bg-lightprimary h-10 w-10 flex justify-center items-center rounded-md">
-                              <Icon
-                                icon={
-                                  links.href.includes('chat') || links.href.includes('conversation') ? 'solar:dialog-linear' :
-                                  links.href.includes('calendar') ? 'solar:calendar-linear' :
-                                  links.href.includes('deals') ? 'solar:case-linear' :
-                                  links.href.includes('email') || links.href.includes('unibox') ? 'solar:letter-linear' :
-                                  links.href.includes('map') ? 'solar:map-point-linear' :
-                                  'solar:widget-2-linear'
-                                }
-                                className="h-5 w-5 text-primary"
-                              />
-                            </span>
-                            <div>
-                              <h6 className="font-semibold text-sm text-ld hover:text-primary mb-1">
-                                {links.title}
-                              </h6>
-                              <p className="text-xs text-link dark:text-darklink opacity-90 font-medium">
-                                {links.subtext}
-                              </p>
-                            </div>
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                  ))}
-                  <div className="col-span-12 md:col-span-12 border-t border-border dark:border-darkborder hidden xl:flex items-stretch pt-4 pr-4">
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center text-dark dark:text-darklink">
-                        <Icon icon="tabler:help" className="text-lg" />
-                        <Link
-                          href="/dashboard/help"
-                          className="text-sm font-semibold hover:text-primary ml-2 flex gap-2 items-center"
-                        >
-                          <Icon icon="tabler:help" width={20} />
-                          Frequently Asked Questions
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <div className="xl:invisible xl:group-hover:visible visible absolute top-[28px] right-0 xl:right-auto xl:left-0 z-[101] w-screen xl:w-auto xl:min-w-[320px] max-w-[400px] dropdown shadow-lg bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-700 overflow-hidden dark:shadow-dark-md">
+        <div className="xl:relative xl:translate-none xl:z-0 hidden xl:block">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+              Your Apps
+            </h2>
+            <Link
+              href="/dashboard"
+              className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors"
+            >
+              View All
+            </Link>
+          </div>
+
+          {/* App grid - 2 rows x 3 cols */}
+          <div className="grid grid-cols-3 gap-3 p-4">
+            {APP_TILES.map((app, index) => (
+              <Link
+                key={index}
+                href={app.href}
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gray-50/50 dark:bg-slate-800/30 hover:bg-gray-100 dark:hover:bg-slate-800/60 border border-transparent hover:border-gray-200 dark:hover:border-slate-600 transition-all duration-200 group/tile"
+              >
+                <span
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl ${app.bgClass} ${app.iconClass} group-hover/tile:scale-105 transition-transform`}
+                >
+                  <Icon icon={app.icon} className="h-6 w-6" />
+                </span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 text-center">
+                  {app.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-gray-100 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/50 px-4 py-3">
+            <Link
+              href="/dashboard/help"
+              className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors"
+            >
+              <Icon icon="solar:question-circle-linear" className="h-5 w-5 shrink-0" />
+              Frequently asked questions
+            </Link>
           </div>
         </div>
       </div>
     </div>
   )
 }
-
-export default AppLinks
