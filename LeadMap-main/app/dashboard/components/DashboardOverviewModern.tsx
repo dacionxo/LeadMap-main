@@ -5,9 +5,14 @@ import {
   AlertCircle,
   ArrowRight,
   ArrowUp,
+  Briefcase,
+  ChevronRight,
   CreditCard,
+  DollarSign,
+  Download,
   History,
   Home,
+  Minus,
   MoreHorizontal,
   PieChart,
   Search,
@@ -17,6 +22,7 @@ import {
   TrendingDown,
   TrendingUp,
   UserPlus,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -28,11 +34,19 @@ interface WidgetData {
   "pipeline-value"?: { value: string; change?: string; trend?: "up" | "down" | "neutral" };
   "conversion-rate"?: { value: string; change?: string; trend?: "up" | "down" | "neutral" };
   "pipeline-funnel"?: {
-    stages: { name: string; value: number; percentage: number }[];
+    stages: {
+      name: string;
+      value: number;
+      percentage: number;
+      dealValue?: string;
+      avgDaysInStage?: number;
+    }[];
   };
   "deal-stage-distribution"?: {
     stages: { name: string; value: number; percentage: number }[];
   };
+  "active-deals"?: { value: number; change?: string; trend?: "up" | "down" | "neutral" };
+  "avg-deal-size"?: { value: string; change?: string; trend?: "up" | "down" | "neutral" };
   "recent-activity"?: Array<{
     id: string;
     title: string;
@@ -80,22 +94,72 @@ export default function DashboardOverviewModern({
   const expiredTrend = data["expired-listings"]?.trend ?? "down";
 
   const pipelineValue = data["pipeline-value"]?.value ?? "$4.2M";
-  const pipelineChange = data["pipeline-value"]?.change ?? "+$340k vs last month";
-  const conversionRate = data["conversion-rate"]?.value ?? "24%";
+  const pipelineChange = data["pipeline-value"]?.change ?? "+12.5%";
+  const conversionRate = data["conversion-rate"]?.value ?? "67%";
+  const conversionChange = data["conversion-rate"]?.change ?? "+2.4%";
+  const activeDeals = data["active-deals"]?.value ?? 142;
+  const activeDealsChange = data["active-deals"]?.change ?? "0%";
+  const activeDealsTrend = data["active-deals"]?.trend ?? "neutral";
+  const avgDealSize = data["avg-deal-size"]?.value ?? "$32.5k";
+  const avgDealSizeChange = data["avg-deal-size"]?.change ?? "+5.1%";
 
-  const funnelStages = data["pipeline-funnel"]?.stages ?? [
-    { name: "Lead", value: 142, percentage: 100 },
-    { name: "Contact", value: 84, percentage: 59 },
-    { name: "Proposal", value: 45, percentage: 32 },
-    { name: "Negotiation", value: 12, percentage: 9 },
+  const dealFunnelStages = data["pipeline-funnel"]?.stages ?? [
+    { name: "New", value: 124, percentage: 100, avgDaysInStage: 1 },
+    { name: "Contacted", value: 86, percentage: 69, avgDaysInStage: 3 },
+    { name: "Qualified", value: 52, percentage: 42, avgDaysInStage: 5 },
+    { name: "Proposal", value: 28, percentage: 22, avgDaysInStage: 7 },
+    { name: "Negotiation", value: 15, percentage: 12, avgDaysInStage: 4 },
+    { name: "Closed", value: 9, percentage: 7, avgDaysInStage: 12 },
+  ];
+
+  const funnelBarWidths = ["100%", "90%", "80%", "70%", "60%", "50%"];
+  const funnelStageStyles = [
+    {
+      bar: "bg-blue-500/20 dark:bg-blue-500/10 border-blue-200 dark:border-blue-800 hover:bg-blue-500/30 dark:hover:bg-blue-500/20",
+      fill: "bg-blue-500/40 dark:bg-blue-500/30",
+      text: "text-blue-600 dark:text-blue-400",
+      legend: "bg-blue-500/40",
+    },
+    {
+      bar: "bg-indigo-500/20 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-500/30 dark:hover:bg-indigo-500/20",
+      fill: "bg-indigo-500/40 dark:bg-indigo-500/30",
+      text: "text-indigo-600 dark:text-indigo-400",
+      legend: "bg-indigo-500/40",
+    },
+    {
+      bar: "bg-purple-500/20 dark:bg-purple-500/10 border-purple-200 dark:border-purple-800 hover:bg-purple-500/30 dark:hover:bg-purple-500/20",
+      fill: "bg-purple-500/40 dark:bg-purple-500/30",
+      text: "text-purple-600 dark:text-purple-400",
+      legend: "bg-purple-500/40",
+    },
+    {
+      bar: "bg-amber-500/20 dark:bg-amber-500/10 border-amber-200 dark:border-amber-800 hover:bg-amber-500/30 dark:hover:bg-amber-500/20",
+      fill: "bg-amber-500/40 dark:bg-amber-500/30",
+      text: "text-amber-600 dark:text-amber-400",
+      legend: "bg-amber-500/40",
+    },
+    {
+      bar: "bg-orange-500/20 dark:bg-orange-500/10 border-orange-200 dark:border-orange-800 hover:bg-orange-500/30 dark:hover:bg-orange-500/20",
+      fill: "bg-orange-500/40 dark:bg-orange-500/30",
+      text: "text-orange-600 dark:text-orange-400",
+      legend: "bg-orange-500/40",
+    },
+    {
+      bar: "bg-emerald-500/20 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-500/30 dark:hover:bg-emerald-500/20",
+      fill: "bg-emerald-500/40 dark:bg-emerald-500/30",
+      text: "text-emerald-600 dark:text-emerald-400",
+      legend: "bg-emerald-500/40",
+    },
   ];
 
   const stageDist = data["deal-stage-distribution"]?.stages ?? [
-    { name: "New", value: 1, percentage: 65 },
-    { name: "Qual", value: 1, percentage: 80 },
-    { name: "Prop", value: 1, percentage: 45 },
-    { name: "Won", value: 1, percentage: 30 },
+    { name: "New", value: 245, percentage: 100 },
+    { name: "Contacted", value: 180, percentage: 73 },
+    { name: "Qualified", value: 98, percentage: 40 },
+    { name: "Proposal", value: 45, percentage: 18 },
+    { name: "Closed", value: 28, percentage: 11 },
   ];
+
 
   const notifications = (data["recent-activity"] ?? []) as Array<{
     id: string;
@@ -279,109 +343,195 @@ export default function DashboardOverviewModern({
         </div>
       </div>
 
-      {/* Deals Analytics */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <PieChart className="w-5 h-5 text-primary" />
-          Deals Analytics
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-3 flex flex-col gap-5">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex-1 flex flex-col justify-center">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1 font-medium">
-                Pipeline Value
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                {pipelineValue}
-              </div>
-              <div className="text-xs text-green-600 mt-2 font-medium flex items-center">
-                <ArrowUp className="w-3.5 h-3.5 mr-1" />
-                {pipelineChange}
-              </div>
+      {/* Deal Analytics - Sleek Single-Card */}
+      <div className="relative overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-100/60 dark:bg-blue-900/20 rounded-full blur-[80px] mix-blend-multiply pointer-events-none z-0" aria-hidden />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-100/60 dark:bg-indigo-900/20 rounded-full blur-[80px] mix-blend-multiply pointer-events-none z-0" aria-hidden />
+        <div className="relative z-10 w-full bg-white dark:bg-gray-800 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-white/50 dark:border-gray-700 p-6 md:p-10 flex flex-col gap-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Deal Analytics
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                Real-time pipeline performance and forecasts
+              </p>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex-1 flex flex-col justify-center">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1 font-medium">
-                Conversion Rate
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-full shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-wide uppercase">
+                  Live Update
+                </span>
               </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                {conversionRate}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 font-medium">
-                Top 15% of agents
-              </div>
-              <div className="w-full bg-gray-100 dark:bg-gray-700 h-1.5 mt-3 rounded-full overflow-hidden">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-500"
-                  style={{ width: conversionRate.replace("%", "") + "%" }}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="lg:col-span-5 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                Pipeline Funnel
-              </h3>
               <button
                 type="button"
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-500"
-                aria-label="More options"
+                className="w-10 h-10 flex items-center justify-center rounded-full border border-slate-200 dark:border-gray-600 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors bg-white dark:bg-gray-800 shadow-sm"
+                aria-label="Filter analytics"
               >
-                <MoreHorizontal className="w-5 h-5" />
+                <Settings2 className="w-5 h-5" />
               </button>
             </div>
-            <div className="space-y-4">
-              {funnelStages.map((stage, i) => (
-                <div
-                  key={stage.name}
-                  className="relative"
-                  style={{
-                    width: `${100 - i * 12}%`,
-                    marginLeft: i === 0 ? 0 : "auto",
-                    marginRight: i === 0 ? 0 : "auto",
-                  }}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <DealMetricCard
+              icon={DollarSign}
+              iconBg="bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
+              value={pipelineValue}
+              label="Pipeline Value"
+              change={pipelineChange}
+              trend="up"
+            />
+            <DealMetricCard
+              icon={Zap}
+              iconBg="bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400"
+              value={conversionRate}
+              label="Conversion Rate"
+              change={conversionChange}
+              trend="up"
+            />
+            <DealMetricCard
+              icon={Briefcase}
+              iconBg="bg-purple-50 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400"
+              value={String(activeDeals)}
+              label="Active Deals"
+              change={activeDealsChange}
+              trend={activeDealsTrend}
+            />
+            <DealMetricCard
+              icon={PieChart}
+              iconBg="bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400"
+              value={avgDealSize}
+              label="Avg Deal Size"
+              change={avgDealSizeChange}
+              trend="up"
+            />
+          </div>
+          <div className="py-4">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Pipeline Funnel
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Sales performance overview
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="flex items-center px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-gray-800 border border-slate-300 dark:border-gray-600 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <div className="flex justify-between text-xs mb-1 font-medium text-gray-500 dark:text-gray-400">
-                    <span>
-                      {stage.name} ({stage.value})
-                    </span>
-                  </div>
-                  <div className="w-full h-8 bg-indigo-50 dark:bg-gray-700/50 rounded-lg relative overflow-hidden">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </button>
+                <button
+                  type="button"
+                  className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  aria-label="More options"
+                >
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col items-center space-y-4 w-full">
+              {dealFunnelStages.map((stage, i) => {
+                const style = funnelStageStyles[i] || funnelStageStyles[0];
+                const barWidth = funnelBarWidths[i] || "100%";
+                const avgDays =
+                  "avgDaysInStage" in stage && typeof (stage as { avgDaysInStage?: number }).avgDaysInStage === "number"
+                    ? (stage as { avgDaysInStage: number }).avgDaysInStage
+                    : i + 1;
+                return (
+                  <div
+                    key={stage.name}
+                    className="w-full flex flex-col items-center group cursor-pointer"
+                  >
                     <div
-                      className="absolute top-0 left-0 h-full bg-primary/80 rounded-lg transition-all duration-500"
-                      style={{ width: "100%" }}
-                    />
+                      className="w-full flex justify-between items-end mb-1 px-4"
+                      style={{ maxWidth: barWidth }}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          {stage.name} ({stage.value})
+                        </span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                          Avg. {avgDays}d in stage
+                        </span>
+                      </div>
+                      <span
+                        className={`text-sm font-medium ${style.text} opacity-0 group-hover:opacity-100 transition-opacity`}
+                      >
+                        {stage.percentage}%
+                      </span>
+                    </div>
+                    <div
+                      className={`relative w-full h-14 rounded-xl glass-bar ${style.bar} transition-all duration-300`}
+                      style={{ width: barWidth }}
+                    >
+                      <div
+                        className={`absolute inset-y-0 left-0 ${style.fill} rounded-l-xl`}
+                        style={{ width: `${stage.percentage}%` }}
+                      />
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+            <div className="mt-8 flex flex-wrap justify-center gap-4 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-gray-800 pt-6">
+              {funnelStageStyles.map((s, i) => (
+                <div key={dealFunnelStages[i]?.name ?? i} className="flex items-center">
+                  <div
+                    className={`w-3 h-3 rounded-full ${s.legend} mr-2`}
+                    aria-hidden
+                  />
+                  {dealFunnelStages[i]?.name ?? "Stage"}
                 </div>
               ))}
             </div>
           </div>
-          <div className="lg:col-span-4 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
+          <div className="pt-6 border-t border-dashed border-slate-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-white uppercase tracking-wider">
                 Stage Distribution
               </h3>
-              <span className="text-xs text-gray-500 border border-gray-200 dark:border-gray-600 px-2 py-1 rounded-md">
-                This Week
-              </span>
+              <Link
+                href="/dashboard/engage"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                View Full Report
+              </Link>
             </div>
-            <div className="flex-1 flex items-end justify-between gap-2 px-2 pb-2">
-              {stageDist.map((s, i) => (
-                <div
-                  key={s.name}
-                  className="flex flex-col items-center gap-2 w-1/5"
-                >
-                  <div className="w-full bg-blue-100 dark:bg-blue-900/30 rounded-t-md relative h-32">
-                    <div
-                      className="absolute bottom-0 w-full bg-blue-500 rounded-t-md transition-all duration-500"
-                      style={{ height: Math.min(100, s.percentage || 30) + "%" }}
-                    />
+            <div className="w-full h-32 flex items-end justify-between gap-2 md:gap-4 px-2">
+              {stageDist.map((s, i) => {
+                const barColors = [
+                  "bg-blue-400 group-hover:bg-blue-500",
+                  "bg-blue-500 group-hover:bg-blue-600",
+                  "bg-indigo-500 group-hover:bg-indigo-600",
+                  "bg-indigo-600 group-hover:bg-indigo-700",
+                  "bg-purple-600 group-hover:bg-purple-700",
+                ];
+                return (
+                  <div key={s.name} className="flex-1 flex flex-col items-center group">
+                    <div className="w-full max-w-[60px] bg-blue-100 dark:bg-blue-900/30 rounded-t-sm relative h-full flex items-end group-hover:bg-blue-50 dark:group-hover:bg-blue-900/40 transition-colors">
+                      <div
+                        className={`w-full ${barColors[i] || barColors[0]} rounded-t-sm relative transition-colors`}
+                        style={{ height: `${Math.min(100, s.percentage || 30)}%` }}
+                      >
+                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          {s.value} Deals
+                        </span>
+                      </div>
+                    </div>
+                    <span className="mt-2 text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 text-center">
+                      {s.name}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
-                    {s.name}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -503,6 +653,57 @@ export default function DashboardOverviewModern({
           Last updated: {lastUpdated.toLocaleTimeString()}
         </p>
       )}
+    </div>
+  );
+}
+
+interface DealMetricCardProps {
+  icon: React.ElementType;
+  iconBg: string;
+  value: string;
+  label: string;
+  change: string;
+  trend: "up" | "down" | "neutral";
+}
+
+function DealMetricCard({
+  icon: Icon,
+  iconBg,
+  value,
+  label,
+  change,
+  trend,
+}: DealMetricCardProps) {
+  const isNeutral = trend === "neutral";
+  return (
+    <div className="group bg-white dark:bg-gray-700/40 p-5 rounded-2xl border border-slate-100 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex justify-between items-start mb-4">
+        <div
+          className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}
+        >
+          <Icon className="w-5 h-5" strokeWidth={2} />
+        </div>
+        <div
+          className={
+            isNeutral
+              ? "flex items-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-1 rounded-md text-[10px] font-bold border border-slate-100 dark:border-slate-600"
+              : "flex items-center text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 dark:border-emerald-500/20"
+          }
+        >
+          {isNeutral ? (
+            <Minus className="w-3.5 h-3.5 mr-0.5" />
+          ) : (
+            <TrendingUp className="w-3.5 h-3.5 mr-0.5" />
+          )}
+          {change}
+        </div>
+      </div>
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+        {value}
+      </h3>
+      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">
+        {label}
+      </p>
     </div>
   );
 }
