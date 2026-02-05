@@ -2,6 +2,7 @@
 
 import { useApp } from "@/app/providers";
 import {
+  AlertCircle,
   ArrowRight,
   ArrowUp,
   CreditCard,
@@ -259,24 +260,17 @@ export default function DashboardOverviewModern({
                 change={totalProspectsChange}
                 trend={totalProspectsTrend}
               />
-              <ProspectMetricCard
-                icon={Home}
+              <ActiveListingsCard
                 value={String(activeListings)}
-                label="Active Listings"
                 change={activeListingsChange}
                 trend="up"
               />
-              <ProspectMetricCard
-                icon={CreditCard}
+              <AvgPropertyValueCard
                 value={avgPropertyValue}
-                label="Avg Property Value"
                 change={avgValueChange}
-                trend="up"
               />
-              <ProspectMetricCard
-                icon={TimerOff}
+              <ExpiredListingsCard
                 value={String(expiredListings)}
-                label="Expired Listings"
                 change={expiredChange}
                 trend={expiredTrend}
               />
@@ -624,6 +618,345 @@ function SavedProspectsCard({ value, change, trend }: SavedProspectsCardProps) {
             className="inline-flex items-center text-[10px] font-medium text-primary hover:text-primary-hover dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
           >
             View All
+            <ArrowRight className="h-3 w-3 ml-0.5" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ActiveListingsCardProps {
+  value: string;
+  change: string;
+  trend: "up" | "down" | "neutral";
+}
+
+function ActiveListingsCard({ value, change, trend }: ActiveListingsCardProps) {
+  const isDown = trend === "down";
+  const listingCapacityPercent = 85;
+  return (
+    <div
+      className="group relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+      role="article"
+      aria-label={`Active Listings: ${value}`}
+    >
+      {/* Credit card in background - retained per user request */}
+      <div
+        className="absolute -right-3 -bottom-3 opacity-[0.025] group-hover:opacity-[0.04] transition-opacity duration-700 pointer-events-none"
+        aria-hidden
+      >
+        <CreditCard className="h-28 w-28 text-slate-900 dark:text-white" strokeWidth={1} />
+      </div>
+      <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-primary opacity-[0.03] dark:opacity-[0.05] rounded-full blur-3xl pointer-events-none" aria-hidden />
+      <div className="relative z-10 p-4">
+        <div className="flex justify-between items-start mb-1">
+          <div className="flex items-center gap-2">
+            <span className="bg-indigo-100 dark:bg-indigo-900/30 p-1.5 rounded-lg">
+              <Home className="h-4 w-4 text-primary" strokeWidth={2} />
+            </span>
+            <h2 className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Active Listings
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-0.5"
+            aria-label="More options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex items-end justify-between gap-2 py-1">
+          <div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+              {value}
+            </div>
+            <div className="flex items-center text-[10px] font-medium">
+              {isDown ? (
+                <span className="text-rose-500 dark:text-rose-400 flex items-center">
+                  <TrendingDown className="h-3 w-3 mr-0.5" />
+                  {change}
+                </span>
+              ) : (
+                <span className="text-emerald-500 dark:text-emerald-400 flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-0.5" />
+                  {change}
+                </span>
+              )}
+              <span className="ml-1 text-slate-500 dark:text-slate-400 font-normal">
+                vs last week
+              </span>
+            </div>
+          </div>
+          <div className="h-8 w-14 flex-shrink-0 text-blue-500">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+              <defs>
+                <linearGradient id="active-listings-gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <path
+                className="opacity-50 dark:opacity-30"
+                d="M0 35 L15 38 L30 25 L45 32 L60 20 L75 25 L90 10 L100 15 V50 H0 Z"
+                fill="url(#active-listings-gradient)"
+              />
+              <path
+                className="sparkline-draw"
+                d="M0 35 L15 38 L30 25 L45 32 L60 20 L75 25 L90 10 L100 15"
+                fill="none"
+                stroke="#3b82f6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
+            </svg>
+          </div>
+        </div>
+        <div className="mt-2">
+          <div className="flex justify-between text-[9px] mb-0.5 text-slate-500 dark:text-slate-400">
+            <span>Listing Capacity</span>
+            <span>{listingCapacityPercent}%</span>
+          </div>
+          <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
+            <div
+              className="bg-primary h-1 rounded-full transition-all duration-500"
+              style={{ width: `${listingCapacityPercent}%` }}
+            />
+          </div>
+        </div>
+        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/50 -mx-4 -mb-4 px-4 pb-3 rounded-b-2xl flex justify-between items-center">
+          <div className="flex -space-x-1.5 overflow-hidden">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="inline-block h-6 w-6 rounded-full ring-2 ring-slate-50 dark:ring-slate-900 bg-indigo-200 dark:bg-indigo-800"
+                aria-hidden
+              />
+            ))}
+            <div className="flex items-center justify-center h-6 w-6 rounded-full ring-2 ring-slate-50 dark:ring-slate-900 bg-gray-200 dark:bg-gray-600 text-[8px] font-medium text-gray-500 dark:text-gray-400">
+              +5
+            </div>
+          </div>
+          <Link
+            href="/dashboard/prospect-enrich"
+            className="inline-flex items-center text-[10px] font-medium text-primary hover:text-primary-hover dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+          >
+            Manage Listings
+            <ArrowRight className="h-3 w-3 ml-0.5" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface AvgPropertyValueCardProps {
+  value: string;
+  change?: string;
+}
+
+function AvgPropertyValueCard({ value }: AvgPropertyValueCardProps) {
+  const avgDaysOnMarket = 12;
+  return (
+    <div
+      className="group relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+      role="article"
+      aria-label={`Avg Property Value: ${value}`}
+    >
+      {/* Credit card icon in background - retained per user request */}
+      <div
+        className="absolute -right-3 -bottom-3 opacity-[0.025] group-hover:opacity-[0.04] transition-opacity duration-700 pointer-events-none"
+        aria-hidden
+      >
+        <CreditCard className="h-28 w-28 text-slate-900 dark:text-white" strokeWidth={1} />
+      </div>
+      <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-primary opacity-[0.03] dark:opacity-[0.05] rounded-full blur-3xl pointer-events-none" aria-hidden />
+      <div className="relative z-10 p-4">
+        <div className="flex justify-between items-start mb-1">
+          <div className="flex items-center gap-2">
+            <span className="bg-indigo-100 dark:bg-indigo-900/30 p-1.5 rounded-lg">
+              <Home className="h-4 w-4 text-primary" strokeWidth={2} />
+            </span>
+            <h2 className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Average Listing Price
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-0.5"
+            aria-label="More options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex items-end justify-between gap-2 py-1">
+          <div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+              {value}
+            </div>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50">
+              Avg. Days on Market: {avgDaysOnMarket}
+            </span>
+          </div>
+          <div className="h-10 w-14 flex items-end justify-between gap-0.5 flex-shrink-0 pb-0.5">
+            <div className="relative w-1/3 h-full flex items-end group/bar">
+              <div className="w-full bg-indigo-300 dark:bg-indigo-700/60 rounded-t-sm h-[60%] transition-all duration-300 hover:bg-indigo-400 dark:hover:bg-indigo-600" />
+            </div>
+            <div className="relative w-1/3 h-full flex items-end group/bar">
+              <div className="w-full bg-primary dark:bg-primary-hover rounded-t-sm h-full shadow-sm transition-all duration-300 hover:opacity-90" />
+            </div>
+            <div className="relative w-1/3 h-full flex items-end group/bar">
+              <div className="w-full bg-indigo-400 dark:bg-indigo-600 rounded-t-sm h-[80%] transition-all duration-300 hover:bg-indigo-500 dark:hover:bg-indigo-500" />
+            </div>
+          </div>
+        </div>
+        {/* Footer - same as Saved Prospects card */}
+        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/50 -mx-4 -mb-4 px-4 pb-3 rounded-b-2xl flex justify-between items-center">
+          <div className="flex -space-x-1.5 overflow-hidden">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="inline-block h-6 w-6 rounded-full ring-2 ring-slate-50 dark:ring-slate-900 bg-indigo-200 dark:bg-indigo-800"
+                aria-hidden
+              />
+            ))}
+            <div className="flex items-center justify-center h-6 w-6 rounded-full ring-2 ring-slate-50 dark:ring-slate-900 bg-gray-200 dark:bg-gray-600 text-[8px] font-medium text-gray-500 dark:text-gray-400">
+              +5
+            </div>
+          </div>
+          <Link
+            href="/dashboard/prospect-enrich"
+            className="inline-flex items-center text-[10px] font-medium text-primary hover:text-primary-hover dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+          >
+            View Listings
+            <ArrowRight className="h-3 w-3 ml-0.5" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ExpiredListingsCardProps {
+  value: string;
+  change: string;
+  trend: "up" | "down" | "neutral";
+}
+
+function ExpiredListingsCard({ value, change, trend }: ExpiredListingsCardProps) {
+  const isDown = trend === "down";
+  const relistRatePercent = 45;
+  return (
+    <div
+      className="group relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+      role="article"
+      aria-label={`Expired Listings: ${value}`}
+    >
+      {/* Credit card in background - retained per user request */}
+      <div
+        className="absolute -right-3 -bottom-3 opacity-[0.025] group-hover:opacity-[0.04] transition-opacity duration-700 pointer-events-none"
+        aria-hidden
+      >
+        <CreditCard className="h-28 w-28 text-slate-900 dark:text-white" strokeWidth={1} />
+      </div>
+      <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-rose-500 opacity-[0.03] dark:opacity-[0.05] rounded-full blur-3xl pointer-events-none" aria-hidden />
+      <div className="relative z-10 p-4">
+        <div className="flex justify-between items-start mb-1">
+          <div className="flex items-center gap-2">
+            <span className="bg-rose-100 dark:bg-rose-900/30 p-1.5 rounded-lg">
+              <AlertCircle className="h-4 w-4 text-rose-500" strokeWidth={2} />
+            </span>
+            <h2 className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Expired Listings
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-0.5"
+            aria-label="More options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex items-end justify-between gap-2 py-1">
+          <div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+              {value}
+            </div>
+            <div className="flex items-center text-[10px] font-medium">
+              {isDown ? (
+                <span className="text-emerald-500 dark:text-emerald-400 flex items-center">
+                  <TrendingDown className="h-3 w-3 mr-0.5" />
+                  {change}
+                </span>
+              ) : (
+                <span className="text-emerald-500 dark:text-emerald-400 flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-0.5" />
+                  {change}
+                </span>
+              )}
+              <span className="ml-1 text-slate-500 dark:text-slate-400 font-normal">
+                vs last month
+              </span>
+            </div>
+          </div>
+          <div className="h-8 w-14 flex-shrink-0">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+              <defs>
+                <linearGradient id="expired-listings-gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                  <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#f43f5e" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <path
+                className="opacity-50 dark:opacity-30"
+                d="M0 25 L15 30 L30 15 L45 20 L60 10 L75 18 L90 5 L100 12 V50 H0 Z"
+                fill="url(#expired-listings-gradient)"
+              />
+              <path
+                className="sparkline-draw"
+                d="M0 25 L15 30 L30 15 L45 20 L60 10 L75 18 L90 5 L100 12"
+                fill="none"
+                stroke="#f43f5e"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
+            </svg>
+          </div>
+        </div>
+        <div className="mt-2">
+          <div className="flex justify-between text-[9px] mb-0.5 text-slate-500 dark:text-slate-400">
+            <span>Re-list Rate</span>
+            <span>{relistRatePercent}%</span>
+          </div>
+          <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
+            <div
+              className="bg-rose-500 h-1 rounded-full transition-all duration-500"
+              style={{ width: `${relistRatePercent}%` }}
+            />
+          </div>
+        </div>
+        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/50 -mx-4 -mb-4 px-4 pb-3 rounded-b-2xl flex justify-between items-center">
+          <div className="flex -space-x-1.5 overflow-hidden">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="inline-block h-6 w-6 rounded-full ring-2 ring-slate-50 dark:ring-slate-900 bg-rose-200 dark:bg-rose-800"
+                aria-hidden
+              />
+            ))}
+            <div className="flex items-center justify-center h-6 w-6 rounded-full ring-2 ring-slate-50 dark:ring-slate-900 bg-gray-200 dark:bg-gray-600 text-[8px] font-medium text-gray-500 dark:text-gray-400">
+              +2
+            </div>
+          </div>
+          <Link
+            href="/dashboard/prospect-enrich"
+            className="inline-flex items-center text-[10px] font-medium text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
+          >
+            Review All
             <ArrowRight className="h-3 w-3 ml-0.5" />
           </Link>
         </div>
