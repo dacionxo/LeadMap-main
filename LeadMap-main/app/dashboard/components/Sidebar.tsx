@@ -31,7 +31,8 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "PROSPECT & ENRICH",
+    // Match visual label from design while keeping routing intact
+    title: "Prospect & Enrich",
     items: [
       {
         label: "All Prospects",
@@ -71,7 +72,7 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "CUSTOMER RELATIONSHIP MANAGEMENT",
+    title: "Customer Relationship",
     items: [
       {
         label: "Lists",
@@ -91,7 +92,7 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "EMAIL MARKETING",
+    title: "Email Marketing",
     items: [
       {
         label: "Unibox",
@@ -204,9 +205,11 @@ export default function Sidebar() {
           : "w-[75px] xl:hover:w-[270px] overflow-hidden xl:hover:overflow-visible"
       }`}
     >
-      {/* Brand / collapse */}
+      {/* Brand / collapse - styled to match NextDeal design */}
       <div
-        className={`flex min-h-[70px] items-center brand-logo overflow-hidden ${isOpen ? "px-6" : "px-5 xl:group-hover:px-6"}`}
+        className={`flex min-h-[80px] items-center brand-logo overflow-hidden ${
+          isOpen ? "px-6" : "px-5 xl:group-hover:px-6"
+        }`}
       >
         {isOpen ? (
           <div className="flex w-full items-center gap-3">
@@ -214,10 +217,10 @@ export default function Sidebar() {
               href="/dashboard"
               className="group flex items-center gap-3 cursor-pointer"
             >
-              <div className="relative w-9 h-9 flex items-center justify-center bg-primary rounded-xl text-white shadow-md shadow-blue-200/70 dark:shadow-none">
+              <div className="relative w-9 h-9 flex items-center justify-center bg-primary rounded-xl text-white shadow-lg shadow-blue-200/80 dark:shadow-none">
                 <Icon icon="solar:home-2-linear" className="w-5 h-5" />
               </div>
-              <span className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight">
+              <span className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight font-nav-display">
                 Next<span className="text-primary">Deal</span>
               </span>
             </Link>
@@ -239,7 +242,7 @@ export default function Sidebar() {
       {/* Navigation */}
       <SimpleBar className="h-[calc(100vh_-_180px)] sidebar-scroll px-0">
         <nav
-          className={`sidebar-nav flex-1 pb-4 space-y-6 ${
+          className={`sidebar-nav flex-1 pb-4 ${
             isOpen ? "px-4" : "px-2 xl:group-hover:px-4"
           }`}
         >
@@ -248,12 +251,19 @@ export default function Sidebar() {
             const hasTitle = !!section.title;
             return (
               <div key={sectionIdx} className="mb-1.5">
+                {sectionIdx > 0 && hasTitle && (
+                  <div
+                    className={`h-px bg-slate-100 dark:bg-slate-800 ${
+                      isOpen ? "mx-3 mb-2" : "mx-2 mb-2 xl:group-hover:mx-3"
+                    }`}
+                  />
+                )}
                 {hasTitle && (
                   <button
                     type="button"
                     onClick={() => hasTitle && toggleSection(sectionIdx)}
                     className={`caption w-full text-left mb-1 focus:outline-none focus:ring-0 group ${
-                      sectionIdx === 0 ? "mt-0" : "mt-6"
+                      sectionIdx === 0 ? "mt-0" : "mt-4"
                     }`}
                   >
                     <h5 className="leading-[26px] flex items-center justify-between gap-2">
@@ -268,7 +278,11 @@ export default function Sidebar() {
                                 ? "solar:alt-arrow-up-linear"
                                 : "solar:alt-arrow-down-linear"
                             }
-                            className="flex-shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors"
+                            className={`flex-shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors ${
+                              sectionIdx === 0
+                                ? ""
+                                : "opacity-0 group-hover:opacity-100"
+                            }`}
                             height={14}
                             width={14}
                           />
@@ -316,13 +330,17 @@ export default function Sidebar() {
                             onClick={handleClick}
                             className={`group/item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start truncate cursor-pointer leading-normal transition-all duration-200 ${
                               active
-                                ? "bg-primary text-white shadow-[0_4px_6px_-1px_rgba(59,130,246,0.2),0_2px_4px_-1px_rgba(59,130,246,0.1)] font-semibold"
+                                ? "bg-primary text-white shadow-[0_4px_6px_-1px_rgba(93,135,255,0.2),0_2px_4px_-1px_rgba(93,135,255,0.12)] font-semibold"
                                 : "text-slate-700 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium"
                             }`}
                           >
                             <Icon
                               icon={item.icon}
-                              className="flex-shrink-0"
+                              className={`flex-shrink-0 ${
+                                active
+                                  ? "text-white"
+                                  : "text-slate-400 dark:text-slate-500 group-hover/item:text-primary"
+                              }`}
                               height={21}
                               width={21}
                             />
