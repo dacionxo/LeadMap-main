@@ -387,10 +387,9 @@ export default function DashboardOverviewModern({
       </div>
 
       {/* Deal Analytics - Sleek Single-Card */}
-      <div className="relative overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-100/60 dark:bg-blue-900/20 rounded-full blur-[80px] mix-blend-multiply pointer-events-none z-0" aria-hidden />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-100/60 dark:bg-indigo-900/20 rounded-full blur-[80px] mix-blend-multiply pointer-events-none z-0" aria-hidden />
-        <div className="relative z-10 w-full bg-white dark:bg-gray-800 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-white/50 dark:border-gray-700 p-6 md:p-10 flex flex-col gap-8">
+      <div className="dashboard-welcome-card relative overflow-hidden rounded-[2rem] border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] p-6 md:p-10 transition-all duration-500">
+        <div className="organic-wave" aria-hidden="true" />
+        <div className="relative z-10 flex flex-col gap-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -582,8 +581,10 @@ export default function DashboardOverviewModern({
 
       {/* Recent Activity */}
       <div className="space-y-4">
-        <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="dashboard-welcome-card relative overflow-hidden rounded-[2rem] border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] transition-all duration-500">
+          <div className="organic-wave" aria-hidden="true" />
+          <div className="relative z-10">
+            <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <History className="w-5 h-5 text-primary" />
@@ -883,6 +884,7 @@ export default function DashboardOverviewModern({
                 Review All <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
+          </div>
           </div>
         </div>
       </div>
