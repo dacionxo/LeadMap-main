@@ -4,30 +4,19 @@ import { useApp } from "@/app/providers";
 import {
   ArrowRight,
   ArrowUp,
-  Bookmark,
-  FileText,
+  DollarSign,
   History,
   Home,
+  Minus,
   MoreHorizontal,
   PieChart,
-  Search,
-  Timer,
+  Settings,
+  TimerOff,
   TrendingDown,
   TrendingUp,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
-
-const sparklines = {
-  up: "M0,35 Q10,32 20,25 T40,28 T60,20 T80,25 T100,10 T120,15",
-  upArea: "M0,40 L0,35 Q10,32 20,25 T40,28 T60,20 T80,25 T100,10 T120,15 L120,40 Z",
-  upMid: "M0,30 Q15,30 30,25 T60,20 T90,25 T120,15",
-  upMidArea:
-    "M0,40 L0,30 Q15,30 30,25 T60,20 T90,25 T120,15 L120,40 Z",
-  downThenUp: "M0,25 Q20,35 40,25 T80,20 T120,5",
-  downThenUpArea: "M0,40 L0,25 Q20,35 40,25 T80,20 T120,5 L120,40 Z",
-  down: "M0,10 Q30,15 60,25 T120,35",
-  downArea: "M0,40 L0,10 Q30,15 60,25 T120,35 L120,40 Z",
-};
 
 interface WidgetData {
   "total-prospects"?: { value: number; change?: string; trend?: "up" | "down" | "neutral" };
@@ -84,7 +73,9 @@ export default function DashboardOverviewModern({
   const totalProspectsTrend = data["total-prospects"]?.trend ?? "up";
   const totalProspectsChange = data["total-prospects"]?.change ?? "+12%";
   const activeListingsChange = data["active-listings"]?.change ?? "+4%";
+  const activeListingsTrend = data["active-listings"]?.trend ?? "up";
   const avgValueChange = data["avg-property-value"]?.change ?? "+2.1%";
+  const avgValueTrend = data["avg-property-value"]?.trend ?? "up";
   const expiredChange = data["expired-listings"]?.change ?? "-18%";
   const expiredTrend = data["expired-listings"]?.trend ?? "down";
 
@@ -137,6 +128,7 @@ export default function DashboardOverviewModern({
   const userName = profile?.name ?? "Alex Rivera";
   const activeListingsCount = activeListings;
   const prospectInteractions = totalProspects;
+  const subheadingText = `Here's what's happening with your projects today. You have ${activeListingsCount} Active Listings, ${prospectInteractions} prospect interactions, and ${avgPropertyValue} in Average Deal Value.`;
 
   if (loading) {
     return (
@@ -174,20 +166,17 @@ export default function DashboardOverviewModern({
               </span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 font-normal leading-relaxed">
-              Here&apos;s what&apos;s happening with your projects today. You
-              have{" "}
-              <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
-                {activeListingsCount} Active Listings
+              <span
+                className="subheading-typing inline-block"
+                style={
+                  {
+                    "--subheading-chars": `${subheadingText.length}ch`,
+                    "--subheading-steps": String(subheadingText.length),
+                  } as React.CSSProperties
+                }
+              >
+                {subheadingText}
               </span>
-              ,{" "}
-              <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
-                {prospectInteractions} prospect interactions
-              </span>
-              , and{" "}
-              <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
-                {avgPropertyValue} in Average Deal Value
-              </span>
-              .
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
@@ -230,65 +219,63 @@ export default function DashboardOverviewModern({
         </div>
       )}
 
-      {/* Prospecting Overview */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Search className="w-5 h-5 text-primary" />
-            Prospecting Overview
-          </h2>
-          <Link
-            href="/dashboard/prospect-enrich"
-            className="text-sm text-primary font-medium hover:underline"
-          >
-            View All
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-          <ProspectCard
-            icon={<Bookmark className="w-5 h-5" />}
-            iconBg="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-            value={totalProspects.toLocaleString()}
-            label="Saved Prospects"
-            change={totalProspectsChange}
-            trend={totalProspectsTrend}
-            sparklineColor="text-blue-500"
-            path={sparklines.up}
-            areaPath={sparklines.upArea}
-          />
-          <ProspectCard
-            icon={<Home className="w-5 h-5" />}
-            iconBg="bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
-            value={String(activeListings)}
-            label="Active Listings"
-            change={activeListingsChange}
-            trend="up"
-            sparklineColor="text-purple-500"
-            path={sparklines.upMid}
-            areaPath={sparklines.upMidArea}
-          />
-          <ProspectCard
-            icon={<FileText className="w-5 h-5" />}
-            iconBg="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400"
-            value={avgPropertyValue}
-            label="Avg Property Value"
-            change={avgValueChange}
-            trend="up"
-            sparklineColor="text-green-500"
-            path={sparklines.downThenUp}
-            areaPath={sparklines.downThenUpArea}
-          />
-          <ProspectCard
-            icon={<Timer className="w-5 h-5" />}
-            iconBg="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-            value={String(expiredListings)}
-            label="Expired Listings"
-            change={expiredChange}
-            trend={expiredTrend}
-            sparklineColor="text-red-500"
-            path={sparklines.down}
-            areaPath={sparklines.downArea}
-          />
+      {/* Prospecting Overview - Bento style */}
+      <div className="prospecting-bento relative overflow-hidden bento-gradient border border-blue-50/50 dark:border-slate-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] p-8 sm:p-12 transition-all duration-500">
+        <div className="organic-wave" aria-hidden="true" />
+        <div className="relative z-10 flex flex-col gap-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            <div>
+              <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Prospecting Overview
+              </h2>
+              <p className="mt-3 text-lg text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                Your high-level pipeline metrics for today.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
+                {lastUpdated ? `Updated ${formatLastUpdated(lastUpdated)}` : "Updated Just Now"}
+              </span>
+              <button
+                type="button"
+                onClick={() => onRefresh?.()}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary transition-all shadow-sm hover:shadow-md active:scale-95"
+                aria-label="Refresh metrics"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <BentoProspectCard
+              icon={UserPlus}
+              value={totalProspects.toLocaleString()}
+              label="Saved Prospects"
+              change={totalProspectsChange}
+              trend={totalProspectsTrend}
+            />
+            <BentoProspectCard
+              icon={Home}
+              value={String(activeListings)}
+              label="Active Listings"
+              change={activeListingsChange}
+              trend={activeListingsTrend}
+            />
+            <BentoProspectCard
+              icon={DollarSign}
+              value={avgPropertyValue}
+              label="Avg Property Value"
+              change={avgValueChange}
+              trend={avgValueTrend}
+            />
+            <BentoProspectCard
+              icon={TimerOff}
+              value={String(expiredListings)}
+              label="Expired Listings"
+              change={expiredChange}
+              trend={expiredTrend}
+            />
+          </div>
         </div>
       </div>
 
@@ -520,74 +507,75 @@ export default function DashboardOverviewModern({
   );
 }
 
-function ProspectCard({
-  icon,
-  iconBg,
+function formatLastUpdated(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "Just Now";
+  if (diffMins < 60) return `${diffMins} min ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  return date.toLocaleTimeString();
+}
+
+function BentoProspectCard({
+  icon: Icon,
   value,
   label,
   change,
   trend,
-  sparklineColor,
-  path,
-  areaPath,
 }: {
-  icon: React.ReactNode;
-  iconBg: string;
+  icon: React.ComponentType<{ className?: string }>;
   value: string;
   label: string;
   change: string;
   trend: "up" | "down" | "neutral";
-  sparklineColor: string;
-  path: string;
-  areaPath: string;
 }) {
+  const isDown = trend === "down";
+  const isNeutral = trend === "neutral";
+  const badgeClass = isDown
+    ? "text-rose-500 bg-rose-100/60 dark:bg-rose-900/20"
+    : isNeutral
+      ? "text-slate-500 bg-slate-100/60 dark:bg-slate-700/30"
+      : "text-emerald-600 bg-emerald-100/60 dark:bg-emerald-900/20";
   return (
-    <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
-        <div
-          className={`p-2.5 rounded-xl ${iconBg}`}
-        >
-          {icon}
+    <div
+      className="group relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+      role="article"
+      aria-label={`${label}: ${value}`}
+    >
+      <div
+        className="absolute -right-6 -bottom-6 opacity-[0.025] group-hover:opacity-[0.04] transition-opacity duration-700 pointer-events-none"
+        aria-hidden
+      >
+        <Icon className="w-32 h-32 text-slate-900 dark:text-white" />
+      </div>
+      <div className="relative z-10 flex flex-col justify-between h-full min-h-[160px]">
+        <Icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400 font-bold" />
+        <div className="mt-4">
+          <div className="pb-3 mb-2 border-b border-slate-200/50 dark:border-slate-700/50">
+            <div className="flex items-center mb-1">
+              <span
+                className={`inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider ${badgeClass}`}
+              >
+                {isDown ? (
+                  <TrendingDown className="w-3 h-3 mr-1 font-bold" />
+                ) : isNeutral ? (
+                  <Minus className="w-3 h-3 mr-1 font-bold" />
+                ) : (
+                  <TrendingUp className="w-3 h-3 mr-1 font-bold" />
+                )}
+                {change}
+              </span>
+            </div>
+            <h3 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
+              {value}
+            </h3>
+          </div>
+          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            {label}
+          </p>
         </div>
-        <span
-          className={`flex items-center text-xs font-semibold px-2 py-1 rounded-full ${
-            trend === "down"
-              ? "text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400"
-              : "text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400"
-          }`}
-        >
-          {trend === "down" ? (
-            <TrendingDown className="w-3.5 h-3.5 mr-0.5" />
-          ) : (
-            <TrendingUp className="w-3.5 h-3.5 mr-0.5" />
-          )}{" "}
-          {change}
-        </span>
-      </div>
-      <div className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">
-        {value}
-      </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{label}</p>
-      <div className="h-10 w-full overflow-hidden">
-        <svg
-          className={`w-full h-full sparkline ${sparklineColor}`}
-          preserveAspectRatio="none"
-          viewBox="0 0 120 40"
-        >
-          <path
-            d={path}
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeWidth="2"
-          />
-          <path
-            d={areaPath}
-            fill="currentColor"
-            fillOpacity="0.1"
-            stroke="none"
-          />
-        </svg>
       </div>
     </div>
   );
