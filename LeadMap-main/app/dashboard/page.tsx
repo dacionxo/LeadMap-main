@@ -1,25 +1,27 @@
-import { redirect } from 'next/navigation'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import DashboardLayout from './components/DashboardLayout'
-import DashboardOverviewAdminOS from './components/DashboardOverviewAdminOS'
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import DashboardClient from "./components/DashboardClient";
+import DashboardLayout from "./components/DashboardLayout";
 
 // Force dynamic rendering to prevent static generation issues with cookies
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies()
-  const supabase = createServerComponentClient({ cookies: () => cookieStore })
+  const cookieStore = await cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/')
+    redirect("/");
   }
 
   return (
     <DashboardLayout>
-      <DashboardOverviewAdminOS />
+      <DashboardClient />
     </DashboardLayout>
-  )
+  );
 }
