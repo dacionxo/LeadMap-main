@@ -4,17 +4,18 @@ import { useApp } from "@/app/providers";
 import {
   ArrowRight,
   ArrowUp,
+  CreditCard,
   History,
   Home,
   MoreHorizontal,
   PieChart,
   Search,
-  SlidersHorizontal,
+  Settings2,
   Timer,
+  TimerOff,
   TrendingDown,
   TrendingUp,
   UserPlus,
-  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -156,7 +157,6 @@ export default function DashboardOverviewModern({
                   {
                     "--welcome-chars": `${"Welcome Back, ".length + userName.length}ch`,
                     "--welcome-steps": String("Welcome Back, ".length + userName.length),
-                    "--welcome-duration": "6s",
                   } as React.CSSProperties
                 }
               >
@@ -164,34 +164,20 @@ export default function DashboardOverviewModern({
               </span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 font-normal leading-relaxed">
-              <span
-                className="welcome-typing-sub"
-                style={
-                  (() => {
-                    const subText = `Here's what's happening with your projects today. You have ${activeListingsCount} Active Listings, ${prospectInteractions} prospect interactions, and ${avgPropertyValue} in Average Deal Value.`;
-                    return {
-                      "--welcome-sub-chars": `${subText.length}ch`,
-                      "--welcome-sub-steps": String(subText.length),
-                      "--welcome-sub-duration": "8s",
-                    } as React.CSSProperties;
-                  })()
-                }
-              >
-                Here&apos;s what&apos;s happening with your projects today. You
-                have{" "}
-                <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
-                  {activeListingsCount} Active Listings
-                </span>
-                ,{" "}
-                <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
-                  {prospectInteractions} prospect interactions
-                </span>
-                , and{" "}
-                <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
-                  {avgPropertyValue} in Average Deal Value
-                </span>
-                .
+              Here&apos;s what&apos;s happening with your projects today. You
+              have{" "}
+              <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
+                {activeListingsCount} Active Listings
               </span>
+              ,{" "}
+              <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
+                {prospectInteractions} prospect interactions
+              </span>
+              , and{" "}
+              <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
+                {avgPropertyValue} in Average Deal Value
+              </span>
+              .
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
@@ -234,62 +220,69 @@ export default function DashboardOverviewModern({
         </div>
       )}
 
-      {/* Prospecting Overview - SaaS Bento style */}
-      <div className="relative overflow-hidden bento-gradient border border-blue-50/50 dark:border-slate-700 shadow-[0_20px_50px_-12px_rgba(59,130,246,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2.5rem] p-8 sm:p-12 transition-all duration-500">
-        <div className="prospecting-organic-wave" aria-hidden="true" />
-        <div className="relative z-10 flex flex-col gap-10">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-            <div>
-              <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                Prospecting Overview
-              </h2>
-              <p className="mt-3 text-lg text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                Your high-level pipeline metrics for today.
-              </p>
+      {/* Prospecting Overview - SaaS Bento style, max 2/3 welcome card size */}
+      <div className="prospecting-overview max-w-5xl">
+        <div className="relative overflow-hidden bento-gradient border border-blue-50/50 dark:border-gray-700 shadow-bento rounded-5xl p-6 sm:p-8 lg:p-10 transition-all duration-500">
+          <div className="organic-wave" aria-hidden="true" />
+          <div className="relative z-10 flex flex-col gap-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  Prospecting Overview
+                </h2>
+                <p className="mt-2 text-base sm:text-lg text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                  Your high-level pipeline metrics for today.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/dashboard/prospect-enrich"
+                  className="text-sm text-primary font-medium hover:underline"
+                >
+                  View All
+                </Link>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
+                  Updated Just Now
+                </span>
+                <button
+                  type="button"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary transition-all shadow-sm hover:shadow-md active:scale-95"
+                  aria-label="Filter prospecting metrics"
+                >
+                  <Settings2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
-                UPDATED JUST NOW
-              </span>
-              <button
-                type="button"
-                onClick={() => onRefresh?.()}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary transition-all shadow-sm hover:shadow-md active:scale-95"
-                aria-label="Filter or refresh prospecting data"
-              >
-                <SlidersHorizontal className="w-5 h-5" />
-              </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <ProspectMetricCard
+                icon={UserPlus}
+                value={totalProspects.toLocaleString()}
+                label="Saved Prospects"
+                change={totalProspectsChange}
+                trend={totalProspectsTrend}
+              />
+              <ProspectMetricCard
+                icon={Home}
+                value={String(activeListings)}
+                label="Active Listings"
+                change={activeListingsChange}
+                trend="up"
+              />
+              <ProspectMetricCard
+                icon={CreditCard}
+                value={avgPropertyValue}
+                label="Avg Property Value"
+                change={avgValueChange}
+                trend="up"
+              />
+              <ProspectMetricCard
+                icon={TimerOff}
+                value={String(expiredListings)}
+                label="Expired Listings"
+                change={expiredChange}
+                trend={expiredTrend}
+              />
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <ProspectingBentoCard
-              icon={UserPlus}
-              value={totalProspects.toLocaleString()}
-              label="Saved Prospects"
-              change={totalProspectsChange}
-              trend={totalProspectsTrend}
-            />
-            <ProspectingBentoCard
-              icon={Home}
-              value={String(activeListings)}
-              label="Active Listings"
-              change={activeListingsChange}
-              trend="up"
-            />
-            <ProspectingBentoCard
-              icon={Wallet}
-              value={avgPropertyValue}
-              label="Avg Property Value"
-              change={avgValueChange}
-              trend="up"
-            />
-            <ProspectingBentoCard
-              icon={Timer}
-              value={String(expiredListings)}
-              label="Expired Listings"
-              change={expiredChange}
-              trend={expiredTrend}
-            />
           </div>
         </div>
       </div>
@@ -522,53 +515,56 @@ export default function DashboardOverviewModern({
   );
 }
 
-function ProspectingBentoCard({
-  icon: IconComponent,
-  value,
-  label,
-  change,
-  trend,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
+interface ProspectMetricCardProps {
+  icon: React.ElementType;
   value: string;
   label: string;
   change: string;
   trend: "up" | "down" | "neutral";
-}) {
+}
+
+function ProspectMetricCard({
+  icon: Icon,
+  value,
+  label,
+  change,
+  trend,
+}: ProspectMetricCardProps) {
   const isDown = trend === "down";
   return (
     <div
-      className="group relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+      className="group relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
       role="article"
       aria-label={`${label}: ${value}`}
     >
+      {/* Faint background icon */}
       <div
-        className="absolute -right-6 -bottom-6 opacity-[0.025] group-hover:opacity-[0.04] transition-opacity duration-700 pointer-events-none"
-        aria-hidden="true"
+        className="absolute -right-4 -bottom-4 opacity-[0.025] group-hover:opacity-[0.04] transition-opacity duration-700 pointer-events-none"
+        aria-hidden
       >
-        <IconComponent className="w-[8rem] h-[8rem] text-slate-900 dark:text-white" />
+        <Icon className="h-32 w-32 text-slate-900 dark:text-white" strokeWidth={1} />
       </div>
-      <div className="relative z-10 flex flex-col justify-between h-full min-h-[160px]">
-        <IconComponent className="w-8 h-8 text-indigo-600 dark:text-indigo-400 font-bold" />
-        <div className="mt-4">
-          <div className="pb-3 mb-2 border-b border-slate-200/50 dark:border-slate-700/50">
-            <div className="flex items-center mb-1">
+      <div className="relative z-10 flex flex-col justify-between min-h-[130px]">
+        <Icon className="h-6 w-6 text-indigo-600 dark:text-indigo-400" strokeWidth={2} />
+        <div className="mt-3">
+          <div className="pb-2 mb-2 border-b border-slate-200/50 dark:border-slate-700/50">
+            <div className="flex items-center mb-0.5">
               <span
-                className={`inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider ${
+                className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded ${
                   isDown
                     ? "text-rose-500 bg-rose-100/60 dark:bg-rose-900/20"
-                    : "text-emerald-600 bg-emerald-100/60 dark:bg-emerald-900/20"
+                    : "text-emerald-600 bg-emerald-100/60 dark:bg-emerald-900/20 dark:text-emerald-400"
                 }`}
               >
                 {isDown ? (
-                  <TrendingDown className="w-3 h-3 mr-1 font-bold" />
+                  <TrendingDown className="h-3 w-3 mr-1 font-bold" />
                 ) : (
-                  <TrendingUp className="w-3 h-3 mr-1 font-bold" />
+                  <TrendingUp className="h-3 w-3 mr-1 font-bold" />
                 )}
                 {change}
               </span>
             </div>
-            <h3 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
+            <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
               {value}
             </h3>
           </div>

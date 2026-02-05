@@ -667,23 +667,24 @@
   }
 }
 
-/* Welcome heading typing animation - loops continuously */
+/* Welcome heading typing animation */
 .welcome-typing {
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;
   border-right: 3px solid currentColor;
-  animation: welcome-typing-cycle var(--welcome-duration, 6s) steps(var(--welcome-steps, 45), end) infinite,
+  animation: welcome-typing 1.8s steps(var(--welcome-steps, 45), end) forwards,
     welcome-blink-caret 0.75s step-end infinite;
   width: 0;
 }
 
-@keyframes welcome-typing-cycle {
-  0% { width: 0; }
-  28% { width: var(--welcome-chars, 45ch); }
-  38% { width: var(--welcome-chars, 45ch); }
-  66% { width: 0; }
-  100% { width: 0; }
+@keyframes welcome-typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--welcome-chars, 45ch);
+  }
 }
 
 @keyframes welcome-blink-caret {
@@ -694,26 +695,6 @@
   50% {
     border-color: currentColor;
   }
-}
-
-/* Subheading typing animation - loops continuously */
-.welcome-typing-sub {
-  display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
-  border-right: 2px solid currentColor;
-  animation: welcome-typing-sub-cycle var(--welcome-sub-duration, 8s) steps(var(--welcome-sub-steps, 120), end) infinite,
-    welcome-blink-caret 0.75s step-end infinite;
-  width: 0;
-  vertical-align: bottom;
-}
-
-@keyframes welcome-typing-sub-cycle {
-  0% { width: 0; }
-  25% { width: var(--welcome-sub-chars, 120ch); }
-  35% { width: var(--welcome-sub-chars, 120ch); }
-  60% { width: 0; }
-  100% { width: 0; }
 }
 
 /* Dashboard Welcome Card - SaaS style */
@@ -745,12 +726,11 @@
 /* Prospecting Overview bento card */
 .bento-gradient {
   background: linear-gradient(135deg, #fdfeff 0%, #ffffff 60%, #f8fafc 100%);
-  transition: all 0.5s ease;
 }
 .dark .bento-gradient {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
-.prospecting-organic-wave {
+.prospecting-overview .organic-wave {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -761,9 +741,9 @@
   background-image: radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 0% 100%, rgba(219, 234, 254, 0.3) 0%, transparent 40%);
 }
-.dark .prospecting-organic-wave {
+.dark .prospecting-overview .organic-wave {
   background-image: radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 0% 100%, rgba(30, 41, 59, 0.5) 0%, transparent 40%);
+    radial-gradient(circle at 0% 100%, rgba(30, 41, 59, 0.3) 0%, transparent 40%);
 }
 
 /* AI chat scrollbar & animations */

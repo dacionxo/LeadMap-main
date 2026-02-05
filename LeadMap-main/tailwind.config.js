@@ -218,7 +218,12 @@ module.exports = {
         9.5: "2.375rem",
         10.5: "2.625rem",
       },
+      borderRadius: {
+        "4xl": "2rem",
+        "5xl": "2.5rem",
+      },
       boxShadow: {
+        bento: "0 20px 50px -12px rgba(59, 130, 246, 0.12)",
         "dark-md":
           "rgba(145, 158, 171, 0.3) 0px 0px 2px 0px, rgba(145, 158, 171, 0.02) 0px 12px 24px -4px",
         md: "rgb(145 158 171 / 30%) 0px 0px 2px 0px, rgb(145 158 171 / 12%) 0px 12px 24px -4px",
