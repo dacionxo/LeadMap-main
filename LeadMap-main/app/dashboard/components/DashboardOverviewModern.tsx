@@ -4,17 +4,17 @@ import { useApp } from "@/app/providers";
 import {
   ArrowRight,
   ArrowUp,
-  DollarSign,
   History,
   Home,
-  Minus,
   MoreHorizontal,
   PieChart,
-  Settings,
-  TimerOff,
+  Search,
+  SlidersHorizontal,
+  Timer,
   TrendingDown,
   TrendingUp,
   UserPlus,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -73,9 +73,7 @@ export default function DashboardOverviewModern({
   const totalProspectsTrend = data["total-prospects"]?.trend ?? "up";
   const totalProspectsChange = data["total-prospects"]?.change ?? "+12%";
   const activeListingsChange = data["active-listings"]?.change ?? "+4%";
-  const activeListingsTrend = data["active-listings"]?.trend ?? "up";
   const avgValueChange = data["avg-property-value"]?.change ?? "+2.1%";
-  const avgValueTrend = data["avg-property-value"]?.trend ?? "up";
   const expiredChange = data["expired-listings"]?.change ?? "-18%";
   const expiredTrend = data["expired-listings"]?.trend ?? "down";
 
@@ -128,7 +126,6 @@ export default function DashboardOverviewModern({
   const userName = profile?.name ?? "Alex Rivera";
   const activeListingsCount = activeListings;
   const prospectInteractions = totalProspects;
-  const subheadingText = `Here's what's happening with your projects today. You have ${activeListingsCount} Active Listings, ${prospectInteractions} prospect interactions, and ${avgPropertyValue} in Average Deal Value.`;
 
   if (loading) {
     return (
@@ -159,6 +156,7 @@ export default function DashboardOverviewModern({
                   {
                     "--welcome-chars": `${"Welcome Back, ".length + userName.length}ch`,
                     "--welcome-steps": String("Welcome Back, ".length + userName.length),
+                    "--welcome-duration": "6s",
                   } as React.CSSProperties
                 }
               >
@@ -167,15 +165,32 @@ export default function DashboardOverviewModern({
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 font-normal leading-relaxed">
               <span
-                className="subheading-typing inline-block"
+                className="welcome-typing-sub"
                 style={
-                  {
-                    "--subheading-chars": `${subheadingText.length}ch`,
-                    "--subheading-steps": String(subheadingText.length),
-                  } as React.CSSProperties
+                  (() => {
+                    const subText = `Here's what's happening with your projects today. You have ${activeListingsCount} Active Listings, ${prospectInteractions} prospect interactions, and ${avgPropertyValue} in Average Deal Value.`;
+                    return {
+                      "--welcome-sub-chars": `${subText.length}ch`,
+                      "--welcome-sub-steps": String(subText.length),
+                      "--welcome-sub-duration": "8s",
+                    } as React.CSSProperties;
+                  })()
                 }
               >
-                {subheadingText}
+                Here&apos;s what&apos;s happening with your projects today. You
+                have{" "}
+                <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
+                  {activeListingsCount} Active Listings
+                </span>
+                ,{" "}
+                <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
+                  {prospectInteractions} prospect interactions
+                </span>
+                , and{" "}
+                <span className="font-semibold text-gray-900 dark:text-white border-b-2 border-primary/20">
+                  {avgPropertyValue} in Average Deal Value
+                </span>
+                .
               </span>
             </p>
           </div>
@@ -219,9 +234,9 @@ export default function DashboardOverviewModern({
         </div>
       )}
 
-      {/* Prospecting Overview - Bento style */}
-      <div className="prospecting-bento relative overflow-hidden bento-gradient border border-blue-50/50 dark:border-slate-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] p-8 sm:p-12 transition-all duration-500">
-        <div className="organic-wave" aria-hidden="true" />
+      {/* Prospecting Overview - SaaS Bento style */}
+      <div className="relative overflow-hidden bento-gradient border border-blue-50/50 dark:border-slate-700 shadow-[0_20px_50px_-12px_rgba(59,130,246,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2.5rem] p-8 sm:p-12 transition-all duration-500">
+        <div className="prospecting-organic-wave" aria-hidden="true" />
         <div className="relative z-10 flex flex-col gap-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div>
@@ -234,42 +249,42 @@ export default function DashboardOverviewModern({
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-widest bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
-                {lastUpdated ? `Updated ${formatLastUpdated(lastUpdated)}` : "Updated Just Now"}
+                UPDATED JUST NOW
               </span>
               <button
                 type="button"
                 onClick={() => onRefresh?.()}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary transition-all shadow-sm hover:shadow-md active:scale-95"
-                aria-label="Refresh metrics"
+                aria-label="Filter or refresh prospecting data"
               >
-                <Settings className="w-5 h-5" />
+                <SlidersHorizontal className="w-5 h-5" />
               </button>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <BentoProspectCard
+            <ProspectingBentoCard
               icon={UserPlus}
               value={totalProspects.toLocaleString()}
               label="Saved Prospects"
               change={totalProspectsChange}
               trend={totalProspectsTrend}
             />
-            <BentoProspectCard
+            <ProspectingBentoCard
               icon={Home}
               value={String(activeListings)}
               label="Active Listings"
               change={activeListingsChange}
-              trend={activeListingsTrend}
+              trend="up"
             />
-            <BentoProspectCard
-              icon={DollarSign}
+            <ProspectingBentoCard
+              icon={Wallet}
               value={avgPropertyValue}
               label="Avg Property Value"
               change={avgValueChange}
-              trend={avgValueTrend}
+              trend="up"
             />
-            <BentoProspectCard
-              icon={TimerOff}
+            <ProspectingBentoCard
+              icon={Timer}
               value={String(expiredListings)}
               label="Expired Listings"
               change={expiredChange}
@@ -507,19 +522,8 @@ export default function DashboardOverviewModern({
   );
 }
 
-function formatLastUpdated(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "Just Now";
-  if (diffMins < 60) return `${diffMins} min ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-  return date.toLocaleTimeString();
-}
-
-function BentoProspectCard({
-  icon: Icon,
+function ProspectingBentoCard({
+  icon: IconComponent,
   value,
   label,
   change,
@@ -532,12 +536,6 @@ function BentoProspectCard({
   trend: "up" | "down" | "neutral";
 }) {
   const isDown = trend === "down";
-  const isNeutral = trend === "neutral";
-  const badgeClass = isDown
-    ? "text-rose-500 bg-rose-100/60 dark:bg-rose-900/20"
-    : isNeutral
-      ? "text-slate-500 bg-slate-100/60 dark:bg-slate-700/30"
-      : "text-emerald-600 bg-emerald-100/60 dark:bg-emerald-900/20";
   return (
     <div
       className="group relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
@@ -546,22 +544,24 @@ function BentoProspectCard({
     >
       <div
         className="absolute -right-6 -bottom-6 opacity-[0.025] group-hover:opacity-[0.04] transition-opacity duration-700 pointer-events-none"
-        aria-hidden
+        aria-hidden="true"
       >
-        <Icon className="w-32 h-32 text-slate-900 dark:text-white" />
+        <IconComponent className="w-[8rem] h-[8rem] text-slate-900 dark:text-white" />
       </div>
       <div className="relative z-10 flex flex-col justify-between h-full min-h-[160px]">
-        <Icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400 font-bold" />
+        <IconComponent className="w-8 h-8 text-indigo-600 dark:text-indigo-400 font-bold" />
         <div className="mt-4">
           <div className="pb-3 mb-2 border-b border-slate-200/50 dark:border-slate-700/50">
             <div className="flex items-center mb-1">
               <span
-                className={`inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider ${badgeClass}`}
+                className={`inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider ${
+                  isDown
+                    ? "text-rose-500 bg-rose-100/60 dark:bg-rose-900/20"
+                    : "text-emerald-600 bg-emerald-100/60 dark:bg-emerald-900/20"
+                }`}
               >
                 {isDown ? (
                   <TrendingDown className="w-3 h-3 mr-1 font-bold" />
-                ) : isNeutral ? (
-                  <Minus className="w-3 h-3 mr-1 font-bold" />
                 ) : (
                   <TrendingUp className="w-3 h-3 mr-1 font-bold" />
                 )}

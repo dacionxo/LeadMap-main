@@ -667,22 +667,22 @@
   }
 }
 
-/* Welcome heading typing animation - loops infinitely */
+/* Welcome heading typing animation - loops continuously */
 .welcome-typing {
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;
   border-right: 3px solid currentColor;
-  animation: welcome-typing-loop 6s steps(var(--welcome-steps, 45), end) infinite,
+  animation: welcome-typing-cycle var(--welcome-duration, 6s) steps(var(--welcome-steps, 45), end) infinite,
     welcome-blink-caret 0.75s step-end infinite;
   width: 0;
 }
 
-@keyframes welcome-typing-loop {
+@keyframes welcome-typing-cycle {
   0% { width: 0; }
-  30% { width: var(--welcome-chars, 45ch); }
-  80% { width: var(--welcome-chars, 45ch); }
-  95% { width: var(--welcome-chars, 45ch); }
+  28% { width: var(--welcome-chars, 45ch); }
+  38% { width: var(--welcome-chars, 45ch); }
+  66% { width: 0; }
   100% { width: 0; }
 }
 
@@ -696,22 +696,23 @@
   }
 }
 
-/* Subheading typing animation - loops infinitely */
-.subheading-typing {
+/* Subheading typing animation - loops continuously */
+.welcome-typing-sub {
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;
   border-right: 2px solid currentColor;
-  animation: subheading-typing-loop 8s steps(var(--subheading-steps, 80), end) infinite,
+  animation: welcome-typing-sub-cycle var(--welcome-sub-duration, 8s) steps(var(--welcome-sub-steps, 120), end) infinite,
     welcome-blink-caret 0.75s step-end infinite;
   width: 0;
+  vertical-align: bottom;
 }
 
-@keyframes subheading-typing-loop {
+@keyframes welcome-typing-sub-cycle {
   0% { width: 0; }
-  25% { width: var(--subheading-chars, 80ch); }
-  75% { width: var(--subheading-chars, 80ch); }
-  92% { width: var(--subheading-chars, 80ch); }
+  25% { width: var(--welcome-sub-chars, 120ch); }
+  35% { width: var(--welcome-sub-chars, 120ch); }
+  60% { width: 0; }
   100% { width: 0; }
 }
 
@@ -741,14 +742,15 @@
     radial-gradient(circle at 0% 100%, rgba(30, 41, 59, 0.8) 0%, transparent 60%);
 }
 
-/* Prospecting Overview Bento */
+/* Prospecting Overview bento card */
 .bento-gradient {
   background: linear-gradient(135deg, #fdfeff 0%, #ffffff 60%, #f8fafc 100%);
+  transition: all 0.5s ease;
 }
 .dark .bento-gradient {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
-.prospecting-bento .organic-wave {
+.prospecting-organic-wave {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -759,8 +761,8 @@
   background-image: radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 0% 100%, rgba(219, 234, 254, 0.3) 0%, transparent 40%);
 }
-.dark .prospecting-bento .organic-wave {
-  background-image: radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+.dark .prospecting-organic-wave {
+  background-image: radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 0% 100%, rgba(30, 41, 59, 0.5) 0%, transparent 40%);
 }
 
