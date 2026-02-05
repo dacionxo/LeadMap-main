@@ -161,8 +161,17 @@ export default function DashboardOverviewModern({
         <div className="relative z-10 flex flex-col items-start gap-10">
           <div className="space-y-6 max-w-3xl">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-[1.1]">
-              Welcome Back,{" "}
-              <span className="text-primary">{userName}</span>
+              <span
+                className="welcome-typing"
+                style={
+                  {
+                    "--welcome-chars": `${"Welcome Back, ".length + userName.length}ch`,
+                    "--welcome-steps": String("Welcome Back, ".length + userName.length),
+                  } as React.CSSProperties
+                }
+              >
+                Welcome Back, <span className="text-primary">{userName}</span>
+              </span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 font-normal leading-relaxed">
               Here&apos;s what&apos;s happening with your projects today. You
