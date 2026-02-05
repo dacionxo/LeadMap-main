@@ -248,6 +248,7 @@ export default function Sidebar() {
           {navSections.map((section, sectionIdx) => {
             const expanded = isSectionExpanded(sectionIdx);
             const hasTitle = !!section.title;
+            const sectionMarginTop = sectionIdx === 0 ? "0px" : "24px";
             return (
               <div key={sectionIdx} className="mb-3">
                 {hasTitle && (
@@ -256,13 +257,13 @@ export default function Sidebar() {
                     onClick={() => hasTitle && toggleSection(sectionIdx)}
                     className="caption px-0 mb-0 w-full text-left focus:outline-none focus:ring-0"
                     style={{
-                      marginTop: sectionIdx === 0 ? "0px" : "24px",
+                      marginTop: sectionMarginTop,
                       padding: "3px 0px",
                       lineHeight: "26px",
                     }}
-                    aria-expanded={expanded ? "true" : "false"}
+                    aria-expanded={expanded}
                   >
-                    <h5 className="text-link dark:text-darklink font-bold text-xs uppercase leading-[26px] flex items-center gap-1.5">
+                    <h5 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.22em] leading-[26px] text-gray-500 dark:text-darklink">
                       {isOpen ? (
                         <>
                           <Icon
@@ -271,7 +272,7 @@ export default function Sidebar() {
                                 ? "solar:alt-arrow-up-linear"
                                 : "solar:alt-arrow-down-linear"
                             }
-                            className="flex-shrink-0 transition-transform text-link dark:text-darklink"
+                            className="flex-shrink-0 transition-transform text-gray-400 dark:text-darklink"
                             height={14}
                             width={14}
                           />
@@ -298,7 +299,7 @@ export default function Sidebar() {
                   <div
                     className={
                       isOpen
-                        ? "space-y-0.5"
+                        ? "space-y-1 pt-1"
                         : "flex flex-col items-center gap-2 xl:group-hover:items-start xl:group-hover:gap-0.5 xl:group-hover:space-y-0.5"
                     }
                   >
@@ -318,11 +319,12 @@ export default function Sidebar() {
                           <button
                             key={item.href}
                             onClick={handleClick}
-                            className={`group/item flex w-full items-center gap-3 rounded-md p-3 text-start truncate cursor-pointer leading-normal transition-all duration-200 ease-in-out hover:translate-x-1 ${
+                            className={`group/item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start truncate cursor-pointer leading-normal transition-all duration-200 ease-in-out ${
                               active
-                                ? "text-white bg-primary hover:bg-primary hover:text-white font-medium"
-                                : "text-link dark:text-darklink hover:text-primary dark:hover:text-primary bg-transparent hover:bg-lightprimary dark:hover:bg-lightprimary font-normal"
+                                ? "bg-primary text-white shadow-soft hover:bg-primary/95 font-semibold"
+                                : "text-link dark:text-darklink hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary dark:hover:text-primary bg-transparent font-medium"
                             }`}
+                            aria-current={active ? "page" : undefined}
                           >
                             <Icon
                               icon={item.icon}
@@ -334,7 +336,7 @@ export default function Sidebar() {
                               {item.label}
                             </span>
                             {item.badge && (
-                              <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                              <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
                                 {item.badge}
                               </span>
                             )}
