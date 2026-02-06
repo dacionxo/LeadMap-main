@@ -6,6 +6,8 @@ import MapView from '@/components/MapView'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useApp } from '@/app/providers'
 import MapsOnboardingModal from './components/MapsOnboardingModal'
+import MapSearchBar from './components/MapSearchBar'
+import MapProfileNotificationButtons from './components/MapProfileNotificationButtons'
 
 const LeadDetailModal = lazy(() => import('../prospect-enrich/components/LeadDetailModal'))
 
@@ -53,6 +55,7 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (profile?.id) {
@@ -240,6 +243,20 @@ export default function MapPage() {
         <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Map Section - full screen */}
           <div className="flex-1 relative">
+            {/* Search bar - top center overlay */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-4xl px-4">
+              <MapSearchBar
+                searchValue={searchQuery}
+                onSearchChange={setSearchQuery}
+                placeholder="Search by City, Zip, or Address"
+              />
+            </div>
+
+            {/* Profile and notifications - top right, to the left of map fullscreen control */}
+            <div className="absolute top-4 right-4 z-10">
+              <MapProfileNotificationButtons />
+            </div>
+
             {/* Map Component - full screen */}
             <div className="w-full h-full">
               <MapView
