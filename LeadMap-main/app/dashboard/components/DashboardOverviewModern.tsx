@@ -387,22 +387,9 @@ export default function DashboardOverviewModern({
         </div>
       </div>
 
-      {/* Pipeline Health cards: Conversion Funnel + Pipeline Value + Active Deals + Deal Size (1:1 with reference designs) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-7xl mx-auto items-start">
-        <ConversionFunnelCard
-          conversionRate={conversionRate}
-          monthlyTargetPercent={85}
-        />
+      {/* Pipeline Health: Pipeline Value only (Conversion Rate, Active Deals, Deal Size moved into Deal Analytics) */}
+      <div className="grid grid-cols-1 gap-6 max-w-7xl mx-auto items-start">
         <PipelineValueCard totalValue={pipelineValue} />
-        <ActiveDealsCard
-          count={activeDeals}
-          changeLabel={`${activeDealsChange} vs last month`}
-          trend={activeDealsTrend}
-        />
-        <DealSizeCard
-          value={avgDealSize}
-          changeLabel={`${avgDealSizeChange} vs last month`}
-        />
       </div>
 
       {/* Stage Distribution - wide horizontal bar (1:1 with reference design) */}
@@ -449,29 +436,22 @@ export default function DashboardOverviewModern({
               change={pipelineChange}
               trend="up"
             />
-            <DealMetricCard
-              icon={Zap}
-              iconBg="bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400"
-              value={conversionRate}
-              label="Conversion Rate"
+            {/* Conversion Rate: new component design in same-sized metric slot (replaces old DealMetricCard) */}
+            <ConversionRateMetricCard
+              conversionRate={conversionRate}
               change={conversionChange}
               trend="up"
             />
-            <DealMetricCard
-              icon={Briefcase}
-              iconBg="bg-purple-50 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400"
-              value={String(activeDeals)}
-              label="Active Deals"
-              change={activeDealsChange}
+            {/* Active Deals: new component design in same-sized metric slot (replaces old DealMetricCard) */}
+            <ActiveDealsMetricCard
+              count={activeDeals}
+              changeLabel={`${activeDealsChange} vs last month`}
               trend={activeDealsTrend}
             />
-            <DealMetricCard
-              icon={PieChart}
-              iconBg="bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400"
+            {/* Deal Size: new component design in same-sized metric slot (replaces old DealMetricCard) */}
+            <DealSizeMetricCard
               value={avgDealSize}
-              label="Avg Deal Size"
-              change={avgDealSizeChange}
-              trend="up"
+              changeLabel={`${avgDealSizeChange} vs last month`}
             />
           </div>
           <div className="py-2.5">
@@ -954,6 +934,136 @@ function DealMetricCard({
       </h3>
       <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">
         {label}
+      </p>
+    </div>
+  );
+}
+
+/* Conversion Rate metric card - same size as DealMetricCard, new Conversion Funnel design (replaces old in Deal Analytics grid) */
+interface ConversionRateMetricCardProps {
+  conversionRate: string;
+  change: string;
+  trend: "up" | "down" | "neutral";
+}
+
+function ConversionRateMetricCard({
+  conversionRate,
+  change,
+  trend,
+}: ConversionRateMetricCardProps) {
+  const displayRate = conversionRate?.replace(/%/g, "").trim() || "67";
+  const isUp = trend === "up";
+  const isDown = trend === "down";
+  const isNeutral = trend === "neutral";
+  const trendPillClass = isDown
+    ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20"
+    : isUp
+      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
+      : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600";
+
+  return (
+    <div className="group bg-white dark:bg-gray-700/40 p-5 rounded-2xl border border-slate-100 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex justify-between items-start mb-4">
+        <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <Zap className="w-5 h-5" strokeWidth={2} />
+        </div>
+        <div className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold border ${trendPillClass}`}>
+          {isDown && <TrendingDown className="w-3.5 h-3.5 mr-0.5" />}
+          {isUp && <TrendingUp className="w-3.5 h-3.5 mr-0.5" />}
+          {isNeutral && <Minus className="w-3.5 h-3.5 mr-0.5" />}
+          {change}
+        </div>
+      </div>
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+        {displayRate}%
+      </h3>
+      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">
+        Conversion Rate
+      </p>
+    </div>
+  );
+}
+
+/* Active Deals metric card - same size as DealMetricCard, new Active Deals design (replaces old in Deal Analytics grid) */
+interface ActiveDealsMetricCardProps {
+  count: number;
+  changeLabel: string;
+  trend: "up" | "down" | "neutral";
+}
+
+function ActiveDealsMetricCard({
+  count,
+  changeLabel,
+  trend,
+}: ActiveDealsMetricCardProps) {
+  const isUp = trend === "up";
+  const isDown = trend === "down";
+  const trendPillClass = isDown
+    ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20"
+    : isUp
+      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
+      : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600";
+
+  return (
+    <div className="group bg-white dark:bg-gray-700/40 p-5 rounded-2xl border border-slate-100 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex justify-between items-start mb-4">
+        <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+          <Briefcase className="w-5 h-5" strokeWidth={2} />
+        </div>
+        <div className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold border ${trendPillClass}`}>
+          {isDown ? (
+            <TrendingDown className="w-3.5 h-3.5 mr-0.5" />
+          ) : isUp ? (
+            <TrendingUp className="w-3.5 h-3.5 mr-0.5" />
+          ) : (
+            <Minus className="w-3.5 h-3.5 mr-0.5" />
+          )}
+          {changeLabel}
+        </div>
+      </div>
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+        {count}
+      </h3>
+      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">
+        Active Deals
+      </p>
+    </div>
+  );
+}
+
+/* Deal Size (Avg Deal Size) metric card - same size as DealMetricCard, new Deal Size design (replaces old in Deal Analytics grid) */
+interface DealSizeMetricCardProps {
+  value: string;
+  changeLabel: string;
+}
+
+function DealSizeMetricCard({ value, changeLabel }: DealSizeMetricCardProps) {
+  const isUp = changeLabel.startsWith("+");
+  const isDown = changeLabel.startsWith("-");
+  const trendPillClass = isDown
+    ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20"
+    : isUp
+      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
+      : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600";
+
+  return (
+    <div className="group bg-white dark:bg-gray-700/40 p-5 rounded-2xl border border-slate-100 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex justify-between items-start mb-4">
+        <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-500/20 flex items-center justify-center text-sky-600 dark:text-sky-400">
+          <DollarSign className="w-5 h-5" strokeWidth={2} />
+        </div>
+        <div className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold border ${trendPillClass}`}>
+          {isDown && <TrendingDown className="w-3.5 h-3.5 mr-0.5" />}
+          {isUp && <TrendingUp className="w-3.5 h-3.5 mr-0.5" />}
+          {!isUp && !isDown && <Minus className="w-3.5 h-3.5 mr-0.5" />}
+          {changeLabel}
+        </div>
+      </div>
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+        {value?.trim() || "$32.5k"}
+      </h3>
+      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">
+        Avg Deal Size
       </p>
     </div>
   );
