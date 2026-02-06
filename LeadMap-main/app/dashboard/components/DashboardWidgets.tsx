@@ -32,6 +32,7 @@ import {
   GitBranch,
   GripVertical,
   LineChart,
+  MoreHorizontal,
   MoreVertical,
   Percent,
   PieChart,
