@@ -163,15 +163,6 @@ export default function DashboardOverviewModern({
     },
   ];
 
-  const stageDist = data["deal-stage-distribution"]?.stages ?? [
-    { name: "New", value: 245, percentage: 100 },
-    { name: "Contacted", value: 180, percentage: 73 },
-    { name: "Qualified", value: 98, percentage: 40 },
-    { name: "Proposal", value: 45, percentage: 18 },
-    { name: "Closed", value: 28, percentage: 11 },
-  ];
-
-
   const notifications = (data["recent-activity"] ?? []) as Array<{
     id: string;
     title: string;
@@ -511,47 +502,6 @@ export default function DashboardOverviewModern({
               ))}
             </div>
           </div>
-          <div className="pt-6 border-t border-dashed border-slate-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-white uppercase tracking-wider">
-                Stage Distribution
-              </h3>
-              <Link
-                href="/dashboard/engage"
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                View Full Report
-              </Link>
-            </div>
-            <div className="w-full h-32 flex items-end justify-between gap-2 md:gap-4 px-2">
-              {stageDist.map((s, i) => {
-                const barColors = [
-                  "bg-blue-400 group-hover:bg-blue-500",
-                  "bg-blue-500 group-hover:bg-blue-600",
-                  "bg-indigo-500 group-hover:bg-indigo-600",
-                  "bg-indigo-600 group-hover:bg-indigo-700",
-                  "bg-purple-600 group-hover:bg-purple-700",
-                ];
-                return (
-                  <div key={s.name} className="flex-1 flex flex-col items-center group">
-                    <div className="w-full max-w-[60px] bg-blue-100 dark:bg-blue-900/30 rounded-t-sm relative h-full flex items-end group-hover:bg-blue-50 dark:group-hover:bg-blue-900/40 transition-colors">
-                      <div
-                        className={`w-full ${barColors[i] || barColors[0]} rounded-t-sm relative transition-colors`}
-                        style={{ height: `${Math.min(100, s.percentage || 30)}%` }}
-                      >
-                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                          {s.value} Deals
-                        </span>
-                      </div>
-                    </div>
-                    <span className="mt-2 text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 text-center">
-                      {s.name}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -604,139 +554,143 @@ export default function DashboardOverviewModern({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-gray-100 dark:divide-gray-800">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Notifications
-                </h3>
-                <button
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
-                  aria-label="Notification actions"
-                  title="Notification actions"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="space-y-0 relative">
-                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-700 z-0" />
-                {displayNotifications.map((n, idx) => {
-                  const accent =
-                    ["bg-blue-500", "bg-green-500", "bg-gray-300 dark:bg-gray-600", "bg-purple-400"][idx] ??
-                    "bg-blue-500";
-                  return (
-                    <div key={n.id ?? idx} className="relative pl-6 py-3 group">
-                      <div
-                        className={`absolute left-0 top-4 w-3.5 h-3.5 rounded-full ${accent} border-[3px] border-white dark:border-gray-900 shadow-sm`}
-                      />
-                      <div className="flex justify-between items-start gap-2">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary transition-colors">
-                            {n.title}
-                          </p>
-                          {n.description && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                              {n.description}
-                            </p>
-                          )}
-                        </div>
-                        {n.time && (
-                          <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap ml-2">
-                            {n.time}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
-                <Link
-                  href="/dashboard/notifications"
-                  className="text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-1"
-                >
-                  View all notifications <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="p-6 bg-gray-50/60 dark:bg-gray-800/40">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Pending Tasks
-                </h3>
-                <div className="flex items-center gap-2">
-                  <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold px-2 py-0.5 rounded-full">
-                    {pendingTasksCount} Left
-                  </span>
-                  <Link
-                    href="/dashboard/tasks"
-                    className="text-gray-500 dark:text-gray-400 hover:text-primary transition"
-                    aria-label="Add new task"
+            <div className="p-6 relative">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-50/50 dark:bg-indigo-900/20 blur-[80px] rounded-full pointer-events-none z-0" aria-hidden />
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-base font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    Notifications
+                  </h2>
+                  <button
+                    type="button"
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 dark:hover:bg-slate-700/50 text-slate-500 dark:text-slate-400 transition-colors"
+                    aria-label="Notification actions"
                   >
-                    <PlusCircle className="w-4 h-4" />
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex flex-col flex-grow space-y-0 relative">
+                  <div className="absolute left-[7px] top-6 bottom-16 w-0.5 bg-slate-100 dark:bg-slate-700/50 z-0" aria-hidden />
+                  {(
+                    notifications.length >= 5
+                      ? notifications.slice(0, 5)
+                      : [
+                          { id: "1", title: "New contact added", description: "Contact added to CRM", time: "1/27/2026" },
+                          { id: "2", title: "New contact added", description: "Contact added to CRM", time: "12/4/2025" },
+                          { id: "3", title: "Deal updated", description: "Deal moved to new stage", time: "12/2/2025" },
+                          { id: "4", title: "New Lead Assigned", description: "Automatic assignment via round-robin", time: "11/28/2025" },
+                          { id: "5", title: "Meeting Scheduled", description: "Demo call with Acme Corp", time: "11/20/2025" },
+                        ]
+                  ).map((n, idx) => {
+                    const dotBorder =
+                      ["border-blue-500", "border-emerald-500", "border-slate-400 dark:border-slate-500", "border-blue-500", "border-emerald-500"][idx] ?? "border-blue-500";
+                    const date = "time" in n && typeof n.time === "string" ? n.time : "";
+                    const title = "title" in n ? String(n.title) : "";
+                    const description = "description" in n ? String(n.description) : "";
+                    return (
+                      <div key={"id" in n ? String(n.id) : idx} className="flex gap-4 relative pb-8 last:pb-0">
+                        <div className="flex-shrink-0 relative z-10">
+                          <div className={`w-4 h-4 rounded-full bg-white dark:bg-slate-800 border-[3px] ${dotBorder} shadow-sm`} aria-hidden />
+                        </div>
+                        <div className="flex-grow pt-0.5 min-w-0">
+                          <div className="flex justify-between items-start gap-2 mb-0.5">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-white leading-tight">
+                              {title}
+                            </h3>
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                              {date}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 font-normal">
+                            {description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="pt-6 border-t border-slate-100 dark:border-slate-700/50 mt-auto">
+                  <Link
+                    href="/dashboard/notifications"
+                    className="group inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  >
+                    View all notifications
+                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               </div>
-              <div className="mb-5">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium">
-                    Daily Goal
-                  </span>
-                  <span className="text-gray-900 dark:text-white font-bold">
-                    {taskCompletionPercent}%
-                  </span>
+            </div>
+
+            <div className="p-6 relative flex flex-col min-h-[400px]">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-50/50 dark:bg-indigo-900/20 blur-[80px] rounded-full pointer-events-none z-0" aria-hidden />
+              <div className="relative z-10 flex flex-col flex-grow">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-base font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                      Pending Tasks
+                    </h2>
+                    <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded-full">
+                      {pendingTasksCount} Left
+                    </span>
+                  </div>
+                  <Link
+                    href="/dashboard/tasks"
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 dark:hover:bg-slate-700/50 text-slate-500 dark:text-slate-400 transition-colors"
+                    aria-label="Add new task"
+                  >
+                    <PlusCircle className="w-5 h-5" />
+                  </Link>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-primary h-1.5 rounded-full"
-                    style={{ width: `${taskCompletionPercent}%` }}
-                  />
+                <div className="mb-6">
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                      Daily Goal
+                    </span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-white">
+                      {taskCompletionPercent}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${taskCompletionPercent}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-3 dashboard-overview-scrollbar max-h-[260px] overflow-y-auto pr-1">
-                {displayTasks.map((t) => {
-                  const completed = !!(t as { completed?: boolean }).completed;
-                  const meta =
-                    (t as { due?: string; priority?: string }).due ||
-                    (t as { priority?: string }).priority;
-                  const isOverdue = meta?.toLowerCase() === "overdue";
-                  return (
-                    <label
-                      key={t.id}
-                      className={`flex items-start gap-3 group cursor-pointer p-2 -mx-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors ${
-                        completed ? "opacity-70" : ""
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        defaultChecked={completed}
-                        className="form-checkbox h-4 w-4 text-primary rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:checked:bg-primary focus:ring-primary mt-0.5"
-                      />
-                      <div className="flex-1">
+                <div className="flex flex-col flex-grow space-y-6">
+                  {displayTasks.map((t) => {
+                    const completed = !!(t as { completed?: boolean }).completed;
+                    return (
+                      <label
+                        key={t.id}
+                        className="group flex items-center gap-4 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          defaultChecked={completed}
+                          className="peer sr-only"
+                        />
+                        <div className="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 rounded flex items-center justify-center flex-shrink-0 transition-colors bg-white dark:bg-slate-800 group-hover:border-slate-400 dark:group-hover:border-slate-500 peer-checked:bg-blue-500 peer-checked:border-blue-500">
+                          <svg className="w-4 h-4 text-white hidden group-has-[:checked]:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
                         <span
-                          className={`text-sm font-medium block ${
+                          className={`text-base font-medium transition-colors ${
                             completed
                               ? "text-gray-400 dark:text-gray-500 line-through"
-                              : "text-gray-900 dark:text-white group-hover:text-primary transition-colors"
+                              : "text-slate-800 dark:text-white group-hover:text-slate-900 dark:group-hover:text-white"
                           }`}
                         >
                           {t.title}
                         </span>
-                        {meta ? (
-                          <span
-                            className={`text-xs ${
-                              isOverdue
-                                ? "text-red-500 font-semibold"
-                                : "text-gray-500 dark:text-gray-400"
-                            }`}
-                          >
-                            {isOverdue ? "Overdue" : meta}
-                          </span>
-                        ) : null}
-                      </div>
-                    </label>
-                  );
-                })}
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="mt-auto pt-6">
+                  <div className="w-full h-4 bg-slate-200/50 dark:bg-slate-700/50 rounded-full" aria-hidden />
+                </div>
               </div>
             </div>
 
