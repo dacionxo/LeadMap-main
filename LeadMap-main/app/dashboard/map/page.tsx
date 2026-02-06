@@ -5,7 +5,6 @@ import DashboardLayout from '../components/DashboardLayout'
 import MapView from '@/components/MapView'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useApp } from '@/app/providers'
-import { Home, Plus, Minus, RefreshCw } from 'lucide-react'
 import MapsOnboardingModal from './components/MapsOnboardingModal'
 
 const LeadDetailModal = lazy(() => import('../prospect-enrich/components/LeadDetailModal'))
@@ -239,33 +238,8 @@ export default function MapPage() {
       <div className="flex flex-col h-full w-full min-h-0 bg-white dark:bg-gray-900">
         {/* Main Content Area - Map and Sidebar (full screen) */}
         <div className="flex-1 flex overflow-hidden min-h-0">
-          {/* Map Section - Enlarged */}
+          {/* Map Section - full screen */}
           <div className="flex-1 relative">
-
-            {/* Map Controls - Top Center */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-              <button
-                onClick={fetchListings}
-                className="px-4 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 flex items-center gap-2 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Reload Map
-              </button>
-            </div>
-
-            {/* Map Controls - Right Sidebar */}
-            <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
-              <button className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg flex items-center justify-center transition-colors">
-                <Home className="w-5 h-5" />
-              </button>
-              <button className="w-10 h-10 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center transition-colors">
-                <Plus className="w-5 h-5" />
-              </button>
-              <button className="w-10 h-10 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center transition-colors">
-                <Minus className="w-5 h-5" />
-              </button>
-            </div>
-
             {/* Map Component - full screen */}
             <div className="w-full h-full">
               <MapView

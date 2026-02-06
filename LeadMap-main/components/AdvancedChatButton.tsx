@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useId } from 'react'
+import { usePathname } from 'next/navigation'
 import AdvancedChatbot from './AdvancedChatbot'
 import AISparkleIcon from './AISparkleIcon'
 import { useApp } from '@/app/providers'
@@ -9,6 +10,8 @@ export default function AdvancedChatButton() {
   const [isOpen, setIsOpen] = useState(false)
   const { user } = useApp()
   const gradientId = useId().replace(/:/g, '_')
+  const pathname = usePathname()
+  const isMapPage = pathname === '/dashboard/map'
 
   if (!user) {
     return null
@@ -16,8 +19,10 @@ export default function AdvancedChatButton() {
 
   return (
     <>
-      {/* Floating AI Assistant Button - Sparkle design with glow */}
-      <div className="fixed bottom-6 right-6 z-40 group cursor-pointer animate-float">
+      {/* Floating AI Assistant Button - left on /dashboard/map, right elsewhere */}
+      <div
+        className={`fixed bottom-6 z-40 group cursor-pointer animate-float ${isMapPage ? 'left-6' : 'right-6'}`}
+      >
         {/* Outer glow - stronger on hover */}
         <div
           className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-400 blur-xl opacity-40 transition-opacity duration-500 group-hover:opacity-60"
