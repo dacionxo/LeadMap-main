@@ -274,6 +274,7 @@ const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading, onStreet
       isActive={isActive}
       listings={listings}
       loading={loading}
+      fullScreen={fullScreen}
     />
       );
     } else {
