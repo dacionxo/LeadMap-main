@@ -557,6 +557,23 @@ export default function CustomizableDashboard() {
     fetchWidgetData(false);
   };
 
+  // #region agent log
+  if (typeof fetch !== "undefined") {
+    fetch("http://127.0.0.1:7242/ingest/a7565911-e087-4f8e-bc4b-5620fd981055", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "CustomizableDashboard.tsx:render",
+        message: "CustomizableDashboard rendering DashboardOverviewModern",
+        data: { importPath: "./DashboardOverviewModern" },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "B",
+      }),
+    }).catch(() => {});
+  }
+  // #endregion
+
   return (
     <DashboardOverviewModern
       widgetData={widgetData}

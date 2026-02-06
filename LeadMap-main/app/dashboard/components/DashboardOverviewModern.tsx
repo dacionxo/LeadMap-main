@@ -1,5 +1,23 @@
 "use client";
 
+// #region agent log
+const ACTIVE_DEALS_DEBUG_SOURCE = "LeadMap-main/app/dashboard/components/DashboardOverviewModern.tsx";
+if (typeof fetch !== "undefined") {
+  fetch("http://127.0.0.1:7242/ingest/a7565911-e087-4f8e-bc4b-5620fd981055", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "DashboardOverviewModern.tsx:module",
+      message: "Module evaluated (which file is bundled)",
+      data: { filePath: ACTIVE_DEALS_DEBUG_SOURCE, deployTarget: "vercel" },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
+}
+// #endregion
+
 import { useApp } from "@/app/providers";
 import {
   AlertCircle,
@@ -92,6 +110,23 @@ export default function DashboardOverviewModern({
 }: DashboardOverviewModernProps) {
   const { profile } = useApp();
   const data = widgetData as WidgetData;
+
+  // #region agent log
+  if (typeof fetch !== "undefined") {
+    fetch("http://127.0.0.1:7242/ingest/a7565911-e087-4f8e-bc4b-5620fd981055", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "DashboardOverviewModern.tsx:mount",
+        message: "DashboardOverviewModern mounted",
+data: { filePath: ACTIVE_DEALS_DEBUG_SOURCE, deployTarget: "vercel" },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      hypothesisId: "B",
+      }),
+    }).catch(() => {});
+  }
+  // #endregion
 
   const totalProspects = data["total-prospects"]?.value ?? 1482;
   const activeListings = data["active-listings"]?.value ?? 56;
