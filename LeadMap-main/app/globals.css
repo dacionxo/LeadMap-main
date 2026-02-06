@@ -884,3 +884,19 @@
 .animate-pulse-glow {
   animation: pulse-glow 1.5s ease-in-out infinite;
 }
+
+/* Active Campaigns Activity Volume chart */
+.bar-gradient {
+  background: linear-gradient(180deg, #3b82f6 0%, #93c5fd 100%);
+}
+.bar-gradient-muted {
+  background: linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 100%);
+}
+
+/* Active Campaigns Activity Volume - highlight bar gradient */
+.bar-gradient-campaign {
+  background: linear-gradient(180deg, #3b82f6 0%, #93c5fd 100%);
+}
+.dark .bar-gradient-campaign {
+  background: linear-gradient(180deg, #3b82f6 0%, #60a5fa 100%);
+}

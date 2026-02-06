@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ArrowUp,
   Briefcase,
+  ChevronDown,
   ChevronRight,
   CreditCard,
   DollarSign,
@@ -694,91 +695,120 @@ export default function DashboardOverviewModern({
               </div>
             </div>
 
-            <div className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
-                      <Mail className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-900 dark:text-white">Active Campaigns</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Email performance summary</p>
-                    </div>
+            {/* Active Campaigns – 1:1 with reference (glass-panel, metric-bg, success badges, Activity Volume bar chart) */}
+            <div className="p-6 relative flex flex-col min-h-[400px]">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-50/50 dark:bg-indigo-900/20 blur-[80px] rounded-full pointer-events-none z-0" aria-hidden />
+              <div className="relative z-10 flex flex-col flex-grow gap-8 backdrop-blur-[8px] bg-white dark:bg-white rounded-[2rem] border border-white/60 dark:border-gray-700 shadow-xl p-6 md:p-8 min-h-0 overflow-hidden">
+                <div className="flex items-start justify-between flex-shrink-0">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                      Active Campaigns
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                      Email performance summary
+                    </p>
                   </div>
                   <button
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                    type="button"
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 dark:hover:bg-gray-700 text-slate-500 dark:text-slate-400 transition-colors"
                     aria-label="Campaign options"
-                    title="Campaign options"
                   >
-                    <MoreHorizontal className="w-4 h-4" />
+                    <MoreHorizontal className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Sent</p>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {campaignMetrics.totalSent.toLocaleString()}
-                    </p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <TrendingUp className="w-3.5 h-3.5 text-green-500" />
-                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                        {campaignMetrics.sentChange}
-                      </span>
+                <div className="grid grid-cols-2 gap-4 flex-shrink-0">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-100 dark:border-gray-600 shadow-sm flex flex-col justify-between h-32 transition-all hover:shadow-md">
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                        Total Sent
+                      </p>
+                      <div className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">
+                        {campaignMetrics.totalSent.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-emerald-500 text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 self-start px-2 py-1 rounded-full">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      <span>{campaignMetrics.sentChange}</span>
                     </div>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Open Rate</p>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {campaignMetrics.openRate}
-                    </p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <TrendingUp className="w-3.5 h-3.5 text-green-500" />
-                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                        {campaignMetrics.openChange}
-                      </span>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-100 dark:border-gray-600 shadow-sm flex flex-col justify-between h-32 transition-all hover:shadow-md">
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                        Open Rate
+                      </p>
+                      <div className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">
+                        {campaignMetrics.openRate}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-emerald-500 text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 self-start px-2 py-1 rounded-full">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      <span>{campaignMetrics.openChange}</span>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="relative">
-                <div className="flex justify-between items-end mb-2 px-1">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                    Activity Volume
-                  </span>
-                  <span className="text-xs text-primary bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full font-medium">
-                    Last 7 Days
-                  </span>
-                </div>
-                <div className="h-24 w-full bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent rounded-lg border border-blue-100 dark:border-blue-900/30 overflow-hidden relative">
-                  <svg
-                    className="absolute bottom-0 left-0 right-0 w-full h-full"
-                    preserveAspectRatio="none"
-                    viewBox="0 0 100 50"
-                  >
-                    <defs>
-                      <linearGradient id="recent-activity-gradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M0,50 L0,30 C10,25 20,40 30,20 C40,5 50,30 60,15 C70,25 80,10 90,20 L100,10 L100,50 Z"
-                      fill="url(#recent-activity-gradient)"
-                      stroke="none"
-                    />
-                    <path
-                      d="M0,30 C10,25 20,40 30,20 C40,5 50,30 60,15 C70,25 80,10 90,20 L100,10"
-                      fill="none"
-                      stroke="#3b82f6"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                  <div className="absolute top-[20%] left-[60%] w-2.5 h-2.5 bg-primary rounded-full border-2 border-white dark:border-gray-800 shadow-md transform -translate-x-1/2 -translate-y-1/2 z-10" />
-                  <div className="absolute top-[5%] left-[60%] transform -translate-x-1/2 bg-gray-900 text-white text-xs py-0.5 px-2 rounded opacity-90 shadow-lg">
-                    {campaignMetrics.highlight}
+                <div className="flex-grow flex flex-col pt-2 min-h-0">
+                  <div className="flex items-center justify-between mb-6 flex-shrink-0">
+                    <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                      Activity Volume
+                    </h3>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-primary bg-blue-100/50 hover:bg-blue-100 dark:bg-primary/20 dark:hover:bg-primary/30 transition-colors px-3 py-1.5 rounded-full flex items-center gap-1"
+                      aria-label="Select period"
+                    >
+                      Last 7 Days
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="relative w-full h-40 flex items-end justify-between px-2 gap-2 flex-shrink-0">
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-0">
+                      <div className="border-t border-dashed border-slate-100 dark:border-slate-600 w-full h-px" />
+                      <div className="border-t border-dashed border-slate-100 dark:border-slate-600 w-full h-px" />
+                      <div className="border-t border-dashed border-slate-100 dark:border-slate-600 w-full h-px" />
+                      <div className="border-t border-dashed border-slate-100 dark:border-slate-600 w-full h-px" />
+                    </div>
+                    {[
+                      { height: 30, muted: true },
+                      { height: 45, muted: true },
+                      { height: 35, muted: true },
+                      { height: 55, muted: false, fill: "bg-blue-100", hoverFill: "group-hover:bg-blue-200" },
+                      { height: 75, highlight: true, value: campaignMetrics.highlight },
+                      { height: 60, muted: false, fill: "bg-blue-200", hoverFill: "group-hover:bg-blue-300" },
+                      { height: 40, muted: true },
+                    ].map((bar, i) => (
+                      <div
+                        key={i}
+                        className="group relative w-full h-full flex items-end flex-1 min-w-0"
+                      >
+                        {bar.highlight ? (
+                          <div
+                            className="w-full bar-gradient rounded-t-md shadow-lg shadow-blue-500/20 relative z-10 transition-transform hover:scale-y-105 origin-bottom"
+                            style={{ height: `${bar.height}%` }}
+                          >
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-slate-900 text-white text-[10px] font-bold py-1 px-2 rounded flex flex-col items-center whitespace-nowrap z-20">
+                              {bar.value}
+                              <div className="w-1.5 h-1.5 bg-slate-900 rotate-45 absolute -bottom-0.5" aria-hidden />
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className={`w-full rounded-t-md transition-all ${bar.muted ? "bg-slate-200 opacity-50 group-hover:bg-primary/30 dark:bg-slate-600 dark:group-hover:bg-primary/30" : `${bar.fill ?? ""} ${bar.hoverFill ?? "group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40"}`}`}
+                            style={{ height: `${bar.height}%` }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between px-2 mt-3 text-xs text-slate-500 dark:text-slate-400 font-medium flex-shrink-0">
+                    <span className="w-full text-center">Mon</span>
+                    <span className="w-full text-center">Tue</span>
+                    <span className="w-full text-center">Wed</span>
+                    <span className="w-full text-center">Thu</span>
+                    <span className="w-full text-center text-primary font-bold">Fri</span>
+                    <span className="w-full text-center">Sat</span>
+                    <span className="w-full text-center">Sun</span>
                   </div>
                 </div>
               </div>
