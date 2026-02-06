@@ -425,22 +425,8 @@ export default function DashboardOverviewModern({
               change={conversionChange}
               progress={85}
             />
-            <DealMetricCard
-              icon={Briefcase}
-              iconBg="bg-purple-50 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400"
-              value={String(activeDeals)}
-              label="Active Deals"
-              change={activeDealsChange}
-              trend={activeDealsTrend}
-            />
-            <DealMetricCard
-              icon={PieChart}
-              iconBg="bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400"
-              value={avgDealSize}
-              label="Avg Deal Size"
-              change={avgDealSizeChange}
-              trend="up"
-            />
+            <ActiveDealsCard value={activeDeals} change={activeDealsChange} />
+            <DealSizeCard value={avgDealSize} change={avgDealSizeChange} />
           </div>
           <div className="py-2.5">
             <div className="flex items-center justify-between mb-4">
@@ -1082,6 +1068,145 @@ function PipelineValueCard({ value }: PipelineValueCardProps) {
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ActiveDealsCardProps {
+  value: number;
+  change: string;
+}
+
+function ActiveDealsCard({ value, change }: ActiveDealsCardProps) {
+  return (
+    <div className="group relative overflow-hidden bg-white/80 dark:bg-gray-800/60 p-5 rounded-2xl border border-slate-100 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              Pipeline Health
+            </p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              Active Deals
+            </p>
+          </div>
+          <button
+            type="button"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-gray-700/50 text-slate-500 dark:text-slate-400 transition-colors"
+            aria-label="Active deals options"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="relative flex-1 flex flex-col items-center justify-center py-6">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-indigo-50 dark:bg-indigo-900/20 blur-[60px] rounded-full pointer-events-none" aria-hidden />
+          <div className="relative z-10 flex flex-col items-center justify-center text-center">
+            <span className="text-6xl font-bold text-slate-900 dark:text-white tracking-tight">
+              {value}
+            </span>
+            <div className="flex items-center gap-1 mt-2 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold">{change} vs last month</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/50 mt-2">
+          <div className="flex -space-x-2">
+            {["AM", "JK", "BL"].map((initials) => (
+              <div
+                key={initials}
+                className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300 flex items-center justify-center shadow-sm"
+              >
+                {initials}
+              </div>
+            ))}
+            <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-50 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300 flex items-center justify-center shadow-sm">
+              +4
+            </div>
+          </div>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-[10px] font-bold text-primary hover:text-primary-hover bg-indigo-50 dark:bg-primary/20 px-3 py-2 rounded-full hover:bg-indigo-100 dark:hover:bg-primary/30 transition-colors"
+            aria-label="Open full active deals report"
+          >
+            Full Report
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface DealSizeCardProps {
+  value: string;
+  change: string;
+}
+
+function DealSizeCard({ value, change }: DealSizeCardProps) {
+  return (
+    <div className="group relative overflow-hidden bg-white/80 dark:bg-gray-800/60 p-5 rounded-2xl border border-slate-100 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="absolute right-[-2rem] top-[-1rem] text-slate-200 dark:text-slate-700 opacity-30 select-none pointer-events-none transform rotate-12 z-0" aria-hidden>
+        <DollarSign className="w-[180px] h-[180px]" strokeWidth={1.5} />
+      </div>
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              Pipeline Health
+            </p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              Deal Size
+            </p>
+          </div>
+          <button
+            type="button"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-gray-700/50 text-slate-500 dark:text-slate-400 transition-colors"
+            aria-label="Deal size options"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="relative flex-1 flex flex-col items-center justify-center py-6">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-emerald-50 dark:bg-emerald-900/20 blur-[60px] rounded-full pointer-events-none" aria-hidden />
+          <div className="relative z-10 flex flex-col items-center justify-center text-center">
+            <span className="text-5xl font-bold text-slate-900 dark:text-white tracking-tight">
+              {value}
+            </span>
+            <div className="flex items-center gap-1 mt-3 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold">{change} vs last month</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/50 mt-2">
+          <div className="flex -space-x-2">
+            {["AM", "JK", "BL"].map((initials) => (
+              <div
+                key={initials}
+                className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300 flex items-center justify-center shadow-sm"
+              >
+                {initials}
+              </div>
+            ))}
+            <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-50 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300 flex items-center justify-center shadow-sm">
+              +4
+            </div>
+          </div>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-[10px] font-bold text-primary hover:text-primary-hover bg-indigo-50 dark:bg-primary/20 px-3 py-2 rounded-full hover:bg-indigo-100 dark:hover:bg-primary/30 transition-colors"
+            aria-label="Open full deal size report"
+          >
+            Full Report
+            <ArrowRight className="w-3 h-3" />
+          </button>
         </div>
       </div>
     </div>
