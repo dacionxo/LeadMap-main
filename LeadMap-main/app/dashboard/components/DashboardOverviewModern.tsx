@@ -427,13 +427,10 @@ export default function DashboardOverviewModern({
               change={pipelineChange}
               trend="up"
             />
-            <DealMetricCard
-              icon={Zap}
-              iconBg="bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400"
+            <ConversionRateCard
               value={conversionRate}
-              label="Conversion Rate"
               change={conversionChange}
-              trend="up"
+              progress={85}
             />
             <DealMetricCard
               icon={Briefcase}
@@ -945,6 +942,147 @@ function DealMetricCard({
       <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">
         {label}
       </p>
+    </div>
+  );
+}
+
+interface ConversionRateCardProps {
+  value: string;
+  change: string;
+  progress: number;
+}
+
+function ConversionRateCard({ value, change, progress }: ConversionRateCardProps) {
+  const clampedProgress = Math.min(100, Math.max(0, progress));
+  const progressOffset = 100 - clampedProgress;
+  return (
+    <div className="group relative overflow-hidden bg-white/80 dark:bg-gray-800/60 p-5 rounded-2xl border border-slate-100 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(93,135,255,0.08)_0%,transparent_50%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,0.06)_0%,transparent_50%),radial-gradient(circle_at_0%_80%,rgba(245,158,11,0.06)_0%,transparent_50%)] opacity-70 pointer-events-none" aria-hidden />
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              Pipeline Health
+            </p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              Conversion Funnel
+            </p>
+          </div>
+          <button
+            type="button"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-gray-700/50 text-slate-400 dark:text-slate-500 transition-colors"
+            aria-label="Conversion funnel options"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="relative flex-1 flex items-center justify-center py-4">
+          <div className="absolute w-24 h-24 bg-primary/10 blur-[40px] rounded-full pointer-events-none" aria-hidden />
+          <div className="relative w-32 h-32">
+            <svg className="w-full h-full -rotate-90 drop-shadow-sm" viewBox="0 0 200 200">
+              <circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="transparent"
+                stroke="rgba(203, 213, 225, 0.35)"
+                strokeWidth="14"
+                className="dark:stroke-slate-800/60"
+              />
+              <circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="transparent"
+                stroke="#6366F1"
+                strokeDasharray="280 550"
+                strokeDashoffset="0"
+                strokeLinecap="round"
+                strokeWidth="16"
+                className="transition-all duration-500"
+              />
+              <circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="transparent"
+                stroke="#EC4899"
+                strokeDasharray="90 550"
+                strokeDashoffset="-295"
+                strokeLinecap="round"
+                strokeWidth="14"
+                className="transition-all duration-500"
+              />
+              <circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="transparent"
+                stroke="#F59E0B"
+                strokeDasharray="50 550"
+                strokeDashoffset="-400"
+                strokeLinecap="round"
+                strokeWidth="14"
+                className="transition-all duration-500"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-slate-900 to-slate-500 dark:from-white dark:to-slate-400 tracking-tight">
+                {value}
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1">
+                Conversion Rate
+              </span>
+              <span className="mt-1 text-[10px] font-semibold text-emerald-500 dark:text-emerald-400">
+                {change}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+            <span className="font-semibold">Monthly Target</span>
+            <span className="font-bold text-slate-900 dark:text-white">
+              {clampedProgress}%
+            </span>
+          </div>
+          <div className="relative h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-pink-500 to-amber-400 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+              style={{ width: `${clampedProgress}%` }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -ml-1.5 w-3 h-3 bg-white border-2 border-amber-400 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.6)]"
+              style={{ left: `${clampedProgress}%` }}
+            />
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex -space-x-2">
+              {["AM", "JK", "BL"].map((initials) => (
+                <div
+                  key={initials}
+                  className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300 flex items-center justify-center shadow-sm"
+                >
+                  {initials}
+                </div>
+              ))}
+              <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-50 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300 flex items-center justify-center shadow-sm">
+                +4
+              </div>
+            </div>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 text-[10px] font-bold text-primary hover:text-primary-hover bg-primary/10 px-3 py-1.5 rounded-full transition-colors"
+              aria-label="Open full conversion report"
+            >
+              Full Report
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
