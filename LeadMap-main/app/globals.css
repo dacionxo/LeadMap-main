@@ -698,6 +698,38 @@
   }
 }
 
+/* Conversion Funnel / glass panel */
+.glass-panel {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Notifications timeline (CRM) - vertical line between dots */
+.notifications-timeline .notifications-timeline-line::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  bottom: -24px;
+  left: 7px;
+  width: 2px;
+  background-color: #f1f5f9;
+  z-index: 0;
+}
+.dark .notifications-timeline .notifications-timeline-line::before {
+  background-color: rgb(51 65 85);
+}
+.notifications-timeline .notifications-timeline-item:last-child .notifications-timeline-line::before {
+  display: none;
+}
+
+/* Active Campaigns - bar chart gradient */
+.bar-gradient {
+  background: linear-gradient(180deg, #3b82f6 0%, #93c5fd 100%);
+}
+.bar-gradient-muted {
+  background: linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 100%);
+}
+
 /* Dashboard Welcome Card - SaaS style */
 .dashboard-welcome-card {
   position: relative;
