@@ -65,9 +65,10 @@ interface MapViewProps {
   listings: Lead[];
   loading: boolean;
   onStreetViewListingClick?: (leadId: string) => void; // NEW: Callback to open property details modal
+  fullScreen?: boolean;
 }
 
-const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading, onStreetViewListingClick }) => {
+const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading, onStreetViewListingClick, fullScreen }) => {
   const [useGoogleMaps, setUseGoogleMaps] = useState<boolean | null>(null);
   const [googleMapsFailed, setGoogleMapsFailed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -258,6 +259,7 @@ const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading, onStreet
         loading={loading}
         onError={handleGoogleMapsError}
         onStreetViewListingClick={onStreetViewListingClick}
+        fullScreen={fullScreen}
       />
     );
   }

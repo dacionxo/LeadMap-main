@@ -44,6 +44,7 @@ interface GoogleMapsViewEnhancedProps {
   loading: boolean;
   onError?: () => void;
   onStreetViewListingClick?: (leadId: string) => void; // NEW: Callback to open property details modal
+  fullScreen?: boolean;
 }
 
 const MapComponent: React.FC<{ 
@@ -51,7 +52,8 @@ const MapComponent: React.FC<{
   onStreetViewClick: (lead: Lead) => void; // CHANGED: Pass full Lead object
   onMapReady: (map: google.maps.Map) => void;
   onError?: () => void;
-}> = ({ leads, onStreetViewClick, onMapReady, onError }) => {
+  fullHeight?: boolean;
+}> = ({ leads, onStreetViewClick, onMapReady, onError, fullHeight }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
@@ -543,7 +545,13 @@ const MapComponent: React.FC<{
     }
   }, [map, leads, infoWindow, onStreetViewClick, openStreetViewImmediately]);
 
-  return <div ref={mapRef} style={{ width: '100%', height: '600px' }} />;
+  return (
+    <div
+      ref={mapRef}
+      className={fullHeight ? 'h-full' : undefined}
+      style={{ width: '100%', height: fullHeight ? '100%' : '600px' }}
+    />
+  );
 };
 
 const render = (status: Status, onError?: () => void): React.ReactElement => {
@@ -578,7 +586,7 @@ const render = (status: Status, onError?: () => void): React.ReactElement => {
   }
 };
 
-const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActive, listings, loading, onError, onStreetViewListingClick }) => {
+const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActive, listings, loading, onError, onStreetViewListingClick, fullScreen }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -762,100 +770,107 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
   }
 
   return (
-    <div className="w-full">
-      <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-900">Property Map</h2>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">
-            {listings.length} propert{listings.length !== 1 ? 'ies' : 'y'} found
-          </span>
-          <div className="flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span>Expired</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span>Geo</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span>Enriched</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span>Default</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="mb-4 relative">
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              searchAddress(e.target.value);
-            }}
-            onFocus={() => {
-              if (searchResults.length > 0) {
-                setShowSearchResults(true);
-              }
-            }}
-            onBlur={() => {
-              setTimeout(() => setShowSearchResults(false), 200);
-            }}
-            placeholder="Search for an address or location..."
-            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-          </div>
-          {isSearching && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            </div>
-          )}
-        </div>
-
-        {/* Search Results Dropdown */}
-        {showSearchResults && searchResults.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-            {searchResults.map((result, index) => (
-              <div
-                key={index}
-                onClick={() => handleSearchResultClick(result)}
-                className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-              >
-                <div className="font-medium text-gray-900 text-sm">
-                  {result.description}
+    <div className={fullScreen ? 'w-full h-full min-h-0' : 'w-full'}>
+      {!fullScreen && (
+        <>
+          <div className="mb-4 flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-900">Property Map</h2>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-500">
+                {listings.length} propert{listings.length !== 1 ? 'ies' : 'y'} found
+              </span>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span>Expired</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span>Geo</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span>Enriched</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                  <span>Default</span>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        )}
 
-        {showSearchResults && searchResults.length === 0 && searchQuery.length >= 3 && !isSearching && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
-            No results found
+          {/* Search Bar */}
+          <div className="mb-4 relative">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  searchAddress(e.target.value);
+                }}
+                onFocus={() => {
+                  if (searchResults.length > 0) {
+                    setShowSearchResults(true);
+                  }
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowSearchResults(false), 200);
+                }}
+                placeholder="Search for an address or location..."
+                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+              </div>
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                </div>
+              )}
+            </div>
+
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {searchResults.map((result, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleSearchResultClick(result)}
+                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="font-medium text-gray-900 text-sm">
+                      {result.description}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showSearchResults && searchResults.length === 0 && searchQuery.length >= 3 && !isSearching && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+                No results found
+              </div>
+            )}
           </div>
-        )}
+        </>
+      )}
+
+      <div className={fullScreen ? 'h-full min-h-0' : undefined}>
+        <Wrapper apiKey={GOOGLE_MAPS_API_KEY} render={(status) => render(status, onError)}>
+          <MapComponent 
+            leads={listings} 
+            onStreetViewClick={handleStreetViewClickFromMap}
+            onMapReady={handleMapReady}
+            onError={onError}
+            fullHeight={fullScreen}
+          />
+        </Wrapper>
       </div>
-      
-      <Wrapper apiKey={GOOGLE_MAPS_API_KEY} render={(status) => render(status, onError)}>
-        <MapComponent 
-          leads={listings} 
-          onStreetViewClick={handleStreetViewClickFromMap}
-          onMapReady={handleMapReady}
-          onError={onError}
-        />
-      </Wrapper>
     </div>
   );
 };

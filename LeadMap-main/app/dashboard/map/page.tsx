@@ -266,77 +266,15 @@ export default function MapPage() {
               </button>
             </div>
 
-            {/* Map Component */}
+            {/* Map Component - full screen */}
             <div className="w-full h-full">
               <MapView
                 isActive={true}
                 listings={leads}
                 loading={loading}
                 onStreetViewListingClick={handleStreetViewClick}
+                fullScreen
               />
-            </div>
-
-            {/* Map Legend - Bottom Center */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 px-4 py-2">
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span className="text-gray-700 dark:text-gray-300">Lead</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-                  <span className="text-gray-700 dark:text-gray-300">Property</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-2 bg-orange-500 rounded"></div>
-                  <span className="text-gray-700 dark:text-gray-300">Highlight Map</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-0.5 bg-gray-500"></div>
-                  <span className="text-gray-700 dark:text-gray-300">Route</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Sidebar - Results (Narrower for larger map) */}
-          <div className="w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
-            <div className="flex-1 overflow-auto p-4">
-              {leads.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    There are no properties to display. Try reloading the map, changing your filters/location, or zooming into a smaller area.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {leads.slice(0, 15).map((lead) => (
-                    <div
-                      key={lead.id}
-                      className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
-                    >
-                      {lead.primary_photo && (
-                        <img
-                          src={lead.primary_photo}
-                          alt={lead.address}
-                          className="w-full h-24 object-cover rounded mb-2"
-                        />
-                      )}
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1">
-                        {lead.address}
-                      </h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                        {lead.city}, {lead.state} {lead.zip}
-                      </p>
-                      {lead.price && (
-                        <p className="text-base font-bold text-gray-900 dark:text-white">
-                          ${lead.price.toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>
