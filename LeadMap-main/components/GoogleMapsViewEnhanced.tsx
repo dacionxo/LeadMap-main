@@ -62,6 +62,7 @@ const MapComponent: React.FC<{
   const [infoWindow, setInfoWindow] = useState<google.maps.InfoWindow | null>(null);
   const streetViewMarkerRef = useRef<google.maps.Marker | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number | null>(null);
+  const lastZoomRef = useRef<number | null>(null);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInitializedRef = useRef(false);
   // Store callbacks in refs to avoid dependency issues
@@ -380,7 +381,8 @@ const MapComponent: React.FC<{
           latLngBounds: usBounds,
           strictBounds: false, // Allow some flexibility at edges
         },
-        streetViewControl: true, // Enable Street View Pegman control
+        gestureHandling: 'greedy', // Allow scroll and zoom without modifier for instant zoom
+        streetViewControl: true,
         mapTypeControl: true,
         fullscreenControl: true,
         zoomControl: true,
@@ -643,7 +645,11 @@ const MapComponent: React.FC<{
     setMarkers(newMarkers);
     markersRef.current = [...newMarkers];
 
-    if (newMarkers.length > 0) {
+    // Only fit bounds when leads/map changed — not when user zoomed (so zoom is not overridden)
+    const zoomTriggeredRun =
+      lastZoomRef.current !== null && lastZoomRef.current !== (zoomLevel ?? map.getZoom());
+    lastZoomRef.current = zoomLevel ?? map.getZoom() ?? null;
+    if (newMarkers.length > 0 && !zoomTriggeredRun) {
       const bounds = new google.maps.LatLngBounds();
       newMarkers.forEach(marker => {
         const position = marker.getPosition();

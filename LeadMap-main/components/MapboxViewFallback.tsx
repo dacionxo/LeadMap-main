@@ -57,6 +57,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<number | null>(null);
+  const lastZoomRef = useRef<number | null>(null);
   const geocodingInProgress = useRef<Set<string>>(new Set());
 
   // Format price for marker label: $1.2M, $850k, $675k
@@ -549,6 +550,12 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       ? sampleLeadsForNationwideView(leadsWithCoords)
       : leadsWithCoords;
 
+    // Only fit bounds when listings/map changed — not when user zoomed (so zoom is not overridden)
+    const zoomTriggeredRun =
+      lastZoomRef.current !== null &&
+      lastZoomRef.current !== (zoomLevel ?? map.current.getZoom());
+    lastZoomRef.current = zoomLevel ?? map.current.getZoom() ?? null;
+
     // Add markers for visible leads with coordinates
     visibleLeadsWithCoords.forEach((lead) => {
       const el = document.createElement("div");
@@ -569,11 +576,12 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       bounds.extend([lead.longitude!, lead.latitude!]);
     });
 
-    // Fit map to show markers with coordinates first
-    if (visibleLeadsWithCoords.length > 0) {
+    // Fit map to show markers only when not zoom-triggered (so user can zoom in without reset)
+    if (visibleLeadsWithCoords.length > 0 && !zoomTriggeredRun) {
       map.current.fitBounds(bounds, {
         padding: { top: 50, bottom: 50, left: 50, right: 50 },
         maxZoom: 15,
+        duration: 0,
       });
     }
 
