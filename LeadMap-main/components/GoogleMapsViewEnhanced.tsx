@@ -138,30 +138,112 @@ const MapComponent: React.FC<{
     }
   }, [leads, onStreetViewClick]);
 
-  // Function to get marker color based on lead type
-  const getMarkerColor = (lead: Lead) => {
-    if (lead.expired) return '#ef4444';
-    if (lead.geo_source) return '#3b82f6';
-    if (lead.owner_email || (lead.enrichment_confidence && lead.enrichment_confidence > 0)) return '#10b981';
-    return '#8b5cf6';
+  // Build property details popup HTML (1:1 card design: image, For Sale, price, address, beds/sqft, marker tip)
+  const buildPropertyPopupHTML = (
+    lead: Lead,
+    opts: { streetViewBtnId: string; closeBtnId: string }
+  ): string => {
+    const primary = '#6366f1';
+    const imgSrc =
+      lead.primary_photo ||
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAHx1cX5YzK46YGrGO1wOmFsj9vY1F5FShgxiUm7ngkY9NjUN4QMRoG1P7qgn8LR-cJQVi3rR5hpxU3XqOipYwRIdzfw0uHgvaZyAz89vHlZJgb-PxQmYwEfqci-niVXH3xvw7hs-VjFZx9FziiPFg-SoF4F7K4-lqGSSEdwjqosG1PI1rbg8RMUh-qSa4gs5wC7YQvJK02f6Zgb8wJKaUwwuOKAV_IPE0-snAXIcS-B3SPawMf_OjpTl9RVeo6KX4JeBSL2n1UJnC1';
+    const priceStr = lead.price
+      ? `$${lead.price.toLocaleString()}`
+      : '—';
+    const address = lead.address || 'Address not available';
+    const cityStateZip = [lead.city, lead.state, lead.zip].filter(Boolean).join(', ');
+    const bedsStr = lead.beds
+      ? `${lead.beds} Bed${lead.beds !== 1 ? 's' : ''}`
+      : '—';
+    const sqftStr = lead.sqft
+      ? `${lead.sqft.toLocaleString()} sqft`
+      : '—';
+    const viewUrl = lead.url || '#';
+    return `
+    <div style="position:relative;width:100%;max-width:240px;font-family:Inter,system-ui,sans-serif;">
+      <div style="position:relative;background:#fff;border-radius:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid rgba(226,232,240,0.6);">
+        <button id="${opts.closeBtnId}" type="button" style="position:absolute;top:10px;right:10px;z-index:20;display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);border-radius:9999px;border:1px solid rgba(0,0,0,0.05);cursor:pointer;color:#64748b;font-size:16px;padding:0;">
+          <span style="font-size:16px;">✕</span>
+        </button>
+        <div style="width:100%;aspect-ratio:1;background:#f1f5f9;overflow:hidden;position:relative;">
+          <img alt="Property" src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%22240%22 viewBox=%220 0 240 240%22%3E%3Crect fill=%22%23e2e8f0%22 width=%22240%22 height=%22240%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%2294a3b8%22 font-size=%2214%22%3ENo image%3C/text%3E%3C/svg%3E'"/>
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.05),transparent);pointer-events:none;"></div>
+        </div>
+        <div style="padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:${primary};margin-bottom:4px;">For Sale</div>
+              <h2 style="margin:0;font-size:18px;font-weight:700;color:#0f172a;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${priceStr}</h2>
+            </div>
+            <div style="display:flex;gap:4px;">
+              <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" style="padding:8px;color:#64748b;background:transparent;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;" title="View Details">
+                <span style="font-size:18px;">👁</span>
+              </a>
+              <button id="${opts.streetViewBtnId}" type="button" style="padding:8px;color:#64748b;background:transparent;border:none;border-radius:8px;cursor:pointer;display:flex;" title="Street View">
+                <span style="font-size:18px;">🗺</span>
+              </button>
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <p style="margin:0;font-size:14px;font-weight:500;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${address.replace(/</g, '&lt;')}</p>
+            <p style="margin:2px 0 0 0;font-size:12px;color:#64748b;">${cityStateZip.replace(/</g, '&lt;')}</p>
+          </div>
+          <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(241,245,249,0.8);display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:500;color:#64748b;">
+            <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:14px;opacity:0.7;">🛏</span><span>${bedsStr}</span></div>
+            <div style="width:4px;height:4px;background:#cbd5e1;border-radius:9999px;"></div>
+            <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:14px;opacity:0.7;">⊡</span><span>${sqftStr}</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%) rotate(45deg);width:16px;height:16px;background:#fff;border-right:1px solid rgba(226,232,240,0.6);border-bottom:1px solid rgba(226,232,240,0.6);"></div>
+    </div>
+    `;
   };
 
-  // Function to get marker icon
-  const getMarkerIcon = (lead: Lead) => {
-    const color = getMarkerColor(lead);
-    const symbol = lead.expired ? '!' : 
-                   lead.geo_source ? '📍' : 
-                   (lead.owner_email || lead.enrichment_confidence) ? '✓' : '🏠';
-    
+  // Format price for marker label: $1.2M, $850k, $675k
+  const formatPrice = (price: number): string => {
+    if (!price || price <= 0) return '—';
+    if (price >= 1e6) return `$${(price / 1e6).toFixed(1).replace(/\.0$/, '')}M`;
+    if (price >= 1e3) return `$${Math.round(price / 1e3)}k`;
+    return `$${price}`;
+  };
+
+  // Property price marker: pill with dynamic price and pointed bottom (default + active styles)
+  const getMarkerIcon = (lead: Lead, isActive = false) => {
+    const priceLabel = formatPrice(lead.price);
+    const primary = '#0F62FE';
+    const surfaceLight = '#FFFFFF';
+    const borderSlate = '#e2e8f0';
+    const textSlate = '#1e293b';
+    const bg = isActive ? primary : surfaceLight;
+    const textColor = isActive ? '#ffffff' : textSlate;
+    const borderColor = isActive ? '#3b82f6' : borderSlate;
+    // Pill width scales with label length; min width for short labels
+    const pillW = Math.max(56, priceLabel.length * 10);
+    const pillH = 24;
+    const pointSize = 6;
+    const totalH = pillH + pointSize;
+    const totalW = pillW + 8;
+    const cx = totalW / 2;
+    const svg = `
+      <svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="markerShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.12"/>
+          </filter>
+        </defs>
+        <!-- Pill body (rounded rect) -->
+        <rect x="4" y="0" width="${pillW}" height="${pillH}" rx="12" ry="12" fill="${bg}" stroke="${borderColor}" stroke-width="1" filter="url(#markerShadow)"/>
+        <!-- Pin point (diamond) -->
+        <path d="M${cx} ${totalH} L${cx - pointSize} ${pillH} L${cx} ${pillH + pointSize * 0.6} L${cx + pointSize} ${pillH} Z" fill="${bg}" stroke="${borderColor}" stroke-width="1"/>
+        <!-- Price text -->
+        <text x="${cx}" y="${pillH / 2 + 4}" text-anchor="middle" fill="${textColor}" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="${isActive ? '700' : '600'}">${priceLabel}</text>
+      </svg>
+    `;
     return {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-        <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="9" fill="${color}" stroke="#ffffff" stroke-width="1.5"/>
-          <text x="10" y="13" text-anchor="middle" fill="white" font-size="8" font-weight="bold">${symbol}</text>
-        </svg>
-      `),
-      scaledSize: new google.maps.Size(20, 20),
-      anchor: new google.maps.Point(10, 10)
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(totalW, totalH),
+      anchor: new google.maps.Point(cx, totalH),
     };
   };
 
@@ -320,84 +402,32 @@ const MapComponent: React.FC<{
           if (infoWindow) {
             infoWindow.close();
           }
-          
-          const address = [lead.address, lead.city, lead.state, lead.zip]
-            .filter(Boolean)
-            .join(', ');
-          
-          // Create a div for the info window content
+          const streetViewBtnId = `street-view-btn-${lead.id}`;
+          const closeBtnId = `close-btn-${lead.id}`;
           const contentDiv = document.createElement('div');
-          contentDiv.style.padding = '8px';
-          contentDiv.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          contentDiv.style.maxWidth = '300px';
-          
-          contentDiv.innerHTML = `
-            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
-              ${lead.address || 'Address not available'}
-            </h3>
-            <p style="margin: 0 0 4px 0; color: #6b7280; font-size: 14px;">
-              ${lead.city}, ${lead.state} ${lead.zip || ''}
-            </p>
-            <div style="display: flex; gap: 12px; margin: 8px 0;">
-              <div>
-                <span style="color: #059669; font-weight: bold; font-size: 18px;">
-                  $${lead.price.toLocaleString()}
-                </span>
-                ${lead.price_drop_percent > 0 ? `
-                  <span style="color: #dc2626; font-size: 14px; margin-left: 4px;">
-                    (${lead.price_drop_percent.toFixed(1)}% off)
-                  </span>
-                ` : ''}
-              </div>
-            </div>
-            <div style="display: flex; gap: 12px; margin: 8px 0; font-size: 14px; color: #6b7280;">
-              ${lead.beds ? `<span>${lead.beds} bed${lead.beds !== 1 ? 's' : ''}</span>` : ''}
-              ${lead.sqft ? `<span>${lead.sqft.toLocaleString()} sqft</span>` : ''}
-              ${lead.year_built ? `<span>Built ${lead.year_built}</span>` : ''}
-            </div>
-            ${lead.days_on_market > 0 ? `
-              <p style="margin: 4px 0 0 0; color: #f59e0b; font-size: 14px;">
-                ${lead.days_on_market} days on market
-              </p>
-            ` : ''}
-            <div style="margin-top: 12px; display: flex; gap: 8px;">
-              <a href="${lead.url}" target="_blank" rel="noopener noreferrer" 
-                 style="display: inline-block; background: #3b82f6; color: white; 
-                        padding: 6px 12px; border-radius: 4px; text-decoration: none; 
-                        font-size: 14px; font-weight: 500;">
-                View Property
-              </a>
-              <button id="street-view-btn-${lead.id}"
-                 style="background: #10b981; color: white; border: none;
-                        padding: 6px 12px; border-radius: 4px; cursor: pointer; 
-                        font-size: 14px; font-weight: 500;">
-                Street View
-              </button>
-            </div>
-          `;
-          
+          contentDiv.innerHTML = buildPropertyPopupHTML(lead, {
+            streetViewBtnId,
+            closeBtnId,
+          });
           if (infoWindow) {
             infoWindow.setContent(contentDiv);
             infoWindow.open(map, marker);
-            
-            // Add event listener to Street View button after info window is open
             window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
-              const btn = document.getElementById(`street-view-btn-${lead.id}`);
-              if (btn) {
-                btn.addEventListener('click', (e) => {
+              const closeBtn = document.getElementById(closeBtnId);
+              if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                  if (infoWindow) infoWindow.close();
+                });
+              }
+              const streetViewBtn = document.getElementById(streetViewBtnId);
+              if (streetViewBtn) {
+                streetViewBtn.addEventListener('click', (e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  
-                  // Close info window first
-                  if (infoWindow) {
-                    infoWindow.close();
-                  }
-                  
-                  // Immediately open Street View on the map if coordinates are available
+                  if (infoWindow) infoWindow.close();
                   if (lead.latitude && lead.longitude && map) {
                     openStreetViewImmediately(lead.latitude, lead.longitude, map, lead);
                   } else {
-                    // Fallback: open modal if no coordinates
                     onStreetViewClick(lead);
                   }
                 });
@@ -434,88 +464,35 @@ const MapComponent: React.FC<{
                 icon: getMarkerIcon(lead)
               });
 
-              // Add click listener (same as above)
               marker.addListener('click', () => {
-                if (infoWindow) {
-                  infoWindow.close();
-                }
-                
-                const addressStr = [lead.address, lead.city, lead.state, lead.zip]
-                  .filter(Boolean)
-                  .join(', ');
-                
+                if (infoWindow) infoWindow.close();
+                const streetViewBtnId = `street-view-btn-geocode-${lead.id}`;
+                const closeBtnId = `close-btn-geocode-${lead.id}`;
                 const contentDiv = document.createElement('div');
-                contentDiv.style.padding = '8px';
-                contentDiv.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                contentDiv.style.maxWidth = '300px';
-                
-                contentDiv.innerHTML = `
-                  <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
-                    ${lead.address || 'Address not available'}
-                  </h3>
-                  <p style="margin: 0 0 4px 0; color: #6b7280; font-size: 14px;">
-                    ${lead.city}, ${lead.state} ${lead.zip || ''}
-                  </p>
-                  <div style="display: flex; gap: 12px; margin: 8px 0;">
-                    <div>
-                      <span style="color: #059669; font-weight: bold; font-size: 18px;">
-                        $${lead.price.toLocaleString()}
-                      </span>
-                      ${lead.price_drop_percent > 0 ? `
-                        <span style="color: #dc2626; font-size: 14px; margin-left: 4px;">
-                          (${lead.price_drop_percent.toFixed(1)}% off)
-                        </span>
-                      ` : ''}
-                    </div>
-                  </div>
-                  <div style="display: flex; gap: 12px; margin: 8px 0; font-size: 14px; color: #6b7280;">
-                    ${lead.beds ? `<span>${lead.beds} bed${lead.beds !== 1 ? 's' : ''}</span>` : ''}
-                    ${lead.sqft ? `<span>${lead.sqft.toLocaleString()} sqft</span>` : ''}
-                    ${lead.year_built ? `<span>Built ${lead.year_built}</span>` : ''}
-                  </div>
-                  ${lead.days_on_market > 0 ? `
-                    <p style="margin: 4px 0 0 0; color: #f59e0b; font-size: 14px;">
-                      ${lead.days_on_market} days on market
-                    </p>
-                  ` : ''}
-                  <div style="margin-top: 12px; display: flex; gap: 8px;">
-                    <a href="${lead.url}" target="_blank" rel="noopener noreferrer" 
-                       style="display: inline-block; background: #3b82f6; color: white; 
-                              padding: 6px 12px; border-radius: 4px; text-decoration: none; 
-                              font-size: 14px; font-weight: 500;">
-                      View Property
-                    </a>
-                    <button id="street-view-btn-geocode-${lead.id}"
-                       style="background: #10b981; color: white; border: none;
-                              padding: 6px 12px; border-radius: 4px; cursor: pointer; 
-                              font-size: 14px; font-weight: 500;">
-                      Street View
-                    </button>
-                  </div>
-                `;
-                
+                contentDiv.innerHTML = buildPropertyPopupHTML(lead, {
+                  streetViewBtnId,
+                  closeBtnId,
+                });
                 if (infoWindow) {
                   infoWindow.setContent(contentDiv);
                   infoWindow.open(map, marker);
-                  
                   window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
-                    const btn = document.getElementById(`street-view-btn-geocode-${lead.id}`);
-                    if (btn) {
-                      btn.addEventListener('click', (e) => {
+                    const closeBtn = document.getElementById(closeBtnId);
+                    if (closeBtn) {
+                      closeBtn.addEventListener('click', () => {
+                        if (infoWindow) infoWindow.close();
+                      });
+                    }
+                    const streetViewBtn = document.getElementById(streetViewBtnId);
+                    if (streetViewBtn) {
+                      streetViewBtn.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        
-                        // Close info window first
-                        if (infoWindow) {
-                          infoWindow.close();
-                        }
-                        
-                        // Get coordinates from geocoded location
+                        if (infoWindow) infoWindow.close();
                         const position = marker.getPosition();
                         if (position && map) {
                           openStreetViewImmediately(position.lat(), position.lng(), map, lead);
                         } else {
-                          // Fallback: open modal
                           onStreetViewClick(lead);
                         }
                       });

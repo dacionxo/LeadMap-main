@@ -58,113 +58,123 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const geocodingInProgress = useRef<Set<string>>(new Set());
 
-  // Function to get marker color based on lead type
-  const getMarkerColor = (lead: Lead): string => {
-    if (lead.expired) return "#ef4444"; // Red for expired leads
-    if (lead.geo_source) return "#3b82f6"; // Blue for geo-sourced leads
-    if (
-      lead.owner_email ||
-      (lead.enrichment_confidence && lead.enrichment_confidence > 0)
-    )
-      return "#10b981"; // Green for enriched leads
-    return "#8b5cf6"; // Purple for default/probate leads
+  // Format price for marker label: $1.2M, $850k, $675k
+  const formatPrice = (price: number): string => {
+    if (!price || price <= 0) return "—";
+    if (price >= 1e6)
+      return `$${(price / 1e6).toFixed(1).replace(/\.0$/, "")}M`;
+    if (price >= 1e3) return `$${Math.round(price / 1e3)}k`;
+    return `$${price}`;
   };
 
-  // Function to create marker HTML
-  const createMarkerHTML = (lead: Lead): string => {
-    const color = getMarkerColor(lead);
-    const symbol = lead.expired
-      ? "!"
-      : lead.geo_source
-        ? "📍"
-        : lead.owner_email || lead.enrichment_confidence
-          ? "✓"
-          : "🏠";
+  // Property price marker: pill with dynamic price and pointed bottom (default + active styles)
+  const createMarkerHTML = (lead: Lead, isActive = false): string => {
+    const priceLabel = formatPrice(lead.price);
+    const primary = "#0F62FE";
+    const surfaceLight = "#FFFFFF";
+    const borderSlate = "#e2e8f0";
+    const textSlate = "#1e293b";
+    const bg = isActive ? primary : surfaceLight;
+    const textColor = isActive ? "#ffffff" : textSlate;
+    const borderColor = isActive ? "#3b82f6" : borderSlate;
+    const boxShadow = isActive
+      ? "0 8px 20px -4px rgba(15, 98, 254, 0.4), 0 0 0 2px rgba(15, 98, 254, 0.2)"
+      : "0 4px 12px -2px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.08)";
 
     return `
       <div style="
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background-color: ${color};
-        border: 1.5px solid white;
-        display: flex;
+        position: relative;
+        cursor: pointer;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 9px;
-        font-weight: bold;
-        color: white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-        cursor: pointer;
-        line-height: 1;
-      ">${symbol}</div>
+      ">
+        <div style="
+          position: relative;
+          z-index: 1;
+          background: ${bg};
+          color: ${textColor};
+          padding: 6px 12px;
+          border-radius: 9999px;
+          font-family: Inter, system-ui, sans-serif;
+          font-size: ${isActive ? "14px" : "13px"};
+          font-weight: ${isActive ? "700" : "600"};
+          border: 1px solid ${borderColor};
+          box-shadow: ${boxShadow};
+          box-sizing: border-box;
+          white-space: nowrap;
+        ">${priceLabel}</div>
+        <div style="
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%) rotate(45deg);
+          bottom: -6px;
+          width: 12px;
+          height: 12px;
+          background: ${bg};
+          border-right: 1px solid ${borderColor};
+          border-bottom: 1px solid ${borderColor};
+          z-index: 0;
+        "></div>
+      </div>
     `;
   };
 
-  // Function to create popup content
+  // Property details popup card (1:1 design: image, For Sale, price, address, beds/sqft, marker tip)
   const createPopupContent = (lead: Lead): string => {
+    const primary = "#6366f1";
+    const imgSrc =
+      lead.primary_photo ||
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAHx1cX5YzK46YGrGO1wOmFsj9vY1F5FShgxiUm7ngkY9NjUN4QMRoG1P7qgn8LR-cJQVi3rR5hpxU3XqOipYwRIdzfw0uHgvaZyAz89vHlZJgb-PxQmYwEfqci-niVXH3xvw7hs-VjFZx9FziiPFg-SoF4F7K4-lqGSSEdwjqosG1PI1rbg8RMUh-qSa4gs5wC7YQvJK02f6Zgb8wJKaUwwuOKAV_IPE0-snAXIcS-B3SPawMf_OjpTl9RVeo6KX4JeBSL2n1UJnC1";
+    const priceStr = lead.price ? `$${lead.price.toLocaleString()}` : "—";
+    const address = lead.address || "Address not available";
+    const cityStateZip = [lead.city, lead.state, lead.zip]
+      .filter(Boolean)
+      .join(", ");
+    const bedsStr = lead.beds
+      ? `${lead.beds} Bed${lead.beds !== 1 ? "s" : ""}`
+      : "—";
+    const sqftStr = lead.sqft
+      ? `${lead.sqft.toLocaleString()} sqft`
+      : "—";
+    const viewUrl = lead.url || "#";
+    const safeAddress = address.replace(/</g, "&lt;");
+    const safeCity = cityStateZip.replace(/</g, "&lt;");
     return `
-      <div style="padding: 8px; max-width: 300px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
-          ${lead.address || "Address not available"}
-        </h3>
-        ${
-          lead.city && lead.state
-            ? `
-          <p style="margin: 0 0 4px 0; color: #6b7280; font-size: 14px;">
-            ${lead.city}, ${lead.state} ${lead.zip || ""}
-          </p>
-        `
-            : ""
-        }
-        <div style="display: flex; gap: 12px; margin: 8px 0;">
-          <div>
-            <span style="color: #059669; font-weight: bold; font-size: 18px;">
-              $${lead.price.toLocaleString()}
-            </span>
-            ${
-              lead.price_drop_percent > 0
-                ? `
-              <span style="color: #dc2626; font-size: 14px; margin-left: 4px;">
-                (${lead.price_drop_percent.toFixed(1)}% off)
-              </span>
-            `
-                : ""
-            }
+    <div style="position:relative;width:100%;max-width:240px;font-family:Inter,system-ui,sans-serif;">
+      <div style="position:relative;background:#fff;border-radius:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid rgba(226,232,240,0.6);">
+        <div style="width:100%;aspect-ratio:1;background:#f1f5f9;overflow:hidden;position:relative;">
+          <img alt="Property" src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%22240%22 viewBox=%220 0 240 240%22%3E%3Crect fill=%22%23e2e8f0%22 width=%22240%22 height=%22240%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%2294a3b8%22 font-size=%2214%22%3ENo image%3C/text%3E%3C/svg%3E'"/>
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.05),transparent);pointer-events:none;"></div>
+        </div>
+        <div style="padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:${primary};margin-bottom:4px;">For Sale</div>
+              <h2 style="margin:0;font-size:18px;font-weight:700;color:#0f172a;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${priceStr}</h2>
+            </div>
+            <div style="display:flex;gap:4px;">
+              <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" style="padding:8px;color:#64748b;background:transparent;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;" title="View Details">
+                <span style="font-size:18px;">👁</span>
+              </a>
+              <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" style="padding:8px;color:#64748b;background:transparent;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;" title="Street View">
+                <span style="font-size:18px;">🗺</span>
+              </a>
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <p style="margin:0;font-size:14px;font-weight:500;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safeAddress}</p>
+            <p style="margin:2px 0 0 0;font-size:12px;color:#64748b;">${safeCity}</p>
+          </div>
+          <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(241,245,249,0.8);display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:500;color:#64748b;">
+            <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:14px;opacity:0.7;">🛏</span><span>${bedsStr}</span></div>
+            <div style="width:4px;height:4px;background:#cbd5e1;border-radius:9999px;"></div>
+            <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:14px;opacity:0.7;">⊡</span><span>${sqftStr}</span></div>
           </div>
         </div>
-        <div style="display: flex; gap: 12px; margin: 8px 0; font-size: 14px; color: #6b7280;">
-          ${lead.beds ? `<span>${lead.beds} bed${lead.beds !== 1 ? "s" : ""}</span>` : ""}
-          ${lead.sqft ? `<span>${lead.sqft.toLocaleString()} sqft</span>` : ""}
-          ${lead.year_built ? `<span>Built ${lead.year_built}</span>` : ""}
-        </div>
-        ${
-          lead.days_on_market > 0
-            ? `
-          <p style="margin: 4px 0 0 0; color: #f59e0b; font-size: 14px;">
-            ${lead.days_on_market} days on market
-          </p>
-        `
-            : ""
-        }
-        ${
-          lead.description
-            ? `
-          <p style="margin: 8px 0 0 0; color: #374151; font-size: 13px; line-height: 1.4;">
-            ${lead.description.substring(0, 150)}${lead.description.length > 150 ? "..." : ""}
-          </p>
-        `
-            : ""
-        }
-        <div style="margin-top: 12px;">
-          <a href="${lead.url}" target="_blank" rel="noopener noreferrer" 
-             style="display: inline-block; background: #3b82f6; color: white; 
-                    padding: 6px 12px; border-radius: 4px; text-decoration: none; 
-                    font-size: 14px; font-weight: 500;">
-            View Property
-          </a>
-        </div>
       </div>
+      <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%) rotate(45deg);width:16px;height:16px;background:#fff;border-right:1px solid rgba(226,232,240,0.6);border-bottom:1px solid rgba(226,232,240,0.6);"></div>
+    </div>
     `;
   };
 
