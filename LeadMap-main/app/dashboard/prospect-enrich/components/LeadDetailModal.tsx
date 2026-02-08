@@ -2,6 +2,7 @@
 
 import { buildAddressString, geocodeAddress } from "@/lib/utils/geocoding";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { add_to_list } from "../utils/listUtils";
 import {
   Activity,
   ChevronDown,
@@ -14,7 +15,6 @@ import {
   List,
   Mail,
   MapPin,
-  Share2,
   Tag,
   User,
   X,
@@ -23,6 +23,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ListsManager from "./ListsManager";
 import OwnerSelector from "./OwnerSelector";
 import PipelineDropdown from "./PipelineDropdown";
+import { useApp } from "@/app/providers";
 import TagsInput from "./TagsInput";
 
 // Helper function to format bathroom count with proper decimal display
@@ -104,14 +105,17 @@ export default function LeadDetailModal({
   onClose,
   onUpdate,
 }: LeadDetailModalProps) {
+  const { profile } = useApp();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<TabType>("info");
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [showOwnerSelector, setShowOwnerSelector] = useState(false);
   const [showListsManager, setShowListsManager] = useState(false);
   const [showTagsInput, setShowTagsInput] = useState(false);
+  const autoAssignRef = useRef(false);
   const supabase = createClientComponentClient();
 
   // Use listing from listingList directly for instant load, only fetch if needed for updates
@@ -125,6 +129,16 @@ export default function LeadDetailModal({
       setListing(listingList[index]);
     }
   }, [listingId, listingList]);
+
+  useEffect(() => {
+    if (!listing) return;
+    setIsSaved(!!listing.in_crm);
+  }, [listing]);
+
+  useEffect(() => {
+    autoAssignRef.current = false;
+  }, [listing?.listing_id]);
+
 
   const fetchListing = useCallback(
     async (id: string) => {
@@ -182,6 +196,33 @@ export default function LeadDetailModal({
     },
     [listing, supabase, onUpdate]
   );
+
+  useEffect(() => {
+    if (!listing || !profile?.id || autoAssignRef.current) return;
+    if (!listing.owner_id) {
+      autoAssignRef.current = true;
+      handleUpdate({ owner_id: profile.id });
+    }
+  }, [listing, profile?.id, handleUpdate]);
+
+  const handleSaveListing = useCallback(async () => {
+    if (!listing || !profile?.id) return;
+    if (isSaved || isSaving) return;
+
+    const sourceId = listing.listing_id || listing.property_url;
+    if (!sourceId) return;
+
+    setIsSaving(true);
+    try {
+      await add_to_list(supabase, profile.id, sourceId, listing, undefined, "all");
+      setIsSaved(true);
+      setListing((prev) => (prev ? { ...prev, in_crm: true } : prev));
+    } catch (error) {
+      console.error("Error saving listing:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [listing, profile?.id, isSaved, isSaving, supabase]);
 
   const goToPrevious = () => {
     if (currentIndex > 0) {
@@ -425,6 +466,7 @@ export default function LeadDetailModal({
           onClick={onClose}
           className="absolute top-6 right-6 z-50 p-2 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-gray-900 transition-colors shadow-sm"
           aria-label="Close"
+          title="Close"
         >
           <X size={20} />
         </button>
@@ -468,22 +510,15 @@ export default function LeadDetailModal({
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-zinc-900 hover:bg-gray-50 rounded-full transition-colors border border-transparent hover:border-gray-200"
-                    aria-label="Share"
-                  >
-                    <Share2 size={20} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsFavorite(!isFavorite)}
+                    onClick={handleSaveListing}
                     className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors border border-transparent hover:border-red-100"
-                    aria-label={
-                      isFavorite ? "Remove from favorites" : "Add to favorites"
-                    }
+                    aria-label="Save this listing"
+                    title="Save this listing"
+                    disabled={isSaving || isSaved}
                   >
                     <Heart
                       size={20}
-                      className={isFavorite ? "fill-red-500 text-red-500" : ""}
+                      className={isSaved ? "fill-red-500 text-red-500" : ""}
                     />
                   </button>
                   <button
@@ -491,6 +526,7 @@ export default function LeadDetailModal({
                     onClick={() => setShowOwnerSelector(!showOwnerSelector)}
                     className="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:text-zinc-900 hover:bg-gray-50 rounded-full transition-colors"
                     aria-label="Assign owner"
+                    title="Assign owner"
                   >
                     <User size={20} />
                     {listing?.owner_id && (
@@ -503,7 +539,8 @@ export default function LeadDetailModal({
                     type="button"
                     onClick={() => setShowListsManager(!showListsManager)}
                     className="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:text-zinc-900 hover:bg-gray-50 rounded-full transition-colors"
-                    aria-label="Manage lists"
+                    aria-label="Add to lists"
+                    title="Add to lists"
                   >
                     <List size={20} />
                     {(listing?.lists?.length ?? 0) > 0 && (
@@ -516,7 +553,8 @@ export default function LeadDetailModal({
                     type="button"
                     onClick={() => setShowTagsInput(!showTagsInput)}
                     className="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:text-zinc-900 hover:bg-gray-50 rounded-full transition-colors"
-                    aria-label="Manage tags"
+                    aria-label="Manage Tags"
+                    title="Manage Tags"
                   >
                     <Tag size={20} />
                     {(listing?.tags?.length ?? 0) > 0 && (
@@ -525,7 +563,7 @@ export default function LeadDetailModal({
                       </span>
                     )}
                   </button>
-                  <div className="relative">
+                  <div className="relative" title="Add to pipeline" aria-label="Add to pipeline">
                     <PipelineDropdown
                       value={listing?.pipeline_status || "new"}
                       onChange={(pipeline_status) =>
@@ -594,6 +632,8 @@ export default function LeadDetailModal({
                   type="button"
                   onClick={() => setShowOwnerSelector(false)}
                   className="p-1 text-slate-500 hover:text-slate-900"
+                  title="Close"
+                  aria-label="Close"
                 >
                   <X size={16} />
                 </button>
@@ -618,6 +658,8 @@ export default function LeadDetailModal({
                   type="button"
                   onClick={() => setShowListsManager(false)}
                   className="p-1 text-slate-500 hover:text-slate-900"
+                  title="Close"
+                  aria-label="Close"
                 >
                   <X size={16} />
                 </button>
@@ -639,6 +681,8 @@ export default function LeadDetailModal({
                   type="button"
                   onClick={() => setShowTagsInput(false)}
                   className="p-1 text-slate-500 hover:text-slate-900"
+                  title="Close"
+                  aria-label="Close"
                 >
                   <X size={16} />
                 </button>
@@ -689,12 +733,12 @@ export default function LeadDetailModal({
                 rel="noopener noreferrer"
                 className="px-8 py-3.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-sm font-semibold shadow-lg shadow-gray-200 flex items-center gap-2 transition-all hover:-translate-y-0.5"
               >
-                View Full Listing
+                View On Map
                 <ExternalLink size={14} />
               </a>
             ) : (
               <span className="px-8 py-3.5 bg-gray-100 text-gray-400 rounded-xl text-sm font-semibold cursor-not-allowed">
-                View Full Listing
+                View On Map
               </span>
             )}
           </div>
