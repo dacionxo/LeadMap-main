@@ -15,6 +15,8 @@ import {
   List,
   Mail,
   MapPin,
+  Maximize,
+  Minimize,
   Tag,
   User,
   X,
@@ -117,6 +119,7 @@ export default function LeadDetailModal({
   const [showListsManager, setShowListsManager] = useState(false);
   const [showTagsInput, setShowTagsInput] = useState(false);
   const autoAssignRef = useRef(false);
+  const streetViewContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClientComponentClient();
 
   // Use listing from listingList directly for instant load, only fetch if needed for updates
@@ -473,9 +476,9 @@ export default function LeadDetailModal({
         </button>
 
         {/* Left Panel: Street View (55%) */}
-        <div className="hidden lg:block w-[55%] h-full relative bg-gray-900 group">
+        <div ref={streetViewContainerRef} className="hidden lg:block w-[55%] h-full relative bg-gray-900 group">
           <div className="absolute inset-0 min-h-[400px]">
-            {listing && <StreetViewPanorama listing={listing} />}
+            {listing && <StreetViewPanorama listing={listing} containerRef={streetViewContainerRef} />}
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5 pointer-events-none" />
           <div className="absolute top-8 left-8">
@@ -750,7 +753,13 @@ export default function LeadDetailModal({
 }
 
 // Interactive Street View Panorama component
-function StreetViewPanorama({ listing }: { listing: Listing | null }) {
+function StreetViewPanorama({ 
+  listing, 
+  containerRef 
+}: { 
+  listing: Listing | null;
+  containerRef?: React.RefObject<HTMLDivElement>;
+}) {
   const panoramaRef = useRef<HTMLDivElement>(null);
   const panoramaInstanceRef = useRef<google.maps.StreetViewPanorama | null>(
     null
@@ -759,6 +768,7 @@ function StreetViewPanorama({ listing }: { listing: Listing | null }) {
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [apiReadyAttempt, setApiReadyAttempt] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (!listing || !panoramaRef.current) return;
@@ -907,6 +917,54 @@ function StreetViewPanorama({ listing }: { listing: Listing | null }) {
     apiReadyAttempt,
   ]);
 
+  // Fullscreen functionality
+  const toggleFullscreen = useCallback(() => {
+    if (!containerRef?.current) return;
+
+    const element = containerRef.current;
+
+    if (!document.fullscreenElement) {
+      // Enter fullscreen
+      if (element.requestFullscreen) {
+        element.requestFullscreen().catch((err) => {
+          console.error("Error attempting to enable fullscreen:", err);
+        });
+      } else if ((element as any).webkitRequestFullscreen) {
+        // Safari
+        (element as any).webkitRequestFullscreen();
+      } else if ((element as any).msRequestFullscreen) {
+        // IE/Edge
+        (element as any).msRequestFullscreen();
+      }
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
+    }
+  }, [containerRef]);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("msfullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("msfullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
   // Fallback to static image if Street View fails
   if (error && listing) {
     const lat = listing.lat ? Number(listing.lat) : null;
@@ -1027,6 +1085,23 @@ function StreetViewPanorama({ listing }: { listing: Listing | null }) {
           minHeight: "400px",
         }}
       />
+
+      {/* Fullscreen button overlay */}
+      {containerRef && (
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className="absolute top-4 right-4 z-50 p-2.5 rounded-lg bg-black/60 hover:bg-black/80 text-white transition-all backdrop-blur-sm border border-white/20 shadow-lg"
+          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        >
+          {isFullscreen ? (
+            <Minimize size={18} />
+          ) : (
+            <Maximize size={18} />
+          )}
+        </button>
+      )}
     </div>
   );
 }
