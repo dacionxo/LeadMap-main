@@ -49,11 +49,12 @@ interface GoogleMapsViewEnhancedProps {
 
 const MapComponent: React.FC<{ 
   leads: Lead[]; 
-  onStreetViewClick: (lead: Lead) => void; // CHANGED: Pass full Lead object
+  onStreetViewClick: (lead: Lead) => void;
+  onViewDetailsClick?: (leadId: string) => void;
   onMapReady: (map: google.maps.Map) => void;
   onError?: () => void;
   fullHeight?: boolean;
-}> = ({ leads, onStreetViewClick, onMapReady, onError, fullHeight }) => {
+}> = ({ leads, onStreetViewClick, onViewDetailsClick, onMapReady, onError, fullHeight }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
@@ -121,7 +122,7 @@ const MapComponent: React.FC<{
               streetViewMarkerRef.current = new window.google.maps.Marker({
                 position: { lat, lng },
                 map: panorama,
-                icon: getMarkerIcon(resolvedLead, false, 1.3),
+                icon: getMarkerIcon(resolvedLead, false, 1.56),
                 zIndex: 9999,
                 title: `${resolvedLead.address}, ${resolvedLead.city}, ${resolvedLead.state}`,
               });
@@ -171,7 +172,7 @@ const MapComponent: React.FC<{
   // Build property details popup HTML (1:1 card: image, For Sale, price, address, Material Symbols, marker tip). Single card only; no scroll.
   const buildPropertyPopupHTML = (
     lead: Lead,
-    opts: { streetViewBtnId: string; closeBtnId: string }
+    opts: { streetViewBtnId: string; closeBtnId: string; viewDetailsBtnId: string }
   ): string => {
     const primary = '#6366f1';
     const imgSrc =
@@ -208,9 +209,9 @@ const MapComponent: React.FC<{
               <h2 style="margin:0;font-size:13px;font-weight:700;color:#0f172a;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${priceStr}</h2>
             </div>
             <div style="display:flex;gap:2px;">
-              <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" style="padding:6px;color:#64748b;background:transparent;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:flex;" title="View Details" aria-label="View Details">
+              <button id="${opts.viewDetailsBtnId}" type="button" style="padding:6px;color:#64748b;background:transparent;border:none;border-radius:6px;cursor:pointer;display:flex;" title="View Details" aria-label="View Details">
                 <span class="material-symbols-outlined" style="font-size:13px;">visibility</span>
-              </a>
+              </button>
               <button id="${opts.streetViewBtnId}" type="button" style="padding:6px;color:#64748b;background:transparent;border:none;border-radius:6px;cursor:pointer;display:flex;" title="Street View" aria-label="Street View">
                 <span class="material-symbols-outlined" style="font-size:13px;">map</span>
               </button>
@@ -260,14 +261,15 @@ const MapComponent: React.FC<{
     const svg = `
       <svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <filter id="markerShadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.12"/>
+          <filter id="markerShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="0" stdDeviation="0.6" flood-color="#000" flood-opacity="0.15"/>
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
           </filter>
         </defs>
-        <!-- Pill body (rounded rect) -->
+        <!-- Pill body (rounded rect) with black shadow + subtle border -->
         <rect x="4" y="0" width="${pillW}" height="${pillH}" rx="12" ry="12" fill="${bg}" stroke="${borderColor}" stroke-width="1" filter="url(#markerShadow)"/>
         <!-- Pin point (diamond) -->
-        <path d="M${cx} ${totalH} L${cx - pointSize} ${pillH} L${cx} ${pillH + pointSize * 0.6} L${cx + pointSize} ${pillH} Z" fill="${bg}" stroke="${borderColor}" stroke-width="1"/>
+        <path d="M${cx} ${totalH} L${cx - pointSize} ${pillH} L${cx} ${pillH + pointSize * 0.6} L${cx + pointSize} ${pillH} Z" fill="${bg}" stroke="${borderColor}" stroke-width="1" filter="url(#markerShadow)"/>
         <!-- Price text -->
         <text x="${cx}" y="${pillH / 2 + 4}" text-anchor="middle" fill="${textColor}" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="${isActive ? '700' : '600'}">${priceLabel}</text>
       </svg>
@@ -308,7 +310,7 @@ const MapComponent: React.FC<{
             <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.15"/>
           </filter>
         </defs>
-        <circle cx="${cx}" cy="${cx}" r="${r}" fill="${primary}" stroke="#ffffff" stroke-width="${stroke}" filter="url(#dotShadowN)" style="filter:drop-shadow(0 0 0 2px rgba(0,0,0,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.3));"/>
+        <circle cx="${cx}" cy="${cx}" r="${r}" fill="${primary}" stroke="#ffffff" stroke-width="${stroke}" filter="url(#dotShadowN)" style="filter:drop-shadow(0 0 0 1px rgba(0,0,0,0.15)) drop-shadow(0 2px 4px rgba(0,0,0,0.2));"/>
       </svg>
     `;
     return {
@@ -502,10 +504,12 @@ const MapComponent: React.FC<{
           }
           const streetViewBtnId = `street-view-btn-${lead.id}`;
           const closeBtnId = `close-btn-${lead.id}`;
+          const viewDetailsBtnId = `view-details-btn-${lead.id}`;
           const contentDiv = document.createElement('div');
           contentDiv.innerHTML = buildPropertyPopupHTML(lead, {
             streetViewBtnId,
             closeBtnId,
+            viewDetailsBtnId,
           });
           if (infoWindow) {
             infoWindow.setContent(contentDiv);
@@ -515,6 +519,15 @@ const MapComponent: React.FC<{
               if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
                   if (infoWindow) infoWindow.close();
+                });
+              }
+              const viewDetailsBtn = document.getElementById(viewDetailsBtnId);
+              if (viewDetailsBtn && onViewDetailsClick) {
+                viewDetailsBtn.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (infoWindow) infoWindow.close();
+                  onViewDetailsClick(lead.id);
                 });
               }
               const streetViewBtn = document.getElementById(streetViewBtnId);
@@ -574,10 +587,12 @@ const MapComponent: React.FC<{
                 if (infoWindow) infoWindow.close();
                 const streetViewBtnId = `street-view-btn-geocode-${lead.id}`;
                 const closeBtnId = `close-btn-geocode-${lead.id}`;
+                const viewDetailsBtnId = `view-details-btn-geocode-${lead.id}`;
                 const contentDiv = document.createElement('div');
                 contentDiv.innerHTML = buildPropertyPopupHTML(lead, {
                   streetViewBtnId,
                   closeBtnId,
+                  viewDetailsBtnId,
                 });
                 if (infoWindow) {
                   infoWindow.setContent(contentDiv);
@@ -587,6 +602,15 @@ const MapComponent: React.FC<{
                     if (closeBtn) {
                       closeBtn.addEventListener('click', () => {
                         if (infoWindow) infoWindow.close();
+                      });
+                    }
+                    const viewDetailsBtn = document.getElementById(viewDetailsBtnId);
+                    if (viewDetailsBtn && onViewDetailsClick) {
+                      viewDetailsBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (infoWindow) infoWindow.close();
+                        onViewDetailsClick(lead.id);
                       });
                     }
                     const streetViewBtn = document.getElementById(streetViewBtnId);
@@ -972,6 +996,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
           <MapComponent 
             leads={listings} 
             onStreetViewClick={handleStreetViewClickFromMap}
+            onViewDetailsClick={onStreetViewListingClick}
             onMapReady={handleMapReady}
             onError={onError}
             fullHeight={fullScreen}

@@ -34,6 +34,7 @@ interface MapboxViewFallbackProps {
   isActive: boolean;
   listings: Lead[];
   loading: boolean;
+  onViewDetailsClick?: (leadId: string) => void;
   fullScreen?: boolean;
 }
 
@@ -41,6 +42,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
   isActive,
   listings,
   loading,
+  onViewDetailsClick,
   fullScreen,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -80,8 +82,8 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     const textColor = isActive ? "#ffffff" : textSlate;
     const borderColor = isActive ? "#3b82f6" : borderSlate;
     const boxShadow = isActive
-      ? "0 8px 20px -4px rgba(15, 98, 254, 0.4), 0 0 0 2px rgba(15, 98, 254, 0.2)"
-      : "0 4px 12px -2px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.08)";
+      ? "0 0 0 1px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.3), 0 8px 20px -4px rgba(15, 98, 254, 0.4), 0 0 0 2px rgba(15, 98, 254, 0.2)"
+      : "0 0 0 1px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.08)";
 
     return `
       <div style="
@@ -140,7 +142,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
           height: 26px;
           background: #0F62FE;
           border-radius: 9999px;
-          box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.2);
           border: 2.4px solid #ffffff;
           box-sizing: border-box;
         "></div>
@@ -200,9 +202,9 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
               <h2 style="margin:0;font-size:13px;font-weight:700;color:#0f172a;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${priceStr}</h2>
             </div>
             <div style="display:flex;gap:2px;">
-              <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" style="padding:6px;color:#64748b;background:transparent;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:flex;" title="View Details" aria-label="View Details">
+              <button type="button" data-view-details="${lead.id}" style="padding:6px;color:#64748b;background:transparent;border:none;border-radius:6px;cursor:pointer;display:flex;" title="View Details" aria-label="View Details">
                 <span class="material-symbols-outlined" style="font-size:13px;">visibility</span>
-              </a>
+              </button>
               <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" style="padding:6px;color:#64748b;background:transparent;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:flex;" title="Street View" aria-label="Street View">
                 <span class="material-symbols-outlined" style="font-size:13px;">map</span>
               </a>
@@ -222,6 +224,20 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       <div class="marker-tip" style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%) rotate(45deg);width:12px;height:12px;background:#fff;border-right:1px solid rgba(226,232,240,0.6);border-bottom:1px solid rgba(226,232,240,0.6);"></div>
     </div>
     `;
+  };
+
+  const createPopupDOM = (lead: Lead): HTMLDivElement => {
+    const div = document.createElement("div");
+    div.innerHTML = createPopupContent(lead);
+    const viewDetailsBtn = div.querySelector("[data-view-details]");
+    if (viewDetailsBtn && onViewDetailsClick) {
+      viewDetailsBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onViewDetailsClick(lead.id);
+      });
+    }
+    return div;
   };
 
   // Initialize map - re-initialize when isActive becomes true
@@ -529,14 +545,14 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       (el as unknown as { __lead?: Lead }).__lead = lead;
       el.style.cursor = "pointer";
 
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([lead.longitude!, lead.latitude!])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25, className: "map-property-popup" }).setHTML(
-            createPopupContent(lead)
-          )
-        )
-        .addTo(map.current!);
+              const marker = new mapboxgl.Marker(el)
+                .setLngLat([lead.longitude!, lead.latitude!])
+                .setPopup(
+                  new mapboxgl.Popup({ offset: 25, className: "map-property-popup" }).setDOMContent(
+                    createPopupDOM(lead)
+                  )
+                )
+                .addTo(map.current!);
 
       markers.current.push(marker);
       bounds.extend([lead.longitude!, lead.latitude!]);
@@ -587,8 +603,8 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
               const marker = new mapboxgl.Marker(el)
                 .setLngLat([coords.lng, coords.lat])
                 .setPopup(
-                  new mapboxgl.Popup({ offset: 25, className: "map-property-popup" }).setHTML(
-                    createPopupContent(lead)
+                  new mapboxgl.Popup({ offset: 25, className: "map-property-popup" }).setDOMContent(
+                    createPopupDOM(lead)
                   )
                 )
                 .addTo(map.current!);
@@ -611,7 +627,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
           setGeocodingCount(0);
         });
     }
-  }, [mapLoaded, listings, zoomLevel]);
+  }, [mapLoaded, listings, zoomLevel, onViewDetailsClick]);
 
   if (!isActive) {
     return (
