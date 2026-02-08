@@ -20,7 +20,6 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ListsManager from "./ListsManager";
 import OwnerSelector from "./OwnerSelector";
