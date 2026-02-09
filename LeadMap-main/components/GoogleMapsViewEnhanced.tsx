@@ -731,12 +731,13 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
   const searchMarkerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
 
-  // Apply flyTo when map is ready or when flyToCenter is set (pan + zoom into location)
+  // Apply flyTo: center map on geocoded point, zoom in, then add marker so user is directed to the searched location
   const applyFlyTo = useCallback((map: google.maps.Map) => {
     if (!flyToCenter) return;
     const zoom = typeof flyToZoom === 'number' ? flyToZoom : 16;
     const latLng = { lat: flyToCenter.lat, lng: flyToCenter.lng };
-    map.panTo(latLng);
+    // Set center and zoom together (do not use panTo — it animates, so setZoom would run at old center and zoom wrong place)
+    map.setCenter(latLng);
     map.setZoom(zoom);
     if (searchMarkerRef.current) {
       searchMarkerRef.current.setMap(null);
