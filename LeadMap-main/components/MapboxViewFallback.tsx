@@ -337,20 +337,26 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     };
   }, [isActive]);
 
-  // Fly map to search result (from dashboard search bar geocode)
+  // Fly map to the searched location and zoom in around the marker; call onFlyToDone when move ends
   useEffect(() => {
     if (!flyToCenter || !map.current || !mapLoaded) {
       if (!flyToCenter) onFlyToDone?.();
       return;
     }
+    const lat = Number(flyToCenter.lat);
+    const lng = Number(flyToCenter.lng);
+    if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      onFlyToDone?.();
+      return;
+    }
     const zoom = typeof flyToZoom === "number" ? flyToZoom : 16;
-    map.current.flyTo({
-      center: [flyToCenter.lng, flyToCenter.lat],
+    const m = map.current;
+    m.flyTo({
+      center: [lng, lat],
       zoom,
       duration: 1500,
       essential: true,
     });
-    // Red search marker at searched location
     if (searchMarker.current) {
       searchMarker.current.remove();
     }
@@ -363,9 +369,17 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       "></div>
     `;
     searchMarker.current = new mapboxgl.Marker(el)
-      .setLngLat([flyToCenter.lng, flyToCenter.lat])
-      .addTo(map.current);
-    onFlyToDone?.();
+      .setLngLat([lng, lat])
+      .addTo(m);
+    const done = onFlyToDone;
+    const onMoveEnd = () => {
+      m.off("moveend", onMoveEnd);
+      done?.();
+    };
+    m.once("moveend", onMoveEnd);
+    return () => {
+      m.off("moveend", onMoveEnd);
+    };
   }, [flyToCenter, flyToZoom, mapLoaded, onFlyToDone]);
 
   // Search for addresses using Mapbox Geocoding API

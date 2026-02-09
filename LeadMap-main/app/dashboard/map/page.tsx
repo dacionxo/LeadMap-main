@@ -272,7 +272,7 @@ export default function MapPage() {
     setSelectedListingId(null);
   };
 
-  // Geocode search query and fly map to result
+  // Geocode search query and fly map to the searched location (detect address → zoom around that point)
   const handleSearchSubmit = async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) return;
@@ -292,10 +292,21 @@ export default function MapPage() {
         );
         return;
       }
-      if (data.lat != null && data.lng != null) {
-        setFlyToCenter({ lat: data.lat, lng: data.lng });
-        if (data.formattedAddress) setSearchQuery(data.formattedAddress);
+      const lat = typeof data.lat === "number" ? data.lat : Number(data.lat);
+      const lng = typeof data.lng === "number" ? data.lng : Number(data.lng);
+      if (
+        Number.isNaN(lat) ||
+        Number.isNaN(lng) ||
+        lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180
+      ) {
+        setSearchError("Invalid location returned.");
+        return;
       }
+      setFlyToCenter({ lat, lng });
+      if (data.formattedAddress) setSearchQuery(data.formattedAddress);
     } catch {
       setSearchError("Search failed. Please try again.");
     } finally {

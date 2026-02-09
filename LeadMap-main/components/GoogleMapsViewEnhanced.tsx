@@ -731,12 +731,14 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
   const searchMarkerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
 
-  // Apply flyTo: center map on geocoded point, zoom in, then add marker so user is directed to the searched location
+  // Apply flyTo: center map on the searched location, zoom in around the marker, then notify when done
   const applyFlyTo = useCallback((map: google.maps.Map) => {
     if (!flyToCenter) return;
+    const lat = Number(flyToCenter.lat);
+    const lng = Number(flyToCenter.lng);
+    if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+    const latLng = { lat, lng };
     const zoom = typeof flyToZoom === 'number' ? flyToZoom : 16;
-    const latLng = { lat: flyToCenter.lat, lng: flyToCenter.lng };
-    // Set center and zoom together (do not use panTo — it animates, so setZoom would run at old center and zoom wrong place)
     map.setCenter(latLng);
     map.setZoom(zoom);
     if (searchMarkerRef.current) {
@@ -750,7 +752,13 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
         icon: { url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' }
       });
     }
-    onFlyToDone?.();
+    // Defer clear so the map has painted the new center/zoom before parent clears flyToCenter
+    const done = onFlyToDone;
+    if (done) {
+      requestAnimationFrame(() => {
+        setTimeout(done, 50);
+      });
+    }
   }, [flyToCenter, flyToZoom, onFlyToDone]);
 
   const handleMapReady = useCallback((map: google.maps.Map) => {
