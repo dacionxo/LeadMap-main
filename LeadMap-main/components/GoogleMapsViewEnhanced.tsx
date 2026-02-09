@@ -731,17 +731,19 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
   const searchMarkerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
 
-  // Apply flyTo when map is ready or when flyToCenter is set
+  // Apply flyTo when map is ready or when flyToCenter is set (pan + zoom into location)
   const applyFlyTo = useCallback((map: google.maps.Map) => {
     if (!flyToCenter) return;
-    map.setCenter({ lat: flyToCenter.lat, lng: flyToCenter.lng });
-    map.setZoom(typeof flyToZoom === 'number' ? flyToZoom : 14);
+    const zoom = typeof flyToZoom === 'number' ? flyToZoom : 16;
+    const latLng = { lat: flyToCenter.lat, lng: flyToCenter.lng };
+    map.panTo(latLng);
+    map.setZoom(zoom);
     if (searchMarkerRef.current) {
       searchMarkerRef.current.setMap(null);
     }
     if (typeof window !== 'undefined' && window.google?.maps) {
       searchMarkerRef.current = new window.google.maps.Marker({
-        position: { lat: flyToCenter.lat, lng: flyToCenter.lng },
+        position: latLng,
         map,
         title: 'Searched location',
         icon: { url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' }

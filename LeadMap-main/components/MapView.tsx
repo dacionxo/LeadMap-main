@@ -74,7 +74,7 @@ interface MapViewProps {
   onFlyToDone?: () => void;
 }
 
-const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading, onStreetViewListingClick, fullScreen, flyToCenter, flyToZoom = 14, onFlyToDone }) => {
+const MapView: React.FC<MapViewProps> = ({ isActive, listings, loading, onStreetViewListingClick, fullScreen, flyToCenter, flyToZoom = 16, onFlyToDone }) => {
   const [useGoogleMaps, setUseGoogleMaps] = useState<boolean | null>(null);
   const [googleMapsFailed, setGoogleMapsFailed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);

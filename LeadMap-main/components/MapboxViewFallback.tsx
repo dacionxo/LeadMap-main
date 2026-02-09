@@ -51,7 +51,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
   onViewDetailsClick,
   fullScreen,
   flyToCenter,
-  flyToZoom = 14,
+  flyToZoom = 16,
   onFlyToDone,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -343,11 +343,12 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       if (!flyToCenter) onFlyToDone?.();
       return;
     }
-    const zoom = typeof flyToZoom === "number" ? flyToZoom : 14;
+    const zoom = typeof flyToZoom === "number" ? flyToZoom : 16;
     map.current.flyTo({
       center: [flyToCenter.lng, flyToCenter.lat],
       zoom,
       duration: 1500,
+      essential: true,
     });
     // Red search marker at searched location
     if (searchMarker.current) {

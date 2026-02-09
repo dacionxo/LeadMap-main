@@ -352,7 +352,7 @@ export default function MapPage() {
                 onStreetViewListingClick={handleStreetViewClick}
                 fullScreen
                 flyToCenter={flyToCenter}
-                flyToZoom={14}
+                flyToZoom={16}
                 onFlyToDone={handleFlyToDone}
               />
             </div>
