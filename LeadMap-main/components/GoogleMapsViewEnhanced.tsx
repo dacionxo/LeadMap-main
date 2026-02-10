@@ -731,6 +731,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
   const searchMarkerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const pendingFlyToRef = useRef<{ lat: number; lng: number } | null>(null);
+  const lastAppliedRef = useRef<string | null>(null);
 
   // H2/H3: Keep pending flyTo in ref so we never lose it (map may not be ready when user searches)
   useEffect(() => {
@@ -742,6 +743,9 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
     const lat = Number(target.lat);
     const lng = Number(target.lng);
     if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+    const key = `${lat},${lng}`;
+    if (lastAppliedRef.current === key) return;
+    lastAppliedRef.current = key;
     const latLng = { lat, lng };
     const zoom = typeof flyToZoom === 'number' ? flyToZoom : 16;
     map.setCenter(latLng);
@@ -759,8 +763,12 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
     }
     const done = onFlyToDone;
     if (done && typeof window !== 'undefined' && window.google?.maps?.event) {
-      window.google.maps.event.addListenerOnce(map, 'idle', () => done());
+      window.google.maps.event.addListenerOnce(map, 'idle', () => {
+        lastAppliedRef.current = null;
+        done();
+      });
     } else if (done) {
+      lastAppliedRef.current = null;
       done();
     }
   }, [flyToZoom, onFlyToDone]);

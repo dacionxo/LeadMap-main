@@ -6,6 +6,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSearchParams } from "next/navigation";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
+import { useMapGeocodeSearch } from "./components/MapGeocodeSearch";
 import MapProfileNotificationButtons from "./components/MapProfileNotificationButtons";
 import MapSearchBar from "./components/MapSearchBar";
 import MapsOnboardingModal from "./components/MapsOnboardingModal";
@@ -66,8 +67,17 @@ export default function MapPage() {
     lat: number;
     lng: number;
   } | null>(null);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
+
+  const handleGeocodeResult = useCallback(
+    (result: { lat: number; lng: number; formattedAddress?: string }) => {
+      setFlyToCenter({ lat: result.lat, lng: result.lng });
+      if (result.formattedAddress) setSearchQuery(result.formattedAddress);
+    },
+    []
+  );
+
+  const { search, isSearching, error: searchError, clearError } =
+    useMapGeocodeSearch({ onResult: handleGeocodeResult });
 
   // Open property detail modal (with street view) when URL has ?listingId=...
   useEffect(() => {
@@ -272,49 +282,7 @@ export default function MapPage() {
     setSelectedListingId(null);
   };
 
-  // Geocode search query and fly map to the searched location (detect address → zoom around that point)
-  const handleSearchSubmit = async (query: string) => {
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    setSearchError(null);
-    setIsSearching(true);
-    try {
-      const res = await fetch(
-        `/api/geocode?q=${encodeURIComponent(trimmed)}`,
-        { credentials: "include" }
-      );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setSearchError(
-          typeof data?.error === "string"
-            ? data.error
-            : "Could not find that location"
-        );
-        return;
-      }
-      const lat = typeof data.lat === "number" ? data.lat : Number(data.lat);
-      const lng = typeof data.lng === "number" ? data.lng : Number(data.lng);
-      if (
-        Number.isNaN(lat) ||
-        Number.isNaN(lng) ||
-        lat < -90 ||
-        lat > 90 ||
-        lng < -180 ||
-        lng > 180
-      ) {
-        setSearchError("Invalid location returned.");
-        return;
-      }
-      setFlyToCenter({ lat, lng });
-      if (data.formattedAddress) setSearchQuery(data.formattedAddress);
-    } catch {
-      setSearchError("Search failed. Please try again.");
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Clear flyToCenter only after map confirms it has applied (H5: stable callback)
+  // Clear flyToCenter only after map confirms it has applied
   const handleFlyToDone = useCallback(() => {
     setFlyToCenter(null);
   }, []);
@@ -332,9 +300,9 @@ export default function MapPage() {
                 searchValue={searchQuery}
                 onSearchChange={(v) => {
                   setSearchQuery(v);
-                  setSearchError(null);
+                  clearError();
                 }}
-                onSearchSubmit={handleSearchSubmit}
+                onSearchSubmit={search}
                 placeholder="Search by City, Zip, or Address"
               />
               {searchError && (
