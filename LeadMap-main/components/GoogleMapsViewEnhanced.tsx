@@ -754,8 +754,25 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
     const latLng = { lat, lng };
     const zoom = typeof flyToZoom === 'number' ? flyToZoom : 16;
     setSuppressAutoFit(true);
-    map.setCenter(latLng);
+    // Apply camera in one pass, then reinforce once from the next frame.
+    // This avoids occasional "stuck at nationwide zoom" behavior after heavy marker updates.
+    map.panTo(latLng);
     map.setZoom(zoom);
+    const reinforce = () => {
+      if (!mapInstanceRef.current || mapInstanceRef.current !== map) return;
+      const center = map.getCenter();
+      const currentZoom = map.getZoom() ?? 0;
+      const centerLat = center?.lat() ?? 0;
+      const centerLng = center?.lng() ?? 0;
+      const centerDrifted =
+        Math.abs(centerLat - latLng.lat) > 0.02 ||
+        Math.abs(centerLng - latLng.lng) > 0.02;
+      if (centerDrifted || currentZoom < zoom - 0.25) {
+        map.panTo(latLng);
+        map.setZoom(zoom);
+      }
+    };
+    requestAnimationFrame(reinforce);
     if (searchMarkerRef.current) {
       searchMarkerRef.current.setMap(null);
     }

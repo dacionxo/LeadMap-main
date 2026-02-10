@@ -361,9 +361,12 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     const zoom = typeof flyToZoom === "number" ? flyToZoom : 16;
     const m = map.current;
     setSuppressAutoFit(true);
+    let moveEndHandler: (() => void) | null = null;
+    let reinforceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const applyFly = () => {
       if (!map.current || map.current !== m) return;
+      m.stop();
       m.flyTo({
         center: [lng, lat],
         zoom,
@@ -385,15 +388,39 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
         .setLngLat([lng, lat])
         .addTo(m);
       const done = onFlyToDone;
-      const onMoveEnd = () => {
-        m.off("moveend", onMoveEnd);
+      moveEndHandler = () => {
+        if (moveEndHandler) {
+          m.off("moveend", moveEndHandler);
+          moveEndHandler = null;
+        }
         done?.();
       };
-      m.once("moveend", onMoveEnd);
+      if (moveEndHandler) {
+        m.once("moveend", moveEndHandler);
+      }
+      reinforceTimer = setTimeout(() => {
+        if (!map.current || map.current !== m) return;
+        const currentCenter = m.getCenter();
+        const currentZoom = m.getZoom();
+        const centerDrifted =
+          Math.abs(currentCenter.lat - lat) > 0.02 ||
+          Math.abs(currentCenter.lng - lng) > 0.02;
+        if (centerDrifted || currentZoom < zoom - 0.25) {
+          m.jumpTo({ center: [lng, lat], zoom });
+        }
+      }, 900);
     };
 
     const raf = requestAnimationFrame(applyFly);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      if (moveEndHandler) {
+        m.off("moveend", moveEndHandler);
+      }
+      if (reinforceTimer) {
+        clearTimeout(reinforceTimer);
+      }
+    };
   }, [flyToCenter, flyToZoom, mapLoaded, onFlyToDone]);
 
   // Search for addresses using Mapbox Geocoding API
