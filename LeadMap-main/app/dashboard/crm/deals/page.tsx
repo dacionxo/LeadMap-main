@@ -296,7 +296,7 @@ function DealsPageContent() {
 
 export default function DealsPage() {
   return (
-    <DashboardLayout fullBleed>
+    <DashboardLayout fullBleed hideHeader>
       <DealsPageContent />
     </DashboardLayout>
   )
