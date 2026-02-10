@@ -1,15 +1,10 @@
 'use client'
 
-import { Card } from '@/app/components/ui/card'
 import { RefreshCw } from 'lucide-react'
 import moment from 'moment'
-import { useCallback, useEffect, useState } from 'react'
-import { Calendar, momentLocalizer, SlotInfo, View } from 'react-big-calendar'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
-import CalendarHelpModal from './CalendarHelpModal'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 moment.locale('en')
-const localizer = momentLocalizer(moment)
 
 interface CalendarEvent {
   id: string
@@ -51,23 +46,18 @@ interface CalendarViewProps {
   calendarType?: string | null
 }
 
-export default function CalendarView({ onEventClick, onDateSelect, calendarType }: CalendarViewProps) {
+type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda'
+
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
+export default function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
-  const [allEvents, setAllEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState<any>(null)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
-  const [view, setView] = useState<View>('month')
+  const [view, setView] = useState<CalendarViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showHelp, setShowHelp] = useState(false)
 
-  // Load settings on mount
-  useEffect(() => {
-    fetchSettings()
-  }, [])
-
-  // Listen for settings updates
   useEffect(() => {
     const handleSettingsUpdate = (event: CustomEvent) => {
       setSettings(event.detail)
@@ -79,9 +69,7 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
     }
   }, [])
 
-  // Calendar always starts on month view (user can switch via toolbar)
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await fetch('/api/calendar/settings', {
         credentials: 'include',
@@ -95,7 +83,11 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
     } finally {
       setSettingsLoaded(true)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchSettings()
+  }, [fetchSettings])
 
   const getEventColor = (eventType?: string): string => {
     const colors: Record<string, string> = {
@@ -106,33 +98,53 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
       meeting: '#ec4899',
       follow_up: '#6366f1',
       other: '#6b7280',
+      email_campaign: '#3b82f6',
     }
     return colors[eventType || 'other'] || colors.other
   }
 
-  // Format event for react-big-calendar; event type drives display color when color_code_by_event_type is on
-  const formatEventForCalendar = (event: any): CalendarEvent => {
-    const userTimezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
-    
-    let eventColor: string
-    if (settings?.color_code_by_event_type !== false) {
-      eventColor = getEventColor(event.event_type)
-    } else {
-      eventColor = event.color || settings?.default_calendar_color || '#3b82f6'
-    }
+  const formatEventForCalendar = useCallback(
+    (event: any): CalendarEvent => {
+      let eventColor: string
+      if (settings?.color_code_by_event_type !== false) {
+        eventColor = getEventColor(event.event_type)
+      } else {
+        eventColor = event.color || settings?.default_calendar_color || '#3b82f6'
+      }
 
-    // Handle all-day events
-    if (event.all_day && event.start_date && event.end_date) {
-      const startDate = new Date(event.start_date)
-      const endDate = new Date(event.end_date)
-      endDate.setDate(endDate.getDate() + 1) // Exclusive end date
-      
+      if (event.all_day && event.start_date && event.end_date) {
+        const startDate = new Date(event.start_date)
+        const endDate = new Date(event.end_date)
+        endDate.setDate(endDate.getDate() + 1)
+
+        return {
+          id: event.id,
+          title: event.title,
+          start: startDate,
+          end: endDate,
+          allDay: true,
+          resource: {
+            eventType: event.event_type,
+            location: event.location,
+            description: event.description,
+            relatedType: event.related_type,
+            relatedId: event.related_id,
+            status: event.status,
+            backgroundColor: eventColor,
+            borderColor: eventColor,
+          },
+        }
+      }
+
+      const startDate = new Date(event.start_time || event.start_date)
+      const endDate = new Date(event.end_time || event.end_date || event.start_time || event.start_date)
+
       return {
         id: event.id,
         title: event.title,
         start: startDate,
         end: endDate,
-        allDay: true,
+        allDay: false,
         resource: {
           eventType: event.event_type,
           location: event.location,
@@ -144,84 +156,16 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
           borderColor: eventColor,
         },
       }
-    }
+    },
+    [settings?.color_code_by_event_type, settings?.default_calendar_color]
+  )
 
-    // Timed events: Convert UTC to user's timezone
-    let startTime = event.start_time || ''
-    let endTime = event.end_time || ''
-    
-    const convertUtcToUserTimezone = (utcIsoString: string, tz: string): Date => {
-      if (!utcIsoString) return new Date()
-      
-      const utcDate = new Date(utcIsoString)
-      if (isNaN(utcDate.getTime())) {
-        if (!utcIsoString.endsWith('Z') && !utcIsoString.match(/[+-]\d{2}:\d{2}$/)) {
-          const fixed = utcIsoString + (utcIsoString.includes('.') ? '' : '.000') + 'Z'
-          const fixedDate = new Date(fixed)
-          if (!isNaN(fixedDate.getTime())) {
-            return convertUtcToUserTimezone(fixed, tz)
-          }
-        }
-        return new Date()
-      }
-      
-      const formatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: tz,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      })
-      
-      const parts = formatter.formatToParts(utcDate)
-      const year = parseInt(parts.find(p => p.type === 'year')?.value || '0')
-      const month = parseInt(parts.find(p => p.type === 'month')?.value || '1')
-      const day = parseInt(parts.find(p => p.type === 'day')?.value || '1')
-      const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0')
-      const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0')
-      const second = parseInt(parts.find(p => p.type === 'second')?.value || '0')
-      
-      return new Date(year, month - 1, day, hour, minute, second)
-    }
-    
-    const startDate = convertUtcToUserTimezone(startTime, userTimezone)
-    const endDate = convertUtcToUserTimezone(endTime, userTimezone)
-    
-    return {
-      id: event.id,
-      title: event.title,
-      start: startDate,
-      end: endDate,
-      allDay: false,
-      resource: {
-        eventType: event.event_type,
-        location: event.location,
-        description: event.description,
-        relatedType: event.related_type,
-        relatedId: event.related_id,
-        status: event.status,
-        backgroundColor: eventColor,
-        borderColor: eventColor,
-      },
-    }
-  }
-
-  // Fetch events
   const fetchEvents = useCallback(async () => {
     try {
       setLoading(true)
-      
-      // Get current view date range
-      const viewStart = moment(currentDate).startOf(view === 'month' ? 'month' : view === 'week' ? 'week' : 'day').toDate()
-      const viewEnd = moment(currentDate).endOf(view === 'month' ? 'month' : view === 'week' ? 'week' : 'day').toDate()
-      
-      const start = viewStart.toISOString()
-      const end = viewEnd.toISOString()
+      const start = moment(currentDate).startOf('month').startOf('week').toISOString()
+      const end = moment(currentDate).endOf('month').endOf('week').toISOString()
 
-      // Fetch calendar events
       const response = await fetch(`/api/calendar/events?start=${start}&end=${end}`, {
         credentials: 'include',
       })
@@ -231,62 +175,32 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
       }
 
       const data = await response.json()
-      
-      // Filter events based on settings
-      let filteredEvents = data.events || []
-      
+      let calendarEvents = data.events || []
+
       if (settings?.show_declined_events === false) {
-        filteredEvents = filteredEvents.filter((event: any) => event.status !== 'cancelled')
+        calendarEvents = calendarEvents.filter((event: any) => event.status !== 'cancelled')
       }
-      
-      // Format calendar events
-      const formattedEvents: CalendarEvent[] = filteredEvents.map((event: any) => 
+
+      const formattedCalendarEvents: CalendarEvent[] = calendarEvents.map((event: any) =>
         formatEventForCalendar(event)
       )
 
-      // Fetch scheduled email campaigns
+      let emailEvents: CalendarEvent[] = []
       try {
         const emailResponse = await fetch(`/api/campaigns?startDate=${start}&endDate=${end}`, {
           credentials: 'include',
         })
-        
         if (emailResponse.ok) {
           const emailData = await emailResponse.json()
-          const emailEvents: CalendarEvent[] = (emailData.campaigns || [])
-            .filter((campaign: any) => {
-              return campaign.start_at && 
-                     campaign.status !== 'cancelled' && 
-                     campaign.status !== 'completed'
-            })
+          emailEvents = (emailData.campaigns || [])
+            .filter((campaign: any) => campaign.start_at && campaign.status !== 'cancelled' && campaign.status !== 'completed')
             .map((campaign: any) => {
-              const userTimezone = settings?.default_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
               const startDate = new Date(campaign.start_at)
-              
-              const formatter = new Intl.DateTimeFormat('en-CA', {
-                timeZone: userTimezone,
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-              })
-              
-              const parts = formatter.formatToParts(startDate)
-              const year = parseInt(parts.find(p => p.type === 'year')?.value || '0')
-              const month = parseInt(parts.find(p => p.type === 'month')?.value || '1')
-              const day = parseInt(parts.find(p => p.type === 'day')?.value || '1')
-              const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0')
-              const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0')
-              
-              const localDate = new Date(year, month - 1, day, hour, minute)
-              const endDate = new Date(localDate.getTime() + 30 * 60 * 1000)
-              
+              const endDate = new Date(startDate.getTime() + 30 * 60 * 1000)
               return {
                 id: `email-${campaign.id}`,
-                title: `📧 ${campaign.name}`,
-                start: localDate,
+                title: campaign.name,
+                start: startDate,
                 end: endDate,
                 allDay: false,
                 resource: {
@@ -298,57 +212,26 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
                   backgroundColor: '#3b82f6',
                   borderColor: '#2563eb',
                 },
-              }
+              } as CalendarEvent
             })
-          
-          const allFormattedEvents = [...formattedEvents, ...emailEvents]
-          setAllEvents(allFormattedEvents)
-          setEvents(allFormattedEvents)
         }
       } catch (emailError) {
         console.error('Error fetching email campaigns:', emailError)
-        setAllEvents(formattedEvents)
-        setEvents(formattedEvents)
       }
+
+      setEvents([...formattedCalendarEvents, ...emailEvents])
     } catch (error) {
       console.error('Error fetching events:', error)
     } finally {
       setLoading(false)
     }
-  }, [currentDate, view, settings?.show_declined_events, settings?.color_code_by_event_type, settings?.default_calendar_color, settings?.default_timezone])
-
-  // Filter events based on search query
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setEvents(allEvents)
-      return
-    }
-
-    const query = searchQuery.toLowerCase()
-    const filtered = allEvents.filter((event) => {
-      const title = event.title?.toLowerCase() || ''
-      const description = event.resource?.description?.toLowerCase() || ''
-      const location = event.resource?.location?.toLowerCase() || ''
-      const eventType = event.resource?.eventType?.toLowerCase() || ''
-      
-      return (
-        title.includes(query) ||
-        description.includes(query) ||
-        location.includes(query) ||
-        eventType.includes(query)
-      )
-    })
-
-    setEvents(filtered)
-  }, [searchQuery, allEvents])
+  }, [currentDate, formatEventForCalendar, settings?.show_declined_events])
 
   useEffect(() => {
-    if (settingsLoaded) {
-      fetchEvents()
-    }
+    if (!settingsLoaded) return
+    fetchEvents()
   }, [fetchEvents, settingsLoaded])
 
-  // Refetch events when sync completes (e.g. after Google connect) so imported events show in user calendar
   useEffect(() => {
     const handleSyncComplete = () => {
       fetchEvents()
@@ -357,151 +240,78 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
     return () => window.removeEventListener('calendarSyncComplete', handleSyncComplete)
   }, [fetchEvents])
 
-  const handleSelectSlot = (slotInfo: SlotInfo) => {
-    if (onDateSelect) {
-      onDateSelect(slotInfo.start, slotInfo.end)
-    }
-  }
+  const monthDays = useMemo(() => {
+    const monthStart = moment(currentDate).startOf('month')
+    const gridStart = monthStart.clone().startOf('week')
+    return Array.from({ length: 42 }).map((_, idx) => gridStart.clone().add(idx, 'day').toDate())
+  }, [currentDate])
 
-  const handleSelectEvent = (event: CalendarEvent) => {
-    if (onEventClick) {
-      // Convert to format expected by EventModal
-      onEventClick({
-        id: event.id,
-        title: event.title,
-        start: event.start.toISOString(),
-        end: event.end.toISOString(),
-        allDay: event.allDay,
-        backgroundColor: event.resource?.backgroundColor,
-        borderColor: event.resource?.borderColor,
-        extendedProps: {
-          eventType: event.resource?.eventType,
-          location: event.resource?.location,
-          description: event.resource?.description,
-          relatedType: event.resource?.relatedType,
-          relatedId: event.resource?.relatedId,
-          status: event.resource?.status,
-        },
-      } as any)
-    }
-  }
-
-  const eventStyleGetter = (event: CalendarEvent) => {
-    const backgroundColor = event.resource?.backgroundColor || '#3b82f6'
-    const borderColor = event.resource?.borderColor || '#2563eb'
-    const isCancelled = event.resource?.status === 'cancelled'
-    
-    return {
-      style: {
-        backgroundColor,
-        borderColor,
-        borderWidth: '2px',
-        borderRadius: '4px',
-        opacity: isCancelled ? 0.5 : 1,
-        textDecoration: isCancelled ? 'line-through' : 'none',
-        color: '#fff',
-        padding: '2px 6px',
-      },
-    }
-  }
-
-  const goToToday = () => {
-    setCurrentDate(new Date())
-  }
-
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = moment(currentDate)
-    if (view === 'month') {
-      newDate.add(direction === 'next' ? 1 : -1, 'month')
-    } else if (view === 'week') {
-      newDate.add(direction === 'next' ? 1 : -1, 'week')
-    } else {
-      newDate.add(direction === 'next' ? 1 : -1, 'day')
-    }
-    setCurrentDate(newDate.toDate())
-  }
-
-  const changeView = (newView: View) => {
-    setView(newView)
-  }
-
-  const getCurrentMonthYear = () => {
-    return moment(currentDate).format('MMMM YYYY')
-  }
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement
-      if (
-        target.tagName === 'INPUT' || 
-        target.tagName === 'TEXTAREA' || 
-        target.isContentEditable ||
-        target.closest('input') ||
-        target.closest('textarea') ||
-        target.closest('[contenteditable="true"]')
-      ) {
-        return
-      }
-
-      if (e.key === 't' || e.key === 'T') {
-        e.preventDefault()
-        goToToday()
-      } else if (e.key === 'ArrowLeft' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault()
-        navigateDate('prev')
-      } else if (e.key === 'ArrowRight' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault()
-        navigateDate('next')
-      } else if (e.key === 'm' || e.key === 'M') {
-        e.preventDefault()
-        changeView('month')
-      } else if (e.key === 'w' || e.key === 'W') {
-        e.preventDefault()
-        changeView('week')
-      } else if (e.key === 'd' || e.key === 'D') {
-        e.preventDefault()
-        changeView('day')
-      } else if (e.key === '/' && !e.shiftKey) {
-        e.preventDefault()
-        const calendarSearchInput = document.querySelector('.calendar-search-input') as HTMLInputElement
-        if (calendarSearchInput) {
-          calendarSearchInput.focus()
-          calendarSearchInput.select()
-        }
-      } else if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
-        e.preventDefault()
-        setShowHelp(true)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyPress, true)
-    return () => window.removeEventListener('keydown', handleKeyPress, true)
-  }, [goToToday, navigateDate, changeView])
-
-  const handleSync = async () => {
-    try {
-      const response = await fetch('/api/calendar/sync/manual', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>()
+    monthDays.forEach((day) => {
+      const dayKey = moment(day).format('YYYY-MM-DD')
+      const dayEvents = events.filter((event) => {
+        const start = moment(event.start).startOf('day')
+        const end = moment(event.end).startOf('day')
+        const target = moment(day).startOf('day')
+        return target.isBetween(start, end, 'day', '[]')
       })
+      map.set(dayKey, dayEvents)
+    })
+    return map
+  }, [events, monthDays])
 
-      if (!response.ok) {
-        throw new Error('Failed to sync calendars')
-      }
+  const handleGoToToday = () => setCurrentDate(new Date())
 
-      setTimeout(() => {
-        fetchEvents()
-      }, 1000)
-    } catch (error) {
-      console.error('Error syncing calendars:', error)
-    }
+  const handleNavigateDate = (direction: 'prev' | 'next') => {
+    const next = moment(currentDate).add(direction === 'next' ? 1 : -1, 'month').toDate()
+    setCurrentDate(next)
   }
 
-  if (!settingsLoaded) {
+  const handleEventClick = (event: CalendarEvent) => {
+    if (!onEventClick) return
+    onEventClick({
+      id: event.id,
+      title: event.title,
+      start: event.start.toISOString(),
+      end: event.end.toISOString(),
+      allDay: event.allDay,
+      backgroundColor: event.resource?.backgroundColor,
+      borderColor: event.resource?.borderColor,
+      extendedProps: {
+        eventType: event.resource?.eventType,
+        location: event.resource?.location,
+        description: event.resource?.description,
+        relatedType: event.resource?.relatedType,
+        relatedId: event.resource?.relatedId,
+        status: event.resource?.status,
+      },
+    })
+  }
+
+  const handleDayClick = (day: Date) => {
+    if (!onDateSelect) return
+    const start = new Date(day)
+    start.setHours(9, 0, 0, 0)
+    const end = new Date(start.getTime() + 30 * 60 * 1000)
+    onDateSelect(start, end)
+  }
+
+  const getEventChipClasses = (event: CalendarEvent) => {
+    const eventType = event.resource?.eventType || 'other'
+    if (eventType === 'meeting' || eventType === 'content') {
+      return 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-50'
+    }
+    if (eventType === 'showing' || eventType === 'deadline') {
+      return 'bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-50'
+    }
+    if (eventType === 'email_campaign' || eventType === 'call' || eventType === 'follow_up') {
+      return 'bg-blue-500 text-white hover:bg-blue-600'
+    }
+    return 'bg-white border border-gray-100 text-gray-700 hover:border-blue-200'
+  }
+
+  if (!settingsLoaded || loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-2">
@@ -512,59 +322,147 @@ export default function CalendarView({ onEventClick, onDateSelect, calendarType 
     )
   }
 
-  // Custom event component: title on left, time on right
-  const EventComponent = ({ event: evt }: { event: CalendarEvent }) => (
-    <div className="rbc-event-content flex items-center justify-between gap-2 w-full overflow-hidden">
-      <span className="rbc-event-label truncate flex-1 min-w-0" title={evt.title}>
-        {evt.title}
-      </span>
-      {!evt.allDay && (
-        <span className="rbc-event-time flex-shrink-0 text-right whitespace-nowrap">
-          {moment(evt.start).format('h:mm A')} – {moment(evt.end).format('h:mm A')}
-        </span>
-      )}
-    </div>
-  )
-
   return (
-    <div className="flex flex-col h-full w-full min-h-0 m-0 pt-[60px] pb-[90px] bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Calendar Container — 60px top inset, 90px bottom inset (another 30px on each side) */}
-      <div className="flex-1 min-h-0 overflow-auto m-0 bg-white dark:bg-gray-900">
-        <Card className="h-full min-h-[400px] m-0 p-0">
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: '100%', minHeight: '400px' }}
-            view={view}
-            onView={setView}
-            date={currentDate}
-            onNavigate={setCurrentDate}
-            onSelectSlot={handleSelectSlot}
-            onSelectEvent={handleSelectEvent}
-            selectable
-            eventPropGetter={eventStyleGetter}
-            components={{ event: EventComponent }}
-            defaultDate={new Date()}
-            scrollToTime={new Date(1970, 1, 1, 6)}
-            showMultiDayTimes
-            step={15}
-            timeslots={2}
-            formats={{
-              dayFormat: 'ddd M/D',
-              dayHeaderFormat: 'ddd M/D',
-              dayRangeHeaderFormat: ({ start, end }: { start: Date; end: Date }) =>
-                `${moment(start).format('MMM D')} - ${moment(end).format('MMM D, YYYY')}`,
-              timeGutterFormat: 'h:mm A',
-              eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
-                `${moment(start).format('h:mm A')} - ${moment(end).format('h:mm A')}`,
-            } as any}
-          />
-        </Card>
-      </div>
+    <div className="flex-1 flex flex-col overflow-hidden relative text-text-main">
+      <header className="shrink-0 z-20 px-8 py-6 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 bg-white p-1 rounded-full border border-gray-200 shadow-sm">
+            <button
+              type="button"
+              onClick={handleGoToToday}
+              className="px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full transition-colors"
+            >
+              Today
+            </button>
+            <div className="w-px h-4 bg-gray-200 mx-1" />
+            <button
+              type="button"
+              onClick={() => handleNavigateDate('prev')}
+              className="px-3 py-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-colors"
+            >
+              Back
+            </button>
+            <div className="w-px h-4 bg-gray-200 mx-1" />
+            <button
+              type="button"
+              onClick={() => handleNavigateDate('next')}
+              className="px-3 py-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-colors"
+            >
+              Next
+            </button>
+          </div>
 
-      <CalendarHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+          <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">
+            {moment(currentDate).format('MMMM YYYY')}
+          </h1>
+
+          <div className="flex items-center bg-white p-1 rounded-full border border-gray-200 shadow-sm">
+            {(['month', 'week', 'day', 'agenda'] as CalendarViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setView(mode)}
+                className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                  view === mode
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-auto custom-scrollbar relative bg-white">
+        <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
+          {WEEKDAY_LABELS.map((label) => (
+            <div key={label} className="py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              {label}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 auto-rows-fr h-full bg-white divide-x divide-gray-100">
+          {monthDays.map((day) => {
+            const dayKey = moment(day).format('YYYY-MM-DD')
+            const isCurrentMonth = moment(day).month() === moment(currentDate).month()
+            const isToday = moment(day).isSame(new Date(), 'day')
+            const dayEvents = eventsByDay.get(dayKey) || []
+
+            return (
+              <div
+                key={dayKey}
+                className={`min-h-[140px] p-2 border-b border-gray-100 relative transition-colors cursor-pointer ${
+                  isToday ? 'bg-blue-50/40 hover:bg-blue-50/60' : 'group hover:bg-gray-50/50'
+                }`}
+                onClick={() => handleDayClick(day)}
+              >
+                {isToday ? (
+                  <span className="absolute top-3 right-3 flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-bold shadow-sm">
+                    {moment(day).format('DD')}
+                  </span>
+                ) : (
+                  <span className={`absolute top-3 right-3 text-sm font-medium ${isCurrentMonth ? 'text-gray-700' : 'text-gray-400'}`}>
+                    {moment(day).format('DD')}
+                  </span>
+                )}
+
+                {dayEvents.length > 0 && (
+                  <div className={`${isToday ? 'mt-8' : 'mt-7'} w-full space-y-1`}>
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <button
+                        key={event.id}
+                        type="button"
+                        onClick={(eventClick) => {
+                          eventClick.stopPropagation()
+                          handleEventClick(event)
+                        }}
+                        className={`${getEventChipClasses(event)} rounded-lg px-2.5 py-1.5 shadow-sm text-xs font-medium cursor-pointer transition-colors flex flex-col gap-0.5 w-full text-left`}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              event.resource?.eventType === 'email_campaign' || event.resource?.eventType === 'call'
+                                ? 'bg-white'
+                                : event.resource?.eventType === 'meeting'
+                                  ? 'bg-purple-500'
+                                  : event.resource?.eventType === 'showing'
+                                    ? 'bg-amber-500'
+                                    : 'bg-blue-500'
+                            }`}
+                          />
+                          <span className="truncate">{event.title}</span>
+                        </div>
+                        <span className={`text-[10px] ${event.resource?.eventType === 'email_campaign' ? 'opacity-90' : 'opacity-75'}`}>
+                          {event.allDay ? 'All day' : `${moment(event.start).format('h:mm A')} - ${moment(event.end).format('h:mm A')}`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </main>
+
+      <div className="absolute bottom-10 right-10 z-50">
+        <button
+          type="button"
+          className="flex items-center gap-3 pl-1.5 pr-5 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full shadow-[0_10px_40px_-10px_rgba(59,130,246,0.5)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+        >
+          <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <span className="material-symbols-outlined text-lg animate-pulse">auto_awesome</span>
+          </div>
+          <div className="text-left">
+            <span className="block text-xs font-bold leading-none">Ask AI</span>
+            <span className="block text-[10px] text-blue-100 leading-none mt-0.5">Ready to help</span>
+          </div>
+          <div className="ml-2 w-5 h-5 rounded bg-white/20 flex items-center justify-center text-[10px] font-bold">⌘K</div>
+        </button>
+      </div>
     </div>
   )
 }

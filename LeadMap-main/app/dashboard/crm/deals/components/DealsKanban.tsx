@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -239,6 +239,21 @@ export default function DealsKanban({
   onAddDeal,
 }: DealsKanbanProps) {
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null)
+  const kanbanScrollRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const el = kanbanScrollRef.current
+    if (!el) return
+    const handleWheel = (e: WheelEvent) => {
+      const canScrollHorizontal = el.scrollWidth > el.clientWidth
+      if (canScrollHorizontal) {
+        e.preventDefault()
+        el.scrollLeft += e.deltaY
+      }
+    }
+    el.addEventListener('wheel', handleWheel, { passive: false })
+    return () => el.removeEventListener('wheel', handleWheel)
+  }, [])
 
   const buckets: Deal[][] = STAGE_KEYS.map(() => [])
   for (const d of deals) {
@@ -487,7 +502,10 @@ export default function DealsKanban({
   }
 
   return (
-    <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-auto overflow-y-hidden kanban-container px-8 pb-8 pt-2">
+    <main
+      ref={kanbanScrollRef}
+      className="flex-1 min-h-0 min-w-0 w-full overflow-x-auto overflow-y-hidden kanban-container px-8 pb-8 pt-2"
+    >
       <div className="flex gap-6 min-w-max pb-4 h-full min-h-0">
         {STAGE_KEYS.map((stageKey, i) => {
           const list = buckets[i]

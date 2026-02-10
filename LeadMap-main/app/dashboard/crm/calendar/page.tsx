@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import { useSidebar } from "../../components/SidebarContext";
+import CalendarNavbar from "./components/CalendarNavbar";
 import CalendarOnboardingView from "./components/CalendarOnboardingView";
 import CalendarSettingsPanel from "./components/CalendarSettingsPanel";
 import CalendarView from "./components/CalendarView";
@@ -204,40 +205,41 @@ function CalendarPageContent() {
   };
 
   return (
-    <div className="-mt-[10px]">
-      {/* Fixed full-bleed: top under navbar, bottom to window, left/right to window edges (like deals) */}
+    <div className="-mt-[30px]">
       <div
-        className="fixed top-[50px] bottom-0 flex flex-col bg-slate-50 dark:bg-gray-900 transition-all duration-300"
+        className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
         style={{ left: isSidebarOpen ? "274px" : "79px", right: 0 }}
       >
-        <div
-          className="h-px w-full shrink-0 bg-slate-200 dark:bg-slate-700"
-          aria-hidden="true"
-          role="separator"
-        />
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-[84px] pt-[84px] pb-[30px]">
-          <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
-            {showOnboarding === null ? (
-              <div className="flex items-center justify-center flex-1">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm text-gray-500">
-                    Loading calendar...
-                  </span>
+        <CalendarNavbar />
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col">
+          <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-white dark:border-slate-700 shadow-glass rounded-[2rem] flex flex-col h-full overflow-hidden relative">
+            <div
+              className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+              aria-hidden
+            />
+            <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+              {showOnboarding === null ? (
+                <div className="flex items-center justify-center flex-1">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm text-gray-500">
+                      Loading calendar...
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ) : showOnboarding ? (
-              <CalendarOnboardingView
-                onDateSelect={handleOnboardingDateSelect}
-                onConnectCalendar={handleConnectCalendar}
-              />
-            ) : (
-              <CalendarView
-                onEventClick={handleEventClick}
-                onDateSelect={handleDateSelect}
-                calendarType={calendarType}
-              />
-            )}
+              ) : showOnboarding ? (
+                <CalendarOnboardingView
+                  onDateSelect={handleOnboardingDateSelect}
+                  onConnectCalendar={handleConnectCalendar}
+                />
+              ) : (
+                <CalendarView
+                  onEventClick={handleEventClick}
+                  onDateSelect={handleDateSelect}
+                  calendarType={calendarType}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -315,7 +317,7 @@ function CalendarPageContent() {
 
 export default function CalendarPage() {
   return (
-    <DashboardLayout>
+    <DashboardLayout fullBleed hideHeader>
       <CalendarPageContent />
     </DashboardLayout>
   );
