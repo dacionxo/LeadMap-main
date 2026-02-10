@@ -494,11 +494,29 @@ const MapComponent: React.FC<{
       }
     });
 
-    // Lazy-load: when zoomed out (whole US) show up to 50 sampled pins; when zoom passes threshold show all.
+    // Lazy-load: when zoomed out (whole US) show up to 50 sampled pins; when zoom passes threshold show all,
+    // but only for leads that are actually inside the current viewport when zoomed in.
     const isZoomedOut = typeof currentZoom === 'number' && currentZoom < minMarkerRenderZoom;
-    const visibleLeadsWithCoords = isZoomedOut
-      ? sampleLeadsForNationwideView(leadsWithCoords).slice(0, maxZoomedOutPins)
-      : leadsWithCoords;
+
+    let visibleLeadsWithCoords: Lead[];
+    if (isZoomedOut) {
+      // Nationwide view: sample across all leads, capped to ~50 pins.
+      visibleLeadsWithCoords = sampleLeadsForNationwideView(leadsWithCoords).slice(
+        0,
+        maxZoomedOutPins
+      );
+    } else {
+      // Zoomed-in view: only render leads that are currently inside the viewport, and cap to a reasonable max.
+      const bounds = map.getBounds();
+      const inView = bounds
+        ? leadsWithCoords.filter((lead) => {
+            if (lead.latitude == null || lead.longitude == null) return false;
+            return bounds.contains({ lat: lead.latitude, lng: lead.longitude });
+          })
+        : leadsWithCoords;
+      const maxInViewPins = 2500;
+      visibleLeadsWithCoords = inView.length > maxInViewPins ? inView.slice(0, maxInViewPins) : inView;
+    }
 
     // Create markers for visible leads with coordinates (use dot icon when zoomed out, price pill when zoomed in)
     const useNationwideIcon = isZoomedOut;

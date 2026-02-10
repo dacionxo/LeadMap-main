@@ -604,9 +604,6 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       return;
     }
 
-    // Create bounds to fit all markers
-    const bounds = new mapboxgl.LngLatBounds();
-
     // Process leads with coordinates first
     const leadsWithCoords: Lead[] = [];
     const leadsWithoutCoords: Lead[] = [];
@@ -625,18 +622,43 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     });
 
     const currentZoom = zoomLevel ?? map.current.getZoom();
-    // Lazy-load: when zoomed out (whole US) show up to 50 sampled pins; when zoom passes threshold show all.
+    // Lazy-load: when zoomed out (whole US) show up to 50 sampled pins; when zoom passes threshold show all,
+    // but only for leads that are currently inside the viewport when zoomed in.
     const isZoomedOut =
       typeof currentZoom === "number" && currentZoom < minMarkerRenderZoom;
-    const visibleLeadsWithCoords = isZoomedOut
-      ? sampleLeadsForNationwideView(leadsWithCoords).slice(0, maxZoomedOutPins)
-      : leadsWithCoords;
+
+    let visibleLeadsWithCoords: Lead[];
+    if (isZoomedOut) {
+      visibleLeadsWithCoords = sampleLeadsForNationwideView(leadsWithCoords).slice(
+        0,
+        maxZoomedOutPins
+      );
+    } else {
+      const mapBounds = map.current.getBounds();
+      const inView = mapBounds
+        ? leadsWithCoords.filter((lead) => {
+            if (lead.latitude == null || lead.longitude == null) return false;
+            return (
+              lead.longitude >= mapBounds.getWest() &&
+              lead.longitude <= mapBounds.getEast() &&
+              lead.latitude >= mapBounds.getSouth() &&
+              lead.latitude <= mapBounds.getNorth()
+            );
+          })
+        : leadsWithCoords;
+      const maxInViewPins = 2500;
+      visibleLeadsWithCoords =
+        inView.length > maxInViewPins ? inView.slice(0, maxInViewPins) : inView;
+    }
 
     // Only fit bounds when listings/map changed — not when user zoomed (so zoom is not overridden)
     const zoomTriggeredRun =
       lastZoomRef.current !== null &&
       lastZoomRef.current !== (zoomLevel ?? map.current.getZoom());
     lastZoomRef.current = zoomLevel ?? map.current.getZoom() ?? null;
+
+    // Create bounds to fit all markers we actually render
+    const bounds = new mapboxgl.LngLatBounds();
 
     // Add markers (use dot icon when zoomed out, price pill when zoomed in)
     const useNationwideIcon = isZoomedOut;
