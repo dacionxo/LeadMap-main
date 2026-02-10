@@ -137,6 +137,8 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
   };
 
   const markerZoomThreshold = 6;
+  const minMarkerRenderZoom = 8;
+  const maxZoomedOutPins = 50;
 
   // Nationwide marker: blue dot, 20% smaller (26px), black shadow outline, ratios retained
   const createNationwideMarkerHTML = (): string => {
@@ -623,9 +625,11 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     });
 
     const currentZoom = zoomLevel ?? map.current.getZoom();
-    const isNationwide = currentZoom != null && currentZoom < markerZoomThreshold;
-    const visibleLeadsWithCoords = isNationwide
-      ? sampleLeadsForNationwideView(leadsWithCoords)
+    // Lazy-load: when zoomed out (whole US) show up to 50 sampled pins; when zoom passes threshold show all.
+    const isZoomedOut =
+      typeof currentZoom === "number" && currentZoom < minMarkerRenderZoom;
+    const visibleLeadsWithCoords = isZoomedOut
+      ? sampleLeadsForNationwideView(leadsWithCoords).slice(0, maxZoomedOutPins)
       : leadsWithCoords;
 
     // Only fit bounds when listings/map changed — not when user zoomed (so zoom is not overridden)
@@ -634,10 +638,13 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       lastZoomRef.current !== (zoomLevel ?? map.current.getZoom());
     lastZoomRef.current = zoomLevel ?? map.current.getZoom() ?? null;
 
-    // Add markers for visible leads with coordinates
+    // Add markers (use dot icon when zoomed out, price pill when zoomed in)
+    const useNationwideIcon = isZoomedOut;
     visibleLeadsWithCoords.forEach((lead) => {
       const el = document.createElement("div");
-      el.innerHTML = getMarkerHTMLForZoom(lead, map.current?.getZoom() ?? null);
+      el.innerHTML = useNationwideIcon
+        ? createNationwideMarkerHTML()
+        : getMarkerHTMLForZoom(lead, map.current?.getZoom() ?? null);
       (el as unknown as { __lead?: Lead }).__lead = lead;
       el.style.cursor = "pointer";
 
@@ -654,11 +661,12 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       bounds.extend([lead.longitude!, lead.latitude!]);
     });
 
-    // Fit map to show markers only when not zoom-triggered (so user can zoom in without reset)
+    // Fit map to show markers only when not zoom-triggered and not in zoomed-out (50-pin) view
     if (
       visibleLeadsWithCoords.length > 0 &&
       !zoomTriggeredRun &&
-      !shouldSuppressAutoFit
+      !shouldSuppressAutoFit &&
+      !isZoomedOut
     ) {
       map.current.fitBounds(bounds, {
         padding: { top: 50, bottom: 50, left: 50, right: 50 },
@@ -668,7 +676,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     }
 
     // Geocode only when zoomed in (state level+) to avoid loading many markers at nationwide
-    if (leadsWithoutCoords.length > 0 && !isNationwide) {
+    if (leadsWithoutCoords.length > 0 && !isZoomedOut) {
       setGeocodingCount(leadsWithoutCoords.length);
 
       // Get current cached geocodes

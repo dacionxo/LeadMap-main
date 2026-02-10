@@ -290,6 +290,9 @@ const MapComponent: React.FC<{
   };
 
   const markerZoomThreshold = 6;
+  // Below this zoom we show ~50 sampled pins (whole US); at or above we show full property pins.
+  const minMarkerRenderZoom = 8;
+  const maxZoomedOutPins = 50;
 
   // At nationwide zoom, show one marker per grid cell to prevent icon overlap
   const sampleLeadsForNationwideView = (leads: Lead[]): Lead[] => {
@@ -491,19 +494,20 @@ const MapComponent: React.FC<{
       }
     });
 
-    // At nationwide zoom, show one marker per grid cell to prevent overlap
-    const visibleLeadsWithCoords =
-      currentZoom != null && currentZoom < markerZoomThreshold
-        ? sampleLeadsForNationwideView(leadsWithCoords)
-        : leadsWithCoords;
+    // Lazy-load: when zoomed out (whole US) show up to 50 sampled pins; when zoom passes threshold show all.
+    const isZoomedOut = typeof currentZoom === 'number' && currentZoom < minMarkerRenderZoom;
+    const visibleLeadsWithCoords = isZoomedOut
+      ? sampleLeadsForNationwideView(leadsWithCoords).slice(0, maxZoomedOutPins)
+      : leadsWithCoords;
 
-    // Create markers for visible leads with coordinates
+    // Create markers for visible leads with coordinates (use dot icon when zoomed out, price pill when zoomed in)
+    const useNationwideIcon = isZoomedOut;
     visibleLeadsWithCoords.forEach((lead) => {
       const marker = new window.google.maps.Marker({
         position: { lat: lead.latitude!, lng: lead.longitude! },
           map: map,
           title: `${lead.address}, ${lead.city}, ${lead.state}`,
-          icon: getMarkerIconForZoom(lead, map.getZoom())
+          icon: useNationwideIcon ? getNationwideMarkerIcon() : getMarkerIconForZoom(lead, map.getZoom())
         });
         markerLeadMapRef.current.set(marker, lead);
 
@@ -668,7 +672,7 @@ const MapComponent: React.FC<{
     const zoomTriggeredRun =
       lastZoomRef.current !== null && lastZoomRef.current !== (zoomLevel ?? map.getZoom());
     lastZoomRef.current = zoomLevel ?? map.getZoom() ?? null;
-    if (newMarkers.length > 0 && !zoomTriggeredRun && !shouldSuppressAutoFit) {
+    if (newMarkers.length > 0 && !zoomTriggeredRun && !shouldSuppressAutoFit && !isZoomedOut) {
       const bounds = new google.maps.LatLngBounds();
       newMarkers.forEach(marker => {
         const position = marker.getPosition();
