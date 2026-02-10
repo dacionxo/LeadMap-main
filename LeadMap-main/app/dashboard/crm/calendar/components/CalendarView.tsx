@@ -49,6 +49,9 @@ interface CalendarViewProps {
 type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+const WEEKS_IN_VIEW = 5
+const DAYS_IN_VIEW = WEEKS_IN_VIEW * 7
+const MAX_EVENTS_PER_DAY = 2
 
 export default function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -88,6 +91,30 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
   useEffect(() => {
     fetchSettings()
   }, [fetchSettings])
+
+  /**
+   * Calendar is intentionally constrained to 5 week rows (35 days) to keep the
+   * page compact and avoid inner scrolling.
+   *
+   * For months that span 6 weeks, we choose either the first 5 or last 5 weeks
+   * based on which window contains the current week (keeps navigation intuitive).
+   */
+  const monthGridStart = useMemo(() => {
+    const monthStart = moment(currentDate).startOf('month')
+    const firstWeekStart = monthStart.clone().startOf('week')
+    const monthEnd = moment(currentDate).endOf('month')
+    const lastWeekStart = monthEnd.clone().endOf('week').startOf('week')
+    const totalWeeks = lastWeekStart.diff(firstWeekStart, 'weeks') + 1
+
+    if (totalWeeks <= WEEKS_IN_VIEW) return firstWeekStart
+
+    // totalWeeks is typically 6 here: show a 5-week window that contains currentDate's week
+    const currentWeekStart = moment(currentDate).startOf('week')
+    const weekIndex = currentWeekStart.diff(firstWeekStart, 'weeks')
+    return weekIndex <= 2 ? firstWeekStart : firstWeekStart.clone().add(1, 'week')
+  }, [currentDate])
+
+  const monthGridEnd = useMemo(() => monthGridStart.clone().add(DAYS_IN_VIEW - 1, 'days'), [monthGridStart])
 
   const getEventColor = (eventType?: string): string => {
     const colors: Record<string, string> = {
@@ -163,8 +190,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
   const fetchEvents = useCallback(async () => {
     try {
       setLoading(true)
-      const start = moment(currentDate).startOf('month').startOf('week').toISOString()
-      const end = moment(currentDate).endOf('month').endOf('week').toISOString()
+      const start = monthGridStart.clone().startOf('day').toISOString()
+      const end = monthGridEnd.clone().endOf('day').toISOString()
 
       const response = await fetch(`/api/calendar/events?start=${start}&end=${end}`, {
         credentials: 'include',
@@ -225,7 +252,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     } finally {
       setLoading(false)
     }
-  }, [currentDate, formatEventForCalendar, settings?.show_declined_events])
+  }, [formatEventForCalendar, monthGridEnd, monthGridStart, settings?.show_declined_events])
 
   useEffect(() => {
     if (!settingsLoaded) return
@@ -241,10 +268,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
   }, [fetchEvents])
 
   const monthDays = useMemo(() => {
-    const monthStart = moment(currentDate).startOf('month')
-    const gridStart = monthStart.clone().startOf('week')
-    return Array.from({ length: 42 }).map((_, idx) => gridStart.clone().add(idx, 'day').toDate())
-  }, [currentDate])
+    return Array.from({ length: DAYS_IN_VIEW }).map((_, idx) => monthGridStart.clone().add(idx, 'day').toDate())
+  }, [monthGridStart])
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
@@ -324,7 +349,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative text-text-main">
-      <header className="shrink-0 z-20 px-8 py-6 border-b border-gray-100">
+      <header className="shrink-0 z-20 px-8 py-6 border-b border-gray-200/80 dark:border-slate-700/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 bg-white p-1 rounded-full border border-gray-200 shadow-sm">
             <button
@@ -375,8 +400,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto custom-scrollbar relative bg-white">
-        <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
+      <main className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-white">
+        <div className="shrink-0 grid grid-cols-7 border-b border-gray-200 bg-gray-50">
           {WEEKDAY_LABELS.map((label) => (
             <div key={label} className="py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
               {label}
@@ -384,7 +409,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           ))}
         </div>
 
-        <div className="grid grid-cols-7 auto-rows-fr h-full bg-white divide-x divide-gray-100">
+        <div className="flex-1 min-h-0 grid grid-cols-7 grid-rows-5 bg-white divide-x divide-gray-100">
           {monthDays.map((day) => {
             const dayKey = moment(day).format('YYYY-MM-DD')
             const isCurrentMonth = moment(day).month() === moment(currentDate).month()
@@ -394,13 +419,13 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             return (
               <div
                 key={dayKey}
-                className={`min-h-[140px] p-2 border-b border-gray-100 relative transition-colors cursor-pointer ${
+                className={`p-2 border-b border-gray-100 relative transition-colors cursor-pointer overflow-hidden ${
                   isToday ? 'bg-blue-50/40 hover:bg-blue-50/60' : 'group hover:bg-gray-50/50'
                 }`}
                 onClick={() => handleDayClick(day)}
               >
                 {isToday ? (
-                  <span className="absolute top-3 right-3 flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-bold shadow-sm">
+                  <span className="absolute top-3 right-3 flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold shadow-sm">
                     {moment(day).format('DD')}
                   </span>
                 ) : (
@@ -410,8 +435,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                 )}
 
                 {dayEvents.length > 0 && (
-                  <div className={`${isToday ? 'mt-8' : 'mt-7'} w-full space-y-1`}>
-                    {dayEvents.slice(0, 3).map((event) => (
+                  <div className={`${isToday ? 'mt-8' : 'mt-7'} w-full space-y-1 overflow-hidden`}>
+                    {dayEvents.slice(0, MAX_EVENTS_PER_DAY).map((event) => (
                       <button
                         key={event.id}
                         type="button"
@@ -419,7 +444,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                           eventClick.stopPropagation()
                           handleEventClick(event)
                         }}
-                        className={`${getEventChipClasses(event)} rounded-lg px-2.5 py-1.5 shadow-sm text-xs font-medium cursor-pointer transition-colors flex flex-col gap-0.5 w-full text-left`}
+                        className={`${getEventChipClasses(event)} rounded-lg px-2.5 py-1.5 shadow-sm text-[11px] font-medium cursor-pointer transition-colors flex flex-col gap-0.5 w-full text-left`}
                       >
                         <div className="flex items-center gap-1">
                           <span
@@ -440,6 +465,12 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                         </span>
                       </button>
                     ))}
+
+                    {dayEvents.length > MAX_EVENTS_PER_DAY && (
+                      <div className="text-[10px] font-medium text-gray-400 px-1">
+                        +{dayEvents.length - MAX_EVENTS_PER_DAY} more
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -447,22 +478,6 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           })}
         </div>
       </main>
-
-      <div className="absolute bottom-10 right-10 z-50">
-        <button
-          type="button"
-          className="flex items-center gap-3 pl-1.5 pr-5 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full shadow-[0_10px_40px_-10px_rgba(59,130,246,0.5)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
-        >
-          <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <span className="material-symbols-outlined text-lg animate-pulse">auto_awesome</span>
-          </div>
-          <div className="text-left">
-            <span className="block text-xs font-bold leading-none">Ask AI</span>
-            <span className="block text-[10px] text-blue-100 leading-none mt-0.5">Ready to help</span>
-          </div>
-          <div className="ml-2 w-5 h-5 rounded bg-white/20 flex items-center justify-center text-[10px] font-bold">⌘K</div>
-        </button>
-      </div>
     </div>
   )
 }
