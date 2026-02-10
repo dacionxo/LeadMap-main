@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 import { useSidebar } from '../../components/SidebarContext'
+import DealsNavbar from './components/DealsNavbar'
 import EditDealModal from './components/EditDealModal'
 import DealsSelectionActionBar from './components/DealsSelectionActionBar'
 import DealsKanban from './components/DealsKanban'
@@ -82,10 +83,11 @@ function DealsPageContent() {
   return (
     <div className="-mt-[30px]">
       <div
-        className="fixed top-[50px] bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
+        className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
         style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
       >
-        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col">
+        <DealsNavbar />
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0">
           <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-white dark:border-slate-700 shadow-glass rounded-[2rem] flex flex-col h-full min-h-0 overflow-hidden relative">
             <div
               className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
