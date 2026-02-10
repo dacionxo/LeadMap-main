@@ -991,3 +991,23 @@
   background-color: rgba(203, 213, 225, 0.5);
   border-radius: 3px;
 }
+
+/* Edit Deal modal - dashboard-aligned CRM */
+.modal-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(203, 213, 225, 0.6);
+  border-radius: 3px;
+}
+.input-focus-glow:focus {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+.dark .input-focus-glow:focus {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+}

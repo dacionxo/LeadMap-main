@@ -1,13 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { X, ChevronDown, Calendar } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/app/components/ui/dialog'
+import { useState, useEffect, useCallback } from 'react'
 import DatePicker from './DatePicker'
 import { useApp } from '@/app/providers'
 
@@ -48,6 +41,55 @@ interface EditDealModalProps {
 
 const STAGES = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']
 
+const STEP_LABELS = ['Lead', 'Contact', 'Qualify', 'Proposal', 'Done'] as const
+
+const STAGE_TO_STEP_INDEX: Record<string, number> = {
+  new: 0,
+  contacted: 1,
+  qualified: 2,
+  proposal: 3,
+  negotiation: 4,
+  closed_won: 4,
+  closed_lost: 4,
+}
+
+function getStepIndex(stage: string): number {
+  return STAGE_TO_STEP_INDEX[stage] ?? 0
+}
+
+function getOwnerInitials(user: User): string {
+  if (user?.name) {
+    const parts = user.name.trim().split(/\s+/)
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+    return (parts[0].slice(0, 2) || '??').toUpperCase()
+  }
+  if (user?.email) {
+    const pre = user.email.split('@')[0]
+    const parts = pre.split(/[._-]/)
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+    return (pre.slice(0, 2) || '??').toUpperCase()
+  }
+  return '??'
+}
+
+function formatValueForInput(v: number | null | undefined): string {
+  if (v == null || isNaN(v)) return ''
+  return v.toLocaleString('en-US', { maximumFractionDigits: 0 })
+}
+
+function parseValueFromInput(s: string): number | null {
+  const cleaned = s.replace(/,/g, '').trim()
+  if (!cleaned) return null
+  const n = parseFloat(cleaned)
+  return isNaN(n) ? null : n
+}
+
+const MOCK_ACTIVITY = [
+  { time: 'Just now', text: 'Stage moved to', highlight: 'Qualified' },
+  { time: '2 hours ago', text: 'Note added by', highlight: 'Tyquan' },
+  { time: 'Yesterday', text: 'Deal created', highlight: null },
+]
+
 export default function EditDealModal({
   isOpen,
   onClose,
@@ -56,7 +98,7 @@ export default function EditDealModal({
   pipelines = [],
   users = [],
 }: EditDealModalProps) {
-  const { user } = useApp()
+  const { user: currentUser } = useApp()
   const [formData, setFormData] = useState<Partial<Deal>>({
     title: '',
     value: null,
@@ -68,6 +110,7 @@ export default function EditDealModal({
     probability: 0,
     notes: '',
   })
+  const [valueInput, setValueInput] = useState('')
   const [loading, setLoading] = useState(false)
 
   const defaultPipeline = pipelines.find((p) => (p as Pipeline).is_default) || pipelines[0]
@@ -76,15 +119,16 @@ export default function EditDealModal({
     if (deal) {
       setFormData({
         title: deal.title || '',
-        value: deal.value || null,
+        value: deal.value ?? null,
         stage: deal.stage || 'new',
         expected_close_date: deal.expected_close_date || null,
         property_address: deal.property_address || null,
         pipeline_id: deal.pipeline_id || null,
         owner_id: deal.owner_id || null,
-        probability: deal.probability || 0,
+        probability: deal.probability ?? 0,
         notes: deal.notes || '',
       })
+      setValueInput(formatValueForInput(deal.value ?? null))
     } else {
       setFormData({
         title: '',
@@ -93,18 +137,20 @@ export default function EditDealModal({
         expected_close_date: null,
         property_address: null,
         pipeline_id: defaultPipeline?.id ?? null,
-        owner_id: user?.id ?? null,
+        owner_id: currentUser?.id ?? null,
         probability: 0,
         notes: '',
       })
+      setValueInput('')
     }
-  }, [deal, isOpen, defaultPipeline?.id, user?.id])
+  }, [deal, isOpen, defaultPipeline?.id, currentUser?.id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
       await onSave(formData)
+      onClose()
     } catch (error) {
       console.error('Error saving deal:', error)
       alert('Failed to save deal')
@@ -113,214 +159,334 @@ export default function EditDealModal({
     }
   }
 
-  const selectedPipeline = pipelines.find((p) => p.id === formData.pipeline_id)
+  const handleValueInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/,/g, '').trim()
+    setValueInput(e.target.value)
+    const n = parseFloat(raw)
+    setFormData((prev) => ({ ...prev, value: raw === '' ? null : isNaN(n) ? prev.value : n }))
+  }, [])
+
+  const handleValueBlur = useCallback(() => {
+    const n = formData.value
+    setValueInput(formatValueForInput(n ?? null))
+  }, [formData.value])
+
   const selectedOwner = users.find((u) => u.id === formData.owner_id)
+  const currentStepIndex = getStepIndex(formData.stage || 'new')
+
+  if (!isOpen) return null
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-        <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
-          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-            {deal ? 'Edit Deal' : 'Create Deal'}
-          </DialogTitle>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          </button>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-5 pt-4">
-          {/* Deal Name */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-              Deal Name
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title || ''}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Deal name"
-            />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-deal-title"
+    >
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-4xl max-h-[90vh] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] flex overflow-hidden relative animate-in fade-in zoom-in-95 duration-300">
+        {/* Left sidebar - Recent Activity */}
+        <div className="w-64 bg-gray-50 dark:bg-slate-800/80 border-r border-gray-100 dark:border-slate-700 flex-shrink-0 hidden md:flex flex-col">
+          <div className="p-6 pb-4 border-b border-gray-100/50 dark:border-slate-700/50">
+            <h3 className="text-sm font-bold text-gray-800 dark:text-slate-200 flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg text-blue-500">history</span>
+              Recent Activity
+            </h3>
           </div>
-
-          {/* Pipeline & Stage - Two columns */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-                Pipeline
-              </label>
-              <div className="relative">
-                <select
-                  value={formData.pipeline_id || ''}
-                  onChange={(e) => setFormData({ ...formData, pipeline_id: e.target.value || null })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  aria-label="Pipeline"
-                  required={!deal}
-                >
-                  <option value="">Select pipeline...</option>
-                  {pipelines.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-                Stage
-              </label>
-              <div className="relative">
-                <select
-                  value={formData.stage || 'new'}
-                  onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  aria-label="Stage"
-                >
-                  {STAGES.map((stage) => (
-                    <option key={stage} value={stage}>
-                      {stage.charAt(0).toUpperCase() + stage.slice(1).replace('_', ' ')}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              </div>
+          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+            <div className="relative pl-4 border-l-2 border-gray-200 dark:border-slate-600 space-y-6">
+              {MOCK_ACTIVITY.map((item, i) => (
+                <div key={i} className="relative">
+                  <div
+                    className={`absolute -left-[21px] top-1 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800 ${
+                      i === 0 ? 'bg-blue-500' : 'bg-gray-300 dark:bg-slate-600'
+                    }`}
+                    aria-hidden
+                  />
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">{item.time}</p>
+                  <p className="text-xs font-medium text-gray-800 dark:text-slate-200">
+                    {item.text}
+                    {item.highlight && (
+                      <span className="text-blue-600 dark:text-blue-400"> {item.highlight}</span>
+                    )}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* Property Address */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-              Property Address
-            </label>
-            <input
-              type="text"
-              value={formData.property_address || ''}
-              onChange={(e) => setFormData({ ...formData, property_address: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Street Address"
-            />
-          </div>
+        {/* Main content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex flex-col px-8 pt-6 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 id="edit-deal-title" className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                {deal ? 'Edit Deal' : 'Create Deal'}
+              </h2>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 dark:bg-slate-800 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-200 transition-colors"
+                aria-label="Close"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+            </div>
 
-          {/* Value & Probability - Two columns */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-                Value ($)
-              </label>
-              <input
-                type="number"
-                value={formData.value || ''}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value ? parseFloat(e.target.value) : null })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="0.00"
-                step="0.01"
-                min="0"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-                Probability (%)
-              </label>
-              <input
-                type="number"
-                value={formData.probability || 0}
-                onChange={(e) => setFormData({ ...formData, probability: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="0"
-                min="0"
-                max="100"
-              />
-            </div>
-          </div>
-
-          {/* Expected Close Date & Owner - Two columns */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-                Expected Close Date
-              </label>
-              <DatePicker
-                value={formData.expected_close_date}
-                onChange={(date) => setFormData({ ...formData, expected_close_date: date })}
-                placeholder="Select date"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-                Owner
-              </label>
-              <div className="relative">
-                <select
-                  value={formData.owner_id || ''}
-                  onChange={(e) => setFormData({ ...formData, owner_id: e.target.value || null })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  aria-label="Owner"
-                >
-                  <option value="">Select owner...</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.id === user?.id ? `${u.name || u.email} (You)` : (u.name || u.email)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            {/* Stage stepper */}
+            <div className="flex items-center justify-between w-full mb-2">
+              <div className="flex items-center flex-1">
+                {STEP_LABELS.map((label, i) => {
+                  const isComplete = currentStepIndex > i
+                  const isCurrent = currentStepIndex === i
+                  return (
+                    <div key={label} className="flex items-center flex-1 min-w-0">
+                      <div className="flex flex-col items-center gap-1.5 relative z-10 shrink-0">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
+                            isComplete
+                              ? 'bg-blue-600 text-white shadow-blue-200 dark:shadow-blue-900/30'
+                              : isCurrent
+                                ? 'bg-white dark:bg-slate-800 border-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                                : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {isComplete ? (
+                            <span className="material-symbols-outlined text-[16px]">check</span>
+                          ) : (
+                            i + 1
+                          )}
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wide ${
+                            isComplete
+                              ? 'text-blue-600 dark:text-blue-400'
+                              : isCurrent
+                                ? 'text-gray-900 dark:text-white'
+                                : 'text-gray-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {label}
+                        </span>
+                      </div>
+                      {i < STEP_LABELS.length - 1 && (
+                        <div className="flex-1 h-0.5 bg-gray-200 dark:bg-slate-600 mx-2 -mt-4 relative overflow-hidden min-w-[8px]">
+                          {currentStepIndex > i && (
+                            <div className="absolute inset-y-0 left-0 w-full bg-blue-600 dark:bg-blue-500 transition-all" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
 
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-              Notes
-            </label>
-            <textarea
-              value={formData.notes || ''}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="Leave notes about this deal..."
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 overflow-y-auto px-8 py-4 modal-scroll min-h-0">
+            <div className="space-y-6 pb-2">
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                  <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">title</span>
+                  Deal Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                  placeholder="Deal Name"
+                />
+              </div>
 
-          {/* Footer - Progress & Done button */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-                Progress
-              </label>
-              <div className="relative">
-                <select
-                  value={formData.stage || 'new'}
-                  onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  aria-label="Progress"
-                >
-                  {STAGES.map((stage) => (
-                    <option key={stage} value={stage}>
-                      {stage.charAt(0).toUpperCase() + stage.slice(1).replace('_', ' ')}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">alt_route</span>
+                    Pipeline
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={formData.pipeline_id || ''}
+                      onChange={(e) => setFormData({ ...formData, pipeline_id: e.target.value || null })}
+                      className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all appearance-none font-medium pr-10"
+                      aria-label="Pipeline"
+                      required={!deal}
+                    >
+                      <option value="">Select pipeline...</option>
+                      {pipelines.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400 dark:text-slate-500">
+                      <span className="material-symbols-outlined text-xl">expand_more</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">flag</span>
+                    Stage
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={formData.stage || 'new'}
+                      onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+                      className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all appearance-none font-medium pr-10"
+                      aria-label="Stage"
+                    >
+                      {STAGES.map((stage) => (
+                        <option key={stage} value={stage}>
+                          {stage.charAt(0).toUpperCase() + stage.slice(1).replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400 dark:text-slate-500">
+                      <span className="material-symbols-outlined text-xl">expand_more</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                  <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">location_city</span>
+                  Property Address
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.property_address || ''}
+                    onChange={(e) => setFormData({ ...formData, property_address: e.target.value })}
+                    className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                    placeholder="Search address..."
+                  />
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 dark:text-slate-500">
+                    <span className="material-symbols-outlined text-xl">search</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">attach_money</span>
+                    Value
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={valueInput}
+                      onChange={handleValueInputChange}
+                      onBlur={handleValueBlur}
+                      className="w-full pl-8 pr-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                      placeholder="0"
+                    />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 dark:text-slate-500 font-bold">
+                      $
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">trending_up</span>
+                    Probability
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={formData.probability ?? ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, probability: parseInt(e.target.value, 10) || 0 })
+                      }
+                      className="w-full pl-4 pr-10 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                      placeholder="0"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-400 dark:text-slate-500 font-bold">
+                      %
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">event</span>
+                    Expected Close
+                  </label>
+                  <DatePicker
+                    value={formData.expected_close_date}
+                    onChange={(date) => setFormData({ ...formData, expected_close_date: date })}
+                    placeholder="MM/DD/YYYY"
+                    inputClassName="w-full px-4 py-3 pr-10 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">person</span>
+                    Owner
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
+                      <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white dark:ring-slate-900">
+                        {selectedOwner ? getOwnerInitials(selectedOwner) : '??'}
+                      </div>
+                    </div>
+                    <select
+                      value={formData.owner_id || ''}
+                      onChange={(e) => setFormData({ ...formData, owner_id: e.target.value || null })}
+                      className="w-full pl-11 pr-10 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all appearance-none font-medium"
+                      aria-label="Owner"
+                    >
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.id === currentUser?.id ? `${u.name || u.email} (You)` : u.name || u.email}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400 dark:text-slate-500">
+                      <span className="material-symbols-outlined text-xl">expand_more</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+                  <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">notes</span>
+                  Notes
+                </label>
+                <textarea
+                  value={formData.notes || ''}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all resize-none placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                  placeholder="Add notes..."
+                />
               </div>
             </div>
+          </div>
+
+          <div className="px-8 py-5 border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 flex items-center justify-end shrink-0">
             <button
               type="submit"
               disabled={loading}
-              className="ml-6 px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-10 py-3 rounded-full font-bold shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? 'Saving...' : deal ? 'Done' : 'Create Deal'}
+              <span className="material-symbols-outlined text-lg">check</span>
             </button>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </form>
+        </div>
+      </div>
+    </div>
   )
 }

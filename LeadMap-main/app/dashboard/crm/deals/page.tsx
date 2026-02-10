@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 import { useSidebar } from '../../components/SidebarContext'
 import DealsNavbar from './components/DealsNavbar'
@@ -8,6 +8,7 @@ import DealDetailView from './components/DealDetailView'
 import EditDealModal from './components/EditDealModal'
 import DealsSelectionActionBar from './components/DealsSelectionActionBar'
 import DealsKanban from './components/DealsKanban'
+import LeadDetailModal from '../../prospect-enrich/components/LeadDetailModal'
 
 type DealRow = {
   id: string
@@ -37,6 +38,9 @@ function DealsPageContent() {
   const [dealForDetailView, setDealForDetailView] = useState<DealRow | null>(null)
   const [pipelines, setPipelines] = useState<Array<{ id: string; name: string; stages: string[]; is_default?: boolean }>>([])
   const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
+  const [propertyModalListingId, setPropertyModalListingId] = useState<string | null>(null)
+  const [propertyModalListingList, setPropertyModalListingList] = useState<any[]>([])
+  const [propertyModalLoading, setPropertyModalLoading] = useState(false)
 
   const refreshDeals = async () => {
     try {
@@ -81,6 +85,31 @@ function DealsPageContent() {
   }, [])
 
   const displayTotal = totalDeals !== null ? totalDeals : '—'
+
+  const handleAddressClick = useCallback(async (deal: DealRow & { listing_id?: string | null }) => {
+    const listingId = deal.listing_id
+    if (!listingId) return
+    setPropertyModalLoading(true)
+    try {
+      const res = await fetch(`/api/crm/deals/listing?listingId=${encodeURIComponent(listingId)}`, {
+        credentials: 'include',
+      })
+      const json = await res.json()
+      if (res.ok && json.data) {
+        setPropertyModalListingId(listingId)
+        setPropertyModalListingList([json.data])
+      }
+    } catch {
+      // no-op: modal not opened
+    } finally {
+      setPropertyModalLoading(false)
+    }
+  }, [])
+
+  const closePropertyModal = useCallback(() => {
+    setPropertyModalListingId(null)
+    setPropertyModalListingList([])
+  }, [])
 
   return (
     <div className="-mt-[30px]">
@@ -182,6 +211,7 @@ function DealsPageContent() {
               onDealDetailView={(d) => {
                 setDealForDetailView(d)
               }}
+              onAddressClick={handleAddressClick}
               onDealUpdate={async (dealId, updates) => {
                 const prev = deals
                 if (updates.stage != null) {
@@ -232,6 +262,14 @@ function DealsPageContent() {
           </div>
         </div>
       </div>
+
+      {propertyModalListingId && propertyModalListingList.length > 0 && (
+        <LeadDetailModal
+          listingId={propertyModalListingId}
+          listingList={propertyModalListingList}
+          onClose={closePropertyModal}
+        />
+      )}
 
       {dealForDetailView && (
         <DealDetailView
