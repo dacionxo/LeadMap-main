@@ -183,17 +183,17 @@ export default function EditDealModal({
       aria-modal="true"
       aria-labelledby="edit-deal-title"
     >
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-4xl max-h-[90vh] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] flex overflow-hidden relative animate-in fade-in zoom-in-95 duration-300">
+      <div className="bg-card-light dark:bg-card-dark rounded-[2rem] w-full max-w-4xl max-h-[90vh] shadow-2xl ring-1 ring-black/5 border border-border-light dark:border-border-dark flex overflow-hidden relative animate-in fade-in zoom-in-95 duration-300">
         {/* Left sidebar - Recent Activity */}
-        <div className="w-64 bg-gray-50 dark:bg-slate-800/80 border-r border-gray-100 dark:border-slate-700 flex-shrink-0 hidden md:flex flex-col">
-          <div className="p-6 pb-4 border-b border-gray-100/50 dark:border-slate-700/50">
+        <div className="w-64 bg-gray-50 dark:bg-slate-800/80 border-r border-border-light dark:border-border-dark flex-shrink-0 hidden md:flex flex-col">
+          <div className="p-6 pb-4 border-b border-border-light dark:border-border-dark">
             <h3 className="text-sm font-bold text-gray-800 dark:text-slate-200 flex items-center gap-2">
               <span className="material-symbols-outlined text-lg text-blue-500">history</span>
               Recent Activity
             </h3>
           </div>
           <div className="flex-1 overflow-y-auto p-5 space-y-6">
-            <div className="relative pl-4 border-l-2 border-gray-200 dark:border-slate-600 space-y-6">
+            <div className="relative pl-4 border-l-2 border-border-light dark:border-border-dark space-y-6">
               {MOCK_ACTIVITY.map((item, i) => (
                 <div key={i} className="relative">
                   <div
@@ -215,39 +215,39 @@ export default function EditDealModal({
           </div>
         </div>
 
-        {/* Main content */}
+        {/* Main content - ~15% smaller spacing/sizes (ratios preserved) */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex flex-col px-8 pt-6 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10">
-            <div className="flex items-center justify-between mb-6">
-              <h2 id="edit-deal-title" className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <div className="flex flex-col px-6 pt-5 pb-1.5 shrink-0 bg-card-light dark:bg-card-dark z-10">
+            <div className="flex items-center justify-between mb-5">
+              <h2 id="edit-deal-title" className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
                 {deal ? 'Edit Deal' : 'Create Deal'}
               </h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 dark:bg-slate-800 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-200 transition-colors"
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 dark:bg-slate-800 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-200 transition-colors"
                 aria-label="Close"
               >
-                <span className="material-symbols-outlined text-xl">close</span>
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
 
             {/* Stage stepper */}
-            <div className="flex items-center justify-between w-full mb-2">
+            <div className="flex items-center justify-between w-full mb-1.5">
               <div className="flex items-center flex-1">
                 {STEP_LABELS.map((label, i) => {
                   const isComplete = currentStepIndex > i
                   const isCurrent = currentStepIndex === i
                   return (
                     <div key={label} className="flex items-center flex-1 min-w-0">
-                      <div className="flex flex-col items-center gap-1.5 relative z-10 shrink-0">
+                      <div className="flex flex-col items-center gap-1 relative z-10 shrink-0">
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm ${
                             isComplete
                               ? 'bg-blue-600 text-white shadow-blue-200 dark:shadow-blue-900/30'
                               : isCurrent
                                 ? 'bg-white dark:bg-slate-800 border-2 border-blue-600 text-blue-600 dark:text-blue-400'
-                                : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500'
+                                : 'bg-white dark:bg-slate-800 border border-border-light dark:border-border-dark text-gray-400 dark:text-slate-500'
                           }`}
                         >
                           {isComplete ? (
@@ -257,7 +257,7 @@ export default function EditDealModal({
                           )}
                         </div>
                         <span
-                          className={`text-[10px] font-bold uppercase tracking-wide ${
+                          className={`text-[9px] font-bold uppercase tracking-wide ${
                             isComplete
                               ? 'text-blue-600 dark:text-blue-400'
                               : isCurrent
@@ -269,7 +269,7 @@ export default function EditDealModal({
                         </span>
                       </div>
                       {i < STEP_LABELS.length - 1 && (
-                        <div className="flex-1 h-0.5 bg-gray-200 dark:bg-slate-600 mx-2 -mt-4 relative overflow-hidden min-w-[8px]">
+                        <div className="flex-1 h-0.5 bg-border-light dark:bg-border-dark mx-1.5 -mt-3.5 relative overflow-hidden min-w-[6px]">
                           {currentStepIndex > i && (
                             <div className="absolute inset-y-0 left-0 w-full bg-blue-600 dark:bg-blue-500 transition-all" />
                           )}
@@ -283,11 +283,11 @@ export default function EditDealModal({
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="flex-1 overflow-y-auto px-8 py-4 modal-scroll min-h-0">
-            <div className="space-y-6 pb-2">
+          <div className="flex-1 overflow-y-auto px-6 py-3 modal-scroll min-h-0">
+            <div className="space-y-5 pb-1.5">
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                  <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">title</span>
+                <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                  <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">title</span>
                   Deal Name
                 </label>
                 <input
@@ -295,22 +295,22 @@ export default function EditDealModal({
                   required
                   value={formData.title || ''}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
                   placeholder="Deal Name"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">alt_route</span>
+                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">alt_route</span>
                     Pipeline
                   </label>
                   <div className="relative">
                     <select
                       value={formData.pipeline_id || ''}
                       onChange={(e) => setFormData({ ...formData, pipeline_id: e.target.value || null })}
-                      className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all appearance-none font-medium pr-10"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all appearance-none font-medium pr-9"
                       aria-label="Pipeline"
                       required={!deal}
                     >
@@ -321,21 +321,21 @@ export default function EditDealModal({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400 dark:text-slate-500">
-                      <span className="material-symbols-outlined text-xl">expand_more</span>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-3.5 pointer-events-none text-gray-400 dark:text-slate-500">
+                      <span className="material-symbols-outlined text-lg">expand_more</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">flag</span>
+                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">flag</span>
                     Stage
                   </label>
                   <div className="relative">
                     <select
                       value={formData.stage || 'new'}
                       onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                      className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all appearance-none font-medium pr-10"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all appearance-none font-medium pr-9"
                       aria-label="Stage"
                     >
                       {STAGES.map((stage) => (
@@ -344,16 +344,16 @@ export default function EditDealModal({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400 dark:text-slate-500">
-                      <span className="material-symbols-outlined text-xl">expand_more</span>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-3.5 pointer-events-none text-gray-400 dark:text-slate-500">
+                      <span className="material-symbols-outlined text-lg">expand_more</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                  <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">location_city</span>
+                <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                  <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">location_city</span>
                   Property Address
                 </label>
                 <div className="relative">
@@ -361,19 +361,19 @@ export default function EditDealModal({
                     type="text"
                     value={formData.property_address || ''}
                     onChange={(e) => setFormData({ ...formData, property_address: e.target.value })}
-                    className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
                     placeholder="Search address..."
                   />
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 dark:text-slate-500">
-                    <span className="material-symbols-outlined text-xl">search</span>
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 dark:text-slate-500">
+                    <span className="material-symbols-outlined text-lg">search</span>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">attach_money</span>
+                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">attach_money</span>
                     Value
                   </label>
                   <div className="relative">
@@ -383,17 +383,17 @@ export default function EditDealModal({
                       value={valueInput}
                       onChange={handleValueInputChange}
                       onBlur={handleValueBlur}
-                      className="w-full pl-8 pr-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                      className="w-full pl-7 pr-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
                       placeholder="0"
                     />
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 dark:text-slate-500 font-bold">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 dark:text-slate-500 font-bold">
                       $
                     </div>
                   </div>
                 </div>
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">trending_up</span>
+                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">trending_up</span>
                     Probability
                   </label>
                   <div className="relative">
@@ -405,44 +405,44 @@ export default function EditDealModal({
                       onChange={(e) =>
                         setFormData({ ...formData, probability: parseInt(e.target.value, 10) || 0 })
                       }
-                      className="w-full pl-4 pr-10 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                      className="w-full pl-3.5 pr-9 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
                       placeholder="0"
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-400 dark:text-slate-500 font-bold">
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-400 dark:text-slate-500 font-bold">
                       %
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">event</span>
+                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">event</span>
                     Expected Close
                   </label>
                   <DatePicker
                     value={formData.expected_close_date}
                     onChange={(date) => setFormData({ ...formData, expected_close_date: date })}
                     placeholder="MM/DD/YYYY"
-                    inputClassName="w-full px-4 py-3 pr-10 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                    inputClassName="w-full px-3.5 py-2.5 pr-9 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
                   />
                 </div>
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                    <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">person</span>
+                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">person</span>
                     Owner
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
-                      <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white dark:ring-slate-900">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none z-10">
+                      <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] font-bold ring-2 ring-white dark:ring-slate-900">
                         {selectedOwner ? getOwnerInitials(selectedOwner) : '??'}
                       </div>
                     </div>
                     <select
                       value={formData.owner_id || ''}
                       onChange={(e) => setFormData({ ...formData, owner_id: e.target.value || null })}
-                      className="w-full pl-11 pr-10 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all appearance-none font-medium"
+                      className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all appearance-none font-medium"
                       aria-label="Owner"
                     >
                       {users.map((u) => (
@@ -451,37 +451,37 @@ export default function EditDealModal({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400 dark:text-slate-500">
-                      <span className="material-symbols-outlined text-xl">expand_more</span>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-3.5 pointer-events-none text-gray-400 dark:text-slate-500">
+                      <span className="material-symbols-outlined text-lg">expand_more</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
-                  <span className="material-symbols-outlined text-lg text-gray-400 dark:text-slate-500">notes</span>
+                <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                  <span className="material-symbols-outlined text-base text-gray-400 dark:text-slate-500">notes</span>
                   Notes
                 </label>
                 <textarea
                   value={formData.notes || ''}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-sm shadow-sm transition-all resize-none placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all resize-none placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium"
                   placeholder="Add notes..."
                 />
               </div>
             </div>
           </div>
 
-          <div className="px-8 py-5 border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 flex items-center justify-end shrink-0">
+          <div className="px-6 py-4 border-t border-border-light dark:border-border-dark bg-gray-50/50 dark:bg-slate-800/50 flex items-center justify-end shrink-0">
             <button
               type="submit"
               disabled={loading}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-10 py-3 rounded-full font-bold shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-2.5 rounded-full font-bold shadow-soft transition-all transform active:scale-95 text-[13px] flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? 'Saving...' : deal ? 'Done' : 'Create Deal'}
-              <span className="material-symbols-outlined text-lg">check</span>
+              <span className="material-symbols-outlined text-base">check</span>
             </button>
           </div>
           </form>
