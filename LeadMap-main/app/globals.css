@@ -942,3 +942,48 @@
 .map-property-popup.mapboxgl-popup .mapboxgl-popup-tip {
   display: none !important;
 }
+
+/* Deals Pipeline - Dashboard-aligned CRM design */
+.bg-mesh {
+  background-color: #f8fafc;
+  background-image: radial-gradient(
+      at 80% 0%,
+      hsla(220, 100%, 96%, 1) 0px,
+      transparent 50%
+    ),
+    radial-gradient(
+      at 0% 50%,
+      hsla(210, 100%, 97%, 1) 0px,
+      transparent 50%
+    ),
+    radial-gradient(
+      at 80% 50%,
+      hsla(230, 100%, 98%, 1) 0px,
+      transparent 50%
+    ),
+    radial-gradient(
+      at 0% 100%,
+      hsla(220, 100%, 98%, 1) 0px,
+      transparent 50%
+    );
+}
+.kanban-container::-webkit-scrollbar {
+  height: 8px;
+}
+.kanban-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.kanban-container::-webkit-scrollbar-thumb {
+  background-color: rgba(203, 213, 225, 0.6);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(203, 213, 225, 0.5);
+  border-radius: 3px;
+}

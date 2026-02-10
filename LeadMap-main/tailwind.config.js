@@ -223,10 +223,17 @@ module.exports = {
         10.5: "2.625rem",
       },
       borderRadius: {
+        "3xl": "1.5rem",
         "4xl": "2rem",
         "5xl": "2.5rem",
       },
       boxShadow: {
+        glass: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        "card-soft":
+          "0 4px 24px -1px rgba(0, 0, 0, 0.04), 0 2px 8px -1px rgba(0, 0, 0, 0.02)",
+        "card-hover":
+          "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01)",
+        "header-smooth": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
         bento: "0 20px 50px -12px rgba(59, 130, 246, 0.12)",
         "dark-md":
           "rgba(145, 158, 171, 0.3) 0px 0px 2px 0px, rgba(145, 158, 171, 0.02) 0px 12px 24px -4px",
