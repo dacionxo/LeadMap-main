@@ -35,6 +35,7 @@ interface DealsKanbanProps {
   deals: Deal[]
   stages: string[]
   onDealClick: (deal: Deal) => void
+  onDealDetailView?: (deal: Deal) => void
   onDealUpdate: (dealId: string, updates: Partial<Deal>) => Promise<void>
   onDealDelete: (dealId: string) => Promise<void>
   pipelines?: Array<{ id: string; name: string; stages: string[] }>
@@ -230,6 +231,7 @@ function getLabelForDeal(deal: Deal): string {
 export default function DealsKanban({
   deals,
   onDealClick,
+  onDealDetailView,
   onDealUpdate,
   onDealDelete,
   onAddDeal,
@@ -242,7 +244,15 @@ export default function DealsKanban({
     buckets[col].push(d)
   }
 
-  const handleDragStart = (deal: Deal) => setDraggedDeal(deal)
+  const handleDragStart = (e: React.DragEvent, deal: Deal) => {
+    setDraggedDeal(deal)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', deal.id)
+    e.dataTransfer.setData('application/x-deal-id', deal.id)
+    const img = new Image()
+    img.src = 'data:image/gif;base64,R0lGOODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    if (e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(img, 0, 0)
+  }
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
@@ -259,6 +269,11 @@ export default function DealsKanban({
     setDraggedDeal(null)
   }
 
+  const dashboardCardClass =
+    'border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)]'
+  const dashboardCardHoverClass =
+    'hover:shadow-[0_24px_56px_-12px_rgba(93,135,255,0.18)] dark:hover:shadow-[0_24px_56px_-12px_rgba(0,0,0,0.4)] hover:border-blue-200 dark:hover:border-blue-800'
+
   function LeadCard({ deal }: { deal: Deal }) {
     const imgUrl = (deal as any).primary_photo || PLACEHOLDER_IMAGE
     const estValue = deal.forecast_value ?? deal.value ?? (deal as any).property_value
@@ -266,12 +281,20 @@ export default function DealsKanban({
 
     return (
       <div
-        draggable
-        onDragStart={() => handleDragStart(deal)}
-        onDragEnd={handleDragEnd}
         onClick={() => onDealClick(deal)}
-        className="bg-white p-4 rounded-2xl shadow-card-soft border border-gray-100 hover:shadow-card-hover hover:border-blue-200 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+        className={`bg-white dark:bg-slate-800/80 p-4 rounded-2xl ${dashboardCardClass} ${dashboardCardHoverClass} transition-all duration-300 cursor-pointer group relative overflow-hidden`}
       >
+        <div
+          draggable
+          onDragStart={(e) => handleDragStart(e, deal)}
+          onDragEnd={handleDragEnd}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 left-2 z-10 w-7 h-7 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing bg-white/90 dark:bg-slate-700/90 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-400 hover:text-blue-500 hover:border-blue-200 dark:hover:border-blue-800 touch-none"
+          title="Drag to move"
+          aria-label="Drag to move deal"
+        >
+          <span className="material-symbols-outlined text-[18px]">drag_indicator</span>
+        </div>
         <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="relative w-full h-32 rounded-xl overflow-hidden mb-3">
           <img
@@ -316,7 +339,13 @@ export default function DealsKanban({
         </div>
         <div className="px-1">
           <h4 className="font-bold text-gray-900 mb-0.5 text-[15px]">{deal.title || 'Untitled deal'}</h4>
-          <p className="text-xs text-slate-500 mb-3 line-clamp-1 font-medium flex items-center gap-1">
+          <p
+            className="text-xs text-slate-500 mb-3 line-clamp-1 font-medium flex items-center gap-1 cursor-pointer hover:text-blue-600 hover:underline"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDealDetailView ? onDealDetailView(deal) : onDealClick(deal)
+            }}
+          >
             <span className="material-symbols-outlined text-[14px] text-gray-400">location_on</span>
             {deal.property_address || 'Address not available'}
           </p>
@@ -339,7 +368,13 @@ export default function DealsKanban({
                 <span className="material-symbols-outlined text-[12px]">timer</span>
                 <span className="text-[10px] font-bold text-gray-600">{daysSince(deal.created_at)}d</span>
               </div>
-              <span className="text-[10px] font-semibold text-blue-500 hover:text-blue-700 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+              <span
+                className="text-[10px] font-semibold text-blue-500 hover:text-blue-700 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDealDetailView ? onDealDetailView(deal) : onDealClick(deal)
+                }}
+              >
                 Details <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
               </span>
             </div>
@@ -354,12 +389,20 @@ export default function DealsKanban({
 
     return (
       <div
-        draggable
-        onDragStart={() => handleDragStart(deal)}
-        onDragEnd={handleDragEnd}
         onClick={() => onDealClick(deal)}
-        className="bg-white p-5 rounded-2xl shadow-card-soft border border-gray-100 hover:shadow-card-hover hover:border-emerald-200 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+        className={`bg-white dark:bg-slate-800/80 p-5 rounded-2xl ${dashboardCardClass} ${dashboardCardHoverClass} hover:border-emerald-200 dark:hover:border-emerald-800 transition-all duration-300 cursor-pointer group relative overflow-hidden`}
       >
+        <div
+          draggable
+          onDragStart={(e) => handleDragStart(e, deal)}
+          onDragEnd={handleDragEnd}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 left-2 z-10 w-7 h-7 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing bg-white/90 dark:bg-slate-700/90 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-400 hover:text-emerald-500 hover:border-emerald-200 dark:hover:border-emerald-800 touch-none"
+          title="Drag to move"
+          aria-label="Drag to move deal"
+        >
+          <span className="material-symbols-outlined text-[18px]">drag_indicator</span>
+        </div>
         <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
@@ -398,7 +441,15 @@ export default function DealsKanban({
           </button>
         </div>
         <h4 className="font-bold text-gray-900 mb-1 text-[15px]">{deal.title || 'Untitled deal'}</h4>
-        <p className="text-xs text-slate-500 mb-4 line-clamp-1 font-medium">{deal.property_address || 'Address not available'}</p>
+        <p
+          className="text-xs text-slate-500 mb-4 line-clamp-1 font-medium cursor-pointer hover:text-blue-600 hover:underline"
+          onClick={(e) => {
+            e.stopPropagation()
+            onDealDetailView ? onDealDetailView(deal) : onDealClick(deal)
+          }}
+        >
+          {deal.property_address || 'Address not available'}
+        </p>
         <div className="space-y-1.5 mb-5 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100/50">
           <div className="flex justify-between text-[11px]">
             <span className="text-gray-500 font-medium">Est. Value</span>
@@ -421,7 +472,13 @@ export default function DealsKanban({
           </div>
         </div>
         <div className="mt-3 pt-3 border-t border-gray-50 text-right">
-          <span className="text-[11px] font-semibold text-emerald-500 hover:text-emerald-700 flex items-center justify-end gap-1 group-hover:translate-x-1 transition-transform">
+          <span
+            className="text-[11px] font-semibold text-emerald-500 hover:text-emerald-700 flex items-center justify-end gap-1 group-hover:translate-x-1 transition-transform cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDealDetailView ? onDealDetailView(deal) : onDealClick(deal)
+            }}
+          >
             View Details <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
           </span>
         </div>
@@ -436,8 +493,8 @@ export default function DealsKanban({
   }
 
   return (
-    <main className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden kanban-container px-8 pb-8 pt-2">
-      <div className="flex gap-6 min-w-max pb-4 min-h-full">
+    <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-auto overflow-y-hidden kanban-container px-8 pb-8 pt-2">
+      <div className="flex gap-6 min-w-max pb-4 h-full min-h-0">
         {STAGE_KEYS.map((stageKey, i) => {
           const list = buckets[i]
           const cfg = STAGE_CONFIG[stageKey]
@@ -446,12 +503,12 @@ export default function DealsKanban({
           return (
             <div
               key={stageKey}
-              className="w-80 flex flex-col flex-shrink-0 min-h-0"
+              className="w-80 flex flex-col flex-shrink-0 h-full min-h-0"
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(i)}
             >
               <div
-                className={`${cfg.headerBg} rounded-[1.25rem] p-3 flex items-center justify-between mb-4 border ${cfg.headerBorder} backdrop-blur-sm`}
+                className={`${cfg.headerBg} rounded-[1.25rem] p-3 flex items-center justify-between mb-4 border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] backdrop-blur-sm shrink-0`}
               >
                 <div className="flex items-center gap-3 w-full">
                   <div className={`w-8 h-8 rounded-full ${cfg.headerIcon} flex items-center justify-center`}>
@@ -478,14 +535,14 @@ export default function DealsKanban({
               </div>
 
               {list.length > 0 ? (
-                <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-4 pr-2 custom-scrollbar">
                   {list.map((d) => (
                     <DealCard key={d.id} deal={d} stageKey={stageKey} />
                   ))}
                 </div>
               ) : (
                 <div
-                  className={`flex-1 rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/30 flex flex-col items-center justify-center gap-3 group ${cfg.dropZone} transition-all cursor-pointer min-h-[140px]`}
+                  className={`flex-1 min-h-[140px] rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-600 bg-gray-50/30 dark:bg-slate-800/30 flex flex-col items-center justify-center gap-3 group ${cfg.dropZone} transition-all cursor-pointer`}
                   onClick={() => onAddDeal?.(stageKey)}
                   onDragOver={handleDragOver}
                   onDrop={() => handleDrop(i)}

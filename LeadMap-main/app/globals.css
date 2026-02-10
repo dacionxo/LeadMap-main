@@ -967,6 +967,10 @@
       transparent 50%
     );
 }
+.kanban-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
 .kanban-container::-webkit-scrollbar {
   height: 8px;
 }

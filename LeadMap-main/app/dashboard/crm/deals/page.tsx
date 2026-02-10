@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 import { useSidebar } from '../../components/SidebarContext'
 import DealsNavbar from './components/DealsNavbar'
+import DealDetailView from './components/DealDetailView'
 import EditDealModal from './components/EditDealModal'
 import DealsSelectionActionBar from './components/DealsSelectionActionBar'
 import DealsKanban from './components/DealsKanban'
@@ -33,6 +34,7 @@ function DealsPageContent() {
   const [selectedDeals, setSelectedDeals] = useState<Set<string>>(new Set())
   const [editingDeal, setEditingDeal] = useState<DealRow | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [dealForDetailView, setDealForDetailView] = useState<DealRow | null>(null)
   const [pipelines, setPipelines] = useState<Array<{ id: string; name: string; stages: string[]; is_default?: boolean }>>([])
   const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
 
@@ -87,8 +89,8 @@ function DealsPageContent() {
         style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
       >
         <DealsNavbar />
-        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-white dark:border-slate-700 shadow-glass rounded-[2rem] flex flex-col h-full min-h-0 overflow-hidden relative">
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+          <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-col h-full min-h-0 overflow-hidden relative">
             <div
               className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
               aria-hidden
@@ -109,13 +111,6 @@ function DealsPageContent() {
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                     Live Updates
                   </div>
-                  <button
-                    type="button"
-                    aria-label="Search"
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-300 shadow-sm transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">search</span>
-                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -184,6 +179,9 @@ function DealsPageContent() {
                 setEditingDeal(d)
                 setIsEditModalOpen(true)
               }}
+              onDealDetailView={(d) => {
+                setDealForDetailView(d)
+              }}
               onDealUpdate={async (dealId, updates) => {
                 const prev = deals
                 if (updates.stage != null) {
@@ -234,6 +232,54 @@ function DealsPageContent() {
           </div>
         </div>
       </div>
+
+      {dealForDetailView && (
+        <DealDetailView
+          deal={dealForDetailView as any}
+          onClose={() => setDealForDetailView(null)}
+          onUpdate={async (dealId, updates) => {
+            try {
+              const res = await fetch(`/api/crm/deals/${dealId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(updates),
+              })
+              if (res.ok) {
+                await refreshDeals()
+                const updated = await fetch(`/api/crm/deals/${dealId}`, { credentials: 'include' }).then((r) => r.json())
+                if (updated?.data) setDealForDetailView(updated.data)
+              } else {
+                const err = await res.json().catch(() => ({}))
+                throw new Error(err.error || 'Failed to update deal')
+              }
+            } catch (e) {
+              console.error('Error updating deal:', e)
+              throw e
+            }
+          }}
+          onAddActivity={async (dealId, activity) => {
+            const res = await fetch(`/api/crm/deals/${dealId}/activities`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify(activity),
+            })
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}))
+              throw new Error(err.error || 'Failed to add activity')
+            }
+            if (dealForDetailView?.id === dealId) {
+              const fullRes = await fetch(`/api/crm/deals/${dealId}`, { credentials: 'include' })
+              const fullJson = await fullRes.json()
+              if (fullRes.ok && fullJson?.data) setDealForDetailView(fullJson.data)
+            }
+          }}
+          onAddTask={async () => {
+            // Tasks API not implemented; no-op for now
+          }}
+        />
+      )}
 
       <EditDealModal
         isOpen={isEditModalOpen}
