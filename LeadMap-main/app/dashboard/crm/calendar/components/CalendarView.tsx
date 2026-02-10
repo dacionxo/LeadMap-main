@@ -55,6 +55,7 @@ const MAX_EVENTS_PER_DAY = 2
 const TIME_GRID_START_HOUR = 8
 const TIME_GRID_END_HOUR = 18
 const MINUTES_PER_HOUR = 60
+const PIXELS_PER_MINUTE_DAY = 85 / 60
 
 export default function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -784,29 +785,31 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
 
         {view === 'day' && dayForDayView && (
           <div className="flex-1 flex flex-col">
-            <div className="grid grid-cols-[60px_1fr] border-b border-gray-200 bg-gray-50/80 sticky top-0 z-30 backdrop-blur-sm">
-              <div className="py-3 border-r border-gray-100" />
-              <div className="py-3 text-center">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">
-                  {moment(dayForDayView).format('ddd')}
+            {/* Sticky day header row - compact Elite CRM day design */}
+            <div className="grid grid-cols-[80px_1fr] border-b border-gray-200 bg-gray-50/80 sticky top-0 z-30 backdrop-blur-sm">
+              <div className="py-4 border-r border-gray-100/50" />
+              <div className="py-4 text-center bg-blue-50/30 flex items-center justify-center gap-3">
+                <div className="text-sm font-bold text-blue-600 uppercase tracking-wide">
+                  {moment(dayForDayView).format('dddd')}
                 </div>
-                <div className="text-xl font-medium text-gray-700">{moment(dayForDayView).format('DD')}</div>
+                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold shadow-md shadow-blue-500/20">
+                  {moment(dayForDayView).format('DD')}
+                </div>
               </div>
             </div>
 
-            <div className="week-grid-container week-grid-container--day flex-1 relative">
-              <div className="time-column bg-white z-10 sticky left-0">
-                <div className="h-[30px]" />
+            {/* Day grid container - 80px time rail + 1fr day column */}
+            <div className="day-grid-container flex-1 relative">
+              <div className="time-column bg-white/60 z-10 sticky left-0 backdrop-blur-sm">
+                <div className="h-[42.5px]" />
                 {timeLabels.map((slot) => (
-                  <div key={slot.hour} className="time-slot">
+                  <div key={slot.hour} className="time-slot font-medium text-[0.875rem] text-text-muted">
                     {slot.label}
                   </div>
                 ))}
               </div>
 
-              <div
-                className="day-column bg-blue-50/20 relative"
-              >
+              <div className="day-column bg-white relative p-2 pr-4">
                 {timeLabels.map((_, idx) => (
                   <div key={idx} className="grid-line" />
                 ))}
@@ -820,7 +823,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                     if (!onDateSelect) return
                     const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
                     const y = e.clientY - rect.top
-                    const minutesFromGridStart = clampToGrid(Math.round(y))
+                    const minutesFromGridStart = clampToGrid(Math.round(y / PIXELS_PER_MINUTE_DAY))
                     const start = new Date(dayForDayView)
                     start.setHours(TIME_GRID_START_HOUR, 0, 0, 0)
                     start.setMinutes(start.getMinutes() + minutesFromGridStart)
@@ -844,32 +847,91 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                   .map((event) => {
                     const startMinutes = clampToGrid(getMinutesFromGridStart(event.start))
                     const endMinutes = clampToGrid(getMinutesFromGridStart(event.end))
-                    const top = Math.min(startMinutes, endMinutes)
-                    const height = Math.max(30, Math.abs(endMinutes - startMinutes))
+                    const minMinutes = Math.min(startMinutes, endMinutes)
+                    const spanMinutes = Math.max(30, Math.abs(endMinutes - startMinutes))
+                    const top = minMinutes * PIXELS_PER_MINUTE_DAY
+                    const height = spanMinutes * PIXELS_PER_MINUTE_DAY
                     const styles = getEventCardClasses(event.resource?.eventType)
+                    const isNow =
+                      moment().isSame(dayForDayView, 'day') &&
+                      moment().isBetween(moment(event.start), moment(event.end), null, '[]')
                     const timeLabel = `${moment(event.start).format('h:mm')} - ${moment(event.end).format('h:mm A')}`
+                    const durationMinutes = Math.max(
+                      15,
+                      moment(event.end).diff(moment(event.start), 'minutes') || spanMinutes
+                    )
+                    const durationLabel =
+                      durationMinutes >= 60
+                        ? `${Math.round(durationMinutes / 60)}h${durationMinutes % 60 ? ` ${durationMinutes % 60}m` : ''}`
+                        : `${durationMinutes}m`
                     const initials = getInitialsFromTitle(event.title)
 
                     return (
-                      <div key={event.id} className="absolute left-1 right-2 z-10" style={{ top, height }}>
+                      <div
+                        key={event.id}
+                        className="absolute left-2 right-2 z-10"
+                        style={{ top, height: Math.max(68, height) }}
+                      >
                         <button
                           type="button"
-                          className={`h-full w-full border-l-4 rounded-r-lg p-2 cursor-pointer transition-colors shadow-sm ${styles.container}`}
+                          className={`h-full w-full cursor-pointer transition-all shadow-sm hover:shadow-md rounded-xl border-l-4 px-3 py-3 flex items-center gap-4 ${
+                            styles.container
+                          }`}
                           onClick={(eventClick) => {
                             eventClick.stopPropagation()
                             handleEventClick(event)
                           }}
                           aria-label={`Open event ${event.title}`}
                         >
-                          <div className="flex justify-between items-start h-full">
-                            <div className="overflow-hidden">
-                              <p className={`text-xs font-semibold truncate ${styles.title}`}>{event.title}</p>
-                              <p className={`text-[10px] ${styles.meta}`}>{timeLabel}</p>
+                          <div className="flex flex-col justify-center min-w-[88px]">
+                            <p className="text-[13px] font-semibold mb-0.5 text-gray-700">
+                              {timeLabel}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              {isNow && (
+                                <>
+                                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                                  <span className="text-[11px] text-emerald-600 font-medium">
+                                    Happening now
+                                  </span>
+                                </>
+                              )}
+                              {!isNow && (
+                                <span className="text-[11px] text-gray-400 font-medium">
+                                  {durationLabel}
+                                </span>
+                              )}
                             </div>
-                            <div
-                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ring-2 ring-white ml-1 shrink-0 ${styles.avatarBg} ${styles.avatarText}`}
-                              aria-hidden
+                          </div>
+                          <div className="w-px h-8 bg-gray-200/70 mx-1" />
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={`text-sm font-bold truncate ${
+                                styles.title || 'text-gray-900'
+                              }`}
                             >
+                              {event.title}
+                            </p>
+                            {event.resource?.description && (
+                              <p
+                                className={`text-xs mt-0.5 truncate ${
+                                  styles.meta || 'text-gray-500'
+                                }`}
+                              >
+                                {event.resource.description}
+                              </p>
+                            )}
+                            {event.resource?.location && (
+                              <p className="text-[11px] mt-0.5 text-gray-400 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px] text-gray-400">
+                                  location_on
+                                </span>
+                                <span className="truncate">{event.resource.location}</span>
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 pl-2">
+                            <div className="w-7 h-7 rounded-full bg-white/80 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-gray-700 shadow-xs">
                               {initials}
                             </div>
                           </div>

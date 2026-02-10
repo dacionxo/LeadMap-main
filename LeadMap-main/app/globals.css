@@ -1013,6 +1013,44 @@
   color: #94a3b8;
   transform: translateY(-50%);
 }
+
+/* Calendar Day View - compact Elite CRM layout */
+.day-grid-container {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  overflow-y: auto;
+  position: relative;
+}
+.day-grid-container .time-column {
+  border-right: 1px solid #f1f5f9;
+}
+.day-grid-container .day-column {
+  position: relative;
+}
+.day-grid-container .grid-line {
+  height: 85px;
+  border-bottom: 1px solid #f8fafc;
+  position: relative;
+}
+.day-grid-container .grid-line:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #f1f5f9;
+}
+.day-grid-container .time-slot {
+  height: 85px;
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: #64748b;
+  transform: translateY(-50%);
+  padding-top: 2px;
+}
 .kanban-container {
   overflow-x: auto;
   overflow-y: hidden;
