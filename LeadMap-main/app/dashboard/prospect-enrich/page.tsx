@@ -146,7 +146,11 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
     {/* Flush under Navbar: top-[50px] so this fixed block sits directly under the Header.
         (top-[80px] had included the container’s 30px pt; we only offset by header height here.) */}
     <div className="fixed top-[50px] bottom-0 flex flex-col transition-all duration-300" style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}>
-      <div className="border-0 bg-white dark:bg-dark card no-inset no-ring undefined dark:shadow-dark-md shadow-md p-0 m-0 flex-1 flex flex-col overflow-x-visible overflow-y-hidden h-full w-full">
+      <div className="flex-1 flex flex-col overflow-hidden" style={{ width: '75%', height: '75%' }}>
+        <div
+          className="border-0 bg-white dark:bg-dark card no-inset no-ring undefined dark:shadow-dark-md shadow-md p-0 m-0 flex flex-col overflow-x-visible overflow-y-hidden flex-1 min-w-0 min-h-0"
+          style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133.333%', height: '133.333%' }}
+        >
         {/* Prospect Search Header */}
         <ProspectSearchHeader
           searchQuery={props.searchTerm || ''}
@@ -274,11 +278,10 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
             )}
           </div>
         </div>
-      </div>
-      {/* SelectionActionBar: fixed at bottom, centered, not edge-to-edge */}
-      {props.selectedIds.size > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 md:px-6">
-          <SelectionActionBar
+        {/* SelectionActionBar: fixed at bottom, centered, not edge-to-edge */}
+        {props.selectedIds.size > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 md:px-6">
+            <SelectionActionBar
             selectedCount={props.selectedIds.size}
             onClose={() => props.setSelectedIds(new Set())}
             onMassEmail={() => {
@@ -304,6 +307,8 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
           />
         </div>
       )}
+        </div>
+      </div>
     </div>
     {/* Lead Detail Modal */}
     {props.showLeadModal && props.selectedListingId && (
