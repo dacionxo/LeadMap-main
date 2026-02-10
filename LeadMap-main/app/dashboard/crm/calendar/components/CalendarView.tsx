@@ -1028,13 +1028,15 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                       <div className="flex flex-col gap-3">
                         {dateEvents.map((event) => {
                           const cardStyles = getAgendaCardStyles(event.resource?.eventType)
+                          const eventType = event.resource?.eventType || 'other'
                           const isNow =
                             moment().isSame(dateMoment, 'day') &&
                             moment().isBetween(moment(event.start), moment(event.end), null, '[]')
-                          const timeHour = moment(event.start).format('h')
+                          const timeFormatted = moment(event.start).format('h:mm')
                           const timePeriod = moment(event.start).format('A')
                           const initials = getInitialsFromTitle(event.title)
                           const locationLower = event.resource?.location?.toLowerCase() || ''
+                          const isDeadlineOrShowing = eventType === 'showing' || eventType === 'deadline'
                           const hasConferencingLink = !!event.resource?.conferencingLink || locationLower.includes('zoom') || locationLower.includes('meet')
                           const conferencingType = event.resource?.conferencingLink
                             ? (locationLower.includes('zoom') ? 'Zoom' : locationLower.includes('meet') ? 'Google Meet' : 'Join')
@@ -1054,7 +1056,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                             >
                               {/* Time column */}
                               <div className={`flex flex-col items-center justify-center min-w-[70px] border-r pr-4 ${cardStyles.border}`}>
-                                <span className="text-sm font-bold text-gray-800">{timeHour}</span>
+                                <span className="text-sm font-bold text-gray-800">{timeFormatted}</span>
                                 <span className="text-xs font-medium text-gray-500">{timePeriod}</span>
                               </div>
 
@@ -1065,6 +1067,11 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                   )}
                                   <h3 className="text-base font-bold text-gray-900 truncate">{event.title}</h3>
+                                  {isDeadlineOrShowing && (
+                                    <span className="inline-flex items-center gap-1 bg-amber-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-amber-700 uppercase tracking-wide">
+                                      <span className="material-symbols-outlined text-[10px]">warning</span> High
+                                    </span>
+                                  )}
                                 </div>
                                 {event.resource?.description && (
                                   <p className="text-sm text-gray-500 truncate">{event.resource.description}</p>
@@ -1075,13 +1082,36 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                               <div className="flex items-center gap-4">
                                 {/* Avatar stack */}
                                 <div className="flex -space-x-2">
-                                  <div className="w-8 h-8 rounded-full bg-gray-100 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-gray-600">
+                                  <div className={`w-8 h-8 rounded-full ring-2 ring-white flex items-center justify-center text-[10px] font-bold ${
+                                    eventType === 'meeting' || eventType === 'content'
+                                      ? 'bg-indigo-200 text-indigo-700'
+                                      : eventType === 'visit'
+                                        ? 'bg-purple-200 text-purple-700'
+                                        : eventType === 'call' || eventType === 'follow_up' || eventType === 'email_campaign'
+                                          ? 'bg-orange-200 text-orange-700'
+                                          : eventType === 'showing' || eventType === 'deadline'
+                                            ? 'bg-amber-200 text-amber-700'
+                                            : 'bg-gray-100 text-gray-600'
+                                  }`}>
                                     {initials}
                                   </div>
                                 </div>
 
                                 {/* Action buttons */}
-                                {hasConferencingLink && conferencingType && (
+                                {isDeadlineOrShowing && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleEventClick(event)
+                                    }}
+                                    className="h-9 w-9 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center hover:bg-amber-200 transition-colors"
+                                    aria-label="View event"
+                                  >
+                                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                                  </button>
+                                )}
+                                {!isDeadlineOrShowing && hasConferencingLink && conferencingType && (
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -1096,7 +1126,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                                     {conferencingType === 'Zoom' ? 'Join Zoom' : 'Google Meet'}
                                   </button>
                                 )}
-                                {event.resource?.eventType === 'call' && !hasConferencingLink && (
+                                {!isDeadlineOrShowing && event.resource?.eventType === 'call' && !hasConferencingLink && (
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -1109,7 +1139,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                                     Call
                                   </button>
                                 )}
-                                {event.resource?.location && !hasConferencingLink && event.resource.eventType !== 'call' && (
+                                {!isDeadlineOrShowing && event.resource?.location && !hasConferencingLink && event.resource.eventType !== 'call' && (
                                   <div className={`h-9 px-3 text-xs font-semibold rounded-lg border flex items-center gap-1.5 ${
                                     cardStyles.container.includes('emerald')
                                       ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200'
