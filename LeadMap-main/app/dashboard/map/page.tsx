@@ -4,7 +4,7 @@ import { useApp } from "@/app/providers";
 import MapView from "@/components/MapView";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSearchParams } from "next/navigation";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import MapProfileNotificationButtons from "./components/MapProfileNotificationButtons";
 import MapRouteGeocodeSearch from "./components/MapRouteGeocodeSearch";
@@ -66,6 +66,7 @@ export default function MapPage() {
     lat: number;
     lng: number;
   } | null>(null);
+  const lastFlownListingIdRef = useRef<string | null>(null);
 
   const handleGeocodeResult = useCallback(
     (result: { lat: number; lng: number; formattedAddress?: string }) => {
@@ -75,11 +76,61 @@ export default function MapPage() {
     []
   );
 
-  // Open property detail modal (with street view) when URL has ?listingId=...
+  // Open property detail modal when URL has ?listingId=...
   useEffect(() => {
     const id = searchParams.get("listingId");
     if (id) setSelectedListingId(id);
   }, [searchParams]);
+
+  // When opened via "View On Map" (?listingId=...), fly map to that property (same as search bar behavior)
+  useEffect(() => {
+    const id = searchParams.get("listingId");
+    if (!id) {
+      lastFlownListingIdRef.current = null;
+      return;
+    }
+    if (!listings.length) return;
+    const listing = listings.find(
+      (l) => l.listing_id === id || l.property_url === id
+    );
+    if (!listing) return;
+    if (lastFlownListingIdRef.current === id) return;
+
+    const address = [listing.address, listing.street, listing.city, listing.state, listing.zip ?? listing.zip_code]
+      .filter(Boolean)
+      .join(", ");
+    if (address) setSearchQuery(address);
+
+    const lat =
+      listing.latitude ??
+      (listing.lat != null ? Number(listing.lat) : undefined);
+    const lng =
+      listing.longitude ??
+      (listing.lng != null ? Number(listing.lng) : undefined);
+
+    if (lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)) {
+      lastFlownListingIdRef.current = id;
+      setFlyToCenter({ lat, lng });
+      return;
+    }
+
+    // No coordinates: geocode the address then fly (same as search bar)
+    if (!address.trim()) return;
+    lastFlownListingIdRef.current = id;
+    fetch(`/api/geocode?q=${encodeURIComponent(address.trim())}`, {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const gotLat = typeof data.lat === "number" ? data.lat : Number(data.lat);
+        const gotLng = typeof data.lng === "number" ? data.lng : Number(data.lng);
+        if (Number.isFinite(gotLat) && Number.isFinite(gotLng)) {
+          setFlyToCenter({ lat: gotLat, lng: gotLng });
+          if (data.formattedAddress) setSearchQuery(data.formattedAddress);
+        }
+      })
+      .catch(() => {});
+  }, [searchParams, listings]);
 
   useEffect(() => {
     if (profile?.id) {
