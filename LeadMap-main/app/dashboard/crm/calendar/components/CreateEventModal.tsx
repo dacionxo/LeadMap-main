@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Calendar, Clock, MapPin, Tag, FileText, Users } from 'lucide-react'
 
 interface CreateEventModalProps {
   isOpen: boolean
@@ -122,7 +121,7 @@ export default function CreateEventModal({
         
         setFormData({
           title: event.title || '',
-          description: event.description || '',
+          description: event.description || event.notes || '',
           eventType: event.event_type || 'call',
           startTime,
           endTime,
@@ -218,9 +217,9 @@ export default function CreateEventModal({
   ]
 
   const reminderOptions = [
-    { value: 5, label: '5 minutes before' },
-    { value: 15, label: '15 minutes before' },
-    { value: 30, label: '30 minutes before' },
+    { value: 5, label: '5 mins before' },
+    { value: 15, label: '15 mins before' },
+    { value: 30, label: '30 mins before' },
     { value: 60, label: '1 hour before' },
     { value: 1440, label: '1 day before' },
   ]
@@ -315,171 +314,289 @@ export default function CreateEventModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={isEditMode ? 'Edit Event' : 'Create Event'}
+    >
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-[2rem] w-full max-w-4xl max-h-[90vh] shadow-modal flex overflow-hidden relative animate-in fade-in zoom-in duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{isEditMode ? 'Edit Event' : 'Create Event'}</h2>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        <div className="w-64 bg-gray-50 border-r border-gray-100 flex-shrink-0 hidden md:flex flex-col">
+          <div className="p-6 pb-4 border-b border-gray-100/50">
+            <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg text-blue-500">history</span>
+              Recent Activity
+            </h3>
+          </div>
+          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+            <div className="relative pl-4 border-l-2 border-gray-200 space-y-6">
+              <div className="relative">
+                <div className="absolute -left-[21px] top-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white" />
+                <p className="text-xs text-gray-500 mb-1">Just now</p>
+                <p className="text-xs font-medium text-gray-800">
+                  Event <span className="text-blue-600">{isEditMode ? 'Updated' : 'Created'}</span>
+                </p>
+              </div>
+              <div className="relative">
+                <div className="absolute -left-[21px] top-1 w-3 h-3 bg-gray-300 rounded-full border-2 border-white" />
+                <p className="text-xs text-gray-500 mb-1">2 hours ago</p>
+                <p className="text-xs font-medium text-gray-800">
+                  Note added by <span className="text-gray-600">Tyquan</span>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Title *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Event title"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Event Type *
-            </label>
-            <select
-              required
-              value={formData.eventType}
-              onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              {eventTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Start Time *
-              </label>
-              <input
-                type="datetime-local"
-                required
-                value={formData.startTime}
-                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex flex-col px-8 pt-6 pb-2 shrink-0 bg-white z-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                {isEditMode ? 'Edit Event' : 'Create Event'}
+              </h2>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                aria-label="Close modal"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                End Time *
-              </label>
-              <input
-                type="datetime-local"
-                required
-                value={formData.endTime}
-                onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+
+            <div className="flex items-center justify-between w-full mb-2">
+              <div className="flex items-center flex-1">
+                <div className="flex flex-col items-center gap-1.5 relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-blue-200">
+                    <span className="material-symbols-outlined text-[16px]">check</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">Details</span>
+                </div>
+                <div className="flex-1 h-0.5 bg-blue-600 mx-2 -mt-4" />
+                <div className="flex flex-col items-center gap-1.5 relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-white border-2 border-blue-600 text-blue-600 flex items-center justify-center text-xs font-bold shadow-sm">
+                    2
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-900 uppercase tracking-wide">Schedule</span>
+                </div>
+                <div className="flex-1 h-0.5 bg-gray-200 mx-2 -mt-4 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-blue-600 w-1/4" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5 relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-400 flex items-center justify-center text-xs font-bold shadow-sm">
+                    3
+                  </div>
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Reminders</span>
+                </div>
+                <div className="flex-1 h-0.5 bg-gray-200 mx-2 -mt-4" />
+                <div className="flex flex-col items-center gap-1.5 relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-400 flex items-center justify-center text-xs font-bold">
+                    4
+                  </div>
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Done</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="allDay"
-              checked={formData.allDay}
-              onChange={(e) => setFormData({ ...formData, allDay: e.target.checked })}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="allDay" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-              All day event
-            </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Location
-            </label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Event location"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Event description"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Reminders
-            </label>
-            <div className="space-y-2">
-              {reminderOptions.map((option) => (
-                <label key={option.value} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.reminderMinutes.includes(option.value)}
-                    onChange={() => toggleReminder(option.value)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                    {option.label}
-                  </span>
+          <div className="flex-1 overflow-y-auto px-8 py-4 modal-scroll">
+            <form id="calendar-create-event-form" onSubmit={handleSubmit} className="space-y-6 pb-2">
+              <div>
+                <label
+                  htmlFor="calendar-event-title"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
+                >
+                  <span className="material-symbols-outlined text-lg text-gray-400">title</span>
+                  Title
                 </label>
-              ))}
-            </div>
+                <input
+                  id="calendar-event-title"
+                  className="w-full px-4 py-3 rounded-2xl border-gray-200 text-gray-800 input-focus-glow focus:ring-0 bg-white text-sm shadow-sm transition-all placeholder:text-gray-400 font-medium"
+                  placeholder="Event title"
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="calendar-event-type"
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
+                  >
+                    <span className="material-symbols-outlined text-lg text-gray-400">category</span>
+                    Event Type
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="calendar-event-type"
+                      className="w-full px-4 py-3 rounded-2xl border-gray-200 text-gray-800 input-focus-glow focus:ring-0 bg-white text-sm shadow-sm transition-all appearance-none font-medium"
+                      required
+                      value={formData.eventType}
+                      onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
+                    >
+                      {eventTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                      <span className="material-symbols-outlined text-xl">expand_more</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="calendar-event-location"
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
+                  >
+                    <span className="material-symbols-outlined text-lg text-gray-400">location_on</span>
+                    Location
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="calendar-event-location"
+                      className="w-full px-4 py-3 rounded-2xl border-gray-200 text-gray-800 input-focus-glow focus:ring-0 bg-white text-sm shadow-sm transition-all placeholder:text-gray-400 font-medium"
+                      placeholder="Event location"
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="calendar-event-start-time"
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
+                  >
+                    <span className="material-symbols-outlined text-lg text-gray-400">calendar_today</span>
+                    Start Time
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="calendar-event-start-time"
+                      className="w-full px-4 py-3 rounded-2xl border-gray-200 text-gray-800 input-focus-glow focus:ring-0 bg-white text-sm shadow-sm transition-all placeholder:text-gray-400 font-medium"
+                      type="datetime-local"
+                      required
+                      value={formData.startTime}
+                      onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="calendar-event-end-time"
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
+                  >
+                    <span className="material-symbols-outlined text-lg text-gray-400">schedule</span>
+                    End Time
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="calendar-event-end-time"
+                      className="w-full px-4 py-3 rounded-2xl border-gray-200 text-gray-800 input-focus-glow focus:ring-0 bg-white text-sm shadow-sm transition-all placeholder:text-gray-400 font-medium"
+                      type="datetime-local"
+                      required
+                      value={formData.endTime}
+                      onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  id="allDay"
+                  type="checkbox"
+                  checked={formData.allDay}
+                  onChange={(e) => setFormData({ ...formData, allDay: e.target.checked })}
+                />
+                <label className="text-sm font-medium text-gray-700 select-none" htmlFor="allDay">
+                  All day event
+                </label>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                  <span className="material-symbols-outlined text-lg text-gray-400">notifications</span>
+                  Reminders
+                </label>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {reminderOptions.map((option) => {
+                    const isChecked = formData.reminderMinutes.includes(option.value)
+                    return (
+                      <label
+                        key={option.value}
+                        className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                          isChecked ? 'bg-blue-50/50 border-blue-200' : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleReminder(option.value)}
+                        />
+                        <span className={`text-sm ${isChecked ? 'text-gray-800 font-medium' : 'text-gray-700'}`}>
+                          {option.label}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="calendar-event-description"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
+                >
+                  <span className="material-symbols-outlined text-lg text-gray-400">notes</span>
+                  Description / Notes
+                </label>
+                <textarea
+                  id="calendar-event-description"
+                  className="w-full px-4 py-3 rounded-2xl border-gray-200 text-gray-800 input-focus-glow focus:ring-0 bg-white text-sm shadow-sm transition-all resize-none placeholder:text-gray-400 font-medium"
+                  placeholder="Event description"
+                  rows={4}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value, notes: e.target.value })}
+                />
+              </div>
+            </form>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Additional notes"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="text-gray-500 hover:text-gray-800 px-6 py-2.5 rounded-full font-medium transition-colors text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
+              form="calendar-create-event-form"
               disabled={loading || !formData.title.trim()}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Event' : 'Create Event')}
+              {loading ? (isEditMode ? 'Updating...' : 'Creating...') : isEditMode ? 'Update Event' : 'Create Event'}
+              <span className="material-symbols-outlined text-lg">add</span>
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )

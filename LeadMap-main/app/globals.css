@@ -819,8 +819,8 @@
 
 /* Pipeline Funnel glass bars */
 .glass-bar {
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
@@ -835,8 +835,8 @@
 
 /* Pipeline Funnel bars - same border logic as welcome card */
 .funnel-bar-welcome {
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border: 1px solid rgba(226, 232, 240, 1);
   box-shadow: 0 20px 50px -12px rgba(93, 135, 255, 0.12);
 }
@@ -967,6 +967,52 @@
       transparent 50%
     );
 }
+
+/* Calendar Week View - Elite CRM grid (1:1 with design reference) */
+.week-grid-container {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  overflow-y: auto;
+  position: relative;
+}
+.week-grid-container--day {
+  grid-template-columns: 60px 1fr;
+}
+.time-column {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #f1f5f9;
+}
+.day-column {
+  position: relative;
+  border-right: 1px solid #f1f5f9;
+}
+.day-column:last-child {
+  border-right: none;
+}
+.grid-line {
+  height: 60px;
+  border-bottom: 1px solid #f8fafc;
+  position: relative;
+}
+.grid-line:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #f1f5f9;
+}
+.time-slot {
+  height: 60px;
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  transform: translateY(-50%);
+}
 .kanban-container {
   overflow-x: auto;
   overflow-y: hidden;
@@ -1010,4 +1056,37 @@
 .dark .input-focus-glow:focus {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
   border-color: #3b82f6;
+}
+
+/* Lightweight modal enter animations (no plugin required) */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes zoom-in {
+  from {
+    transform: scale(0.98);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.animate-in {
+  --anim-fade: none;
+  --anim-zoom: none;
+  --anim-duration: 300ms;
+  animation-name: var(--anim-fade), var(--anim-zoom);
+  animation-duration: var(--anim-duration), var(--anim-duration);
+  animation-timing-function: ease-out, ease-out;
+  animation-fill-mode: both, both;
+}
+.fade-in {
+  --anim-fade: fade-in;
+}
+.zoom-in {
+  --anim-zoom: zoom-in;
 }

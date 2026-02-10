@@ -204,6 +204,11 @@ module.exports = {
         "saas-teal": "#06B6D4",
         "saas-teal-hover": "#0891B2",
         charcoal: "#334155",
+        // Elite CRM Calendar Week View tokens (design parity)
+        "text-main": "#1E293B", // Slate-800
+        "text-muted": "#64748B", // Slate-500
+        "bg-surface": "#F8FAFC", // Slate-50
+        "grid-border": "#F1F5F9", // Slate-100
       },
       fontSize: {
         "heading-1": ["60px", "72px"],
@@ -234,6 +239,8 @@ module.exports = {
         "card-hover":
           "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01)",
         "header-smooth": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        modal: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        floating: "0 10px 40px -10px rgba(59, 130, 246, 0.5)",
         bento: "0 20px 50px -12px rgba(59, 130, 246, 0.12)",
         "dark-md":
           "rgba(145, 158, 171, 0.3) 0px 0px 2px 0px, rgba(145, 158, 171, 0.02) 0px 12px 24px -4px",
