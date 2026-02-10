@@ -691,7 +691,8 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     );
   }
 
-  if (loading) {
+  // When fullScreen, always render the map so search/geocode can work immediately (map must exist to zoom to searched location)
+  if (loading && !fullScreen) {
     return (
       <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg">
         <div className="text-center">
