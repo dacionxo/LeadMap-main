@@ -71,6 +71,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
   const lastZoomRef = useRef<number | null>(null);
   const geocodingInProgress = useRef<Set<string>>(new Set());
   const pendingFlyToRef = useRef<{ lat: number; lng: number } | null>(null);
+  const [suppressAutoFit, setSuppressAutoFit] = useState(false);
 
   // Format price for marker label: $1.2M, $850k, $675k
   const formatPrice = (price: number): string => {
@@ -358,6 +359,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     }
     const zoom = typeof flyToZoom === "number" ? flyToZoom : 16;
     const m = map.current;
+    setSuppressAutoFit(true);
     m.flyTo({
       center: [lng, lat],
       zoom,
@@ -481,6 +483,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       zoom: 14,
       duration: 1500,
     });
+    setSuppressAutoFit(true);
 
     // Close search results
     setShowSearchResults(false);
@@ -620,7 +623,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     });
 
     // Fit map to show markers only when not zoom-triggered (so user can zoom in without reset)
-    if (visibleLeadsWithCoords.length > 0 && !zoomTriggeredRun) {
+    if (visibleLeadsWithCoords.length > 0 && !zoomTriggeredRun && !suppressAutoFit) {
       map.current.fitBounds(bounds, {
         padding: { top: 50, bottom: 50, left: 50, right: 50 },
         maxZoom: 15,
@@ -676,7 +679,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
           });
 
           // Update map bounds to include all markers
-          if (markers.current.length > 0) {
+          if (markers.current.length > 0 && !suppressAutoFit) {
             map.current.fitBounds(newBounds, {
               padding: { top: 50, bottom: 50, left: 50, right: 50 },
               maxZoom: 15,
@@ -688,7 +691,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
           setGeocodingCount(0);
         });
     }
-  }, [mapLoaded, listings, zoomLevel, onViewDetailsClick]);
+  }, [mapLoaded, listings, zoomLevel, onViewDetailsClick, suppressAutoFit]);
 
   if (!isActive) {
     return (

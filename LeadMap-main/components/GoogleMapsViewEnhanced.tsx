@@ -60,7 +60,8 @@ const MapComponent: React.FC<{
   onMapReady: (map: google.maps.Map) => void;
   onError?: () => void;
   fullHeight?: boolean;
-}> = ({ leads, onStreetViewClick, onViewDetailsClick, onMapReady, onError, fullHeight }) => {
+  suppressAutoFit?: boolean;
+}> = ({ leads, onStreetViewClick, onViewDetailsClick, onMapReady, onError, fullHeight, suppressAutoFit = false }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
@@ -642,7 +643,7 @@ const MapComponent: React.FC<{
               markersRef.current = [...newMarkers];
 
               // Update bounds when new marker is added
-              if (newMarkers.length > 0 && map) {
+              if (newMarkers.length > 0 && map && !suppressAutoFit) {
                 const bounds = new window.google.maps.LatLngBounds();
                 newMarkers.forEach(m => {
                   const pos = m.getPosition();
@@ -665,7 +666,7 @@ const MapComponent: React.FC<{
     const zoomTriggeredRun =
       lastZoomRef.current !== null && lastZoomRef.current !== (zoomLevel ?? map.getZoom());
     lastZoomRef.current = zoomLevel ?? map.getZoom() ?? null;
-    if (newMarkers.length > 0 && !zoomTriggeredRun) {
+    if (newMarkers.length > 0 && !zoomTriggeredRun && !suppressAutoFit) {
       const bounds = new google.maps.LatLngBounds();
       newMarkers.forEach(marker => {
         const position = marker.getPosition();
@@ -680,6 +681,7 @@ const MapComponent: React.FC<{
     zoomLevel,
     onStreetViewClick,
     openStreetViewImmediately,
+    suppressAutoFit,
   ]);
 
   return (
@@ -732,6 +734,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const pendingFlyToRef = useRef<{ lat: number; lng: number } | null>(null);
   const lastAppliedRef = useRef<string | null>(null);
+  const [suppressAutoFit, setSuppressAutoFit] = useState(false);
 
   // H2/H3: Keep pending flyTo in ref so we never lose it (map may not be ready when user searches)
   useEffect(() => {
@@ -748,6 +751,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
     lastAppliedRef.current = key;
     const latLng = { lat, lng };
     const zoom = typeof flyToZoom === 'number' ? flyToZoom : 16;
+    setSuppressAutoFit(true);
     map.setCenter(latLng);
     map.setZoom(zoom);
     if (searchMarkerRef.current) {
@@ -1059,6 +1063,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
             onMapReady={handleMapReady}
             onError={onError}
             fullHeight={fullScreen}
+            suppressAutoFit={suppressAutoFit}
           />
         </Wrapper>
       </div>

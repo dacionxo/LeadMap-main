@@ -6,9 +6,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSearchParams } from "next/navigation";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
-import { useMapGeocodeSearch } from "./components/MapGeocodeSearch";
 import MapProfileNotificationButtons from "./components/MapProfileNotificationButtons";
-import MapSearchBar from "./components/MapSearchBar";
+import MapRouteGeocodeSearch from "./components/MapRouteGeocodeSearch";
 import MapsOnboardingModal from "./components/MapsOnboardingModal";
 
 const LeadDetailModal = lazy(
@@ -75,9 +74,6 @@ export default function MapPage() {
     },
     []
   );
-
-  const { search, isSearching, error: searchError, clearError } =
-    useMapGeocodeSearch({ onResult: handleGeocodeResult });
 
   // Open property detail modal (with street view) when URL has ?listingId=...
   useEffect(() => {
@@ -296,25 +292,12 @@ export default function MapPage() {
           <div className="flex-1 relative">
             {/* Search bar - top center overlay */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-4xl px-4 space-y-1">
-              <MapSearchBar
-                searchValue={searchQuery}
-                onSearchChange={(v) => {
-                  setSearchQuery(v);
-                  clearError();
-                }}
-                onSearchSubmit={search}
+              <MapRouteGeocodeSearch
+                value={searchQuery}
+                onValueChange={setSearchQuery}
+                onResult={handleGeocodeResult}
                 placeholder="Search by City, Zip, or Address"
               />
-              {searchError && (
-                <p className="text-sm text-red-600 dark:text-red-400 text-center px-2">
-                  {searchError}
-                </p>
-              )}
-              {isSearching && (
-                <p className="text-sm text-slate-500 dark:text-slate-400 text-center px-2">
-                  Finding location...
-                </p>
-              )}
             </div>
 
             {/* Profile and notifications - top right, 30px left of default */}
