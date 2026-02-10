@@ -21,6 +21,7 @@ interface CalendarEvent {
     status?: string
     backgroundColor?: string
     borderColor?: string
+    conferencingLink?: string
   }
 }
 
@@ -182,6 +183,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
             status: event.status,
             backgroundColor: eventColor,
             borderColor: eventColor,
+            conferencingLink: event.conferencing_link,
           },
         }
       }
@@ -204,6 +206,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           status: event.status,
           backgroundColor: eventColor,
           borderColor: eventColor,
+          conferencingLink: event.conferencing_link,
         },
       }
     },
@@ -944,50 +947,192 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           </div>
         )}
 
-        {view === 'agenda' && (
-          <div className="flex-1 px-8 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-700">
-                {moment(activeRange.start).format('MMM D')} - {moment(activeRange.end).format('MMM D, YYYY')}
-              </h2>
-              <span className="text-xs text-gray-400">{events.length} events</span>
-            </div>
-            <div className="space-y-2">
-              {events
-                .slice()
-                .sort((a, b) => a.start.getTime() - b.start.getTime())
-                .map((event) => {
-                  const styles = getEventCardClasses(event.resource?.eventType)
+        {view === 'agenda' && (() => {
+          // Group events by date
+          const eventsByDate = new Map<string, CalendarEvent[]>()
+          const sortedEvents = events
+            .slice()
+            .sort((a, b) => a.start.getTime() - b.start.getTime())
+            .filter((event) => !event.allDay) // Filter out all-day events for agenda view
+
+          sortedEvents.forEach((event) => {
+            const dateKey = moment(event.start).format('YYYY-MM-DD')
+            if (!eventsByDate.has(dateKey)) {
+              eventsByDate.set(dateKey, [])
+            }
+            eventsByDate.get(dateKey)!.push(event)
+          })
+
+          // Get all dates in range, sorted
+          const dateKeys = Array.from(eventsByDate.keys()).sort()
+
+          // Helper to get agenda-specific card styles
+          const getAgendaCardStyles = (eventType?: string) => {
+            const type = eventType || 'other'
+            if (type === 'meeting' || type === 'content') {
+              return {
+                container: 'bg-purple-50/50 border-purple-100/60 hover:bg-purple-50 hover:shadow-card-hover',
+                border: 'border-purple-200/50',
+              }
+            }
+            if (type === 'visit') {
+              return {
+                container: 'bg-emerald-50/50 border-emerald-100/60 hover:bg-emerald-50 hover:shadow-card-hover',
+                border: 'border-emerald-200/50',
+              }
+            }
+            if (type === 'showing' || type === 'deadline') {
+              return {
+                container: 'bg-amber-50/50 border-amber-100/60 hover:bg-amber-50 hover:shadow-card-hover',
+                border: 'border-amber-200/50',
+              }
+            }
+            if (type === 'email_campaign' || type === 'call' || type === 'follow_up') {
+              return {
+                container: 'bg-blue-50/50 border-blue-100/60 hover:bg-blue-50 hover:shadow-card-hover',
+                border: 'border-blue-200/50',
+              }
+            }
+            return {
+              container: 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-card-hover',
+              border: 'border-gray-100',
+            }
+          }
+
+          return (
+            <div className="flex-1 overflow-auto custom-scrollbar relative bg-white/30 flex flex-col p-8 pt-4">
+              {dateKeys.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-sm text-gray-400">No events scheduled</p>
+                </div>
+              ) : (
+                dateKeys.map((dateKey, dateIdx) => {
+                  const dateEvents = eventsByDate.get(dateKey)!
+                  const dateMoment = moment(dateKey)
+                  const isToday = dateMoment.isSame(new Date(), 'day')
+                  const dateLabel = dateMoment.format('dddd, MMMM D')
+
                   return (
-                    <button
-                      key={event.id}
-                      type="button"
-                      className={`w-full text-left border-l-4 rounded-r-lg p-3 shadow-sm transition-colors ${styles.container}`}
-                      onClick={() => handleEventClick(event)}
-                      aria-label={`Open event ${event.title}`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className={`text-sm font-semibold truncate ${styles.title}`}>{event.title}</p>
-                          <p className={`text-xs mt-0.5 ${styles.meta}`}>
-                            {event.allDay
-                              ? moment(event.start).format('ddd, MMM D') + ' (All day)'
-                              : `${moment(event.start).format('ddd, MMM D • h:mm A')} – ${moment(event.end).format('h:mm A')}`}
-                          </p>
-                        </div>
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ring-2 ring-white shrink-0 ${styles.avatarBg} ${styles.avatarText}`}
-                          aria-hidden
-                        >
-                          {getInitialsFromTitle(event.title)}
-                        </div>
+                    <div key={dateKey} className={dateIdx > 0 ? 'mb-4' : 'mb-8'}>
+                      {/* Sticky date header */}
+                      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md py-3 mb-4 border-b border-gray-100 flex items-center gap-3 -mx-2 px-2 rounded-lg">
+                        <h2 className="text-lg font-bold text-gray-800">{dateLabel}</h2>
+                        {isToday && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wide">
+                            Today
+                          </span>
+                        )}
                       </div>
-                    </button>
+
+                      {/* Events for this date */}
+                      <div className="flex flex-col gap-3">
+                        {dateEvents.map((event) => {
+                          const cardStyles = getAgendaCardStyles(event.resource?.eventType)
+                          const isNow =
+                            moment().isSame(dateMoment, 'day') &&
+                            moment().isBetween(moment(event.start), moment(event.end), null, '[]')
+                          const timeHour = moment(event.start).format('h')
+                          const timePeriod = moment(event.start).format('A')
+                          const initials = getInitialsFromTitle(event.title)
+                          const locationLower = event.resource?.location?.toLowerCase() || ''
+                          const hasConferencingLink = !!event.resource?.conferencingLink || locationLower.includes('zoom') || locationLower.includes('meet')
+                          const conferencingType = event.resource?.conferencingLink
+                            ? (locationLower.includes('zoom') ? 'Zoom' : locationLower.includes('meet') ? 'Google Meet' : 'Join')
+                            : locationLower.includes('zoom')
+                              ? 'Zoom'
+                              : locationLower.includes('meet')
+                                ? 'Google Meet'
+                                : null
+
+                          return (
+                            <button
+                              key={event.id}
+                              type="button"
+                              className={`group flex items-center gap-4 p-4 rounded-xl transition-all cursor-pointer ${cardStyles.container}`}
+                              onClick={() => handleEventClick(event)}
+                              aria-label={`Open event ${event.title}`}
+                            >
+                              {/* Time column */}
+                              <div className={`flex flex-col items-center justify-center min-w-[70px] border-r pr-4 ${cardStyles.border}`}>
+                                <span className="text-sm font-bold text-gray-800">{timeHour}</span>
+                                <span className="text-xs font-medium text-gray-500">{timePeriod}</span>
+                              </div>
+
+                              {/* Content area */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  {isNow && (
+                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                  )}
+                                  <h3 className="text-base font-bold text-gray-900 truncate">{event.title}</h3>
+                                </div>
+                                {event.resource?.description && (
+                                  <p className="text-sm text-gray-500 truncate">{event.resource.description}</p>
+                                )}
+                              </div>
+
+                              {/* Right side: avatars and actions */}
+                              <div className="flex items-center gap-4">
+                                {/* Avatar stack */}
+                                <div className="flex -space-x-2">
+                                  <div className="w-8 h-8 rounded-full bg-gray-100 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-gray-600">
+                                    {initials}
+                                  </div>
+                                </div>
+
+                                {/* Action buttons */}
+                                {hasConferencingLink && conferencingType && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      if (event.resource?.conferencingLink) {
+                                        window.open(event.resource.conferencingLink, '_blank')
+                                      }
+                                    }}
+                                    className="h-9 px-4 bg-white text-blue-600 text-sm font-semibold rounded-lg border border-blue-200 shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-2"
+                                  >
+                                    <span className="material-symbols-outlined text-[18px]">videocam</span>
+                                    {conferencingType === 'Zoom' ? 'Join Zoom' : 'Google Meet'}
+                                  </button>
+                                )}
+                                {event.resource?.eventType === 'call' && !hasConferencingLink && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleEventClick(event)
+                                    }}
+                                    className="h-9 px-4 bg-white text-purple-600 text-sm font-semibold rounded-lg border border-purple-200 shadow-sm hover:bg-purple-50 hover:border-purple-300 transition-all flex items-center gap-2"
+                                  >
+                                    <span className="material-symbols-outlined text-[18px]">call</span>
+                                    Call
+                                  </button>
+                                )}
+                                {event.resource?.location && !hasConferencingLink && event.resource.eventType !== 'call' && (
+                                  <div className={`h-9 px-3 text-xs font-semibold rounded-lg border flex items-center gap-1.5 ${
+                                    cardStyles.container.includes('emerald')
+                                      ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200'
+                                      : 'bg-gray-50 text-gray-600 border-gray-200'
+                                  }`}>
+                                    <span className="material-symbols-outlined text-[16px]">
+                                      {event.resource.location.toLowerCase().includes('room') ? 'meeting_room' : 'location_on'}
+                                    </span>
+                                    {event.resource.location}
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
                   )
-                })}
+                })
+              )}
             </div>
-          </div>
-        )}
+          )
+        })()}
       </main>
     </div>
   )
