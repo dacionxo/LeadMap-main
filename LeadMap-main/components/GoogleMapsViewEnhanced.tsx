@@ -61,7 +61,8 @@ const MapComponent: React.FC<{
   onError?: () => void;
   fullHeight?: boolean;
   suppressAutoFit?: boolean;
-}> = ({ leads, onStreetViewClick, onViewDetailsClick, onMapReady, onError, fullHeight, suppressAutoFit = false }) => {
+  flyToCenter?: { lat: number; lng: number } | null;
+}> = ({ leads, onStreetViewClick, onViewDetailsClick, onMapReady, onError, fullHeight, suppressAutoFit = false, flyToCenter = null }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
@@ -334,6 +335,7 @@ const MapComponent: React.FC<{
 
   // Retry state for waiting for Google Maps API
   const [mapInitAttempt, setMapInitAttempt] = useState(0);
+  const shouldSuppressAutoFit = suppressAutoFit || Boolean(flyToCenter);
 
   useEffect(() => {
     if (!mapRef.current || isInitializedRef.current || map) return;
@@ -643,7 +645,7 @@ const MapComponent: React.FC<{
               markersRef.current = [...newMarkers];
 
               // Update bounds when new marker is added
-              if (newMarkers.length > 0 && map && !suppressAutoFit) {
+              if (newMarkers.length > 0 && map && !shouldSuppressAutoFit) {
                 const bounds = new window.google.maps.LatLngBounds();
                 newMarkers.forEach(m => {
                   const pos = m.getPosition();
@@ -666,7 +668,7 @@ const MapComponent: React.FC<{
     const zoomTriggeredRun =
       lastZoomRef.current !== null && lastZoomRef.current !== (zoomLevel ?? map.getZoom());
     lastZoomRef.current = zoomLevel ?? map.getZoom() ?? null;
-    if (newMarkers.length > 0 && !zoomTriggeredRun && !suppressAutoFit) {
+    if (newMarkers.length > 0 && !zoomTriggeredRun && !shouldSuppressAutoFit) {
       const bounds = new google.maps.LatLngBounds();
       newMarkers.forEach(marker => {
         const position = marker.getPosition();
@@ -681,7 +683,7 @@ const MapComponent: React.FC<{
     zoomLevel,
     onStreetViewClick,
     openStreetViewImmediately,
-    suppressAutoFit,
+    shouldSuppressAutoFit,
   ]);
 
   return (
@@ -1064,6 +1066,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
             onError={onError}
             fullHeight={fullScreen}
             suppressAutoFit={suppressAutoFit}
+            flyToCenter={flyToCenter}
           />
         </Wrapper>
       </div>

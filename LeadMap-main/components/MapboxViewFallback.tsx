@@ -72,6 +72,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
   const geocodingInProgress = useRef<Set<string>>(new Set());
   const pendingFlyToRef = useRef<{ lat: number; lng: number } | null>(null);
   const [suppressAutoFit, setSuppressAutoFit] = useState(false);
+  const shouldSuppressAutoFit = suppressAutoFit || Boolean(flyToCenter);
 
   // Format price for marker label: $1.2M, $850k, $675k
   const formatPrice = (price: number): string => {
@@ -623,7 +624,11 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     });
 
     // Fit map to show markers only when not zoom-triggered (so user can zoom in without reset)
-    if (visibleLeadsWithCoords.length > 0 && !zoomTriggeredRun && !suppressAutoFit) {
+    if (
+      visibleLeadsWithCoords.length > 0 &&
+      !zoomTriggeredRun &&
+      !shouldSuppressAutoFit
+    ) {
       map.current.fitBounds(bounds, {
         padding: { top: 50, bottom: 50, left: 50, right: 50 },
         maxZoom: 15,
@@ -679,7 +684,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
           });
 
           // Update map bounds to include all markers
-          if (markers.current.length > 0 && !suppressAutoFit) {
+          if (markers.current.length > 0 && !shouldSuppressAutoFit) {
             map.current.fitBounds(newBounds, {
               padding: { top: 50, bottom: 50, left: 50, right: 50 },
               maxZoom: 15,
@@ -691,7 +696,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
           setGeocodingCount(0);
         });
     }
-  }, [mapLoaded, listings, zoomLevel, onViewDetailsClick, suppressAutoFit]);
+  }, [mapLoaded, listings, zoomLevel, onViewDetailsClick, shouldSuppressAutoFit]);
 
   if (!isActive) {
     return (
