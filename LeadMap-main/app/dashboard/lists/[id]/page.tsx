@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import DashboardLayout from '../../components/DashboardLayout'
+import { useSidebar } from '../../components/SidebarContext'
+import DealsNavbar from '../../crm/deals/components/DealsNavbar'
 import Link from 'next/link'
 
 interface List {
@@ -92,6 +94,7 @@ function StatusBadge({ status }: { status?: string | null }) {
 export default function ListDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { isOpen: isSidebarOpen } = useSidebar()
   const listId = params.id as string
 
   const [list, setList] = useState<List | null>(null)
@@ -285,27 +288,38 @@ export default function ListDetailPage() {
 
   if (loading && !list) {
     return (
-      <DashboardLayout fullBleed>
-        <div className="flex items-center justify-center h-full bg-mesh">
-          <span className="text-slate-500 text-sm font-medium">Loading list...</span>
+      <DashboardLayout fullBleed hideHeader>
+        <div
+          className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
+          style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
+        >
+          <DealsNavbar />
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-slate-500 text-sm font-medium">Loading list...</span>
+          </div>
         </div>
       </DashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout fullBleed>
-      <div className="list-detail-page flex flex-col h-full min-h-0 bg-mesh font-sans text-slate-900 antialiased overflow-hidden selection:bg-blue-100 selection:text-blue-700">
-        <div className="flex-1 px-3 pb-3 overflow-hidden flex flex-col min-h-0">
-          <div className="list-detail-glass bg-white/40 backdrop-blur-2xl border border-white/60 shadow-glass rounded-xl flex flex-col h-full overflow-hidden relative flex-1 min-h-0">
-            {/* Decorative blue glow */}
+    <DashboardLayout fullBleed hideHeader>
+      <div className="-mt-[30px]">
+        <div
+          className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
+          style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
+        >
+          <DealsNavbar />
+          <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+            <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-col h-full min-h-0 overflow-hidden relative font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-100 selection:text-blue-700">
+            {/* Decorative blue glow - matches deals page */}
             <div
-              className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/4 -translate-y-1/4 mix-blend-multiply"
+              className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
               aria-hidden
             />
 
-            {/* ─── HEADER (reference: px-6 pt-6 pb-2, text-3xl title, subtitle) ─── */}
-            <header className="shrink-0 z-20 px-6 pt-6 pb-2">
+            {/* ─── HEADER (matches deals: px-8 py-6) ─── */}
+            <header className="shrink-0 z-20 px-8 py-6">
               <div className="flex flex-col gap-1">
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
@@ -368,8 +382,8 @@ export default function ListDetailPage() {
               </div>
             </header>
 
-            {/* ─── MAIN CONTENT ─── */}
-            <main className="flex-1 overflow-auto custom-scrollbar px-6 pb-6 flex flex-col mt-2 min-h-0">
+            {/* ─── MAIN CONTENT (matches deals content padding) ─── */}
+            <main className="flex-1 overflow-auto custom-scrollbar px-8 pb-6 flex flex-col min-h-0">
               {/* ─── TOOLBAR (reference: search pill + View/Sort/Filter buttons) ─── */}
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <div className="relative group w-full max-w-sm">
@@ -855,6 +869,7 @@ export default function ListDetailPage() {
                 )}
               </div>
             </main>
+            </div>
           </div>
         </div>
       </div>
