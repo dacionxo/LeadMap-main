@@ -5,14 +5,9 @@ import DashboardLayout from '../components/DashboardLayout'
 import { useSidebar } from '../components/SidebarContext'
 import DealsNavbar from '../crm/deals/components/DealsNavbar'
 import UniboxContent from './components/UniboxContent'
-import { RefreshCw } from 'lucide-react'
 
 function UniboxPageContent() {
   const { isOpen: isSidebarOpen } = useSidebar()
-
-  const handleRefresh = () => {
-    window.dispatchEvent(new CustomEvent('unibox-refresh'))
-  }
 
   return (
     <div className="-mt-[30px]">
@@ -28,29 +23,7 @@ function UniboxPageContent() {
               aria-hidden
             />
 
-            <header className="shrink-0 z-20 px-8 py-6">
-              <div className="flex items-end justify-between mb-6">
-                <div>
-                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    Unibox <span className="text-blue-500">Inbox</span>
-                  </h1>
-                  <p className="text-slate-500 dark:text-slate-400 mt-2 text-base">
-                    Unified inbox for all your email conversations and leads.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRefresh}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                  aria-label="Refresh inbox"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Refresh
-                </button>
-              </div>
-            </header>
-
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden px-2 pb-4">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               <Suspense
                 fallback={
                   <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">

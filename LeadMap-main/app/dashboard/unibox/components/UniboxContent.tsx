@@ -317,18 +317,7 @@ export default function UniboxContent({ embedded = false }: UniboxContentProps) 
     return (
       <>
         <div className="flex flex-1 min-h-0 overflow-hidden">
-          <div
-            className="flex flex-1 min-h-0 origin-top-left"
-            style={{
-              width: '111.11%',
-              height: '111.11%',
-              maxWidth: '111.11%',
-              maxHeight: '111.11%',
-              transform: 'scale(0.9)',
-            }}
-          >
-            {threePane}
-          </div>
+          {threePane}
         </div>
         {showComposer && selectedThread && threadDetails && (
           <ReplyComposer

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Mail, Search, RefreshCw } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import type { UniboxThread, UniboxMailbox, UniboxFilterStatus, UniboxFilterFolder } from '../../unibox/types'
 import UniboxSidebar from '../../unibox/components/UniboxSidebar'
 import ThreadList from '../../unibox/components/ThreadList'
@@ -178,13 +178,6 @@ const [threadDetails, setThreadDetails] = useState<Parameters<typeof ThreadView>
     }
   }
 
-  const handleRefresh = () => {
-    fetchThreads()
-    if (selectedThread) {
-      fetchThreadDetails(selectedThread.id)
-    }
-  }
-
   // Get unread count
   const unreadCount = threads.filter(t => t.unread).length
 
@@ -195,30 +188,9 @@ const [threadDetails, setThreadDetails] = useState<Parameters<typeof ThreadView>
   }, {} as Record<string, number>)
 
   return (
-    <div className="h-[calc(100vh-250px)] flex flex-col bg-gray-50 dark:bg-gray-900 -mx-6">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Unibox</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Unified inbox for all your email conversations
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleRefresh}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content - Three Pane Layout */}
-      <div className="flex-1 flex overflow-hidden">
+    <div className="h-[calc(100vh-250px)] flex flex-col bg-unibox-background-light dark:bg-unibox-background-dark -mx-6">
+      {/* Main Content - Three Pane Layout (matches Elite CRM Unibox design) */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left Sidebar */}
         <UniboxSidebar
           mailboxes={mailboxes}
@@ -233,32 +205,31 @@ const [threadDetails, setThreadDetails] = useState<Parameters<typeof ThreadView>
         />
 
         {/* Middle - Thread List */}
-        <div className="w-80 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col">
-          {/* Search Bar */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <section className="w-[400px] flex-shrink-0 flex flex-col border-r border-slate-200/50 dark:border-slate-700/50 bg-white/20 dark:bg-slate-900/20 backdrop-blur-sm hidden md:flex">
+          <div className="h-20 flex items-center px-6 border-b border-slate-200/50 dark:border-slate-700/50">
+            <div className="relative w-full">
+              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 material-icons-round text-xl pointer-events-none" aria-hidden>search</span>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search threads..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-unibox-primary/50 focus:border-unibox-primary transition-all placeholder-slate-400 shadow-sm"
               />
             </div>
           </div>
-
-          {/* Thread List */}
-          <ThreadList
-            threads={threads}
-            selectedThread={selectedThread}
-            onThreadSelect={handleThreadSelect}
-            loading={loading}
-          />
-        </div>
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <ThreadList
+              threads={threads}
+              selectedThread={selectedThread}
+              onThreadSelect={handleThreadSelect}
+              loading={loading}
+            />
+          </div>
+        </section>
 
         {/* Right - Thread View */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 overflow-hidden">
+        <section className="flex-1 flex flex-col bg-slate-50/50 dark:bg-slate-900/50 relative overflow-hidden min-w-0">
           {selectedThread ? (
             <ThreadView
               thread={threadDetails}
@@ -268,7 +239,7 @@ const [threadDetails, setThreadDetails] = useState<Parameters<typeof ThreadView>
               onForward={handleForward}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
               <div className="text-center">
                 <Mail className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium mb-2">No thread selected</p>
@@ -276,7 +247,7 @@ const [threadDetails, setThreadDetails] = useState<Parameters<typeof ThreadView>
               </div>
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       {/* Reply/Forward Composer */}
