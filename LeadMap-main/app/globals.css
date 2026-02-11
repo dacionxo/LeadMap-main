@@ -1178,3 +1178,49 @@
 .zoom-in {
   --anim-zoom: zoom-in;
 }
+
+/* Elite CRM Unibox - 1:1 design (mesh, glass, scrollbar, glow) */
+.unibox-page ::-webkit-scrollbar {
+  width: 6px;
+}
+.unibox-page ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.unibox-page ::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+}
+.dark .unibox-page ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.unibox-mesh {
+  background-color: #f6f6f8;
+  background-image:
+    radial-gradient(at 0% 0%, hsla(220, 85%, 93%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(210, 90%, 95%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(220, 85%, 93%, 1) 0, transparent 50%);
+}
+.dark .unibox-mesh {
+  background-color: #101622;
+  background-image:
+    radial-gradient(at 0% 0%, hsla(220, 70%, 15%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(215, 70%, 15%, 1) 0, transparent 50%);
+}
+.unibox-glass-panel {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.dark .unibox-glass-panel {
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+@keyframes unibox-glowing {
+  0% { box-shadow: 0 0 5px #2b6cee; }
+  50% { box-shadow: 0 0 20px #2b6cee, 0 0 10px #5a8dee; }
+  100% { box-shadow: 0 0 5px #2b6cee; }
+}
+.unibox-ai-glow {
+  animation: unibox-glowing 3s infinite;
+}

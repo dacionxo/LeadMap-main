@@ -1,16 +1,5 @@
 'use client'
 
-import { 
-  Inbox, 
-  Archive, 
-  Star, 
-  Mail,
-  AlertCircle,
-  Clock,
-  CheckCircle2,
-  XCircle
-} from 'lucide-react'
-
 interface Mailbox {
   id: string
   email: string
@@ -22,7 +11,7 @@ interface Mailbox {
 type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
 type FilterFolder = 'inbox' | 'archived' | 'starred'
 
-interface Props {
+interface UniboxSidebarProps {
   mailboxes: Mailbox[]
   selectedMailboxId: string | null
   onMailboxSelect: (id: string | null) => void
@@ -32,7 +21,17 @@ interface Props {
   onFolderFilterChange: (folder: FilterFolder) => void
   mailboxUnreadCounts: Record<string, number>
   unreadCount: number
+  onCompose?: () => void
 }
+
+const statusOptions: Array<{ value: FilterStatus; label: string; icon: string }> = [
+  { value: 'all', label: 'All', icon: 'all_inclusive' },
+  { value: 'open', label: 'Open', icon: 'mail_outline' },
+  { value: 'needs_reply', label: 'Needs Reply', icon: 'error_outline' },
+  { value: 'waiting', label: 'Waiting', icon: 'schedule' },
+  { value: 'closed', label: 'Closed', icon: 'check_circle_outline' },
+  { value: 'ignored', label: 'Ignored', icon: 'block' },
+]
 
 export default function UniboxSidebar({
   mailboxes,
@@ -43,136 +42,138 @@ export default function UniboxSidebar({
   folderFilter,
   onFolderFilterChange,
   mailboxUnreadCounts,
-  unreadCount
-}: Props) {
-  const statusOptions: Array<{ value: FilterStatus; label: string; icon: any }> = [
-    { value: 'all', label: 'All', icon: Inbox },
-    { value: 'open', label: 'Open', icon: Mail },
-    { value: 'needs_reply', label: 'Needs Reply', icon: AlertCircle },
-    { value: 'waiting', label: 'Waiting', icon: Clock },
-    { value: 'closed', label: 'Closed', icon: CheckCircle2 },
-    { value: 'ignored', label: 'Ignored', icon: XCircle }
-  ]
+  unreadCount,
+  onCompose,
+}: UniboxSidebarProps) {
+  const handleCompose = () => {
+    onCompose?.()
+  }
 
   return (
-    <div className="w-64 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-      {/* Folders */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="space-y-1">
-          <button
-            onClick={() => onFolderFilterChange('inbox')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-              folderFilter === 'inbox'
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-          >
-            <Inbox className="w-5 h-5" />
-            <span className="flex-1 text-left font-medium">Inbox</span>
-            {unreadCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-semibold bg-blue-600 text-white rounded-full">
-                {unreadCount}
+    <aside className="w-20 lg:w-64 flex-shrink-0 flex flex-col border-r border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40">
+      <div className="px-4 lg:px-6 pt-8 pb-6">
+        <button
+          type="button"
+          onClick={handleCompose}
+          className="w-full h-12 bg-gradient-to-r from-unibox-primary to-unibox-primary-light hover:to-unibox-primary-dark text-white rounded-full shadow-lg shadow-unibox-primary/30 transition-all duration-200 flex items-center justify-center lg:justify-start lg:px-5 group transform hover:scale-[1.02]"
+          aria-label="Compose"
+        >
+          <span className="material-icons-round text-xl lg:mr-3" aria-hidden>edit</span>
+          <span className="font-bold tracking-wide hidden lg:inline">Compose</span>
+        </button>
+      </div>
+      <nav className="flex-1 overflow-y-auto px-4 lg:px-6 space-y-1 custom-scrollbar" aria-label="Unibox folders and status">
+        <button
+          type="button"
+          onClick={() => onFolderFilterChange('inbox')}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl group transition-all font-medium ${
+            folderFilter === 'inbox'
+              ? 'bg-unibox-primary/10 text-unibox-primary'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <div className="flex items-center">
+            <span className="material-icons-round text-[20px] lg:mr-3" aria-hidden>inbox</span>
+            <span className="hidden lg:inline">Inbox</span>
+          </div>
+          {unreadCount > 0 && (
+            <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => onFolderFilterChange('starred')}
+          className={`w-full flex items-center px-4 py-3 rounded-2xl transition-colors ${
+            folderFilter === 'starred'
+              ? 'bg-unibox-primary/10 text-unibox-primary'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>star_border</span>
+          <span className="font-medium hidden lg:inline">Starred</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onFolderFilterChange('archived')}
+          className={`w-full flex items-center px-4 py-3 rounded-2xl transition-colors ${
+            folderFilter === 'archived'
+              ? 'bg-unibox-primary/10 text-unibox-primary'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>archive</span>
+          <span className="font-medium hidden lg:inline">Archived</span>
+        </button>
+
+        <div className="pt-8 pb-3 hidden lg:block">
+          <h3 className="px-4 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            Status
+          </h3>
+        </div>
+        <div className="hidden lg:block space-y-1">
+          {statusOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onStatusFilterChange(option.value)}
+              className={`w-full flex items-center px-4 py-2.5 rounded-2xl transition-colors ${
+                statusFilter === option.value
+                  ? 'bg-blue-50 dark:bg-slate-800/50 text-blue-600 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              <span className={`material-icons-outlined text-[18px] mr-3 ${statusFilter === option.value ? '' : 'text-slate-400'}`} aria-hidden>
+                {option.icon}
               </span>
-            )}
-          </button>
-          <button
-            onClick={() => onFolderFilterChange('starred')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-              folderFilter === 'starred'
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-          >
-            <Star className="w-5 h-5" />
-            <span className="flex-1 text-left font-medium">Starred</span>
-          </button>
-          <button
-            onClick={() => onFolderFilterChange('archived')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-              folderFilter === 'archived'
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-          >
-            <Archive className="w-5 h-5" />
-            <span className="flex-1 text-left font-medium">Archived</span>
-          </button>
+              <span className="text-sm font-medium">{option.label}</span>
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* Status Filters */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-          Status
-        </h3>
-        <div className="space-y-1">
-          {statusOptions.map((option) => {
-            const Icon = option.icon
-            return (
-              <button
-                key={option.value}
-                onClick={() => onStatusFilterChange(option.value)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  statusFilter === option.value
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="flex-1 text-left text-sm">{option.label}</span>
-              </button>
-            )
-          })}
+        <div className="pt-8 pb-3 hidden lg:block">
+          <h3 className="px-4 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            Mailboxes
+          </h3>
         </div>
-      </div>
-
-      {/* Mailboxes */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-          Mailboxes
-        </h3>
-        <div className="space-y-1">
+        <div className="hidden lg:block space-y-1 mb-8">
           <button
+            type="button"
             onClick={() => onMailboxSelect(null)}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            className={`w-full flex items-center px-4 py-2.5 rounded-2xl transition-colors ${
               selectedMailboxId === null
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                ? 'bg-blue-50/50 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <Mail className="w-4 h-4" />
-            <span className="flex-1 text-left text-sm font-medium">All Mailboxes</span>
+            <span className="material-icons-outlined text-[18px] mr-3 text-unibox-primary" aria-hidden>folder_open</span>
+            <span className="text-sm font-medium">All Mailboxes</span>
           </button>
           {mailboxes.map((mailbox) => {
-            const unreadCount = mailboxUnreadCounts[mailbox.id] || 0
+            const count = mailboxUnreadCounts[mailbox.id] || 0
+            const label = mailbox.display_name || mailbox.email
             return (
               <button
                 key={mailbox.id}
+                type="button"
                 onClick={() => onMailboxSelect(mailbox.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  selectedMailboxId === mailbox.id
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-2xl transition-colors"
               >
-                <Mail className="w-4 h-4" />
-                <span className="flex-1 text-left text-sm truncate">
-                  {mailbox.display_name || mailbox.email}
-                </span>
-                {!mailbox.active && (
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full" title="Inactive" />
-                )}
-                {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 text-xs font-semibold bg-blue-600 text-white rounded-full">
-                    {unreadCount}
+                <div className="flex items-center overflow-hidden min-w-0">
+                  <span className="material-icons-outlined text-[18px] mr-3 text-slate-400 shrink-0" aria-hidden>email</span>
+                  <span className="text-sm font-medium truncate">{label}</span>
+                </div>
+                {count > 0 && (
+                  <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold shrink-0 ml-2">
+                    {count}
                   </span>
                 )}
               </button>
             )
           })}
         </div>
-      </div>
-    </div>
+      </nav>
+    </aside>
   )
 }
-

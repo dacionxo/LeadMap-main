@@ -1,19 +1,5 @@
 'use client'
 
-import { 
-  Reply, 
-  ReplyAll, 
-  Forward, 
-  Archive, 
-  Star, 
-  MoreVertical,
-  RefreshCw,
-  Mail,
-  Clock,
-  User,
-  FileText,
-  Tag
-} from 'lucide-react'
 import { useState } from 'react'
 
 interface Message {
@@ -30,7 +16,7 @@ interface Message {
     type: 'from' | 'to' | 'cc' | 'bcc'
     email: string
     name: string | null
-    contacts?: any
+    contacts?: unknown
   }>
   email_attachments?: Array<{
     id: string
@@ -56,12 +42,12 @@ interface Thread {
   }
   messages: Message[]
   lastMessageAt: string
-  contact?: any
-  listing?: any
-  campaign?: any
+  contact?: { first_name?: string; last_name?: string }
+  listing?: { address?: string }
+  campaign?: { name?: string }
 }
 
-interface Props {
+interface ThreadViewProps {
   thread: Thread | null
   loading: boolean
   onReply: () => void
@@ -69,13 +55,46 @@ interface Props {
   onForward: () => void
 }
 
-export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward }: Props) {
-  const [isStarred, setIsStarred] = useState(thread?.starred || false)
+function formatDate(dateString: string | null): string {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+function getFromParticipant(message: Message) {
+  return message.email_participants.find((p) => p.type === 'from')
+}
+
+function getToParticipants(message: Message) {
+  return message.email_participants.filter((p) => p.type === 'to')
+}
+
+function getCcParticipants(message: Message) {
+  return message.email_participants.filter((p) => p.type === 'cc')
+}
+
+function getInitial(name: string | null, email: string): string {
+  if (name && name.length >= 1) return name.slice(0, 1).toUpperCase()
+  if (email && email.length >= 1) return email.slice(0, 1).toUpperCase()
+  return '?'
+}
+
+export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward }: ThreadViewProps) {
+  const [isStarred, setIsStarred] = useState(thread?.starred ?? false)
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+        <span className="material-icons-round text-4xl text-slate-400 animate-spin" aria-hidden>refresh</span>
+        <span className="sr-only">Loading thread</span>
       </div>
     )
   }
@@ -83,236 +102,147 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
   if (!thread) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center text-gray-500 dark:text-gray-400">
-          <Mail className="w-16 h-16 mx-auto mb-4 opacity-50" />
+        <div className="text-center text-slate-500 dark:text-slate-400">
+          <span className="material-icons-outlined text-6xl opacity-50 block mb-4" aria-hidden>mail_outline</span>
           <p className="text-lg font-medium mb-2">No thread selected</p>
         </div>
       </div>
     )
   }
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const getFromParticipant = (message: Message) => {
-    return message.email_participants.find(p => p.type === 'from')
-  }
-
-  const getToParticipants = (message: Message) => {
-    return message.email_participants.filter(p => p.type === 'to')
-  }
-
-  const getCcParticipants = (message: Message) => {
-    return message.email_participants.filter(p => p.type === 'cc')
-  }
+  const firstMessage = thread.messages?.[0]
+  const fromParticipant = firstMessage ? getFromParticipant(firstMessage) : null
+  const displayName = fromParticipant?.name || fromParticipant?.email || 'Unknown'
+  const toNames = firstMessage ? getToParticipants(firstMessage).map((p) => p.name || p.email).join(', ') : ''
+  const dateStr = firstMessage ? formatDate(firstMessage.received_at || firstMessage.sent_at) : ''
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Thread Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {thread.subject || '(No Subject)'}
-              </h2>
-              {thread.status !== 'open' && (
-                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                  thread.status === 'needs_reply'
-                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                    : thread.status === 'closed'
-                    ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                }`}>
-                  {thread.status.replace('_', ' ')}
-                </span>
-              )}
-            </div>
-            
-            {/* CRM Links */}
-            {(thread.contact || thread.listing || thread.campaign) && (
-              <div className="flex items-center gap-4 mb-2 text-sm">
-                {thread.contact && (
-                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                    <User className="w-4 h-4" />
-                    <span>Contact: {thread.contact.first_name} {thread.contact.last_name}</span>
-                  </div>
-                )}
-                {thread.listing && (
-                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                    <FileText className="w-4 h-4" />
-                    <span>Listing: {thread.listing.address}</span>
-                  </div>
-                )}
-                {thread.campaign && (
-                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                    <Tag className="w-4 h-4" />
-                    <span>Campaign: {thread.campaign.name}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsStarred(!isStarred)}
-              className={`p-2 rounded-lg transition-colors ${
-                isStarred
-                  ? 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-              title={isStarred ? 'Unstar' : 'Star'}
-            >
-              <Star className={`w-5 h-5 ${isStarred ? 'fill-current' : ''}`} />
-            </button>
-            <button
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              title="More options"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-          </div>
+      {/* Elite toolbar */}
+      <div className="h-20 flex items-center justify-between px-8 border-b border-slate-200/50 dark:border-slate-700/50 flex-shrink-0 backdrop-blur-sm z-10">
+        <div className="flex items-center gap-3">
+          <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-full uppercase tracking-wide">
+            Leads
+          </span>
+          <span className="px-3 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-full uppercase tracking-wide">
+            Inbox
+          </span>
         </div>
-
-        {/* Action Buttons */}
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={onReply}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+            aria-label="Reply"
           >
-            <Reply className="w-4 h-4" />
-            Reply
+            <span className="material-icons-round text-[20px] transform -scale-x-100" aria-hidden>reply</span>
           </button>
           <button
-            onClick={onReplyAll}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            type="button"
+            className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+            aria-label="Archive"
           >
-            <ReplyAll className="w-4 h-4" />
-            Reply All
+            <span className="material-icons-outlined text-[20px]" aria-hidden>archive</span>
           </button>
           <button
-            onClick={onForward}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            type="button"
+            className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+            aria-label="Delete"
           >
-            <Forward className="w-4 h-4" />
-            Forward
+            <span className="material-icons-outlined text-[20px]" aria-hidden>delete</span>
+          </button>
+          <div className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-2" aria-hidden />
+          <button
+            type="button"
+            className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+            aria-label="More options"
+          >
+            <span className="material-icons-outlined text-[20px]" aria-hidden>more_vert</span>
           </button>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {thread.messages.map((message, index) => {
-          const from = getFromParticipant(message)
-          const to = getToParticipants(message)
-          const cc = getCcParticipants(message)
-          const isInbound = message.direction === 'inbound'
-          const date = message.received_at || message.sent_at
-
-          return (
-            <div
-              key={message.id}
-              className={`border rounded-lg p-4 ${
-                isInbound
-                  ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-                  : 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20'
-              }`}
-            >
-              {/* Message Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {from?.name || from?.email || 'Unknown'}
+      {/* Message content - Elite card */}
+      <div className="flex-1 overflow-y-auto p-4 lg:p-8 bg-slate-50/50 dark:bg-slate-900/30">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 p-8 mb-24">
+          {/* Card header: from, to, date */}
+          <div className="flex items-start justify-between mb-8 pb-6 border-b border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-lg shadow-md shrink-0">
+                {getInitial(fromParticipant?.name ?? null, fromParticipant?.email ?? '')}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-slate-900 dark:text-white text-base">{displayName}</span>
+                  {fromParticipant?.email && (
+                    <span className="text-slate-400 dark:text-slate-500 text-xs">
+                      &lt;{fromParticipant.email}&gt;
                     </span>
-                    {from?.email && from?.name && (
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">
-                        &lt;{from.email}&gt;
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                    {to.length > 0 && (
-                      <div>
-                        <span className="font-medium">to:</span>{' '}
-                        {to.map(p => p.name || p.email).join(', ')}
-                      </div>
-                    )}
-                    {cc.length > 0 && (
-                      <div>
-                        <span className="font-medium">cc:</span>{' '}
-                        {cc.map(p => p.name || p.email).join(', ')}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-                {date && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {formatDate(date)}
+                {toNames && (
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    to: <span className="text-slate-700 dark:text-slate-300 font-medium">{toNames}</span>
                   </div>
                 )}
               </div>
-
-              {/* Message Body */}
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                {message.body_html ? (
-                  <div
-                    dangerouslySetInnerHTML={{ __html: message.body_html }}
-                    className="text-gray-900 dark:text-gray-100"
-                  />
-                ) : (
-                  <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-100">
-                    {message.body_plain || message.snippet}
-                  </p>
-                )}
-              </div>
-
-              {/* Attachments */}
-              {message.email_attachments && message.email_attachments.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Attachments:
-                  </div>
-                  <div className="space-y-2">
-                    {message.email_attachments.map((attachment) => (
-                      <a
-                        key={attachment.id}
-                        href={attachment.storage_path || '#'}
-                        className="flex items-center gap-2 p-2 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      >
-                        <FileText className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {attachment.filename}
-                        </span>
-                        {attachment.size_bytes && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
-                            {(attachment.size_bytes / 1024).toFixed(1)} KB
-                          </span>
-                        )}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          )
-        })}
+            <div className="text-right shrink-0">
+              <p className="text-xs text-slate-500 dark:text-slate-400">{dateStr}</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+              {thread.subject || '(No Subject)'}
+            </h1>
+
+            {thread.messages?.map((message) => {
+              const from = getFromParticipant(message)
+              return (
+                <div key={message.id} className="space-y-4">
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    {message.body_html ? (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: message.body_html }}
+                        className="text-slate-900 dark:text-slate-100"
+                      />
+                    ) : (
+                      <p className="whitespace-pre-wrap text-slate-900 dark:text-slate-100">
+                        {message.body_plain || message.snippet}
+                      </p>
+                    )}
+                  </div>
+                  {message.email_attachments && message.email_attachments.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                      <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Attachments:
+                      </div>
+                      <div className="space-y-2">
+                        {message.email_attachments.map((att) => (
+                          <a
+                            key={att.id}
+                            href={att.storage_path || '#'}
+                            className="flex items-center gap-2 p-2 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                          >
+                            <span className="material-icons-outlined text-slate-400 text-lg" aria-hidden>attach_file</span>
+                            <span className="text-sm text-slate-700 dark:text-slate-300">{att.filename}</span>
+                            {att.size_bytes > 0 && (
+                              <span className="text-xs text-slate-500 dark:text-slate-400 ml-auto">
+                                {(att.size_bytes / 1024).toFixed(1)} KB
+                              </span>
+                            )}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </div>
   )
 }
-
-
