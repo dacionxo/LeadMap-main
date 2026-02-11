@@ -91,7 +91,8 @@ function StatusBadge({ status }: { status?: string | null }) {
   )
 }
 
-export default function ListDetailPage() {
+/** Must be inside DashboardLayout (useSidebar). */
+function ListDetailContent() {
   const params = useParams()
   const router = useRouter()
   const { isOpen: isSidebarOpen } = useSidebar()
@@ -288,23 +289,20 @@ export default function ListDetailPage() {
 
   if (loading && !list) {
     return (
-      <DashboardLayout fullBleed hideHeader>
-        <div
-          className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
-          style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
-        >
-          <DealsNavbar />
-          <div className="flex-1 flex items-center justify-center">
-            <span className="text-slate-500 text-sm font-medium">Loading list...</span>
-          </div>
+      <div
+        className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
+        style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
+      >
+        <DealsNavbar />
+        <div className="flex-1 flex items-center justify-center">
+          <span className="text-slate-500 text-sm font-medium">Loading list...</span>
         </div>
-      </DashboardLayout>
+      </div>
     )
   }
 
   return (
-    <DashboardLayout fullBleed hideHeader>
-      <div className="-mt-[30px]">
+    <div className="-mt-[30px]">
         <div
           className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
           style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
@@ -873,6 +871,13 @@ export default function ListDetailPage() {
           </div>
         </div>
       </div>
+  )
+}
+
+export default function ListDetailPage() {
+  return (
+    <DashboardLayout fullBleed hideHeader>
+      <ListDetailContent />
     </DashboardLayout>
   )
 }
