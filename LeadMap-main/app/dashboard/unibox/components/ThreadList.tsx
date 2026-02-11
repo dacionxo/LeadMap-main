@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback, useEffect, useRef } from 'react'
 import type { UniboxThread } from '../types'
 
 interface ThreadListProps {
@@ -7,6 +8,9 @@ interface ThreadListProps {
   selectedThread: UniboxThread | null
   onThreadSelect: (thread: UniboxThread) => void
   loading: boolean
+  hasMore?: boolean
+  loadingMore?: boolean
+  onLoadMore?: () => void
 }
 
 const AVATAR_COLORS = [
@@ -53,7 +57,35 @@ function formatDate(dateString: string): string {
   })
 }
 
-export default function ThreadList({ threads, selectedThread, onThreadSelect, loading }: ThreadListProps) {
+export default function ThreadList({
+  threads,
+  selectedThread,
+  onThreadSelect,
+  loading,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
+}: ThreadListProps) {
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const loadMore = useCallback(() => {
+    if (hasMore && !loadingMore && !loading && onLoadMore) onLoadMore()
+  }, [hasMore, loadingMore, loading, onLoadMore])
+
+  useEffect(() => {
+    if (!onLoadMore || !hasMore || loadingMore || loading) return
+    const el = sentinelRef.current
+    if (!el) return
+    const scrollRoot = el.closest('.overflow-y-auto') ?? null
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore()
+      },
+      { root: scrollRoot, rootMargin: '200px', threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [loadMore, onLoadMore, hasMore, loadingMore, loading, threads.length])
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -75,7 +107,7 @@ export default function ThreadList({ threads, selectedThread, onThreadSelect, lo
   }
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 flex flex-col">
       {threads.map((thread, index) => {
         const isSelected = selectedThread?.id === thread.id
         const snippet = thread.lastMessage?.snippet || 'No preview'
@@ -133,6 +165,13 @@ export default function ThreadList({ threads, selectedThread, onThreadSelect, lo
           </button>
         )
       })}
+      <div ref={sentinelRef} className="h-2 flex-shrink-0" aria-hidden />
+      {loadingMore && (
+        <div className="flex items-center justify-center py-4">
+          <span className="material-icons-round text-2xl text-slate-400 animate-spin" aria-hidden>refresh</span>
+          <span className="sr-only">Loading more threads</span>
+        </div>
+      )}
     </div>
   )
 }

@@ -67,10 +67,17 @@ export default function UniboxContent({ embedded = false }: UniboxContentProps) 
   const [composerMode, setComposerMode] = useState<'reply' | 'reply-all' | 'forward' | null>(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [totalThreadCount, setTotalThreadCount] = useState<number>(0)
 
   useEffect(() => {
     fetchMailboxes()
   }, [])
+
+  // Reset to page 1 when filters or search change so next fetch replaces the list
+  useEffect(() => {
+    setPage(1)
+  }, [selectedMailboxId, statusFilter, folderFilter, searchQuery])
 
   useEffect(() => {
     fetchThreads()
@@ -98,8 +105,10 @@ export default function UniboxContent({ embedded = false }: UniboxContentProps) 
   }
 
   const fetchThreads = async () => {
+    const isFirstPage = page === 1
     try {
-      setLoading(true)
+      if (isFirstPage) setLoading(true)
+      else setLoadingMore(true)
       const params = new URLSearchParams()
       if (selectedMailboxId) params.append('mailboxId', selectedMailboxId)
       if (statusFilter !== 'all') params.append('status', statusFilter)
@@ -113,16 +122,29 @@ export default function UniboxContent({ embedded = false }: UniboxContentProps) 
       const response = await fetch(`/api/unibox/threads?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
-        setThreads(data.threads || [])
-        setHasMore(data.pagination?.page < data.pagination?.totalPages)
-        if (!selectedThread && data.threads?.length > 0) {
-          handleThreadSelect(data.threads[0])
+        const newThreads = data.threads || []
+        const total = data.pagination?.total ?? 0
+        const totalPages = data.pagination?.totalPages ?? 1
+        setTotalThreadCount(total)
+        setHasMore(page < totalPages)
+        if (isFirstPage) {
+          setThreads(newThreads)
+          if (!selectedThread && newThreads.length > 0) {
+            handleThreadSelect(newThreads[0])
+          }
+        } else {
+          setThreads((prev) => {
+            const seen = new Set(prev.map((t) => t.id))
+            const appended = newThreads.filter((t: Thread) => !seen.has(t.id))
+            return appended.length ? [...prev, ...appended] : prev
+          })
         }
       }
     } catch (error) {
       console.error('Error fetching threads:', error)
     } finally {
-      setLoading(false)
+      if (isFirstPage) setLoading(false)
+      else setLoadingMore(false)
     }
   }
 
@@ -214,11 +236,15 @@ export default function UniboxContent({ embedded = false }: UniboxContentProps) 
     }
   }
 
-  const unreadCount = threads.filter(t => t.unread).length
+  const unreadCount = threads.filter((t) => t.unread).length
   const mailboxUnreadCounts = mailboxes.reduce((acc, mb) => {
-    acc[mb.id] = threads.filter(t => t.mailbox.id === mb.id && t.unread).length
+    acc[mb.id] = threads.filter((t) => t.mailbox.id === mb.id && t.unread).length
     return acc
   }, {} as Record<string, number>)
+
+  const handleLoadMore = useCallback(() => {
+    if (hasMore && !loadingMore && !loading) setPage((p) => p + 1)
+  }, [hasMore, loadingMore, loading])
 
   const threePane = (
     <>
@@ -232,6 +258,7 @@ export default function UniboxContent({ embedded = false }: UniboxContentProps) 
         onFolderFilterChange={setFolderFilter}
         mailboxUnreadCounts={mailboxUnreadCounts}
         unreadCount={unreadCount}
+        totalThreadCount={totalThreadCount}
         onCompose={() => setShowComposer(true)}
       />
 
@@ -256,6 +283,9 @@ export default function UniboxContent({ embedded = false }: UniboxContentProps) 
             selectedThread={selectedThread}
             onThreadSelect={handleThreadSelect}
             loading={loading}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            onLoadMore={handleLoadMore}
           />
         </div>
       </section>
@@ -287,7 +317,18 @@ export default function UniboxContent({ embedded = false }: UniboxContentProps) 
     return (
       <>
         <div className="flex flex-1 min-h-0 overflow-hidden">
-          {threePane}
+          <div
+            className="flex flex-1 min-h-0 origin-top-left"
+            style={{
+              width: '111.11%',
+              height: '111.11%',
+              maxWidth: '111.11%',
+              maxHeight: '111.11%',
+              transform: 'scale(0.9)',
+            }}
+          >
+            {threePane}
+          </div>
         </div>
         {showComposer && selectedThread && threadDetails && (
           <ReplyComposer

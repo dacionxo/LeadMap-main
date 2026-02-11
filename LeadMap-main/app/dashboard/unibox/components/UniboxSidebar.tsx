@@ -21,6 +21,8 @@ interface UniboxSidebarProps {
   onFolderFilterChange: (folder: FilterFolder) => void
   mailboxUnreadCounts: Record<string, number>
   unreadCount: number
+  /** Total thread count from API for current filters (accurate inbox total) */
+  totalThreadCount?: number
   onCompose?: () => void
 }
 
@@ -43,6 +45,7 @@ export default function UniboxSidebar({
   onFolderFilterChange,
   mailboxUnreadCounts,
   unreadCount,
+  totalThreadCount = 0,
   onCompose,
 }: UniboxSidebarProps) {
   const handleCompose = () => {
@@ -76,11 +79,9 @@ export default function UniboxSidebar({
             <span className="material-icons-round text-[20px] lg:mr-3" aria-hidden>inbox</span>
             <span className="hidden lg:inline">Inbox</span>
           </div>
-          {unreadCount > 0 && (
-            <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">
-              {unreadCount}
-            </span>
-          )}
+          <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold" title={unreadCount > 0 ? `${unreadCount} unread` : undefined}>
+            {totalThreadCount >= 0 ? totalThreadCount : unreadCount}
+          </span>
         </button>
         <button
           type="button"
