@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import DashboardLayout from '../../components/DashboardLayout'
 import { useSidebar } from '../../components/SidebarContext'
 import DealsNavbar from '../../crm/deals/components/DealsNavbar'
@@ -295,7 +296,8 @@ function ListDetailContent() {
       >
         <DealsNavbar />
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-slate-500 text-sm font-medium">Loading list...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" aria-hidden />
+          <span className="ml-3 text-slate-500 font-medium">Loading list...</span>
         </div>
       </div>
     )
@@ -316,109 +318,108 @@ function ListDetailContent() {
               aria-hidden
             />
 
-            {/* ─── HEADER (matches deals: px-8 py-6) ─── */}
+            {/* ─── HEADER (matches /dashboard/lists style) ─── */}
             <header className="shrink-0 z-20 px-8 py-6">
-              <div className="flex flex-col gap-1">
-                {/* Breadcrumb */}
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
-                  <Link href="/dashboard/lists" className="hover:text-blue-600 transition-colors">
-                    Lists
-                  </Link>
-                  <span className="material-symbols-outlined text-[12px] text-slate-400">chevron_right</span>
-                  <span className="text-slate-800">{list?.name ?? '…'}</span>
+              <div className="flex items-end justify-between mb-8">
+                <div>
+                  {/* Breadcrumb */}
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+                    <Link href="/dashboard/lists" className="hover:text-blue-600 transition-colors">
+                      Lists
+                    </Link>
+                    <span className="material-symbols-outlined text-[12px] text-slate-400">chevron_right</span>
+                    <span className="text-slate-700 dark:text-slate-300">{list?.name ?? '…'}</span>
+                  </div>
+                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    {list?.name ?? '…'} <span className="text-blue-500">List</span>
+                  </h1>
+                  <p className="text-slate-500 dark:text-slate-400 mt-2 text-base">
+                    Manage and track your {list?.type === 'people' ? 'contacts' : 'property records'} in this list efficiently.
+                  </p>
                 </div>
-                {/* Title row */}
-                <div className="flex items-end justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">
-                        {list?.name ?? '…'} <span className="text-blue-600">List</span>
-                      </h1>
-                    </div>
-                    <p className="text-slate-500 text-sm mt-1.5 font-normal">
-                      Manage and track your property records in this list efficiently.
-                    </p>
-                  </div>
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-3 mb-1">
-                    <button
-                      type="button"
-                      onClick={() => {}}
-                      className="h-9 px-4 rounded-full bg-white border border-slate-200 hover:border-slate-300 shadow-sm text-slate-600 text-xs font-semibold hover:text-slate-800 transition-all flex items-center gap-2"
-                      aria-label="Import"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                      Import
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {}}
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-5 rounded-full text-xs font-bold shadow-[0_2px_5px_rgba(59,130,246,0.3)] hover:shadow-blue-500/40 transition-all flex items-center gap-2"
-                      aria-label="Add records"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">add</span>
-                      Add records
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {}}
-                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white h-9 px-5 rounded-full text-xs font-bold shadow-[0_2px_5px_rgba(59,130,246,0.3)] hover:shadow-violet-500/40 transition-all flex items-center gap-2"
-                      aria-label="Research with AI"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-                      Research with AI
-                    </button>
-                    <button
-                      type="button"
-                      className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-800 shadow-sm transition-all"
-                      aria-label="More options"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">more_vert</span>
-                    </button>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {}}
+                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                    aria-label="Import"
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">upload_file</span>
+                    Import
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {}}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                    aria-label="Add records"
+                  >
+                    Add records
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {}}
+                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                    aria-label="Research with AI"
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">auto_awesome</span>
+                    Research with AI
+                  </button>
+                  <button
+                    type="button"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                    aria-label="More options"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                  </button>
                 </div>
               </div>
             </header>
 
-            {/* ─── MAIN CONTENT (matches deals content padding) ─── */}
-            <main className="flex-1 overflow-auto custom-scrollbar px-8 pb-6 flex flex-col min-h-0">
-              {/* ─── TOOLBAR (reference: search pill + View/Sort/Filter buttons) ─── */}
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                <div className="relative group w-full max-w-sm">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[20px]">
-                    search
-                  </span>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={list?.type === 'properties' ? 'Search properties...' : 'Search contacts...'}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-full text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 shadow-sm transition-all h-10"
-                    aria-label="Search"
-                  />
-                </div>
-                <div className="flex-1" />
-                <div className="flex items-center gap-3">
+            {/* ─── MAIN CONTENT (matches /dashboard/lists padding) ─── */}
+            <main className="flex-1 overflow-auto custom-scrollbar px-8 pb-8 flex flex-col min-h-0">
+              {/* ─── TOOLBAR (matches /dashboard/lists: search + View/Sort/Filter) ─── */}
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex-1 flex items-center relative group max-w-md">
+                    <span
+                      className="absolute left-3 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[18px]"
+                      aria-hidden
+                    >
+                      search
+                    </span>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={list?.type === 'properties' ? 'Search properties...' : 'Search contacts...'}
+                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      aria-label="Search"
+                    />
+                  </div>
                   <button
                     type="button"
-                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                    aria-label="View options"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">grid_view</span>
+                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">grid_view</span>
                     View
-                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
+                    <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                    aria-label="Sort options"
                   >
                     Sort: Modified
-                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
+                    <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
+                    className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                    aria-label="Filter options"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">filter_list</span>
+                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">filter_list</span>
                     Filter
                   </button>
                 </div>
@@ -426,23 +427,42 @@ function ListDetailContent() {
 
               {/* ─── TABLE + DETAIL PANEL LAYOUT ─── */}
               <div className="flex gap-4 h-full overflow-hidden">
-                {/* ─── TABLE CARD ─── */}
-                <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
+                {/* ─── TABLE CARD (matches lists index table styling) ─── */}
+                <div className="bg-white dark:bg-slate-800/50 border border-gray-200/80 dark:border-slate-600 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
                   <div className="overflow-auto custom-scrollbar flex-1 pb-10">
                     {loading ? (
-                      <div className="flex items-center justify-center py-16">
-                        <span className="text-slate-500 text-sm font-medium">Loading...</span>
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" aria-hidden />
+                        <span className="ml-3 text-slate-500 font-medium">Loading...</span>
                       </div>
                     ) : listings.length === 0 ? (
-                      <div className="flex items-center justify-center py-16">
-                        <span className="text-slate-500 text-sm font-medium">
-                          {searchQuery ? 'No items match your search' : 'No items in this list'}
-                        </span>
+                      <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="w-32 h-32 mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-5xl">
+                          {list?.type === 'properties' ? '🏠' : '👥'}
+                        </div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+                          {searchQuery ? 'No matches found' : 'This list is empty'}
+                        </h2>
+                        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md">
+                          {searchQuery
+                            ? 'Try adjusting your search to find what you\'re looking for.'
+                            : `Add ${list?.type === 'properties' ? 'properties' : 'contacts'} to this list to get started.`}
+                        </p>
+                        {!searchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => {}}
+                            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                          >
+                            Add records
+                            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                          </button>
+                        )}
                       </div>
                     ) : list?.type === 'properties' ? (
                       /* ─── PROPERTIES TABLE (1:1 reference classes) ─── */
                       <table className="w-full text-left text-sm text-slate-600" role="grid">
-                        <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+                        <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-sm z-10">
                           <tr>
                             <th className="pl-6 pr-4 py-3 w-12 font-semibold align-middle" scope="col">
                               <input
@@ -463,7 +483,7 @@ function ListDetailContent() {
                             <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
+                        <tbody className="divide-y divide-slate-50 dark:divide-slate-600/50">
                           {listings.map((listing) => {
                             const id = getListingId(listing)
                             const address = listing.street || '—'
@@ -559,7 +579,7 @@ function ListDetailContent() {
                     ) : (
                       /* ─── PEOPLE TABLE ─── */
                       <table className="w-full text-left text-sm text-slate-600" role="grid">
-                        <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+                        <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-sm z-10">
                           <tr>
                             <th className="pl-6 pr-4 py-3 w-12 font-semibold align-middle" scope="col">
                               <input
@@ -578,7 +598,7 @@ function ListDetailContent() {
                             <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
+                        <tbody className="divide-y divide-slate-50 dark:divide-slate-600/50">
                           {listings.map((item, idx) => {
                             const id =
                               (item as any).contact_id || item.listing_id || item.agent_email || `row-${idx}`
@@ -640,20 +660,20 @@ function ListDetailContent() {
                     )}
                   </div>
 
-                  {/* ─── PAGINATION FOOTER (1:1 reference) ─── */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-2 flex items-center justify-between z-20">
-                    <div className="text-xs text-slate-500 font-medium">
+                  {/* ─── PAGINATION FOOTER (matches lists index) ─── */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-600 px-4 py-2 flex items-center justify-between z-20">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                       Showing{' '}
-                      <span className="font-bold text-slate-800">{startRecord}</span> -{' '}
-                      <span className="font-bold text-slate-800">{endRecord}</span> of{' '}
-                      <span className="font-bold text-slate-800">{totalCount.toLocaleString()}</span> records
+                      <span className="font-bold text-slate-800 dark:text-slate-200">{startRecord}</span> -{' '}
+                      <span className="font-bold text-slate-800 dark:text-slate-200">{endRecord}</span> of{' '}
+                      <span className="font-bold text-slate-800 dark:text-slate-200">{totalCount.toLocaleString()}</span> records
                     </div>
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage <= 1}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors disabled:opacity-50"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-50"
                         aria-label="Previous page"
                       >
                         <span className="material-symbols-outlined text-[16px]">chevron_left</span>
@@ -665,7 +685,7 @@ function ListDetailContent() {
                           className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                             currentPage === 1
                               ? 'bg-blue-600 text-white shadow-sm'
-                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                              : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
                           }`}
                         >
                           1
@@ -678,7 +698,7 @@ function ListDetailContent() {
                           className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                             currentPage === 2
                               ? 'bg-blue-600 text-white shadow-sm'
-                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                              : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
                           }`}
                         >
                           2
@@ -691,7 +711,7 @@ function ListDetailContent() {
                           className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                             currentPage === 3
                               ? 'bg-blue-600 text-white shadow-sm'
-                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                              : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
                           }`}
                         >
                           3
@@ -707,7 +727,7 @@ function ListDetailContent() {
                           className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                             currentPage === totalPages
                               ? 'bg-blue-600 text-white shadow-sm'
-                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                              : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
                           }`}
                         >
                           {totalPages}
@@ -717,7 +737,7 @@ function ListDetailContent() {
                         type="button"
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage >= totalPages}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm disabled:opacity-50"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200 transition-colors shadow-sm disabled:opacity-50"
                         aria-label="Next page"
                       >
                         <span className="material-symbols-outlined text-[16px]">chevron_right</span>
@@ -726,9 +746,9 @@ function ListDetailContent() {
                   </div>
                 </div>
 
-                {/* ─── PROPERTY DETAIL SIDE PANEL (reference: 30% width, slide-in) ─── */}
+                {/* ─── PROPERTY DETAIL SIDE PANEL (matches lists index styling) ─── */}
                 {selectedListing && list?.type === 'properties' && (
-                  <div className="w-[30%] min-w-[320px] bg-white/80 backdrop-blur-2xl border border-white/60 shadow-float rounded-lg flex flex-col h-full overflow-hidden transition-all">
+                  <div className="w-[30%] min-w-[320px] bg-white dark:bg-slate-800/80 backdrop-blur-2xl border border-gray-200/80 dark:border-slate-600 shadow-float rounded-xl flex flex-col h-full overflow-hidden transition-all">
                     {/* Image header */}
                     <div className="relative h-48 shrink-0 group">
                       {selectedListing.primary_photo ? (
