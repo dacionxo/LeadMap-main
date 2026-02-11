@@ -252,6 +252,7 @@ module.exports = {
         glow: "0 0 15px rgba(79, 70, 229, 0.3)",
         "sm-soft": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
         float: "0 10px 40px -10px rgba(0,0,0,0.08)",
+        "action-btn": "0 2px 5px rgba(59, 130, 246, 0.3)",
       },
     },
   },

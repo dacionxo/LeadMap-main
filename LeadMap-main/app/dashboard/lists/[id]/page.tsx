@@ -33,6 +33,10 @@ interface Listing {
   phone?: string | null
   company?: string | null
   job_title?: string | null
+  primary_photo?: string | null
+  year_built?: number | null
+  property_type?: string | null
+  lot_size?: string | null
   [key: string]: unknown
 }
 
@@ -47,43 +51,37 @@ interface ListPaginatedResponse {
   list: { id: string; name: string; type: string }
 }
 
+/* ─── AI Score badge (reference: rounded-md, blue or emerald bg) ─── */
 function AIScoreCell({ score }: { score?: number | null }) {
   if (score == null || score === 0) {
-    return <span className="text-slate-300 text-sm">-</span>
+    return <span className="text-slate-300 text-lg">-</span>
   }
   const rounded = Math.round(score)
-  if (rounded >= 90) {
-    return (
-      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 mx-auto">
-        <span className="text-[9px] font-bold text-white">{rounded}</span>
-      </div>
-    )
-  }
-  const deg = (rounded / 100) * 360
+  const isHigh = rounded >= 80
   return (
-    <div
-      className="w-6 h-6 p-[2px] rounded-full inline-flex"
-      style={{
-        background: `conic-gradient(from 180deg, #6366f1 0deg, #a855f7 ${deg}deg, #e2e8f0 ${deg}deg)`,
-      }}
+    <span
+      className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-[11px] font-bold leading-none border ${
+        isHigh
+          ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+          : 'bg-blue-50 text-blue-600 border-blue-100'
+      }`}
     >
-      <div className="ai-score-inner flex-1 min-w-0 min-h-0 rounded-full flex items-center justify-center text-[9px] font-bold text-indigo-600">
-        {rounded}
-      </div>
-    </div>
+      {rounded}
+    </span>
   )
 }
 
+/* ─── Status badge (reference: non-rounded, 10px bold, border) ─── */
 function StatusBadge({ status }: { status?: string | null }) {
   if (!status) return null
   const s = String(status).toLowerCase()
   const isPending = s.includes('pending')
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-px rounded-full text-[9px] font-bold uppercase tracking-wide leading-tight border ${
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide leading-relaxed border ${
         isPending
-          ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-          : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+          ? 'bg-amber-50 text-amber-600 border-amber-100'
+          : 'bg-emerald-50 text-emerald-600 border-emerald-100'
       }`}
     >
       {status}
@@ -109,6 +107,7 @@ export default function ListDetailPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -220,34 +219,15 @@ export default function ListDetailPage() {
       const rows = items || []
 
       const headers = [
-        'Listing ID',
-        'Address',
-        'City',
-        'State',
-        'Zip Code',
-        'Price',
-        'Beds',
-        'Baths',
-        'Sqft',
-        'Status',
-        'Agent Name',
-        'Agent Email',
-        'Agent Phone',
+        'Listing ID', 'Address', 'City', 'State', 'Zip Code',
+        'Price', 'Beds', 'Baths', 'Sqft', 'Status',
+        'Agent Name', 'Agent Email', 'Agent Phone',
       ]
       const csvRows = rows.map((r: Listing) => [
-        r.listing_id || '',
-        r.street || '',
-        r.city || '',
-        r.state || '',
-        r.zip_code || '',
-        r.list_price?.toString() || '',
-        r.beds?.toString() || '',
-        r.full_baths?.toString() || '',
-        r.sqft?.toString() || '',
-        r.status || '',
-        r.agent_name || '',
-        r.agent_email || '',
-        r.agent_phone || '',
+        r.listing_id || '', r.street || '', r.city || '', r.state || '',
+        r.zip_code || '', r.list_price?.toString() || '', r.beds?.toString() || '',
+        r.full_baths?.toString() || '', r.sqft?.toString() || '', r.status || '',
+        r.agent_name || '', r.agent_email || '', r.agent_phone || '',
       ])
       const csv =
         headers.join(',') +
@@ -284,8 +264,20 @@ export default function ListDetailPage() {
     }
   }
 
+  const handleRowClick = (listing: Listing) => {
+    const id = listing.listing_id || listing.property_url || ''
+    if (selectedListing && (selectedListing.listing_id || selectedListing.property_url) === id) {
+      setSelectedListing(null)
+    } else {
+      setSelectedListing(listing)
+    }
+  }
+
   const startRecord = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const endRecord = totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount)
+
+  const getListingId = (listing: Listing) =>
+    listing.listing_id || listing.property_url || ''
 
   if (!listId) {
     return null
@@ -303,549 +295,564 @@ export default function ListDetailPage() {
 
   return (
     <DashboardLayout fullBleed>
-      <div className="list-detail-page flex flex-col h-full min-h-0 bg-mesh font-sans text-slate-900 antialiased overflow-hidden">
+      <div className="list-detail-page flex flex-col h-full min-h-0 bg-mesh font-sans text-slate-900 antialiased overflow-hidden selection:bg-blue-100 selection:text-blue-700">
         <div className="flex-1 px-3 pb-3 overflow-hidden flex flex-col min-h-0">
           <div className="list-detail-glass bg-white/40 backdrop-blur-2xl border border-white/60 shadow-glass rounded-xl flex flex-col h-full overflow-hidden relative flex-1 min-h-0">
+            {/* Decorative blue glow */}
             <div
               className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/4 -translate-y-1/4 mix-blend-multiply"
               aria-hidden
             />
 
-            <header className="shrink-0 z-20 px-4 pt-4 pb-2">
+            {/* ─── HEADER (reference: px-6 pt-6 pb-2, text-3xl title, subtitle) ─── */}
+            <header className="shrink-0 z-20 px-6 pt-6 pb-2">
               <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                  <Link
-                    href="/dashboard/lists"
-                    className="hover:text-blue-600 transition-colors"
-                  >
+                {/* Breadcrumb */}
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
+                  <Link href="/dashboard/lists" className="hover:text-blue-600 transition-colors">
                     Lists
                   </Link>
-                  <span className="material-symbols-outlined text-[10px] text-slate-400">
-                    chevron_right
-                  </span>
+                  <span className="material-symbols-outlined text-[12px] text-slate-400">chevron_right</span>
                   <span className="text-slate-800">{list?.name ?? '…'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
-                      {list?.name ?? '…'}
-                    </h1>
-                    <span className="px-1.5 py-px rounded-full bg-slate-100 text-slate-500 text-[9px] font-bold border border-slate-200 uppercase tracking-wide">
-                      {totalCount} records
-                    </span>
+                {/* Title row */}
+                <div className="flex items-end justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">
+                        {list?.name ?? '…'} <span className="text-blue-600">List</span>
+                      </h1>
+                    </div>
+                    <p className="text-slate-500 text-sm mt-1.5 font-normal">
+                      Manage and track your property records in this list efficiently.
+                    </p>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-3 mb-1">
                     <button
                       type="button"
                       onClick={() => {}}
-                      className="h-7 px-2.5 rounded bg-white/60 border border-white shadow-sm-soft text-slate-600 text-[11px] font-semibold hover:bg-white hover:text-blue-600 hover:shadow-md transition-all flex items-center gap-1 backdrop-blur-sm"
+                      className="h-9 px-4 rounded-full bg-white border border-slate-200 hover:border-slate-300 shadow-sm text-slate-600 text-xs font-semibold hover:text-slate-800 transition-all flex items-center gap-2"
                       aria-label="Import"
                     >
-                      <span className="material-symbols-outlined text-[14px]">upload_file</span>
+                      <span className="material-symbols-outlined text-[18px]">upload_file</span>
                       Import
                     </button>
                     <button
                       type="button"
-                      onClick={handleExportCSV}
-                      className="h-7 px-2.5 rounded bg-white/60 border border-white shadow-sm-soft text-slate-600 text-[11px] font-semibold hover:bg-white hover:text-blue-600 hover:shadow-md transition-all flex items-center gap-1 backdrop-blur-sm"
-                      aria-label="Export"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">download</span>
-                      Export
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {}}
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-7 px-2.5 rounded text-[11px] font-bold shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all flex items-center gap-1"
+                      className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-5 rounded-full text-xs font-bold shadow-[0_2px_5px_rgba(59,130,246,0.3)] hover:shadow-blue-500/40 transition-all flex items-center gap-2"
                       aria-label="Add records"
                     >
-                      <span className="material-symbols-outlined text-[14px]">add</span>
+                      <span className="material-symbols-outlined text-[18px]">add</span>
                       Add records
                     </button>
                     <button
                       type="button"
                       onClick={() => {}}
-                      className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white h-7 px-2.5 rounded text-[11px] font-bold shadow-md shadow-violet-500/20 hover:shadow-violet-500/30 transition-all flex items-center gap-1"
+                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white h-9 px-5 rounded-full text-xs font-bold shadow-[0_2px_5px_rgba(59,130,246,0.3)] hover:shadow-violet-500/40 transition-all flex items-center gap-2"
                       aria-label="Research with AI"
                     >
-                      <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                      <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
                       Research with AI
                     </button>
                     <button
                       type="button"
-                      className="w-7 h-7 flex items-center justify-center rounded bg-white/60 border border-white shadow-sm-soft text-slate-500 hover:text-slate-800 hover:bg-white transition-all"
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-800 shadow-sm transition-all"
                       aria-label="More options"
                     >
-                      <span className="material-symbols-outlined text-[14px]">more_vert</span>
+                      <span className="material-symbols-outlined text-[18px]">more_vert</span>
                     </button>
                   </div>
                 </div>
               </div>
             </header>
 
-            <main className="flex-1 overflow-auto custom-scrollbar px-4 pb-4 flex flex-col min-h-0">
-              <div className="flex items-center justify-between gap-3 mb-2 bg-white/50 backdrop-blur-md px-1.5 py-1 rounded-lg border border-white/50 shadow-sm-soft">
-                <div className="flex-1 flex items-center relative group max-w-xs">
-                  <span
-                    className="absolute left-2 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[16px]"
-                    aria-hidden
-                  >
+            {/* ─── MAIN CONTENT ─── */}
+            <main className="flex-1 overflow-auto custom-scrollbar px-6 pb-6 flex flex-col mt-2 min-h-0">
+              {/* ─── TOOLBAR (reference: search pill + View/Sort/Filter buttons) ─── */}
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <div className="relative group w-full max-w-sm">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[20px]">
                     search
                   </span>
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={
-                      list?.type === 'properties'
-                        ? 'Search properties...'
-                        : 'Search contacts...'
-                    }
-                    className="w-full pl-8 pr-3 py-0.5 bg-transparent border-0 text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 h-7"
+                    placeholder={list?.type === 'properties' ? 'Search properties...' : 'Search contacts...'}
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-full text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 shadow-sm transition-all h-10"
                     aria-label="Search"
                   />
                 </div>
-                <div className="h-4 w-px bg-slate-200 mx-1" aria-hidden />
-                <div className="flex items-center gap-1.5">
+                <div className="flex-1" />
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
                   >
-                    Status: Any
-                    <span className="material-symbols-outlined text-[12px] text-slate-400">
-                      expand_more
-                    </span>
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">grid_view</span>
+                    View
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
                   >
-                    Price Range
-                    <span className="material-symbols-outlined text-[12px] text-slate-400">
-                      expand_more
-                    </span>
+                    Sort: Modified
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[12px] text-slate-500">
-                      filter_list
-                    </span>
-                    More Filters
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">filter_list</span>
+                    Filter
                   </button>
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col relative min-h-0">
-                <div className="overflow-auto custom-scrollbar flex-1 pb-10 min-h-0">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-16">
-                      <span className="text-slate-500 text-sm font-medium">
-                        Loading...
-                      </span>
-                    </div>
-                  ) : listings.length === 0 ? (
-                    <div className="flex items-center justify-center py-16">
-                      <span className="text-slate-500 text-sm font-medium">
-                        {searchQuery ? 'No items match your search' : 'No items in this list'}
-                      </span>
-                    </div>
-                  ) : list?.type === 'properties' ? (
-                    <table
-                      className="w-full text-left text-sm text-slate-600 table-fixed table-compact"
-                      role="grid"
-                    >
-                      <thead className="text-[10px] font-semibold text-slate-400 uppercase bg-slate-50/90 border-b border-slate-200/60 tracking-wider sticky top-0 backdrop-blur-md z-10">
-                        <tr>
-                          <th
-                            className="pl-3 pr-1 py-1.5 w-8 font-semibold align-middle"
-                            scope="col"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={
-                                listings.length > 0 &&
-                                selectedIds.size === listings.length
-                              }
-                              onChange={handleSelectAll}
-                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
-                              aria-label="Select all"
-                            />
-                          </th>
-                          <th
-                            className="px-2 py-1.5 font-semibold align-middle w-[35%]"
-                            scope="col"
-                          >
-                            Address
-                          </th>
-                          <th
-                            className="px-2 py-1.5 font-semibold w-24 align-middle"
-                            scope="col"
-                          >
-                            Price
-                          </th>
-                          <th
-                            className="px-2 py-1.5 font-semibold w-20 align-middle"
-                            scope="col"
-                          >
-                            Status
-                          </th>
-                          <th
-                            className="px-2 py-1.5 font-semibold w-20 text-center align-middle"
-                            scope="col"
-                          >
-                            AI Score
-                          </th>
-                          <th
-                            className="px-1 py-1.5 font-semibold w-12 text-center align-middle"
-                            scope="col"
-                          >
-                            Beds
-                          </th>
-                          <th
-                            className="px-1 py-1.5 font-semibold w-12 text-center align-middle"
-                            scope="col"
-                          >
-                            Baths
-                          </th>
-                          <th
-                            className="px-2 py-1.5 font-semibold w-20 text-right align-middle"
-                            scope="col"
-                          >
-                            Sqft
-                          </th>
-                          <th
-                            className="px-2 py-1.5 font-semibold w-16 text-right align-middle"
-                            scope="col"
-                          >
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100/80 text-[13px]">
-                        {listings.map((listing) => {
-                          const id =
-                            listing.listing_id || listing.property_url || ''
-                          const address = listing.street || '—'
-                          const cityStateZip = [listing.city, listing.state, listing.zip_code]
-                            .filter(Boolean)
-                            .join(', ')
-                          const isDeleting = deletingId === id
+              {/* ─── TABLE + DETAIL PANEL LAYOUT ─── */}
+              <div className="flex gap-4 h-full overflow-hidden">
+                {/* ─── TABLE CARD ─── */}
+                <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
+                  <div className="overflow-auto custom-scrollbar flex-1 pb-10">
+                    {loading ? (
+                      <div className="flex items-center justify-center py-16">
+                        <span className="text-slate-500 text-sm font-medium">Loading...</span>
+                      </div>
+                    ) : listings.length === 0 ? (
+                      <div className="flex items-center justify-center py-16">
+                        <span className="text-slate-500 text-sm font-medium">
+                          {searchQuery ? 'No items match your search' : 'No items in this list'}
+                        </span>
+                      </div>
+                    ) : list?.type === 'properties' ? (
+                      /* ─── PROPERTIES TABLE (1:1 reference classes) ─── */
+                      <table className="w-full text-left text-sm text-slate-600" role="grid">
+                        <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+                          <tr>
+                            <th className="pl-6 pr-4 py-3 w-12 font-semibold align-middle" scope="col">
+                              <input
+                                type="checkbox"
+                                checked={listings.length > 0 && selectedIds.size === listings.length}
+                                onChange={handleSelectAll}
+                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
+                                aria-label="Select all"
+                              />
+                            </th>
+                            <th className="px-4 py-3 font-semibold align-middle w-[30%]" scope="col">Address</th>
+                            <th className="px-4 py-3 font-semibold w-32 align-middle" scope="col">Price</th>
+                            <th className="px-4 py-3 font-semibold w-24 align-middle" scope="col">Status</th>
+                            <th className="px-4 py-3 font-semibold w-24 text-center align-middle" scope="col">AI Score</th>
+                            <th className="px-4 py-3 font-semibold w-16 text-center align-middle" scope="col">Beds</th>
+                            <th className="px-4 py-3 font-semibold w-16 text-center align-middle" scope="col">Baths</th>
+                            <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Sqft</th>
+                            <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {listings.map((listing) => {
+                            const id = getListingId(listing)
+                            const address = listing.street || '—'
+                            const cityStateZip = [listing.city, listing.state, listing.zip_code]
+                              .filter(Boolean)
+                              .join(', ')
+                            const isDeleting = deletingId === id
+                            const isSelected = selectedListing != null && getListingId(selectedListing) === id
 
-                          return (
-                            <tr
-                              key={id}
-                              className="bg-white/40 hover:bg-blue-50/40 transition-colors duration-150 group"
-                            >
-                              <td className="pl-3 pr-1 align-middle">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedIds.has(id)}
-                                  onChange={(e) =>
-                                    handleSelect(id, e.target.checked)
-                                  }
-                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  aria-label={`Select property ${address}`}
-                                />
-                              </td>
-                              <td className="px-2 align-middle">
-                                <div className="flex items-center gap-2">
-                                  <div className="p-0.5 rounded-full bg-slate-100 shrink-0">
-                                    <span className="material-symbols-outlined text-slate-400 text-[12px]">
-                                      location_on
-                                    </span>
-                                  </div>
-                                  <div className="flex flex-col min-w-0">
-                                    <div className="flex items-center gap-1.5 leading-none mb-0.5">
-                                      <span className="font-semibold text-slate-800 text-xs truncate">
+                            return (
+                              <tr
+                                key={id}
+                                onClick={() => handleRowClick(listing)}
+                                className={`transition-colors duration-150 group cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-blue-50/60 hover:bg-blue-50 border-l-4 border-l-blue-500'
+                                    : 'bg-white hover:bg-slate-50/80'
+                                }`}
+                              >
+                                <td className={`${isSelected ? 'pl-5' : 'pl-6'} pr-4 py-2.5 align-middle`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedIds.has(id)}
+                                    onChange={(e) => handleSelect(id, e.target.checked)}
+                                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
+                                    onClick={(e) => e.stopPropagation()}
+                                    aria-label={`Select property ${address}`}
+                                  />
+                                </td>
+                                <td className="px-4 py-2.5 align-middle">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                      isSelected ? 'bg-blue-100 text-blue-600' : 'bg-blue-50 text-blue-500'
+                                    }`}>
+                                      <span className="material-symbols-outlined text-[18px]">
+                                        {isSelected ? 'home' : 'location_on'}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col justify-center">
+                                      <span className={`font-semibold text-sm ${isSelected ? 'text-slate-900' : 'text-slate-800'}`}>
                                         {address}
                                       </span>
-                                    </div>
-                                    <div className="flex items-center gap-1 leading-none">
-                                      <span className="text-[10px] text-slate-500 truncate">
+                                      <span className={`text-[11px] ${isSelected ? 'text-slate-600' : 'text-slate-500'}`}>
                                         {cityStateZip || '—'}
                                       </span>
-                                      {listing.property_url && (
-                                        <a
-                                          href={listing.property_url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-[9px] font-medium text-blue-600 hover:underline inline-flex items-center gap-px opacity-0 group-hover:opacity-100 transition-opacity"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <span className="material-symbols-outlined text-[9px]">
-                                            open_in_new
-                                          </span>
-                                        </a>
-                                      )}
                                     </div>
                                   </div>
-                                </div>
-                              </td>
-                              <td className="px-2 align-middle text-xs font-semibold text-slate-700">
-                                {listing.list_price != null
-                                  ? `$${Number(listing.list_price).toLocaleString()}`
-                                  : '—'}
-                              </td>
-                              <td className="px-2 align-middle">
-                                <StatusBadge status={listing.status} />
-                              </td>
-                              <td className="px-2 text-center align-middle">
-                                <AIScoreCell score={listing.ai_investment_score} />
-                              </td>
-                              <td className="px-1 text-center align-middle text-slate-600">
-                                {listing.beds ?? '—'}
-                              </td>
-                              <td className="px-1 text-center align-middle text-slate-600">
-                                {listing.full_baths ?? '—'}
-                              </td>
-                              <td className="px-2 text-right align-middle text-slate-600 tabular-nums">
-                                {listing.sqft != null
-                                  ? Number(listing.sqft).toLocaleString()
-                                  : '—'}
-                              </td>
-                              <td className="px-2 text-right align-middle">
-                                <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                  <button
-                                    type="button"
-                                    className="w-5 h-5 flex items-center justify-center hover:text-blue-600 hover:bg-blue-50/80 rounded transition-colors"
-                                    title="Edit"
-                                    aria-label="Edit"
+                                </td>
+                                <td className={`px-4 py-2.5 align-middle text-sm font-bold font-mono ${isSelected ? 'text-slate-800' : 'text-slate-700'}`}>
+                                  {listing.list_price != null
+                                    ? `$${Number(listing.list_price).toLocaleString()}`
+                                    : '—'}
+                                </td>
+                                <td className="px-4 py-2.5 align-middle">
+                                  <StatusBadge status={listing.status} />
+                                </td>
+                                <td className="px-4 py-2.5 text-center align-middle">
+                                  <AIScoreCell score={listing.ai_investment_score} />
+                                </td>
+                                <td className={`px-4 py-2.5 text-center align-middle text-sm font-medium ${isSelected ? 'text-slate-800' : 'text-slate-600'}`}>
+                                  {listing.beds ?? '—'}
+                                </td>
+                                <td className={`px-4 py-2.5 text-center align-middle text-sm font-medium ${isSelected ? 'text-slate-800' : 'text-slate-600'}`}>
+                                  {listing.full_baths ?? '—'}
+                                </td>
+                                <td className={`px-4 py-2.5 text-right align-middle text-sm font-medium tabular-nums ${isSelected ? 'text-slate-800' : 'text-slate-600'}`}>
+                                  {listing.sqft != null ? Number(listing.sqft).toLocaleString() : '—'}
+                                </td>
+                                <td className="px-4 py-2.5 text-right align-middle">
+                                  <div className={`flex items-center justify-end gap-1 transition-opacity duration-200 ${
+                                    isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                  }`}>
+                                    <button
+                                      type="button"
+                                      className={`w-7 h-7 flex items-center justify-center rounded transition-colors ${
+                                        isSelected
+                                          ? 'text-blue-600 bg-blue-50'
+                                          : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                                      }`}
+                                      title="Edit"
+                                      aria-label="Edit"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      /* ─── PEOPLE TABLE ─── */
+                      <table className="w-full text-left text-sm text-slate-600" role="grid">
+                        <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+                          <tr>
+                            <th className="pl-6 pr-4 py-3 w-12 font-semibold align-middle" scope="col">
+                              <input
+                                type="checkbox"
+                                checked={listings.length > 0 && selectedIds.size === listings.length}
+                                onChange={handleSelectAll}
+                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
+                                aria-label="Select all"
+                              />
+                            </th>
+                            <th className="px-4 py-3 font-semibold align-middle w-[30%]" scope="col">Name</th>
+                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Job Title</th>
+                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Company</th>
+                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Email</th>
+                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Phone</th>
+                            <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {listings.map((item, idx) => {
+                            const id =
+                              (item as any).contact_id || item.listing_id || item.agent_email || `row-${idx}`
+                            const name =
+                              item.agent_name ||
+                              [item.first_name, item.last_name].filter(Boolean).join(' ').trim() ||
+                              '—'
+                            const isDeleting = deletingId === id
+
+                            return (
+                              <tr
+                                key={id}
+                                className="bg-white hover:bg-slate-50/80 transition-colors duration-150 group"
+                              >
+                                <td className="pl-6 pr-4 py-2.5 align-middle">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedIds.has(id)}
+                                    onChange={(e) => handleSelect(id, e.target.checked)}
+                                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
                                     onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <span className="material-symbols-outlined text-[12px]">
-                                      edit
-                                    </span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) =>
-                                      handleRemoveFromList(listing, e)
-                                    }
-                                    disabled={isDeleting}
-                                    className="w-5 h-5 flex items-center justify-center hover:text-red-600 hover:bg-red-50/80 rounded transition-colors disabled:opacity-50"
-                                    aria-label="Delete"
-                                  >
-                                    <span className="material-symbols-outlined text-[12px]">
-                                      delete
-                                    </span>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <table
-                      className="w-full text-left text-sm text-slate-600 table-fixed table-compact"
-                      role="grid"
-                    >
-                      <thead className="text-[10px] font-semibold text-slate-400 uppercase bg-slate-50/90 border-b border-slate-200/60 tracking-wider sticky top-0 backdrop-blur-md z-10">
-                        <tr>
-                          <th className="pl-3 pr-1 py-1.5 w-8 font-semibold align-middle" scope="col">
-                            <input
-                              type="checkbox"
-                              checked={
-                                listings.length > 0 &&
-                                selectedIds.size === listings.length
-                              }
-                              onChange={handleSelectAll}
-                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
-                              aria-label="Select all"
-                            />
-                          </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle w-[30%]" scope="col">
-                            Name
-                          </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
-                            Job Title
-                          </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
-                            Company
-                          </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
-                            Email
-                          </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
-                            Phone
-                          </th>
-                          <th className="px-2 py-1.5 font-semibold w-16 text-right align-middle" scope="col">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100/80 text-[13px]">
-                        {listings.map((item, idx) => {
-                          const id =
-                            (item as any).contact_id ||
-                            item.listing_id ||
-                            item.agent_email ||
-                            `row-${idx}`
-                          const name =
-                            item.agent_name ||
-                            [item.first_name, item.last_name]
-                              .filter(Boolean)
-                              .join(' ')
-                              .trim() ||
-                            '—'
-                          const isDeleting = deletingId === id
-
-                          return (
-                            <tr
-                              key={id}
-                              className="bg-white/40 hover:bg-blue-50/40 transition-colors duration-150 group"
-                            >
-                              <td className="pl-3 pr-1 align-middle">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedIds.has(id)}
-                                  onChange={(e) =>
-                                    handleSelect(id, e.target.checked)
-                                  }
-                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  aria-label={`Select contact ${name}`}
-                                />
-                              </td>
-                              <td className="px-2 align-middle">
-                                <span className="font-semibold text-slate-800 text-xs">
-                                  {name}
-                                </span>
-                              </td>
-                              <td className="px-2 align-middle text-slate-600 text-xs">
-                                {item.job_title || '—'}
-                              </td>
-                              <td className="px-2 align-middle text-slate-600 text-xs">
-                                {item.company || '—'}
-                              </td>
-                              <td className="px-2 align-middle text-slate-600 text-xs truncate max-w-[180px]">
-                                {item.agent_email || item.email || '—'}
-                              </td>
-                              <td className="px-2 align-middle text-slate-600 text-xs">
-                                {item.agent_phone || item.phone || '—'}
-                              </td>
-                              <td className="px-2 text-right align-middle">
-                                <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                  <button
-                                    type="button"
-                                    className="w-5 h-5 flex items-center justify-center hover:text-red-600 hover:bg-red-50/80 rounded transition-colors disabled:opacity-50"
-                                    onClick={(e) =>
-                                      handleRemoveFromList(item, e)
-                                    }
-                                    disabled={isDeleting}
-                                    aria-label="Delete"
-                                  >
-                                    <span className="material-symbols-outlined text-[12px]">
-                                      delete
-                                    </span>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-2 flex items-center justify-between z-20">
-                  <div className="text-xs text-slate-500 font-medium">
-                    Showing{' '}
-                    <span className="font-bold text-slate-800">{startRecord}</span>{' '}
-                    -{' '}
-                    <span className="font-bold text-slate-800">{endRecord}</span>{' '}
-                    of <span className="font-bold text-slate-800">{totalCount}</span>{' '}
-                    records
+                                    aria-label={`Select contact ${name}`}
+                                  />
+                                </td>
+                                <td className="px-4 py-2.5 align-middle">
+                                  <span className="font-semibold text-slate-800 text-sm">{name}</span>
+                                </td>
+                                <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
+                                  {item.job_title || '—'}
+                                </td>
+                                <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
+                                  {item.company || '—'}
+                                </td>
+                                <td className="px-4 py-2.5 align-middle text-sm text-slate-600 truncate max-w-[200px]">
+                                  {item.agent_email || item.email || '—'}
+                                </td>
+                                <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
+                                  {item.agent_phone || item.phone || '—'}
+                                </td>
+                                <td className="px-4 py-2.5 text-right align-middle">
+                                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <button
+                                      type="button"
+                                      className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                                      onClick={(e) => { e.stopPropagation(); handleRemoveFromList(item, e) }}
+                                      disabled={isDeleting}
+                                      aria-label="Delete"
+                                      title="Delete"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                      aria-label="Previous page"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">
-                        chevron_left
-                      </span>
-                    </button>
-                    {totalPages >= 1 && (
+
+                  {/* ─── PAGINATION FOOTER (1:1 reference) ─── */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-2 flex items-center justify-between z-20">
+                    <div className="text-xs text-slate-500 font-medium">
+                      Showing{' '}
+                      <span className="font-bold text-slate-800">{startRecord}</span> -{' '}
+                      <span className="font-bold text-slate-800">{endRecord}</span> of{' '}
+                      <span className="font-bold text-slate-800">{totalCount.toLocaleString()}</span> records
+                    </div>
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => setCurrentPage(1)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                          currentPage === 1
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                        }`}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage <= 1}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors disabled:opacity-50"
+                        aria-label="Previous page"
                       >
-                        1
+                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                       </button>
-                    )}
-                    {totalPages >= 2 && (
+                      {totalPages >= 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage(1)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                            currentPage === 1
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                          }`}
+                        >
+                          1
+                        </button>
+                      )}
+                      {totalPages >= 2 && (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage(2)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                            currentPage === 2
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                          }`}
+                        >
+                          2
+                        </button>
+                      )}
+                      {totalPages >= 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage(3)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                            currentPage === 3
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                          }`}
+                        >
+                          3
+                        </button>
+                      )}
+                      {totalPages > 4 && (
+                        <span className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs">...</span>
+                      )}
+                      {totalPages > 4 && (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage(totalPages)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                            currentPage === totalPages
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                          }`}
+                        >
+                          {totalPages}
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() => setCurrentPage(2)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                          currentPage === 2
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                        }`}
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage >= totalPages}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm disabled:opacity-50"
+                        aria-label="Next page"
                       >
-                        2
+                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                       </button>
-                    )}
-                    {totalPages >= 3 && (
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage(3)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                          currentPage === 3
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                        }`}
-                      >
-                        3
-                      </button>
-                    )}
-                    {totalPages > 4 && (
-                      <span className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs">
-                        ...
-                      </span>
-                    )}
-                    {totalPages > 4 && (
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage(totalPages)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                          currentPage === totalPages
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                        }`}
-                      >
-                        {totalPages}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      disabled={currentPage >= totalPages}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm disabled:opacity-50 disabled:pointer-events-none"
-                      aria-label="Next page"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">
-                        chevron_right
-                      </span>
-                    </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* ─── PROPERTY DETAIL SIDE PANEL (reference: 30% width, slide-in) ─── */}
+                {selectedListing && list?.type === 'properties' && (
+                  <div className="w-[30%] min-w-[320px] bg-white/80 backdrop-blur-2xl border border-white/60 shadow-float rounded-lg flex flex-col h-full overflow-hidden transition-all">
+                    {/* Image header */}
+                    <div className="relative h-48 shrink-0 group">
+                      {selectedListing.primary_photo ? (
+                        <img
+                          alt={selectedListing.street || 'Property'}
+                          className="w-full h-full object-cover"
+                          src={selectedListing.primary_photo}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-blue-400 text-[48px]">home</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute top-3 right-3">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedListing(null)}
+                          className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white flex items-center justify-center transition-all"
+                          aria-label="Close panel"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                      </div>
+                      <div className="absolute bottom-4 left-4 right-4 text-white">
+                        <h2 className="text-xl font-bold leading-tight mb-0.5">
+                          {selectedListing.street || 'Address N/A'}
+                        </h2>
+                        <p className="text-white/80 text-xs font-medium">
+                          {[selectedListing.city, selectedListing.state, selectedListing.zip_code].filter(Boolean).join(', ')}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-5 flex flex-col gap-5">
+                      {/* Price + status */}
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">List Price</span>
+                            <span className="text-2xl font-bold text-slate-900 tracking-tight">
+                              {selectedListing.list_price != null
+                                ? `$${Number(selectedListing.list_price).toLocaleString()}`
+                                : '—'}
+                            </span>
+                          </div>
+                          <StatusBadge status={selectedListing.status || 'Active'} />
+                        </div>
+                        {/* Stats grid */}
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100 text-center hover:bg-blue-50 hover:border-blue-100 transition-colors group">
+                            <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-500 mb-1 text-[20px]">bed</span>
+                            <span className="text-sm font-bold text-slate-800">{selectedListing.beds ?? '—'}</span>
+                            <span className="text-[10px] text-slate-500 font-medium">Beds</span>
+                          </div>
+                          <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100 text-center hover:bg-blue-50 hover:border-blue-100 transition-colors group">
+                            <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-500 mb-1 text-[20px]">bathtub</span>
+                            <span className="text-sm font-bold text-slate-800">{selectedListing.full_baths ?? '—'}</span>
+                            <span className="text-[10px] text-slate-500 font-medium">Baths</span>
+                          </div>
+                          <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100 text-center hover:bg-blue-50 hover:border-blue-100 transition-colors group">
+                            <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-500 mb-1 text-[20px]">square_foot</span>
+                            <span className="text-sm font-bold text-slate-800">
+                              {selectedListing.sqft != null ? Number(selectedListing.sqft).toLocaleString() : '—'}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium">Sqft</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="h-px bg-slate-100" />
+                      {/* AI Insights */}
+                      {selectedListing.ai_investment_score != null && selectedListing.ai_investment_score > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="material-symbols-outlined text-violet-600 text-[18px]">auto_awesome</span>
+                            <h3 className="text-sm font-bold text-slate-800">Property Insights</h3>
+                          </div>
+                          <div className="bg-gradient-to-br from-violet-50 to-indigo-50/50 rounded-xl p-3 border border-violet-100/60 relative overflow-hidden">
+                            <p className="text-xs text-slate-600 leading-relaxed relative z-10">
+                              <span className="font-semibold text-slate-800">AI Score: {Math.round(selectedListing.ai_investment_score)}</span> — This property shows strong investment potential based on market analysis and comparable sales.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {/* Details */}
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-bold text-slate-800">Details</h3>
+                        {selectedListing.year_built && (
+                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
+                            <span className="text-xs text-slate-500">Year Built</span>
+                            <span className="text-xs font-medium text-slate-700">{selectedListing.year_built}</span>
+                          </div>
+                        )}
+                        {selectedListing.property_type && (
+                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
+                            <span className="text-xs text-slate-500">Type</span>
+                            <span className="text-xs font-medium text-slate-700">{selectedListing.property_type}</span>
+                          </div>
+                        )}
+                        {selectedListing.lot_size && (
+                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
+                            <span className="text-xs text-slate-500">Lot Size</span>
+                            <span className="text-xs font-medium text-slate-700">{selectedListing.lot_size}</span>
+                          </div>
+                        )}
+                        {selectedListing.agent_name && (
+                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
+                            <span className="text-xs text-slate-500">Agent</span>
+                            <span className="text-xs font-medium text-slate-700">{selectedListing.agent_name}</span>
+                          </div>
+                        )}
+                        {(selectedListing.agent_email || selectedListing.email) && (
+                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
+                            <span className="text-xs text-slate-500">Contact</span>
+                            <span className="text-xs font-medium text-slate-700">{selectedListing.agent_email || selectedListing.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* Footer CTA */}
+                    <div className="p-4 bg-white/50 backdrop-blur border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedListing.property_url) {
+                            window.open(selectedListing.property_url, '_blank')
+                          }
+                        }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 rounded-lg text-xs font-bold shadow-[0_2px_5px_rgba(59,130,246,0.3)] hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-2"
+                      >
+                        View Full Profile
+                        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </main>
           </div>
