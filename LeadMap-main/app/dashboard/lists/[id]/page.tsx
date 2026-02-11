@@ -49,28 +49,20 @@ interface ListPaginatedResponse {
 
 function AIScoreCell({ score }: { score?: number | null }) {
   if (score == null || score === 0) {
-    return <span className="text-slate-300 text-sm">-</span>
+    return <span className="text-slate-300 text-lg">-</span>
   }
   const rounded = Math.round(score)
   if (rounded >= 90) {
     return (
-      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 mx-auto">
-        <span className="text-[9px] font-bold text-white">{rounded}</span>
-      </div>
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 text-[11px] font-bold leading-none border border-emerald-100">
+        {rounded}
+      </span>
     )
   }
-  const deg = (rounded / 100) * 360
   return (
-    <div
-      className="w-6 h-6 p-[2px] rounded-full inline-flex"
-      style={{
-        background: `conic-gradient(from 180deg, #6366f1 0deg, #a855f7 ${deg}deg, #e2e8f0 ${deg}deg)`,
-      }}
-    >
-      <div className="ai-score-inner flex-1 min-w-0 min-h-0 rounded-full flex items-center justify-center text-[9px] font-bold text-indigo-600">
-        {rounded}
-      </div>
-    </div>
+    <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 text-blue-600 text-[11px] font-bold leading-none border border-blue-100">
+      {rounded}
+    </span>
   )
 }
 
@@ -80,10 +72,10 @@ function StatusBadge({ status }: { status?: string | null }) {
   const isPending = s.includes('pending')
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-px rounded-full text-[9px] font-bold uppercase tracking-wide leading-tight border ${
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide leading-relaxed border ${
         isPending
-          ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-          : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+          ? 'bg-amber-50 text-amber-600 border-amber-100'
+          : 'bg-emerald-50 text-emerald-600 border-emerald-100'
       }`}
     >
       {status}
@@ -305,89 +297,91 @@ export default function ListDetailPage() {
     <DashboardLayout fullBleed>
       <div className="list-detail-page flex flex-col h-full min-h-0 bg-mesh font-sans text-slate-900 antialiased overflow-hidden">
         <div className="flex-1 px-3 pb-3 overflow-hidden flex flex-col min-h-0">
-          <div className="list-detail-glass bg-white/40 backdrop-blur-2xl border border-white/60 shadow-glass rounded-xl flex flex-col h-full overflow-hidden relative flex-1 min-h-0">
+          <div className="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-glass rounded-xl flex flex-col h-full overflow-hidden relative flex-1 min-h-0">
             <div
               className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/4 -translate-y-1/4 mix-blend-multiply"
               aria-hidden
             />
 
-            <header className="shrink-0 z-20 px-4 pt-4 pb-2">
+            <header className="shrink-0 z-20 px-6 pt-6 pb-2">
               <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
                   <Link
                     href="/dashboard/lists"
                     className="hover:text-blue-600 transition-colors"
                   >
                     Lists
                   </Link>
-                  <span className="material-symbols-outlined text-[10px] text-slate-400">
+                  <span className="material-symbols-outlined text-[12px] text-slate-400">
                     chevron_right
                   </span>
                   <span className="text-slate-800">{list?.name ?? '…'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
-                      {list?.name ?? '…'}
-                    </h1>
-                    <span className="px-1.5 py-px rounded-full bg-slate-100 text-slate-500 text-[9px] font-bold border border-slate-200 uppercase tracking-wide">
-                      {totalCount} records
-                    </span>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">
+                        {list?.name ?? '…'} <span className="text-blue-600">List</span>
+                      </h1>
+                    </div>
+                    <p className="text-slate-500 text-sm mt-1.5 font-normal">
+                      Manage and track your property records in this list efficiently.
+                    </p>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-3 mb-1">
                     <button
                       type="button"
                       onClick={() => {}}
-                      className="h-7 px-2.5 rounded bg-white/60 border border-white shadow-sm-soft text-slate-600 text-[11px] font-semibold hover:bg-white hover:text-blue-600 hover:shadow-md transition-all flex items-center gap-1 backdrop-blur-sm"
+                      className="h-9 px-4 rounded-full bg-white border border-slate-200 hover:border-slate-300 shadow-sm text-slate-600 text-xs font-semibold hover:text-slate-800 transition-all flex items-center gap-2"
                       aria-label="Import"
                     >
-                      <span className="material-symbols-outlined text-[14px]">upload_file</span>
+                      <span className="material-symbols-outlined text-[18px]">upload_file</span>
                       Import
                     </button>
                     <button
                       type="button"
                       onClick={handleExportCSV}
-                      className="h-7 px-2.5 rounded bg-white/60 border border-white shadow-sm-soft text-slate-600 text-[11px] font-semibold hover:bg-white hover:text-blue-600 hover:shadow-md transition-all flex items-center gap-1 backdrop-blur-sm"
+                      className="h-9 px-4 rounded-full bg-white border border-slate-200 hover:border-slate-300 shadow-sm text-slate-600 text-xs font-semibold hover:text-slate-800 transition-all flex items-center gap-2"
                       aria-label="Export"
                     >
-                      <span className="material-symbols-outlined text-[14px]">download</span>
+                      <span className="material-symbols-outlined text-[18px]">download</span>
                       Export
                     </button>
                     <button
                       type="button"
                       onClick={() => {}}
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-7 px-2.5 rounded text-[11px] font-bold shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all flex items-center gap-1"
+                      className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-5 rounded-full text-xs font-bold shadow-action-btn hover:shadow-blue-500/40 transition-all flex items-center gap-2"
                       aria-label="Add records"
                     >
-                      <span className="material-symbols-outlined text-[14px]">add</span>
+                      <span className="material-symbols-outlined text-[18px]">add</span>
                       Add records
                     </button>
                     <button
                       type="button"
                       onClick={() => {}}
-                      className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white h-7 px-2.5 rounded text-[11px] font-bold shadow-md shadow-violet-500/20 hover:shadow-violet-500/30 transition-all flex items-center gap-1"
+                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white h-9 px-5 rounded-full text-xs font-bold shadow-action-btn hover:shadow-violet-500/40 transition-all flex items-center gap-2"
                       aria-label="Research with AI"
                     >
-                      <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                      <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
                       Research with AI
                     </button>
                     <button
                       type="button"
-                      className="w-7 h-7 flex items-center justify-center rounded bg-white/60 border border-white shadow-sm-soft text-slate-500 hover:text-slate-800 hover:bg-white transition-all"
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-800 shadow-sm transition-all"
                       aria-label="More options"
                     >
-                      <span className="material-symbols-outlined text-[14px]">more_vert</span>
+                      <span className="material-symbols-outlined text-[18px]">more_vert</span>
                     </button>
                   </div>
                 </div>
               </div>
             </header>
 
-            <main className="flex-1 overflow-auto custom-scrollbar px-4 pb-4 flex flex-col min-h-0">
-              <div className="flex items-center justify-between gap-3 mb-2 bg-white/50 backdrop-blur-md px-1.5 py-1 rounded-lg border border-white/50 shadow-sm-soft">
-                <div className="flex-1 flex items-center relative group max-w-xs">
+            <main className="flex-1 overflow-auto custom-scrollbar px-6 pb-6 flex flex-col mt-2 min-h-0">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <div className="relative group w-full max-w-sm">
                   <span
-                    className="absolute left-2 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[16px]"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[20px]"
                     aria-hidden
                   >
                     search
@@ -401,43 +395,38 @@ export default function ListDetailPage() {
                         ? 'Search properties...'
                         : 'Search contacts...'
                     }
-                    className="w-full pl-8 pr-3 py-0.5 bg-transparent border-0 text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 h-7"
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-full text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 shadow-sm transition-all h-10"
                     aria-label="Search"
                   />
                 </div>
-                <div className="h-4 w-px bg-slate-200 mx-1" aria-hidden />
-                <div className="flex items-center gap-1.5">
+                <div className="flex-1" />
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
                   >
-                    Status: Any
-                    <span className="material-symbols-outlined text-[12px] text-slate-400">
-                      expand_more
-                    </span>
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">grid_view</span>
+                    View
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
                   >
-                    Price Range
-                    <span className="material-symbols-outlined text-[12px] text-slate-400">
-                      expand_more
-                    </span>
+                    Sort: Modified
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 h-10 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[12px] text-slate-500">
-                      filter_list
-                    </span>
-                    More Filters
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">filter_list</span>
+                    Filter
                   </button>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col relative min-h-0">
+              <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col relative min-h-0">
                 <div className="overflow-auto custom-scrollbar flex-1 pb-10 min-h-0">
                   {loading ? (
                     <div className="flex items-center justify-center py-16">
@@ -453,13 +442,13 @@ export default function ListDetailPage() {
                     </div>
                   ) : list?.type === 'properties' ? (
                     <table
-                      className="w-full text-left text-sm text-slate-600 table-fixed table-compact"
+                      className="w-full text-left text-sm text-slate-600"
                       role="grid"
                     >
-                      <thead className="text-[10px] font-semibold text-slate-400 uppercase bg-slate-50/90 border-b border-slate-200/60 tracking-wider sticky top-0 backdrop-blur-md z-10">
+                      <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100 tracking-wider sticky top-0 backdrop-blur-sm z-10">
                         <tr>
                           <th
-                            className="pl-3 pr-1 py-1.5 w-8 font-semibold align-middle"
+                            className="pl-6 pr-4 py-3 w-12 font-semibold align-middle"
                             scope="col"
                           >
                             <input
@@ -469,61 +458,61 @@ export default function ListDetailPage() {
                                 selectedIds.size === listings.length
                               }
                               onChange={handleSelectAll}
-                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
+                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
                               aria-label="Select all"
                             />
                           </th>
                           <th
-                            className="px-2 py-1.5 font-semibold align-middle w-[35%]"
+                            className="px-4 py-3 font-semibold align-middle w-[30%]"
                             scope="col"
                           >
                             Address
                           </th>
                           <th
-                            className="px-2 py-1.5 font-semibold w-24 align-middle"
+                            className="px-4 py-3 font-semibold w-32 align-middle"
                             scope="col"
                           >
                             Price
                           </th>
                           <th
-                            className="px-2 py-1.5 font-semibold w-20 align-middle"
+                            className="px-4 py-3 font-semibold w-24 align-middle"
                             scope="col"
                           >
                             Status
                           </th>
                           <th
-                            className="px-2 py-1.5 font-semibold w-20 text-center align-middle"
+                            className="px-4 py-3 font-semibold w-24 text-center align-middle"
                             scope="col"
                           >
                             AI Score
                           </th>
                           <th
-                            className="px-1 py-1.5 font-semibold w-12 text-center align-middle"
+                            className="px-4 py-3 font-semibold w-16 text-center align-middle"
                             scope="col"
                           >
                             Beds
                           </th>
                           <th
-                            className="px-1 py-1.5 font-semibold w-12 text-center align-middle"
+                            className="px-4 py-3 font-semibold w-16 text-center align-middle"
                             scope="col"
                           >
                             Baths
                           </th>
                           <th
-                            className="px-2 py-1.5 font-semibold w-20 text-right align-middle"
+                            className="px-4 py-3 font-semibold w-24 text-right align-middle"
                             scope="col"
                           >
                             Sqft
                           </th>
                           <th
-                            className="px-2 py-1.5 font-semibold w-16 text-right align-middle"
+                            className="px-4 py-3 font-semibold w-24 text-right align-middle"
                             scope="col"
                           >
                             Actions
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100/80 text-[13px]">
+                      <tbody className="divide-y divide-slate-50">
                         {listings.map((listing) => {
                           const id =
                             listing.listing_id || listing.property_url || ''
@@ -536,87 +525,62 @@ export default function ListDetailPage() {
                           return (
                             <tr
                               key={id}
-                              className="bg-white/40 hover:bg-blue-50/40 transition-colors duration-150 group"
+                              className="bg-white hover:bg-slate-50/80 transition-colors duration-150 group"
                             >
-                              <td className="pl-3 pr-1 align-middle">
+                              <td className="pl-6 pr-4 py-2.5 align-middle">
                                 <input
                                   type="checkbox"
                                   checked={selectedIds.has(id)}
                                   onChange={(e) =>
                                     handleSelect(id, e.target.checked)
                                   }
-                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
+                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
                                   onClick={(e) => e.stopPropagation()}
                                 />
                               </td>
-                              <td className="px-2 align-middle">
-                                <div className="flex items-center gap-2">
-                                  <div className="p-0.5 rounded-full bg-slate-100 shrink-0">
-                                    <span className="material-symbols-outlined text-slate-400 text-[12px]">
-                                      location_on
-                                    </span>
+                              <td className="px-4 py-2.5 align-middle">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-[18px]">location_on</span>
                                   </div>
-                                  <div className="flex flex-col min-w-0">
-                                    <div className="flex items-center gap-1.5 leading-none mb-0.5">
-                                      <span className="font-semibold text-slate-800 text-xs truncate">
-                                        {address}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-1 leading-none">
-                                      <span className="text-[10px] text-slate-500 truncate">
-                                        {cityStateZip || '—'}
-                                      </span>
-                                      {listing.property_url && (
-                                        <a
-                                          href={listing.property_url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-[9px] font-medium text-blue-600 hover:underline inline-flex items-center gap-px opacity-0 group-hover:opacity-100 transition-opacity"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <span className="material-symbols-outlined text-[9px]">
-                                            open_in_new
-                                          </span>
-                                        </a>
-                                      )}
-                                    </div>
+                                  <div className="flex flex-col justify-center">
+                                    <span className="font-semibold text-slate-800 text-sm">{address}</span>
+                                    <span className="text-[11px] text-slate-500">{cityStateZip || '—'}</span>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-2 align-middle text-xs font-semibold text-slate-700">
+                              <td className="px-4 py-2.5 align-middle text-sm font-bold text-slate-700 font-mono">
                                 {listing.list_price != null
                                   ? `$${Number(listing.list_price).toLocaleString()}`
                                   : '—'}
                               </td>
-                              <td className="px-2 align-middle">
+                              <td className="px-4 py-2.5 align-middle">
                                 <StatusBadge status={listing.status} />
                               </td>
-                              <td className="px-2 text-center align-middle">
+                              <td className="px-4 py-2.5 text-center align-middle">
                                 <AIScoreCell score={listing.ai_investment_score} />
                               </td>
-                              <td className="px-1 text-center align-middle text-slate-600">
+                              <td className="px-4 py-2.5 text-center align-middle text-sm font-medium text-slate-600">
                                 {listing.beds ?? '—'}
                               </td>
-                              <td className="px-1 text-center align-middle text-slate-600">
+                              <td className="px-4 py-2.5 text-center align-middle text-sm font-medium text-slate-600">
                                 {listing.full_baths ?? '—'}
                               </td>
-                              <td className="px-2 text-right align-middle text-slate-600 tabular-nums">
+                              <td className="px-4 py-2.5 text-right align-middle text-sm font-medium text-slate-600 tabular-nums">
                                 {listing.sqft != null
                                   ? Number(listing.sqft).toLocaleString()
                                   : '—'}
                               </td>
-                              <td className="px-2 text-right align-middle">
-                                <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <td className="px-4 py-2.5 text-right align-middle">
+                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                   <button
                                     type="button"
-                                    className="w-5 h-5 flex items-center justify-center hover:text-blue-600 hover:bg-blue-50/80 rounded transition-colors"
+                                    className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                     title="Edit"
                                     aria-label="Edit"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <span className="material-symbols-outlined text-[12px]">
-                                      edit
-                                    </span>
+                                    <span className="material-symbols-outlined text-[16px]">edit</span>
                                   </button>
                                   <button
                                     type="button"
@@ -624,12 +588,10 @@ export default function ListDetailPage() {
                                       handleRemoveFromList(listing, e)
                                     }
                                     disabled={isDeleting}
-                                    className="w-5 h-5 flex items-center justify-center hover:text-red-600 hover:bg-red-50/80 rounded transition-colors disabled:opacity-50"
+                                    className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
                                     aria-label="Delete"
                                   >
-                                    <span className="material-symbols-outlined text-[12px]">
-                                      delete
-                                    </span>
+                                    <span className="material-symbols-outlined text-[16px]">delete</span>
                                   </button>
                                 </div>
                               </td>
@@ -640,12 +602,12 @@ export default function ListDetailPage() {
                     </table>
                   ) : (
                     <table
-                      className="w-full text-left text-sm text-slate-600 table-fixed table-compact"
+                      className="w-full text-left text-sm text-slate-600"
                       role="grid"
                     >
-                      <thead className="text-[10px] font-semibold text-slate-400 uppercase bg-slate-50/90 border-b border-slate-200/60 tracking-wider sticky top-0 backdrop-blur-md z-10">
+                      <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100 tracking-wider sticky top-0 backdrop-blur-sm z-10">
                         <tr>
-                          <th className="pl-3 pr-1 py-1.5 w-8 font-semibold align-middle" scope="col">
+                          <th className="pl-6 pr-4 py-3 w-12 font-semibold align-middle" scope="col">
                             <input
                               type="checkbox"
                               checked={
@@ -653,31 +615,31 @@ export default function ListDetailPage() {
                                 selectedIds.size === listings.length
                               }
                               onChange={handleSelectAll}
-                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
+                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
                               aria-label="Select all"
                             />
                           </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle w-[30%]" scope="col">
+                          <th className="px-4 py-3 font-semibold align-middle w-[30%]" scope="col">
                             Name
                           </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
+                          <th className="px-4 py-3 font-semibold align-middle" scope="col">
                             Job Title
                           </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
+                          <th className="px-4 py-3 font-semibold align-middle" scope="col">
                             Company
                           </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
+                          <th className="px-4 py-3 font-semibold align-middle" scope="col">
                             Email
                           </th>
-                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
+                          <th className="px-4 py-3 font-semibold align-middle" scope="col">
                             Phone
                           </th>
-                          <th className="px-2 py-1.5 font-semibold w-16 text-right align-middle" scope="col">
+                          <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">
                             Actions
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100/80 text-[13px]">
+                      <tbody className="divide-y divide-slate-50">
                         {listings.map((item, idx) => {
                           const id =
                             (item as any).contact_id ||
@@ -696,48 +658,48 @@ export default function ListDetailPage() {
                           return (
                             <tr
                               key={id}
-                              className="bg-white/40 hover:bg-blue-50/40 transition-colors duration-150 group"
+                              className="bg-white hover:bg-slate-50/80 transition-colors duration-150 group"
                             >
-                              <td className="pl-3 pr-1 align-middle">
+                              <td className="pl-6 pr-4 py-2.5 align-middle">
                                 <input
                                   type="checkbox"
                                   checked={selectedIds.has(id)}
                                   onChange={(e) =>
                                     handleSelect(id, e.target.checked)
                                   }
-                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
+                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
                                   onClick={(e) => e.stopPropagation()}
                                 />
                               </td>
-                              <td className="px-2 align-middle">
-                                <span className="font-semibold text-slate-800 text-xs">
+                              <td className="px-4 py-2.5 align-middle">
+                                <span className="font-semibold text-slate-800 text-sm">
                                   {name}
                                 </span>
                               </td>
-                              <td className="px-2 align-middle text-slate-600 text-xs">
+                              <td className="px-4 py-2.5 align-middle text-sm font-medium text-slate-600">
                                 {item.job_title || '—'}
                               </td>
-                              <td className="px-2 align-middle text-slate-600 text-xs">
+                              <td className="px-4 py-2.5 align-middle text-sm font-medium text-slate-600">
                                 {item.company || '—'}
                               </td>
-                              <td className="px-2 align-middle text-slate-600 text-xs truncate max-w-[180px]">
+                              <td className="px-4 py-2.5 align-middle text-sm font-medium text-slate-600 truncate max-w-[180px]">
                                 {item.agent_email || item.email || '—'}
                               </td>
-                              <td className="px-2 align-middle text-slate-600 text-xs">
+                              <td className="px-4 py-2.5 align-middle text-sm font-medium text-slate-600">
                                 {item.agent_phone || item.phone || '—'}
                               </td>
-                              <td className="px-2 text-right align-middle">
-                                <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <td className="px-4 py-2.5 text-right align-middle">
+                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                   <button
                                     type="button"
-                                    className="w-5 h-5 flex items-center justify-center hover:text-red-600 hover:bg-red-50/80 rounded transition-colors disabled:opacity-50"
+                                    className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
                                     onClick={(e) =>
                                       handleRemoveFromList(item, e)
                                     }
                                     disabled={isDeleting}
                                     aria-label="Delete"
                                   >
-                                    <span className="material-symbols-outlined text-[12px]">
+                                    <span className="material-symbols-outlined text-[16px]">
                                       delete
                                     </span>
                                   </button>
@@ -751,13 +713,13 @@ export default function ListDetailPage() {
                   )}
                 </div>
 
-                <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 px-4 py-2 flex items-center justify-between z-20">
-                  <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-2 flex items-center justify-between z-20">
+                  <div className="text-xs text-slate-500 font-medium">
                     Showing{' '}
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{startRecord}</span>{' '}
+                    <span className="font-bold text-slate-800">{startRecord}</span>{' '}
                     -{' '}
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{endRecord}</span>{' '}
-                    of <span className="font-bold text-slate-800 dark:text-slate-200">{totalCount}</span>{' '}
+                    <span className="font-bold text-slate-800">{endRecord}</span>{' '}
+                    of <span className="font-bold text-slate-800">{totalCount}</span>{' '}
                     records
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -765,7 +727,7 @@ export default function ListDetailPage() {
                       type="button"
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage <= 1}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                       aria-label="Previous page"
                     >
                       <span className="material-symbols-outlined text-[16px]">
@@ -787,7 +749,7 @@ export default function ListDetailPage() {
                         p === 'ellipsis' ? (
                           <span
                             key={`ellipsis-${i}`}
-                            className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-slate-500 text-xs"
+                            className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs"
                           >
                             ...
                           </span>
@@ -799,7 +761,7 @@ export default function ListDetailPage() {
                             className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                               currentPage === p
                                 ? 'bg-blue-600 text-white shadow-sm'
-                                : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
+                                : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                             }`}
                           >
                             {p}
@@ -813,7 +775,7 @@ export default function ListDetailPage() {
                         setCurrentPage((p) => Math.min(totalPages, p + 1))
                       }
                       disabled={currentPage >= totalPages}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors shadow-sm disabled:opacity-50 disabled:pointer-events-none"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm disabled:opacity-50 disabled:pointer-events-none"
                       aria-label="Next page"
                     >
                       <span className="material-symbols-outlined text-[16px]">
