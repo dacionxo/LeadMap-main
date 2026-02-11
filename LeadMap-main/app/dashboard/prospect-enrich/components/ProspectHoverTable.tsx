@@ -2,30 +2,14 @@
 
 /**
  * ProspectHoverTable Component
- * 
- * A 1-to-1 visual replica of TailwindAdmin's HoverTable component,
- * adapted for NextDeal's prospect data while preserving all API routes.
- * 
- * Key Features:
- * - Exact visual match to TailwindAdmin's /shadcn-tables/hover
- * - Server-side pagination via /api/listings/paginated endpoint (PRESERVED)
- * - All columns preserved: Address, Price, Status, AI Score, Beds, Baths, Sqft, 
- *   Description, Agent Name, Agent Email, Agent Phone, Agent Phone 2, 
- *   Listing Agent Phone 2, Listing Agent Phone 5, Year Built, Last Sale Price, 
- *   Last Sale Date, Actions
- * - Actions: Email, Call, Save, More
- * - Fully compatible with existing API routes and props
+ *
+ * Elite Property Prospecting Dashboard — 1:1 design match to reference HTML.
+ * Preserves all API routes and columns: Address, Price, Status, AI Score, Beds,
+ * Baths, Sqft, Description, Agent Name, Agent Email, Agent Phone(s), Year Built,
+ * Last Sale Price/Date, Actions.
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/app/components/ui/table'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +20,7 @@ import { Checkbox } from '@/app/components/ui/checkbox'
 import { MoreVertical, Mail, Phone, Bookmark, BookmarkCheck } from 'lucide-react'
 import TailwindAdminPagination from './TailwindAdminPagination'
 import SaveButton from './AddToCrmButton'
+import { cn } from '@/app/lib/utils'
 
 // ============================================================================
 // Type Definitions (PRESERVED FROM ProspectCheckboxTable)
@@ -428,22 +413,18 @@ export default function ProspectHoverTable({
     )
   }
 
-  // Elite Property Prospecting Dashboard - 1:1 table design
+  const colSpan = columns.length + (showSelectionColumn ? 1 : 0)
+
   return (
     <div className="h-full flex flex-col bg-white/50 dark:bg-slate-900/50 overflow-hidden">
       <div className="flex-1 min-h-0 overflow-auto px-6 pb-6">
-        <table className="prospect-hover-table min-w-full table-auto w-full text-left border-collapse">
-            <TableHeader
-              className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10"
-            >
-            <TableRow className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+        <table className="w-full text-left border-collapse">
+          <thead className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10">
+            <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               {showSelectionColumn && (
-                  <TableHead className="px-4 py-4 w-10">
+                <th className="px-4 py-4 w-10">
                     <button
                       type="button"
-                      className={`flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-ld focus:border-ld focus:outline-none ${
-                        somePageSelected && !allPageSelected ? 'border-primary bg-primary/10' : ''
-                      }`}
                       onClick={handleSelectAll}
                       aria-label={
                         somePageSelected
@@ -452,73 +433,78 @@ export default function ProspectHoverTable({
                           ? 'Deselect all listings on this page'
                           : 'Select all listings on this page'
                       }
+                      className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     >
-                    {somePageSelected && !allPageSelected ? (
-                      <span className="h-[2px] w-4 rounded-full bg-primary" />
-                    ) : (
-                      <Checkbox checked={allPageSelected} />
-                    )}
-                  </button>
-                </TableHead>
+                      <Checkbox
+                        checked={allPageSelected}
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                      />
+                    </button>
+                </th>
               )}
-              {columns.includes('address') && <TableHead className="px-4 py-4">Address</TableHead>}
-              {columns.includes('price') && <TableHead className="px-4 py-4">Price</TableHead>}
-              {columns.includes('status') && <TableHead className="px-4 py-4">Status</TableHead>}
-              {columns.includes('score') && <TableHead className="px-4 py-4">AI Score</TableHead>}
-              {columns.includes('beds') && <TableHead className="px-4 py-4">Beds</TableHead>}
-              {columns.includes('full_baths') && <TableHead className="px-4 py-4">Baths</TableHead>}
-              {columns.includes('sqft') && <TableHead className="px-4 py-4">Sqft</TableHead>}
-              {columns.includes('description') && <TableHead className="px-4 py-4">Description</TableHead>}
-              {columns.includes('agent_name') && <TableHead className="px-4 py-4">Agent Name</TableHead>}
-              {columns.includes('agent_email') && <TableHead className="px-4 py-4">Agent Email</TableHead>}
-              {columns.includes('agent_phone') && <TableHead className="px-4 py-4">Agent Phone</TableHead>}
-              {columns.includes('agent_phone_2') && <TableHead className="px-4 py-4">Agent Phone 2</TableHead>}
-              {columns.includes('listing_agent_phone_2') && <TableHead className="px-4 py-4">Listing Agent Phone 2</TableHead>}
-              {columns.includes('listing_agent_phone_5') && <TableHead className="px-4 py-4">Listing Agent Phone 5</TableHead>}
-              {columns.includes('year_built') && <TableHead className="px-4 py-4">Year Built</TableHead>}
-              {columns.includes('last_sale_price') && <TableHead className="px-4 py-4">Last Sale Price</TableHead>}
-              {columns.includes('last_sale_date') && <TableHead className="px-4 py-4">Last Sale Date</TableHead>}
-              {columns.includes('actions') && <TableHead className="px-4 py-4"></TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody className="text-sm divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              {columns.includes('address') && <th className="px-4 py-4">Address</th>}
+              {columns.includes('price') && <th className="px-4 py-4">Price</th>}
+              {columns.includes('status') && <th className="px-4 py-4">Status</th>}
+              {columns.includes('score') && <th className="px-4 py-4">AI Score</th>}
+              {columns.includes('beds') && <th className="px-4 py-4">Beds</th>}
+              {columns.includes('full_baths') && <th className="px-4 py-4">Baths</th>}
+              {columns.includes('sqft') && <th className="px-4 py-4">Sqft</th>}
+              {columns.includes('description') && <th className="px-4 py-4">Description</th>}
+              {columns.includes('agent_name') && <th className="px-4 py-4">Agent Name</th>}
+              {columns.includes('agent_email') && <th className="px-4 py-4">Agent Email</th>}
+              {columns.includes('agent_phone') && <th className="px-4 py-4">Agent Phone</th>}
+              {columns.includes('agent_phone_2') && <th className="px-4 py-4">Agent Phone 2</th>}
+              {columns.includes('listing_agent_phone_2') && <th className="px-4 py-4">Listing Agent Phone 2</th>}
+              {columns.includes('listing_agent_phone_5') && <th className="px-4 py-4">Listing Agent Phone 5</th>}
+              {columns.includes('year_built') && <th className="px-4 py-4">Year Built</th>}
+              {columns.includes('last_sale_price') && <th className="px-4 py-4">Last Sale Price</th>}
+              {columns.includes('last_sale_date') && <th className="px-4 py-4">Last Sale Date</th>}
+              {columns.includes('actions') && <th className="px-4 py-4" />}
+            </tr>
+          </thead>
+          <tbody className="text-sm divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
             {listings.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length + (showSelectionColumn ? 1 : 0)}
-                  className="text-center py-8 text-slate-500 dark:text-slate-400"
+              <tr>
+                <td
+                  colSpan={colSpan}
+                  className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                 >
                   No listings found
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : (
               listings.map((listing) => {
                 const { street, cityStateZip } = formatAddress(listing)
-                const isSaved = crmContactIds.has(listing.listing_id) || (listing.property_url ? crmContactIds.has(listing.property_url) : false)
-                
+                const isSaved =
+                  crmContactIds.has(listing.listing_id) ||
+                  (listing.property_url ? crmContactIds.has(listing.property_url) : false)
+
                 return (
-                  <TableRow
+                  <tr
                     key={listing.listing_id}
                     className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
                     onClick={() => onListingClick?.(listing)}
                   >
                     {showSelectionColumn && (
-                      <TableCell className="px-4 py-4 w-10">
+                      <td className="px-4 py-4 w-10">
                         <button
                           type="button"
-                          className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-ld focus:border-ld focus:outline-none"
-                          onClick={(event) => {
-                            event.stopPropagation()
+                          className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-slate-300 focus:outline-none"
+                          onClick={(e) => {
+                            e.stopPropagation()
                             handleRowSelectionChange(listing)
                           }}
                           aria-label={`Select listing ${listing.street || listing.listing_id}`}
                         >
-                          <Checkbox checked={isRowSelected(listing)} />
+                          <Checkbox
+                            checked={isRowSelected(listing)}
+                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                          />
                         </button>
-                      </TableCell>
+                      </td>
                     )}
                     {columns.includes('address') && (
-                      <TableCell className="px-4 py-4">
+                      <td className="px-4 py-4">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 text-slate-400 dark:text-slate-500">
                             <span className="material-symbols-outlined text-[18px]">location_on</span>
@@ -528,23 +514,22 @@ export default function ProspectHoverTable({
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{cityStateZip}</div>
                           </div>
                         </div>
-                      </TableCell>
+                      </td>
                     )}
-                    
                     {columns.includes('price') && (
-                      <TableCell className="px-4 py-4 font-semibold text-slate-700 dark:text-slate-300">{formatPrice(listing.list_price)}</TableCell>
+                      <td className="px-4 py-4 font-semibold text-slate-700 dark:text-slate-300">
+                        {formatPrice(listing.list_price)}
+                      </td>
                     )}
-                    
                     {columns.includes('status') && (
-                      <TableCell className="px-4 py-4">
+                      <td className="px-4 py-4">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
                           {listing.status || (listing.active ? 'Active' : 'Foreclosures')}
                         </span>
-                      </TableCell>
+                      </td>
                     )}
-                    
                     {columns.includes('score') && (
-                      <TableCell className="px-4 py-4">
+                      <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           {listing.ai_investment_score != null ? (
                             <div className="w-8 h-8 rounded-full border-2 border-indigo-100 dark:border-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30">
@@ -554,94 +539,75 @@ export default function ProspectHoverTable({
                             <span className="text-slate-400 dark:text-slate-500 text-lg">-</span>
                           )}
                         </div>
-                      </TableCell>
+                      </td>
                     )}
-                    
                     {columns.includes('beds') && (
-                      <TableCell className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.beds ?? '-'}</TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.beds ?? '-'}</td>
                     )}
                     {columns.includes('full_baths') && (
-                      <TableCell className="px-4 py-4 text-slate-600 dark:text-slate-400">{formatBaths(listing.full_baths)}</TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{formatBaths(listing.full_baths)}</td>
                     )}
                     {columns.includes('sqft') && (
-                      <TableCell className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.sqft ? listing.sqft.toLocaleString() : '-'}</TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
+                        {listing.sqft ? listing.sqft.toLocaleString() : '-'}
+                      </td>
                     )}
-                    
                     {columns.includes('description') && (
-                      <TableCell>
-                        <p className="text-base">{getDescription(listing)}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={getDescription(listing)}>
+                        {getDescription(listing)}
+                      </td>
                     )}
-                    
                     {columns.includes('agent_name') && (
-                      <TableCell className="whitespace-nowrap">
-                        {" "}
-                        <p className="text-base">{listing.agent_name || '-'}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {listing.agent_name || '-'}
+                      </td>
                     )}
-                    
                     {columns.includes('agent_email') && (
-                      <TableCell className="whitespace-nowrap">
-                        {" "}
-                        <p className="text-base">{listing.agent_email || '-'}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {listing.agent_email || '-'}
+                      </td>
                     )}
-                    
                     {columns.includes('agent_phone') && (
-                      <TableCell className="whitespace-nowrap">
-                        {" "}
-                        <p className="text-base">{listing.agent_phone || '-'}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {listing.agent_phone || '-'}
+                      </td>
                     )}
-                    
                     {columns.includes('agent_phone_2') && (
-                      <TableCell className="whitespace-nowrap">
-                        {" "}
-                        <p className="text-base">{listing.agent_phone_2 || '-'}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {listing.agent_phone_2 || '-'}
+                      </td>
                     )}
-                    
                     {columns.includes('listing_agent_phone_2') && (
-                      <TableCell className="whitespace-nowrap">
-                        {" "}
-                        <p className="text-base">{listing.listing_agent_phone_2 || '-'}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {listing.listing_agent_phone_2 || '-'}
+                      </td>
                     )}
-                    
                     {columns.includes('listing_agent_phone_5') && (
-                      <TableCell className="whitespace-nowrap">
-                        {" "}
-                        <p className="text-base">{listing.listing_agent_phone_5 || '-'}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {listing.listing_agent_phone_5 || '-'}
+                      </td>
                     )}
-                    
                     {columns.includes('year_built') && (
-                      <TableCell className="whitespace-nowrap">
-                        <p className="text-base">{listing.year_built ?? '-'}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.year_built ?? '-'}</td>
                     )}
-                    
                     {columns.includes('last_sale_price') && (
-                      <TableCell className="whitespace-nowrap">
-                        <p className="text-base">{formatPrice(listing.last_sale_price)}</p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 font-medium">
+                        {formatPrice(listing.last_sale_price)}
+                      </td>
                     )}
-                    
                     {columns.includes('last_sale_date') && (
-                      <TableCell className="whitespace-nowrap">
-                        <p className="text-base">
-                          {listing.last_sale_date ? new Date(listing.last_sale_date).toLocaleDateString() : '-'}
-                        </p>
-                      </TableCell>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {listing.last_sale_date ? new Date(listing.last_sale_date).toLocaleDateString() : '-'}
+                      </td>
                     )}
-                    
                     {columns.includes('actions') && (
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
                           {listing.agent_email && (
                             <button
+                              type="button"
                               onClick={() => onAction?.('email', listing)}
-                              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
                               title="Send Email"
                             >
                               <Mail className="h-4 w-4" />
@@ -649,8 +615,9 @@ export default function ProspectHoverTable({
                           )}
                           {listing.agent_phone && (
                             <button
+                              type="button"
                               onClick={() => onAction?.('call', listing)}
-                              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
                               title="Call"
                             >
                               <Phone className="h-4 w-4" />
@@ -658,17 +625,15 @@ export default function ProspectHoverTable({
                           )}
                           {onSave && (
                             <button
+                              type="button"
                               onClick={() => onSave(listing, !isSaved)}
-                              className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                                isSaved ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
-                              }`}
+                              className={cn(
+                                'p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors',
+                                isSaved ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'
+                              )}
                               title={isSaved ? 'Unsave prospect' : 'Save prospect'}
                             >
-                              {isSaved ? (
-                                <BookmarkCheck className="h-4 w-4" />
-                              ) : (
-                                <Bookmark className="h-4 w-4" />
-                              )}
+                              {isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
                             </button>
                           )}
                           <SaveButton
@@ -688,7 +653,8 @@ export default function ProspectHoverTable({
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
-                                className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                type="button"
+                                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
                                 title="More Actions"
                               >
                                 <MoreVertical className="h-4 w-4" />
@@ -706,25 +672,22 @@ export default function ProspectHoverTable({
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                      </TableCell>
+                      </td>
                     )}
-                  </TableRow>
+                  </tr>
                 )
               })
             )}
-          </TableBody>
-            </table>
+          </tbody>
+        </table>
       </div>
-      
       {showPagination && (
         <TailwindAdminPagination
           currentPage={currentPage}
           totalPages={totalPages}
           pageSize={pageSize}
           totalItems={totalCount}
-          onPageChange={(page) => {
-            pagination?.onPageChange(page) || setInternalCurrentPage(page)
-          }}
+          onPageChange={(page) => pagination?.onPageChange(page) ?? setInternalCurrentPage(page)}
           isDark={isDark}
         />
       )}
