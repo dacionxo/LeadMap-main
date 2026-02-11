@@ -47,7 +47,12 @@ interface Mailbox {
 type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
 type FilterFolder = 'inbox' | 'archived' | 'starred'
 
-export default function UniboxContent() {
+interface UniboxContentProps {
+  /** When true, render only the three-pane layout (no Elite header/mesh). For use inside dashboard layout. */
+  embedded?: boolean
+}
+
+export default function UniboxContent({ embedded = false }: UniboxContentProps) {
   const [threads, setThreads] = useState<Thread[]>([])
   const [selectedThread, setSelectedThread] = useState<Thread | null>(null)
   const [threadDetails, setThreadDetails] = useState<any>(null)
@@ -70,6 +75,15 @@ export default function UniboxContent() {
   useEffect(() => {
     fetchThreads()
   }, [selectedMailboxId, statusFilter, folderFilter, searchQuery, page])
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchThreads()
+      if (selectedThread) fetchThreadDetails(selectedThread.id)
+    }
+    window.addEventListener('unibox-refresh', handleRefresh)
+    return () => window.removeEventListener('unibox-refresh', handleRefresh)
+  }, [selectedThread])
 
   const fetchMailboxes = async () => {
     try {
@@ -206,6 +220,88 @@ export default function UniboxContent() {
     return acc
   }, {} as Record<string, number>)
 
+  const threePane = (
+    <>
+      <UniboxSidebar
+        mailboxes={mailboxes}
+        selectedMailboxId={selectedMailboxId}
+        onMailboxSelect={setSelectedMailboxId}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        folderFilter={folderFilter}
+        onFolderFilterChange={setFolderFilter}
+        mailboxUnreadCounts={mailboxUnreadCounts}
+        unreadCount={unreadCount}
+        onCompose={() => setShowComposer(true)}
+      />
+
+      {/* Thread list column */}
+      <section className="w-[400px] flex-shrink-0 flex-col border-r border-slate-200/50 dark:border-slate-700/50 bg-white/20 dark:bg-slate-900/20 backdrop-blur-sm hidden md:flex md:flex-col">
+        <div className="h-20 flex items-center px-6 border-b border-slate-200/50 dark:border-slate-700/50">
+          <div className="relative w-full">
+            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 material-icons-round text-xl pointer-events-none" aria-hidden>search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search threads..."
+              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-unibox-primary/50 focus:border-unibox-primary transition-all placeholder-slate-400 shadow-sm"
+              aria-label="Search threads"
+            />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+          <ThreadList
+            threads={threads}
+            selectedThread={selectedThread}
+            onThreadSelect={handleThreadSelect}
+            loading={loading}
+          />
+        </div>
+      </section>
+
+      {/* Thread view column */}
+      <section className="flex-1 flex flex-col bg-slate-50/50 dark:bg-slate-900/50 relative overflow-hidden min-w-0">
+        {selectedThread ? (
+          <ThreadView
+            thread={threadDetails}
+            loading={loadingThread}
+            onReply={handleReply}
+            onReplyAll={handleReplyAll}
+            onForward={handleForward}
+          />
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
+            <div className="text-center">
+              <span className="material-icons-outlined text-6xl opacity-50 block mb-4" aria-hidden>mail_outline</span>
+              <p className="text-lg font-medium mb-2">No thread selected</p>
+              <p className="text-sm">Select a thread from the list to view conversation</p>
+            </div>
+          </div>
+        )}
+      </section>
+    </>
+  )
+
+  if (embedded) {
+    return (
+      <>
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          {threePane}
+        </div>
+        {showComposer && selectedThread && threadDetails && (
+          <ReplyComposer
+            thread={threadDetails}
+            mode={composerMode}
+            onClose={handleComposerClose}
+            onSend={handleComposerSend}
+            mailbox={selectedThread.mailbox}
+          />
+        )}
+      </>
+    )
+  }
+
   return (
     <div className="unibox-page unibox-mesh min-h-screen text-slate-800 dark:text-slate-200 font-display p-4 md:p-8 flex flex-col items-center justify-center overflow-hidden">
       {/* Elite header */}
@@ -261,64 +357,7 @@ export default function UniboxContent() {
 
       {/* Main glass panel */}
       <main className="w-full max-w-[1760px] h-[85vh] unibox-glass-panel rounded-3xl shadow-unibox-glass flex overflow-hidden relative">
-        <UniboxSidebar
-          mailboxes={mailboxes}
-          selectedMailboxId={selectedMailboxId}
-          onMailboxSelect={setSelectedMailboxId}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          folderFilter={folderFilter}
-          onFolderFilterChange={setFolderFilter}
-          mailboxUnreadCounts={mailboxUnreadCounts}
-          unreadCount={unreadCount}
-          onCompose={() => setShowComposer(true)}
-        />
-
-        {/* Thread list column */}
-        <section className="w-[400px] flex-shrink-0 flex-col border-r border-slate-200/50 dark:border-slate-700/50 bg-white/20 dark:bg-slate-900/20 backdrop-blur-sm hidden md:flex md:flex-col">
-          <div className="h-20 flex items-center px-6 border-b border-slate-200/50 dark:border-slate-700/50">
-            <div className="relative w-full">
-              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 material-icons-round text-xl pointer-events-none" aria-hidden>search</span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search threads..."
-                className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-unibox-primary/50 focus:border-unibox-primary transition-all placeholder-slate-400 shadow-sm"
-                aria-label="Search threads"
-              />
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <ThreadList
-              threads={threads}
-              selectedThread={selectedThread}
-              onThreadSelect={handleThreadSelect}
-              loading={loading}
-            />
-          </div>
-        </section>
-
-        {/* Thread view column */}
-        <section className="flex-1 flex flex-col bg-slate-50/50 dark:bg-slate-900/50 relative overflow-hidden">
-          {selectedThread ? (
-            <ThreadView
-              thread={threadDetails}
-              loading={loadingThread}
-              onReply={handleReply}
-              onReplyAll={handleReplyAll}
-              onForward={handleForward}
-            />
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
-              <div className="text-center">
-                <span className="material-icons-outlined text-6xl opacity-50 block mb-4" aria-hidden>mail_outline</span>
-                <p className="text-lg font-medium mb-2">No thread selected</p>
-                <p className="text-sm">Select a thread from the list to view conversation</p>
-              </div>
-            </div>
-          )}
-        </section>
+        {threePane}
       </main>
 
       {showComposer && selectedThread && threadDetails && (
