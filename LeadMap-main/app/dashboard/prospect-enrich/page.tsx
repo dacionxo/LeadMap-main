@@ -11,6 +11,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { Map as MapIcon } from 'lucide-react'
 import DashboardLayout from '../components/DashboardLayout'
 import { useSidebar } from '../components/SidebarContext'
+import DealsNavbar from '../crm/deals/components/DealsNavbar'
 import AddToCampaignModal from './components/AddToCampaignModal'
 import AddToListModal from './components/AddToListModal'
 import ImportLeadsModal from './components/ImportLeadsModal'
@@ -142,12 +143,18 @@ function ProspectContentInner(props: any) {
 function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
   return (
     <>
-    {/* Elite Property Prospecting Dashboard - mesh gradient + glass container */}
-    <div className="prospect-enrich-page prospect-enrich-mesh min-h-screen font-sans text-slate-800 dark:text-slate-200 p-6 flex items-center justify-center">
-      <div className="prospect-enrich-glass w-full max-w-[1440px] h-[90vh] rounded-[2rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-none border border-white/50 dark:border-slate-700/50 flex overflow-hidden relative">
-        {/* Left Sidebar - Filter Sidebar */}
-        {props.filtersVisible && (
-          <ProspectFilterSidebar
+    {/* Same layout as Deals: fixed full-bleed, DealsNavbar, container with Dashboard border/shadow */}
+    <div className="-mt-[30px]">
+      <div
+        className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
+        style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
+      >
+        <DealsNavbar />
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+          <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-row h-full min-h-0 overflow-hidden relative">
+            {/* Left Sidebar - Filter Sidebar */}
+            {props.filtersVisible && (
+              <ProspectFilterSidebar
             filters={props.apolloFilters}
             onFiltersChange={props.setApolloFilters}
             totalCount={props.totalCount || 0}
@@ -156,11 +163,11 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
             isCollapsed={!props.filtersVisible}
             onToggleCollapse={() => props.setFiltersVisible(!props.filtersVisible)}
             listings={props.allListings || []}
-            isDark={props.isDark}
-          />
-        )}
-        {/* Main content: header + table/map */}
-        <main className="flex-1 flex flex-col h-full bg-white/50 dark:bg-slate-900/50 relative min-w-0 overflow-hidden">
+                isDark={props.isDark}
+              />
+            )}
+            {/* Main content: header + table/map */}
+            <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
           <ProspectSearchHeader
             searchQuery={props.searchTerm || ''}
             onSearchChange={props.setSearchTerm}
@@ -256,7 +263,9 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
           showPagination={true}
             />
             )}
-        </main>
+            </main>
+          </div>
+        </div>
       </div>
         {/* SelectionActionBar: fixed at bottom, centered, not edge-to-edge */}
         {props.selectedIds.size > 0 && (
@@ -1568,7 +1577,7 @@ function ProspectEnrichInner() {
   }
   
   return (
-    <DashboardLayout fullBleed>
+    <DashboardLayout fullBleed hideHeader>
       <div className="flex-1 flex flex-col min-h-0">
         <ProspectContentInner
         activeCategory={activeCategory}
