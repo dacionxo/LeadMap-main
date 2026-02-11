@@ -442,7 +442,11 @@ export default function ProspectHoverTable({
                     </button>
                 </th>
               )}
-              {columns.includes('address') && <th className="px-4 py-4">Address</th>}
+              {columns.includes('address') && (
+                <th className="px-4 py-4 min-w-[260px] max-w-[360px]">
+                  Address
+                </th>
+              )}
               {columns.includes('price') && <th className="px-4 py-4">Price</th>}
               {columns.includes('status') && <th className="px-4 py-4">Status</th>}
               {columns.includes('score') && <th className="px-4 py-4">AI Score</th>}
@@ -504,14 +508,18 @@ export default function ProspectHoverTable({
                       </td>
                     )}
                     {columns.includes('address') && (
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-4 min-w-[260px] max-w-[360px]">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 text-slate-400 dark:text-slate-500">
                             <span className="material-symbols-outlined text-[18px]">location_on</span>
                           </div>
-                          <div>
-                            <div className="font-medium text-slate-900 dark:text-slate-100">{street}</div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{cityStateZip}</div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap truncate">
+                              {street}
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              {cityStateZip}
+                            </div>
                           </div>
                         </div>
                       </td>

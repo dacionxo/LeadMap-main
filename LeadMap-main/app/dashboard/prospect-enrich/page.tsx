@@ -152,11 +152,8 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
       >
         <DealsNavbar />
         <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
-          <div className="prospect-enrich-glass dark:bg-dark/90 border border-white/50 dark:border-gray-700 shadow-glass dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-row h-full min-h-0 overflow-hidden relative">
-            <div
-              className="absolute top-0 left-0 flex flex-row"
-              style={{ width: '117.65%', height: '117.65%', transform: 'scale(0.85)', transformOrigin: 'top left' }}
-            >
+          <div className="prospect-enrich-glass dark:bg-dark/90 border border-slate-200 dark:border-slate-700 shadow-glass dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-row h-full min-h-0 overflow-hidden">
+            <div className="flex flex-row h-full w-full">
             {/* Left Sidebar - Filter Sidebar */}
             {props.filtersVisible && (
               <ProspectFilterSidebar
@@ -414,7 +411,8 @@ function ProspectEnrichInner() {
   const [activeView, setActiveView] = useState<ViewType>('analytics')
   const [selectedFilters, setSelectedFilters] = useState<Set<FilterType>>(new Set<FilterType>(['all']))
   const [apolloFilters, setApolloFilters] = useState<Record<string, any>>({})
-  const [filtersVisible, setFiltersVisible] = useState(false)
+  // Show filters by default when landing on /dashboard/prospect-enrich
+  const [filtersVisible, setFiltersVisible] = useState(true)
   const [viewTypeSelector, setViewTypeSelector] = useState<'table' | 'map'>('table')
   const [sortBy, setSortBy] = useState('relevance')
   const [sortField, setSortField] = useState<SortField>('date')

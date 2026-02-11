@@ -82,7 +82,8 @@ export default function ProspectFilterSidebar({
   viewType = 'total',
   onViewTypeChange
 }: ProspectFilterSidebarProps) {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['price_range', 'location', 'ai_score']))
+  // Start with all groups collapsed so pinned filters show as rows only (no auto dropdown)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [showMoreFilters, setShowMoreFilters] = useState(false)
   const [locationSearch, setLocationSearch] = useState<Record<'city' | 'state' | 'zip_code', string>>({ city: '', state: '', zip_code: '' })
   const [activeLocationTab, setActiveLocationTab] = useState<'city' | 'state' | 'zip_code'>('city')
