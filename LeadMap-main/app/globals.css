@@ -943,6 +943,56 @@
   display: none !important;
 }
 
+/* Elite CRM Lists page - glass panel and scrollbar (1:1 design parity) */
+.lists-glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.lists-page .custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.lists-page .custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.lists-page .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(203, 213, 225, 0.6);
+  border-radius: 4px;
+}
+
+/* Elite CRM List Detail - AI score ring & compact table */
+.list-detail-glass {
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.ai-score-ring {
+  background: conic-gradient(from 180deg, #6366f1 0%, #a855f7 70%, #e2e8f0 70%);
+  border-radius: 50%;
+  padding: 2px;
+  display: inline-flex;
+}
+.ai-score-inner {
+  background: white;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 10px;
+  color: #4f46e5;
+}
+.table-compact th,
+.table-compact td {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
 /* Deals Pipeline - Dashboard-aligned CRM design */
 .bg-mesh {
   background-color: #f8fafc;

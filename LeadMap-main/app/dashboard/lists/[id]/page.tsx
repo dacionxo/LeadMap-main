@@ -1,53 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import DashboardLayout from '../../components/DashboardLayout'
-import VirtualizedListingsTable from '../../prospect-enrich/components/VirtualizedListingsTable'
-import BulkActions from '../components/BulkActions'
-import ApolloPagination from '../../prospect-enrich/components/ApolloPagination'
-import { ArrowLeft, Download, Search, RefreshCw, ChevronLeft, ChevronRight, Users, Building2, Filter, Settings, Plus, MoreVertical, CheckCircle, Phone, Link2, MapPin, Sparkles, ChevronDown, Zap, Workflow, X } from 'lucide-react'
-
-// ============================================================================
-// Stable Column Configuration (Apollo-style)
-// ============================================================================
-// Define columns outside component to ensure stability across pagination
-// These match the Prospect page columns exactly: Address, Price, Status, AI Score, Beds, Baths, Sqft, Text, Agent Name, Agent Email, Agent Phone, Actions
-// Order and column names must match the Prospect page for consistency
-const DEFAULT_PROPERTY_COLUMNS = [
-  'address',      // Address (280px)
-  'price',        // Price (130px)
-  'status',       // Status (120px)
-  'score',        // AI Score (100px)
-  'beds',         // Total Beds (100px)
-  'full_baths',   // Total Baths (110px)
-  'sqft',         // Housing Square Feet (140px)
-  'description',  // Text (200px)
-  'agent_name',   // Agent Name (150px)
-  'agent_email',  // Agent Email (180px)
-  'agent_phone',  // Agent Phone (130px)
-  'agent_phone_2',           // Agent Phone 2 (130px)
-  'listing_agent_phone_2',   // Listing Agent Phone 2 (160px)
-  'listing_agent_phone_5',   // Listing Agent Phone 5 (160px)
-  'year_built',   // Year Built (100px)
-  'last_sale_price',  // Last Sale Price (130px)
-  'last_sale_date',   // Last Sale Date (130px)
-  'actions'       // Actions (130px)
-] as const
-
-// Visible columns - static array at module scope (no hooks needed)
-const VISIBLE_COLUMNS = [...DEFAULT_PROPERTY_COLUMNS]
+import Link from 'next/link'
 
 interface List {
   id: string
   name: string
-  type?: 'people' | 'properties'
-  description?: string
-  created_at?: string
-  updated_at?: string
-  user_id?: string
+  type: 'people' | 'properties'
 }
 
 interface Listing {
@@ -61,38 +22,18 @@ interface Listing {
   full_baths?: number | null
   sqft?: number | null
   status?: string | null
-  active?: boolean
   ai_investment_score?: number | null
+  property_url?: string | null
+  agent_name?: string | null
   agent_email?: string | null
   agent_phone?: string | null
-  agent_name?: string | null
-  agent_phone_2?: string | null
-  listing_agent_phone_2?: string | null
-  listing_agent_phone_5?: string | null
-  text?: string | null
-  year_built?: number | null
-  last_sale_price?: number | null
-  last_sale_date?: string | null
-  created_at?: string
-  property_url?: string | null
-  price_per_sqft?: number | null
-  [key: string]: any
-}
-
-interface ListItemsResponse {
-  listings: Listing[]
-  totalCount: number
-  page?: number // Legacy - use currentPage instead
-  currentPage?: number
-  pageSize: number
-  totalPages: number
-  hasNextPage?: boolean
-  hasPreviousPage?: boolean
-  list: {
-    id: string
-    name: string
-    type: string
-  }
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+  phone?: string | null
+  company?: string | null
+  job_title?: string | null
+  [key: string]: unknown
 }
 
 interface ListPaginatedResponse {
@@ -103,11 +44,51 @@ interface ListPaginatedResponse {
   totalPages: number
   hasNextPage: boolean
   hasPreviousPage: boolean
-  list: {
-    id: string
-    name: string
-    type: string
+  list: { id: string; name: string; type: string }
+}
+
+function AIScoreCell({ score }: { score?: number | null }) {
+  if (score == null || score === 0) {
+    return <span className="text-slate-300 text-sm">-</span>
   }
+  const rounded = Math.round(score)
+  if (rounded >= 90) {
+    return (
+      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 mx-auto">
+        <span className="text-[9px] font-bold text-white">{rounded}</span>
+      </div>
+    )
+  }
+  const deg = (rounded / 100) * 360
+  return (
+    <div
+      className="w-6 h-6 p-[2px] rounded-full inline-flex"
+      style={{
+        background: `conic-gradient(from 180deg, #6366f1 0deg, #a855f7 ${deg}deg, #e2e8f0 ${deg}deg)`,
+      }}
+    >
+      <div className="ai-score-inner flex-1 min-w-0 min-h-0 rounded-full flex items-center justify-center text-[9px] font-bold text-indigo-600">
+        {rounded}
+      </div>
+    </div>
+  )
+}
+
+function StatusBadge({ status }: { status?: string | null }) {
+  if (!status) return null
+  const s = String(status).toLowerCase()
+  const isPending = s.includes('pending')
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-px rounded-full text-[9px] font-bold uppercase tracking-wide leading-tight border ${
+        isPending
+          ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+          : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+      }`}
+    >
+      {status}
+    </span>
+  )
 }
 
 export default function ListDetailPage() {
@@ -115,128 +96,55 @@ export default function ListDetailPage() {
   const router = useRouter()
   const listId = params.id as string
 
-  // Validate listId
-  useEffect(() => {
-    if (listId && typeof listId === 'string') {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('📋 List detail page loaded with listId:', listId)
-      }
-    } else {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('❌ Invalid listId:', listId)
-      }
-      router.push('/dashboard/lists')
-    }
-  }, [listId, router])
-  
   const [list, setList] = useState<List | null>(null)
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [crmContactIds, setCrmContactIds] = useState<Set<string>>(new Set())
   const [sortBy, setSortBy] = useState('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20) // Match Apollo.io default
+  const [pageSize] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
-  const [showViewOptions, setShowViewOptions] = useState(false)
-  const [groupBy, setGroupBy] = useState('type')
-  const viewOptionsRef = useRef<HTMLDivElement>(null)
-  
-  // Handler for page size changes
-  const handlePageSizeChange = useCallback((size: number) => {
-    setPageSize(size)
-    setCurrentPage(1) // Reset to first page when page size changes
-  }, [])
-  
-  const [supabase, setSupabase] = useState<ReturnType<typeof createClientComponentClient> | null>(null)
-  const dataScrollContainerRef = useRef<HTMLDivElement>(null)
-  const headerScrollRef = useRef<HTMLDivElement>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  // Only create Supabase client on client side after mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setSupabase(createClientComponentClient())
-    }
-  }, [])
-
-  // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery)
-      setCurrentPage(1) // Reset to first page on search
+      setCurrentPage(1)
     }, 300)
-
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Fetch list items from API
   const fetchListData = useCallback(async () => {
     if (!listId) return
 
     try {
       setLoading(true)
-      
-      const params = new URLSearchParams({
+      const searchParams = new URLSearchParams({
         page: currentPage.toString(),
         pageSize: pageSize.toString(),
         sortBy,
         sortOrder,
-        ...(debouncedSearch && { search: debouncedSearch })
+        ...(debouncedSearch && { search: debouncedSearch }),
       })
 
-      // Use the new /paginated endpoint which has proper Apollo-style reconstruction
-      const response = await fetch(`/api/lists/${listId}/paginated?${params}`, {
+      const response = await fetch(`/api/lists/${listId}/paginated?${searchParams}`, {
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        headers: { 'Content-Type': 'application/json' },
       })
-      
+
       if (!response.ok) {
-        let errorData: any = {}
-        try {
-          errorData = await response.json()
-        } catch (e) {
-          // If response is not JSON, use status text
-          errorData = { error: response.statusText || 'Unknown error' }
-        }
-        
-        if (process.env.NODE_ENV !== 'production') {
-          console.error('❌ API Error:', { 
-            status: response.status, 
-            statusText: response.statusText,
-            error: errorData.error,
-            details: errorData.details
-          })
-        }
-        
+        const errorData = await response.json().catch(() => ({}))
         if (response.status === 401) {
-          // Unauthorized - redirect to login
-          if (process.env.NODE_ENV !== 'production') {
-            console.error('Unauthorized - redirecting to login')
-          }
           router.push('/login?redirect=' + encodeURIComponent(window.location.pathname))
           return
         }
-        
         if (response.status === 404) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.error('List not found. Details:', errorData)
-          }
-          alert(`List not found: ${errorData.details || errorData.error || 'Unknown error'}`)
           router.push('/dashboard/lists')
           return
-        }
-        
-        // Don't throw error, just set empty state
-        if (process.env.NODE_ENV !== 'production') {
-          console.error('Failed to fetch list items:', errorData.error || 'Unknown error')
         }
         setListings([])
         setTotalCount(0)
@@ -245,1987 +153,688 @@ export default function ListDetailPage() {
       }
 
       const data: ListPaginatedResponse = await response.json()
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('✅ List data fetched (paginated):', { 
-          listId, 
-          listName: data.list?.name, 
-          itemCount: data.count,
-          totalPages: data.totalPages,
-          currentPage: data.page,
-          listingsReceived: data.data?.length || 0
-        })
-      }
-      
       setList({
         id: data.list.id,
         name: data.list.name,
-        type: data.list.type as 'people' | 'properties'
+        type: data.list.type as 'people' | 'properties',
       })
-      
-      // Update pagination metadata (map from paginated response shape)
       setTotalCount(data.count)
       setTotalPages(data.totalPages)
-      
-      // Use server-provided page (it's already clamped)
-      const serverPage = data.page || currentPage
-      
-      // Clamp current page if it's out of range (e.g., items were deleted)
-      if (data.totalPages > 0 && serverPage > data.totalPages) {
-        const clampedPage = data.totalPages
-        console.warn(`⚠️ Current page ${serverPage} exceeds total pages ${data.totalPages}. Clamping to page ${clampedPage}`)
-        setCurrentPage(clampedPage)
-        // Don't set listings here - let the refetch handle it
-        return // Exit early, useEffect will trigger refetch with new currentPage
-      }
-      
-      // Use server-provided page if it differs from current (server has clamped it)
-      if (serverPage !== currentPage) {
-        setCurrentPage(serverPage)
-        return // Exit early, useEffect will trigger refetch with corrected currentPage
-      }
-      
-      // Set listings from data.data (Apollo-style reconstructed rows in membership order)
-      if (data.data && data.data.length > 0) {
-        setListings(data.data)
-      } else if (data.count > 0) {
-        // Empty page but items exist - this shouldn't happen, but handle gracefully
-        console.warn('⚠️ Empty listings array but count > 0. This may indicate a pagination issue.')
-        setListings([])
-      } else {
-        // Truly empty list
-        setListings([])
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Error fetching list data:', err)
-      }
+      setListings(data.data || [])
+    } catch {
       setListings([])
     } finally {
       setLoading(false)
     }
   }, [listId, currentPage, pageSize, sortBy, sortOrder, debouncedSearch, router])
 
-  // Fetch list data when dependencies change
   useEffect(() => {
     fetchListData()
   }, [fetchListData])
 
-  // Close view options dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (viewOptionsRef.current && !viewOptionsRef.current.contains(event.target as Node)) {
-        setShowViewOptions(false)
-      }
-    }
+  const handleRemoveFromList = useCallback(
+    async (listing: Listing, e: React.MouseEvent) => {
+      e.stopPropagation()
+      const isPeople = list?.type === 'people'
+      const itemId = isPeople
+        ? ((listing as any).contact_id || listing.listing_id)
+        : (listing.listing_id || listing.property_url)
+      if (!itemId || !listId) return
+      if (!confirm('Remove this item from the list?')) return
 
-    if (showViewOptions) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside)
-      }
-    }
-  }, [showViewOptions])
-
-  // Fetch CRM contacts for save status
-  useEffect(() => {
-    if (!supabase) return
-    
-    const client = supabase!
-    
-    async function fetchCrmContacts() {
       try {
-        const { data: { user } } = await client.auth.getUser()
-        if (!user) return
+        setDeletingId(String(itemId))
+        const response = await fetch(`/api/lists/${listId}/remove`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            itemId: String(itemId),
+            itemType: isPeople ? 'contact' : 'listing',
+          }),
+        })
 
-        const { data: contacts } = await client
-          .from('contacts')
-          .select('id, source_id')
-          .eq('user_id', user.id)
-          .eq('source', 'listing')
-
-        if (contacts && Array.isArray(contacts)) {
-          const contactIds = new Set<string>()
-          const typedContacts = contacts as Array<{ id?: string; source_id?: string | null }>
-          typedContacts.forEach(contact => {
-            if (contact.source_id) {
-              contactIds.add(contact.source_id)
-            }
-          })
-          setCrmContactIds(contactIds)
+        if (response.ok) {
+          await fetchListData()
+        } else {
+          const err = await response.json().catch(() => ({}))
+          alert(err.error || 'Failed to remove item')
         }
-      } catch (err) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.error('Error fetching CRM contacts:', err)
-        }
+      } catch {
+        alert('Failed to remove item')
+      } finally {
+        setDeletingId(null)
       }
-    }
+    },
+    [listId, list?.type, fetchListData]
+  )
 
-    fetchCrmContacts()
-  }, [supabase])
-
-  // Header scrolls naturally with data since it's inside the scroll container
-  // No manual sync needed - sticky positioning handles vertical stickiness
-
-  const handleExportCSV = useCallback(() => {
+  const handleExportCSV = useCallback(async () => {
     try {
+      const response = await fetch(
+        `/api/lists/${listId}/paginated?page=1&pageSize=1000${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ''}`,
+        { credentials: 'include', headers: { 'Content-Type': 'application/json' } }
+      )
+      if (!response.ok) return
+      const { data: items } = await response.json()
+      const rows = items || []
+
       const headers = [
-        'Listing ID', 'Address', 'City', 'State', 'Zip Code', 'Price', 
-        'Beds', 'Baths', 'Sqft', 'Status', 'Agent Name', 'Agent Email', 
-        'Agent Phone', 'Score', 'Year Built', 'Last Sale Price', 'Last Sale Date'
+        'Listing ID',
+        'Address',
+        'City',
+        'State',
+        'Zip Code',
+        'Price',
+        'Beds',
+        'Baths',
+        'Sqft',
+        'Status',
+        'Agent Name',
+        'Agent Email',
+        'Agent Phone',
       ]
-      
-      const rows = listings.map(listing => [
-        listing.listing_id || '',
-        listing.street || '',
-        listing.city || '',
-        listing.state || '',
-        listing.zip_code || '',
-        listing.list_price?.toString() || '',
-        listing.beds?.toString() || '',
-        listing.full_baths?.toString() || '',
-        listing.sqft?.toString() || '',
-        listing.status || '',
-        listing.agent_name || '',
-        listing.agent_email || '',
-        listing.agent_phone || '',
-        listing.ai_investment_score?.toString() || '',
-        listing.year_built?.toString() || '',
-        listing.last_sale_price?.toString() || '',
-        listing.last_sale_date || ''
+      const csvRows = rows.map((r: Listing) => [
+        r.listing_id || '',
+        r.street || '',
+        r.city || '',
+        r.state || '',
+        r.zip_code || '',
+        r.list_price?.toString() || '',
+        r.beds?.toString() || '',
+        r.full_baths?.toString() || '',
+        r.sqft?.toString() || '',
+        r.status || '',
+        r.agent_name || '',
+        r.agent_email || '',
+        r.agent_phone || '',
       ])
-
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-      ].join('\n')
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const url = window.URL.createObjectURL(blob)
+      const csv =
+        headers.join(',') +
+        '\n' +
+        csvRows
+          .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+          .join('\n')
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = `${(list?.name || 'list').replace(/[^a-z0-9]/gi, '_')}.csv`
-      document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-    } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Error exporting CSV:', err)
-      }
-      alert('Failed to export list')
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Failed to export')
     }
-  }, [listings, list])
+  }, [listId, list?.name, debouncedSearch])
 
-  const handleBulkExportCSV = useCallback(() => {
-    const selectedListings = listings.filter(l => selectedIds.has(l.listing_id))
-    if (selectedListings.length === 0) {
-      alert('Please select items to export')
-      return
-    }
+  const handleSelect = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
 
-    try {
-      const headers = [
-        'Listing ID', 'Address', 'City', 'State', 'Zip Code', 'Price', 
-        'Beds', 'Baths', 'Sqft', 'Status', 'Agent Name', 'Agent Email', 
-        'Agent Phone', 'Score', 'Year Built', 'Last Sale Price', 'Last Sale Date'
-      ]
-      
-      const rows = selectedListings.map(listing => [
-        listing.listing_id || '',
-        listing.street || '',
-        listing.city || '',
-        listing.state || '',
-        listing.zip_code || '',
-        listing.list_price?.toString() || '',
-        listing.beds?.toString() || '',
-        listing.full_baths?.toString() || '',
-        listing.sqft?.toString() || '',
-        listing.status || '',
-        listing.agent_name || '',
-        listing.agent_email || '',
-        listing.agent_phone || '',
-        listing.ai_investment_score?.toString() || '',
-        listing.year_built?.toString() || '',
-        listing.last_sale_price?.toString() || '',
-        listing.last_sale_date || ''
-      ])
-
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-      ].join('\n')
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${(list?.name || 'list').replace(/[^a-z0-9]/gi, '_')}_selected.csv`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-      
+  const handleSelectAll = () => {
+    if (selectedIds.size === listings.length) {
       setSelectedIds(new Set())
-    } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Error exporting CSV:', err)
-      }
-      alert('Failed to export selected items')
-    }
-  }, [listings, selectedIds, list])
-
-  const handleEmailOwners = useCallback(() => {
-    const selectedListings = listings.filter(l => selectedIds.has(l.listing_id))
-    const emails = selectedListings
-      .map(l => l.agent_email)
-      .filter(Boolean)
-      .join(', ')
-    
-    if (emails) {
-      window.location.href = `mailto:${emails}?subject=Regarding your property listing`
     } else {
-      alert('No email addresses found for selected items')
-    }
-  }, [listings, selectedIds])
-
-  const handleBulkRemove = useCallback(async () => {
-    const client = supabase
-    if (!client || selectedIds.size === 0) return
-
-    if (!confirm(`Remove ${selectedIds.size} item(s) from this list?`)) {
-      return
-    }
-
-    try {
-      // Get the list_membership IDs for the selected listings
-      // We need to fetch list_memberships to get their IDs
-      const selectedListingIds = Array.from(selectedIds)
-      const { data: listItems } = await client
-        .from('list_memberships')
-        .select('id')
-        .eq('list_id', listId)
-        .in('item_id', selectedListingIds)
-
-      if (!listItems || listItems.length === 0) {
-        alert('Could not find items to remove')
-        return
-      }
-
-      const typedListItems = listItems as Array<{ id: string }>
-      const itemIds = typedListItems.map(item => item.id)
-
-      const response = await fetch(`/api/lists/${listId}/items/bulk`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'remove',
-          itemIds
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to remove items')
-      }
-
-      setSelectedIds(new Set())
-      await fetchListData()
-    } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Error removing items:', err)
-      }
-      alert('Failed to remove items from list')
-    }
-  }, [selectedIds, listId, supabase, fetchListData])
-
-  const handleListingClick = (listing: Listing) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Listing clicked:', listing)
+      setSelectedIds(new Set(listings.map((l) => l.listing_id || (l as any).contact_id || '').filter(Boolean)))
     }
   }
 
-  const handleSelect = (listingId: string, selected: boolean) => {
-    const newSet = new Set(selectedIds)
-    if (selected) {
-      newSet.add(listingId)
-    } else {
-      newSet.delete(listingId)
-    }
-    setSelectedIds(newSet)
-  }
+  const startRecord = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
+  const endRecord = totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount)
 
-  const handleSave = async (listing: Listing, saved: boolean) => {
-    const client = supabase
-    if (!client) return
-    
-    try {
-      const { data: { user } } = await client.auth.getUser()
-      if (!user) return
-
-      const sourceId = listing.listing_id || listing.property_url
-      if (!sourceId) return
-
-      if (saved) {
-        if (crmContactIds.has(sourceId)) {
-          return
-        }
-
-        const nameParts = listing.agent_name?.split(' ') || []
-        const firstName = nameParts[0] || null
-        const lastName = nameParts.slice(1).join(' ') || 'Property Owner'
-
-        const contactData = {
-          user_id: user.id,
-          first_name: firstName,
-          last_name: lastName,
-          email: listing.agent_email || null,
-          phone: listing.agent_phone || null,
-          address: listing.street || null,
-          city: listing.city || null,
-          state: listing.state || null,
-          zip_code: listing.zip_code || null,
-          source: 'listing',
-          source_id: sourceId,
-          status: 'new',
-          notes: `Saved from list: ${list?.name || 'N/A'}\nList Price: ${listing.list_price ? `$${listing.list_price.toLocaleString()}` : 'N/A'}`
-        }
-
-        const { error } = await (client
-          .from('contacts') as any)
-          .insert([contactData])
-
-        if (!error) {
-          setCrmContactIds(prev => new Set([...Array.from(prev), sourceId]))
-        }
-      } else {
-        const { error } = await client
-          .from('contacts')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('source', 'listing')
-          .eq('source_id', sourceId)
-
-        if (!error) {
-          const newSet = new Set(crmContactIds)
-          newSet.delete(sourceId)
-          setCrmContactIds(newSet)
-        }
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Error saving listing:', err)
-      }
-    }
-  }
-
-  const handleRemoveFromList = async (listing: Listing) => {
-    const client = supabase
-    if (!client) return
-    
-    try {
-      const sourceId = listing.listing_id || listing.property_url
-      if (!sourceId || !listId) return
-
-      const { error } = await client
-        .from('list_memberships')
-        .delete()
-        .eq('list_id', listId)
-        .eq('item_type', 'listing')
-        .eq('item_id', sourceId)
-
-      if (!error) {
-        await fetchListData()
-      } else {
-        if (process.env.NODE_ENV !== 'production') {
-          console.error('Error removing from list:', error)
-        }
-        alert('Failed to remove item from list')
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Error removing from list:', err)
-      }
-      alert('Failed to remove item from list')
-    }
-  }
-
-  const handleSort = (field: string) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortBy(field)
-      setSortOrder('desc')
-    }
-    setCurrentPage(1) // Reset to first page on sort
-  }
-
-  // Don't render until Supabase client is ready (client-side only)
-  if (typeof window === 'undefined' || !supabase) {
-    return (
-      <DashboardLayout>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          color: '#64748b',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-        }}>
-          Loading...
-        </div>
-      </DashboardLayout>
-    )
+  if (!listId) {
+    return null
   }
 
   if (loading && !list) {
     return (
-      <DashboardLayout>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          color: '#64748b',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-        }}>
-          Loading list...
+      <DashboardLayout fullBleed>
+        <div className="flex items-center justify-center h-full bg-mesh">
+          <span className="text-slate-500 text-sm font-medium">Loading list...</span>
         </div>
       </DashboardLayout>
     )
   }
-
-  if (!list) {
-    return (
-      <DashboardLayout>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          color: '#64748b',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-        }}>
-          List not found
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  const listTypeLabel = list.type === 'people' ? 'Prospects' : 'Properties'
-  const listTypeIcon = list.type === 'people' ? Users : Building2
-  const ListIcon = listTypeIcon
-
-  // Display range helpers for "Showing X–Y of Z" text
-  const startRecord = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
-  const endRecord = totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount)
-
-  // Use static columns configuration from module scope (no hooks needed)
-  const visibleColumns = VISIBLE_COLUMNS
 
   return (
-    <DashboardLayout>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        backgroundColor: '#ffffff'
-      }}>
-        {/* Header */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e5e7eb',
-          padding: '24px 32px'
-        }}>
-          {/* Breadcrumbs */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '16px',
-            fontSize: '14px',
-            color: '#6b7280',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-          }}>
-            <span 
-              onClick={() => router.push('/dashboard/lists')}
-              style={{ cursor: 'pointer', color: '#6366f1' }}
-              onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-              onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-            >
-              Lists
-            </span>
-            <span style={{ color: '#9ca3af' }}>›</span>
-            <span style={{ color: '#111827', fontWeight: 500 }}>{list.name}</span>
-          </div>
+    <DashboardLayout fullBleed>
+      <div className="list-detail-page flex flex-col h-full min-h-0 bg-mesh font-sans text-slate-900 antialiased overflow-hidden">
+        <div className="flex-1 px-3 pb-3 overflow-hidden flex flex-col min-h-0">
+          <div className="list-detail-glass bg-white/40 backdrop-blur-2xl border border-white/60 shadow-glass rounded-xl flex flex-col h-full overflow-hidden relative flex-1 min-h-0">
+            <div
+              className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/4 -translate-y-1/4 mix-blend-multiply"
+              aria-hidden
+            />
 
-          {/* Title and Record Count */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '24px',
-            flexWrap: 'wrap',
-            gap: '16px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h1 style={{
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '24px',
-                fontWeight: 600,
-                color: '#111827',
-                margin: 0
-              }}>
-                {list.name}
-              </h1>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '14px',
-                color: '#6b7280',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}>
-                <ListIcon size={16} />
-                <span>{listTypeLabel}</span>
-              </div>
-              <div style={{
-                fontSize: '14px',
-                color: '#6b7280',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}>
-                {totalCount} {totalCount === 1 ? 'record' : 'records'}
-              </div>
-            </div>
-          </div>
-
-          {/* Action Bar - Apollo Style (Reorganized) */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-          }}>
-            {/* First Row: Left side controls and search */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            flexWrap: 'wrap'
-          }}>
-              {/* Left side controls */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#374151',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}
-            >
-              Default view
-                  <ChevronDown size={14} />
-            </button>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#374151',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}
-            >
-              <Filter size={14} />
-              Show Filters
-            </button>
-              </div>
-              
-              {/* Search bar */}
-            <div style={{ position: 'relative', flex: 1, maxWidth: '300px' }}>
-              <Search style={{
-                position: 'absolute',
-                left: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '16px',
-                height: '16px',
-                color: '#9ca3af',
-                pointerEvents: 'none'
-              }} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search"
-                style={{
-                  width: '100%',
-                  paddingLeft: '36px',
-                  paddingRight: '12px',
-                  paddingTop: '6px',
-                  paddingBottom: '6px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                }}
-              />
-            </div>
-            </div>
-
-            {/* Second Row: Right side action buttons */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-              gap: '8px',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-start'
-            }}>
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                handleExportCSV()
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#374151',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}
-              title="Export to CSV"
-            >
-              <Download size={14} />
-              Export
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                alert('Import functionality coming soon')
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#374151',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}
-              title="Import records"
-            >
-              Import
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                alert('Add records functionality coming soon')
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: '#fbbf24',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#ffffff',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f59e0b'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#fbbf24'
-                  e.currentTarget.style.transform = 'translateY(0)'
-              }}
-              title="Add records to list"
-            >
-              <Plus size={14} />
-              Add records to list
-            </button>
-            <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  alert('Research with AI functionality coming soon')
-                }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                  backgroundColor: '#8b5cf6',
-                  border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#ffffff',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  transition: 'all 0.2s'
-              }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#7c3aed'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#8b5cf6'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                }}
-                title="Research with AI"
-              >
-                <Sparkles size={14} />
-              Research with AI
-            </button>
-            <button
-              style={{
-                padding: '6px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-                title="More options"
-            >
-              <MoreVertical size={16} color="#6b7280" />
-            </button>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#374151',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}
-            >
-                <Zap size={14} />
-              Create workflow
-            </button>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#374151',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}
-            >
-              Save as new view
-            </button>
-              <div style={{ position: 'relative' }}>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#374151',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}
-            >
-                  ↑↓ {listTypeLabel} Auto-Score
-                  <ChevronDown size={14} />
-            </button>
-              </div>
-            <div style={{ position: 'relative' }} ref={viewOptionsRef}>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setShowViewOptions(!showViewOptions)
-                }}
-                style={{
-                  padding: '6px',
-                  backgroundColor: showViewOptions ? '#f3f4f6' : '#ffffff',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'background-color 0.15s'
-                }}
-                title="View options"
-              >
-                <Settings size={16} color="#6b7280" />
-              </button>
-              
-              {showViewOptions && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    top: '100%',
-                    marginTop: '8px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                    zIndex: 1000,
-                    width: '320px',
-                    minWidth: '280px',
-                    padding: 0,
-                    overflow: 'hidden'
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Header */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '16px 20px',
-                    borderBottom: '1px solid #e5e7eb'
-                  }}>
-                    <h3 style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: '#111827',
-                      margin: 0,
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      View options
-                    </h3>
+            <header className="shrink-0 z-20 px-4 pt-4 pb-2">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                  <Link
+                    href="/dashboard/lists"
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Lists
+                  </Link>
+                  <span className="material-symbols-outlined text-[10px] text-slate-400">
+                    chevron_right
+                  </span>
+                  <span className="text-slate-800">{list?.name ?? '…'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
+                      {list?.name ?? '…'}
+                    </h1>
+                    <span className="px-1.5 py-px rounded-full bg-slate-100 text-slate-500 text-[9px] font-bold border border-slate-200 uppercase tracking-wide">
+                      {totalCount} records
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
                     <button
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        setShowViewOptions(false)
-                      }}
-                      style={{
-                        padding: '4px',
-                        border: 'none',
-                        background: 'transparent',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '4px',
-                        color: '#6b7280'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f3f4f6'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
+                      type="button"
+                      onClick={() => {}}
+                      className="h-7 px-2.5 rounded bg-white/60 border border-white shadow-sm-soft text-slate-600 text-[11px] font-semibold hover:bg-white hover:text-blue-600 hover:shadow-md transition-all flex items-center gap-1 backdrop-blur-sm"
+                      aria-label="Import"
                     >
-                      <X size={18} />
+                      <span className="material-symbols-outlined text-[14px]">upload_file</span>
+                      Import
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportCSV}
+                      className="h-7 px-2.5 rounded bg-white/60 border border-white shadow-sm-soft text-slate-600 text-[11px] font-semibold hover:bg-white hover:text-blue-600 hover:shadow-md transition-all flex items-center gap-1 backdrop-blur-sm"
+                      aria-label="Export"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">download</span>
+                      Export
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {}}
+                      className="bg-blue-600 hover:bg-blue-700 text-white h-7 px-2.5 rounded text-[11px] font-bold shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all flex items-center gap-1"
+                      aria-label="Add records"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">add</span>
+                      Add records
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {}}
+                      className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white h-7 px-2.5 rounded text-[11px] font-bold shadow-md shadow-violet-500/20 hover:shadow-violet-500/30 transition-all flex items-center gap-1"
+                      aria-label="Research with AI"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                      Research with AI
+                    </button>
+                    <button
+                      type="button"
+                      className="w-7 h-7 flex items-center justify-center rounded bg-white/60 border border-white shadow-sm-soft text-slate-500 hover:text-slate-800 hover:bg-white transition-all"
+                      aria-label="More options"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">more_vert</span>
                     </button>
                   </div>
-                  
-                  {/* Content */}
-                  <div style={{
-                    padding: '20px'
-                  }}>
-                    {/* Group by section */}
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '13px',
-                        fontWeight: 400,
-                        color: '#6b7280',
-                        marginBottom: '8px',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                      }}>
-                        Group by
-                      </label>
-                      <div style={{ position: 'relative' }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '10px 12px',
-                          border: '1px solid #3b82f6',
-                          borderRadius: '6px',
-                          backgroundColor: '#ffffff',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                        }}>
-                          <div style={{
-                            width: '16px',
-                            height: '16px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}>
-                            <div style={{
-                              width: '12px',
-                              height: '12px',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '2px'
-                            }}>
-                              <div style={{
-                                width: '100%',
-                                height: '2px',
-                                backgroundColor: '#6b7280',
-                                borderRadius: '1px'
-                              }} />
-                              <div style={{
-                                width: '80%',
-                                height: '2px',
-                                backgroundColor: '#6b7280',
-                                borderRadius: '1px'
-                              }} />
-                              <div style={{
-                                width: '60%',
-                                height: '2px',
-                                backgroundColor: '#6b7280',
-                                borderRadius: '1px'
-                              }} />
-                            </div>
-                          </div>
-                          <span style={{
-                            flex: 1,
-                            color: '#374151',
-                            fontSize: '14px'
-                          }}>
-                            Group By
-                          </span>
-                          <select
-                            value={groupBy}
-                            onChange={(e) => setGroupBy(e.target.value)}
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              opacity: 0,
-                              cursor: 'pointer',
-                              fontSize: '14px'
-                            }}
-                          >
-                            <option value="none">None</option>
-                            <option value="type">Type</option>
-                            <option value="status">Status</option>
-                            <option value="city">City</option>
-                            <option value="state">State</option>
-                            <option value="agent_name">Agent Name</option>
-                          </select>
-                          <span style={{
-                            color: '#374151',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            marginLeft: 'auto'
-                          }}>
-                            {groupBy === 'type' ? 'Type' : 
-                             groupBy === 'status' ? 'Status' :
-                             groupBy === 'city' ? 'City' :
-                             groupBy === 'state' ? 'State' :
-                             groupBy === 'agent_name' ? 'Agent Name' : 'None'}
-                          </span>
-                          <ChevronDown size={16} color="#6b7280" style={{ flexShrink: 0 }} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              )}
-            </div>
-            </div>
-          </div>
-        </div>
+              </div>
+            </header>
 
-        {/* Content Section */}
-        <div style={{
-          flex: 1,
-          padding: '24px 32px',
-          backgroundColor: '#ffffff',
-          position: 'relative',
-          zIndex: 1,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          paddingBottom: selectedIds.size > 0 ? '100px' : '24px'
-        }}>
-          {loading ? (
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '8px',
-              padding: '64px',
-              textAlign: 'center',
-              border: '1px solid #e5e7eb'
-            }}>
-              <div style={{
-                color: '#111827',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '16px',
-                fontWeight: 500
-              }}>
-                Loading list items...
-              </div>
-            </div>
-          ) : listings.length === 0 ? (
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '8px',
-              padding: '64px',
-              textAlign: 'center',
-              border: '1px solid #e5e7eb'
-            }}>
-              <div style={{
-                color: '#111827',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '16px',
-                fontWeight: 500,
-                marginBottom: '8px'
-              }}>
-                {searchQuery ? 'No items match your search' : 'No items in this list'}
-              </div>
-              <div style={{
-                color: '#6b7280',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '14px'
-              }}>
-                {searchQuery ? 'Try adjusting your search terms' : 'Add items to this list to get started'}
-              </div>
-            </div>
-          ) : list.type === 'people' ? (
-            /* People/Prospects Table - Apollo Style */
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              backgroundColor: '#ffffff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              overflow: 'hidden'
-            }}>
-              {/* Table */}
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', width: '40px' }}>
-                      <input type="checkbox" />
-                    </th>
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      NAME
-                    </th>
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      JOB TITLE
-                    </th>
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      COMPANY
-                    </th>
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      EMAILS
-                    </th>
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      PHONE NUMBERS
-                    </th>
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      ACTIONS
-                    </th>
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      LINKS
-                    </th>
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      LOCATION
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listings.map((listing: any) => {
-                    // Handle both contact and listing data
-                    const name = listing.agent_name || listing.first_name && listing.last_name 
-                      ? `${listing.first_name} ${listing.last_name}` 
-                      : listing.first_name || listing.last_name || 'Unknown'
-                    const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-                    const email = listing.agent_email || listing.email || null
-                    const phone = listing.agent_phone || listing.phone || null
-                    const company = listing.company || '—'
-                    const jobTitle = listing.job_title || listing.title || '—'
-                    const location = [listing.city, listing.state].filter(Boolean).join(', ') || '—'
-                    
-                    return (
-                      <tr
-                        key={listing.listing_id}
-                        style={{
-                          borderBottom: '1px solid #e5e7eb',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.15s'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f9fafb'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#ffffff'
-                        }}
-                      >
-                        <td style={{ padding: '12px 16px' }}>
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(listing.listing_id)}
-                            onChange={(e) => {
-                              e.stopPropagation()
-                              handleSelect(listing.listing_id, e.target.checked)
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '50%',
-                              backgroundColor: '#6366f1',
-                              color: '#ffffff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                              flexShrink: 0
-                            }}>
-                              {initials}
-                            </div>
-                            <span style={{
-                              fontSize: '14px',
-                              fontWeight: 500,
-                              color: '#111827',
-                              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                            }}>
-                              {name}
-                            </span>
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280' }}>
-                          {jobTitle}
-                        </td>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280' }}>
-                          {company}
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          {email ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '14px', color: '#111827' }}>{email}</span>
-                              <CheckCircle size={14} color="#10b981" />
-                            </div>
-                          ) : (
-                            <span style={{ fontSize: '14px', color: '#9ca3af' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          {phone ? (
-                            <span style={{ fontSize: '14px', color: '#111827' }}>{phone}</span>
-                          ) : (
-                            <span style={{ fontSize: '14px', color: '#9ca3af' }}>Request phone number</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <button
-                              style={{
-                                padding: '4px',
-                                border: 'none',
-                                background: 'transparent',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <CheckCircle size={16} color="#10b981" />
-                            </button>
-                            <button
-                              style={{
-                                padding: '4px',
-                                border: 'none',
-                                background: 'transparent',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <Phone size={16} color="#6b7280" />
-                            </button>
-                            <button
-                              style={{
-                                padding: '4px',
-                                border: 'none',
-                                background: 'transparent',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <MoreVertical size={16} color="#6b7280" />
-                            </button>
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <Link2 size={16} color="#6b7280" />
-                        </td>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280' }}>
-                          {location}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-              
-              {/* Add Row Button */}
-              <div style={{
-                padding: '12px 16px',
-                borderTop: '1px solid #e5e7eb',
-                backgroundColor: '#f9fafb'
-              }}>
-                <button
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 12px',
-                    backgroundColor: '#ffffff',
-                    border: '1px dashed #d1d5db',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    color: '#6b7280',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                  }}
-                >
-                  <Plus size={14} />
-                  Add a row
-                </button>
+            <main className="flex-1 overflow-auto custom-scrollbar px-4 pb-4 flex flex-col min-h-0">
+              <div className="flex items-center justify-between gap-3 mb-2 bg-white/50 backdrop-blur-md px-1.5 py-1 rounded-lg border border-white/50 shadow-sm-soft">
+                <div className="flex-1 flex items-center relative group max-w-xs">
+                  <span
+                    className="absolute left-2 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[16px]"
+                    aria-hidden
+                  >
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={
+                      list?.type === 'properties'
+                        ? 'Search properties...'
+                        : 'Search contacts...'
+                    }
+                    className="w-full pl-8 pr-3 py-0.5 bg-transparent border-0 text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 h-7"
+                    aria-label="Search"
+                  />
+                </div>
+                <div className="h-4 w-px bg-slate-200 mx-1" aria-hidden />
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                  >
+                    Status: Any
+                    <span className="material-symbols-outlined text-[12px] text-slate-400">
+                      expand_more
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                  >
+                    Price Range
+                    <span className="material-symbols-outlined text-[12px] text-slate-400">
+                      expand_more
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 px-2 py-0.5 h-6 bg-white border border-slate-100 shadow-sm rounded text-[10px] font-medium text-slate-600 hover:border-slate-300 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[12px] text-slate-500">
+                      filter_list
+                    </span>
+                    More Filters
+                  </button>
+                </div>
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  borderTop: '1px solid #e5e7eb',
-                  backgroundColor: '#ffffff'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px'
-                  }}>
-                    <div style={{
-                      fontSize: '14px',
-                      color: '#6b7280',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                    }}>
-                      {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount}
+              <div className="bg-white/70 backdrop-blur-md border border-white rounded-lg shadow-sm-soft overflow-hidden flex-1 flex flex-col relative min-h-0">
+                <div className="overflow-auto custom-scrollbar flex-1 pb-10 min-h-0">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-16">
+                      <span className="text-slate-500 text-sm font-medium">
+                        Loading...
+                      </span>
                     </div>
-                    <select
-                      value={pageSize}
-                      onChange={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        const newPageSize = Number(e.target.value)
-                        if (newPageSize > 0 && newPageSize <= 100) {
-                          handlePageSizeChange(newPageSize)
-                        }
-                      }}
-                      style={{
-                        padding: '6px 8px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        cursor: 'pointer',
-                        backgroundColor: '#ffffff'
-                      }}
-                      aria-label="Items per page"
+                  ) : listings.length === 0 ? (
+                    <div className="flex items-center justify-center py-16">
+                      <span className="text-slate-500 text-sm font-medium">
+                        {searchQuery ? 'No items match your search' : 'No items in this list'}
+                      </span>
+                    </div>
+                  ) : list?.type === 'properties' ? (
+                    <table
+                      className="w-full text-left text-sm text-slate-600 table-fixed table-compact"
+                      role="grid"
                     >
-                      <option value={10}>10 per page</option>
-                      <option value={20}>20 per page</option>
-                      <option value={50}>50 per page</option>
-                      <option value={100}>100 per page</option>
-                    </select>
+                      <thead className="text-[10px] font-semibold text-slate-400 uppercase bg-slate-50/90 border-b border-slate-200/60 tracking-wider sticky top-0 backdrop-blur-md z-10">
+                        <tr>
+                          <th
+                            className="pl-3 pr-1 py-1.5 w-8 font-semibold align-middle"
+                            scope="col"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={
+                                listings.length > 0 &&
+                                selectedIds.size === listings.length
+                              }
+                              onChange={handleSelectAll}
+                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
+                              aria-label="Select all"
+                            />
+                          </th>
+                          <th
+                            className="px-2 py-1.5 font-semibold align-middle w-[35%]"
+                            scope="col"
+                          >
+                            Address
+                          </th>
+                          <th
+                            className="px-2 py-1.5 font-semibold w-24 align-middle"
+                            scope="col"
+                          >
+                            Price
+                          </th>
+                          <th
+                            className="px-2 py-1.5 font-semibold w-20 align-middle"
+                            scope="col"
+                          >
+                            Status
+                          </th>
+                          <th
+                            className="px-2 py-1.5 font-semibold w-20 text-center align-middle"
+                            scope="col"
+                          >
+                            AI Score
+                          </th>
+                          <th
+                            className="px-1 py-1.5 font-semibold w-12 text-center align-middle"
+                            scope="col"
+                          >
+                            Beds
+                          </th>
+                          <th
+                            className="px-1 py-1.5 font-semibold w-12 text-center align-middle"
+                            scope="col"
+                          >
+                            Baths
+                          </th>
+                          <th
+                            className="px-2 py-1.5 font-semibold w-20 text-right align-middle"
+                            scope="col"
+                          >
+                            Sqft
+                          </th>
+                          <th
+                            className="px-2 py-1.5 font-semibold w-16 text-right align-middle"
+                            scope="col"
+                          >
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100/80 text-[13px]">
+                        {listings.map((listing) => {
+                          const id =
+                            listing.listing_id || listing.property_url || ''
+                          const address = listing.street || '—'
+                          const cityStateZip = [listing.city, listing.state, listing.zip_code]
+                            .filter(Boolean)
+                            .join(', ')
+                          const isDeleting = deletingId === id
+
+                          return (
+                            <tr
+                              key={id}
+                              className="bg-white/40 hover:bg-blue-50/40 transition-colors duration-150 group"
+                            >
+                              <td className="pl-3 pr-1 align-middle">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedIds.has(id)}
+                                  onChange={(e) =>
+                                    handleSelect(id, e.target.checked)
+                                  }
+                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </td>
+                              <td className="px-2 align-middle">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-0.5 rounded-full bg-slate-100 shrink-0">
+                                    <span className="material-symbols-outlined text-slate-400 text-[12px]">
+                                      location_on
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <div className="flex items-center gap-1.5 leading-none mb-0.5">
+                                      <span className="font-semibold text-slate-800 text-xs truncate">
+                                        {address}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 leading-none">
+                                      <span className="text-[10px] text-slate-500 truncate">
+                                        {cityStateZip || '—'}
+                                      </span>
+                                      {listing.property_url && (
+                                        <a
+                                          href={listing.property_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-[9px] font-medium text-blue-600 hover:underline inline-flex items-center gap-px opacity-0 group-hover:opacity-100 transition-opacity"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <span className="material-symbols-outlined text-[9px]">
+                                            open_in_new
+                                          </span>
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-2 align-middle text-xs font-semibold text-slate-700">
+                                {listing.list_price != null
+                                  ? `$${Number(listing.list_price).toLocaleString()}`
+                                  : '—'}
+                              </td>
+                              <td className="px-2 align-middle">
+                                <StatusBadge status={listing.status} />
+                              </td>
+                              <td className="px-2 text-center align-middle">
+                                <AIScoreCell score={listing.ai_investment_score} />
+                              </td>
+                              <td className="px-1 text-center align-middle text-slate-600">
+                                {listing.beds ?? '—'}
+                              </td>
+                              <td className="px-1 text-center align-middle text-slate-600">
+                                {listing.full_baths ?? '—'}
+                              </td>
+                              <td className="px-2 text-right align-middle text-slate-600 tabular-nums">
+                                {listing.sqft != null
+                                  ? Number(listing.sqft).toLocaleString()
+                                  : '—'}
+                              </td>
+                              <td className="px-2 text-right align-middle">
+                                <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <button
+                                    type="button"
+                                    className="w-5 h-5 flex items-center justify-center hover:text-blue-600 hover:bg-blue-50/80 rounded transition-colors"
+                                    title="Edit"
+                                    aria-label="Edit"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <span className="material-symbols-outlined text-[12px]">
+                                      edit
+                                    </span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) =>
+                                      handleRemoveFromList(listing, e)
+                                    }
+                                    disabled={isDeleting}
+                                    className="w-5 h-5 flex items-center justify-center hover:text-red-600 hover:bg-red-50/80 rounded transition-colors disabled:opacity-50"
+                                    aria-label="Delete"
+                                  >
+                                    <span className="material-symbols-outlined text-[12px]">
+                                      delete
+                                    </span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <table
+                      className="w-full text-left text-sm text-slate-600 table-fixed table-compact"
+                      role="grid"
+                    >
+                      <thead className="text-[10px] font-semibold text-slate-400 uppercase bg-slate-50/90 border-b border-slate-200/60 tracking-wider sticky top-0 backdrop-blur-md z-10">
+                        <tr>
+                          <th className="pl-3 pr-1 py-1.5 w-8 font-semibold align-middle" scope="col">
+                            <input
+                              type="checkbox"
+                              checked={
+                                listings.length > 0 &&
+                                selectedIds.size === listings.length
+                              }
+                              onChange={handleSelectAll}
+                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
+                              aria-label="Select all"
+                            />
+                          </th>
+                          <th className="px-2 py-1.5 font-semibold align-middle w-[30%]" scope="col">
+                            Name
+                          </th>
+                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
+                            Job Title
+                          </th>
+                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
+                            Company
+                          </th>
+                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
+                            Email
+                          </th>
+                          <th className="px-2 py-1.5 font-semibold align-middle" scope="col">
+                            Phone
+                          </th>
+                          <th className="px-2 py-1.5 font-semibold w-16 text-right align-middle" scope="col">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100/80 text-[13px]">
+                        {listings.map((item, idx) => {
+                          const id =
+                            (item as any).contact_id ||
+                            item.listing_id ||
+                            item.agent_email ||
+                            `row-${idx}`
+                          const name =
+                            item.agent_name ||
+                            [item.first_name, item.last_name]
+                              .filter(Boolean)
+                              .join(' ')
+                              .trim() ||
+                            '—'
+                          const isDeleting = deletingId === id
+
+                          return (
+                            <tr
+                              key={id}
+                              className="bg-white/40 hover:bg-blue-50/40 transition-colors duration-150 group"
+                            >
+                              <td className="pl-3 pr-1 align-middle">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedIds.has(id)}
+                                  onChange={(e) =>
+                                    handleSelect(id, e.target.checked)
+                                  }
+                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3 h-3 cursor-pointer"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </td>
+                              <td className="px-2 align-middle">
+                                <span className="font-semibold text-slate-800 text-xs">
+                                  {name}
+                                </span>
+                              </td>
+                              <td className="px-2 align-middle text-slate-600 text-xs">
+                                {item.job_title || '—'}
+                              </td>
+                              <td className="px-2 align-middle text-slate-600 text-xs">
+                                {item.company || '—'}
+                              </td>
+                              <td className="px-2 align-middle text-slate-600 text-xs truncate max-w-[180px]">
+                                {item.agent_email || item.email || '—'}
+                              </td>
+                              <td className="px-2 align-middle text-slate-600 text-xs">
+                                {item.agent_phone || item.phone || '—'}
+                              </td>
+                              <td className="px-2 text-right align-middle">
+                                <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <button
+                                    type="button"
+                                    className="w-5 h-5 flex items-center justify-center hover:text-red-600 hover:bg-red-50/80 rounded transition-colors disabled:opacity-50"
+                                    onClick={(e) =>
+                                      handleRemoveFromList(item, e)
+                                    }
+                                    disabled={isDeleting}
+                                    aria-label="Delete"
+                                  >
+                                    <span className="material-symbols-outlined text-[12px]">
+                                      delete
+                                    </span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-3 py-1.5 flex items-center justify-between z-20">
+                  <div className="text-[10px] text-slate-500 font-medium">
+                    Showing{' '}
+                    <span className="font-bold text-slate-800">{startRecord}</span>{' '}
+                    -{' '}
+                    <span className="font-bold text-slate-800">{endRecord}</span>{' '}
+                    of <span className="font-bold text-slate-800">{totalCount}</span>{' '}
+                    records
                   </div>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
+                  <div className="flex items-center gap-0.5">
                     <button
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        if (currentPage > 1) {
-                          setCurrentPage(prev => Math.max(1, prev - 1))
-                        }
-                      }}
-                      style={{
-                        padding: '6px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        backgroundColor: currentPage === 1 ? '#f3f4f6' : '#ffffff',
-                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                        opacity: currentPage === 1 ? 0.5 : 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        pointerEvents: currentPage === 1 ? 'none' : 'auto'
-                      }}
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                      className="w-5 h-5 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                       aria-label="Previous page"
                     >
-                      <ChevronLeft size={16} />
+                      <span className="material-symbols-outlined text-[12px]">
+                        chevron_left
+                      </span>
                     </button>
-                    <select
-                      value={currentPage}
-                      onChange={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        const newPage = Number(e.target.value)
-                        if (newPage >= 1 && newPage <= totalPages) {
-                          setCurrentPage(newPage)
-                        }
-                      }}
-                      style={{
-                        padding: '6px 8px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        cursor: 'pointer',
-                        backgroundColor: '#ffffff'
-                      }}
-                      aria-label="Select page"
-                    >
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                        <option key={page} value={page}>{page}</option>
-                      ))}
-                    </select>
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      const pageNum =
+                        totalPages <= 5
+                          ? i + 1
+                          : currentPage <= 3
+                            ? i + 1
+                            : currentPage >= totalPages - 2
+                              ? totalPages - 4 + i
+                              : currentPage - 2 + i
+                      if (pageNum < 1) return null
+                      const isActive = pageNum === currentPage
+                      return (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-5 h-5 flex items-center justify-center rounded text-[9px] font-bold transition-colors ${
+                            isActive
+                              ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      )
+                    })}
+                    {totalPages > 5 && (
+                      <span className="w-5 h-5 flex items-center justify-center text-slate-400 text-[9px]">
+                        ...
+                      </span>
+                    )}
+                    {totalPages > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage(totalPages)}
+                        className={`w-5 h-5 flex items-center justify-center rounded text-[9px] font-bold transition-colors ${
+                          currentPage === totalPages
+                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                            : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                        }`}
+                      >
+                        {totalPages}
+                      </button>
+                    )}
                     <button
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        if (currentPage < totalPages) {
-                          setCurrentPage(prev => Math.min(totalPages, prev + 1))
-                        }
-                      }}
-                      style={{
-                        padding: '6px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        backgroundColor: currentPage === totalPages ? '#f3f4f6' : '#ffffff',
-                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                        opacity: currentPage === totalPages ? 0.5 : 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        pointerEvents: currentPage === totalPages ? 'none' : 'auto'
-                      }}
+                      type="button"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage >= totalPages}
+                      className="w-5 h-5 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm disabled:opacity-50 disabled:pointer-events-none"
                       aria-label="Next page"
                     >
-                      <ChevronRight size={16} />
+                      <span className="material-symbols-outlined text-[12px]">
+                        chevron_right
+                      </span>
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
-          ) : (
-            /* Properties Table - Apollo Style with VirtualizedListingsTable */
-            <div
-              style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-                padding: '16px 32px 24px',
-                gap: '12px',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Bulk actions + range text (Apollo-style) */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                  marginBottom: '8px',
-                }}
-              >
-                <BulkActions
-                  selectedCount={selectedIds.size}
-                  onEmailOwners={handleEmailOwners}
-                  onExportCSV={handleBulkExportCSV}
-                  onRemoveFromList={handleBulkRemove}
-                />
-
-                <div
-                  style={{
-                    fontSize: '13px',
-                    color: '#6b7280',
-                    fontFamily:
-                      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  }}
-                >
-                  {totalCount > 0
-                    ? `Showing ${startRecord.toLocaleString()}–${endRecord.toLocaleString()} of ${totalCount.toLocaleString()} records`
-                    : 'No records to display'}
-                </div>
               </div>
-
-              {/* Scrollable virtualized table */}
-              <div
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-              borderRadius: '8px',
-                  border: '1px solid #e5e7eb',
-                  backgroundColor: '#f9fafb',
-                  overflow: 'hidden',
-                }}
-              >
-                {/* Scrollable container - header is inside so it scrolls horizontally with data */}
-                <div
-                  ref={dataScrollContainerRef}
-                  style={{
-                    flex: 1,
-                    overflowX: 'auto',
-                    overflowY: 'auto',
-                    position: 'relative',
-                  }}
-                >
-                  {/* Sticky Header Row - INSIDE scroll container, scrolls horizontally with data */}
-              <div 
-                ref={headerScrollRef}
-                style={{
-                  display: 'flex',
-                  width: 'max-content',
-                  minWidth: '100%',
-                  padding: '16px 18px',
-                  borderBottom: '1px solid #e5e7eb',
-                  backgroundColor: '#f9fafb',
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 10,
-                }}
-              >
-                  {/* Checkbox column */}
-                  <div style={{ 
-                    marginRight: '16px', 
-                    flexShrink: 0, 
-                    width: '18px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }} />
-                  {/* Address */}
-                  <div style={{ 
-                    flex: '0 0 280px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Address
-                  </span>
-                </div>
-                  {/* Price */}
-                  <div style={{ 
-                    flex: '0 0 130px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Price
-                  </span>
-                </div>
-                  {/* Status */}
-                  <div style={{ 
-                    flex: '0 0 120px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Status
-                  </span>
-                </div>
-                  {/* AI Score */}
-                  <div style={{ 
-                    flex: '0 0 100px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      AI Score
-                  </span>
-                </div>
-                  {/* Total Beds */}
-                  <div style={{ 
-                    flex: '0 0 100px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Total Beds
-                  </span>
-                </div>
-                  {/* Total Baths */}
-                  <div style={{ 
-                    flex: '0 0 110px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Total Baths
-                  </span>
-                </div>
-                  {/* Housing Square Feet */}
-                  <div style={{ 
-                    flex: '0 0 140px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Housing Square Feet
-                  </span>
-                </div>
-                  {/* Text */}
-                  <div style={{ 
-                    flex: '0 0 200px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    Text
-                  </span>
-                </div>
-                  {/* Agent Name */}
-                  <div style={{ 
-                    flex: '0 0 150px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Agent Name
-                  </span>
-                </div>
-                  {/* Agent Email */}
-                  <div style={{ 
-                    flex: '0 0 180px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Agent Email
-                  </span>
-                </div>
-                  {/* Agent Phone */}
-                  <div style={{ 
-                    flex: '0 0 130px', 
-                    marginRight: '24px',
-                    minWidth: 0
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Agent Phone
-                  </span>
-                </div>
-                  {/* Agent Phone 2 */}
-                  {visibleColumns.includes('agent_phone_2') && (
-                    <div style={{ 
-                      flex: '0 0 130px', 
-                      marginRight: '24px',
-                      minWidth: 0
-                    }}>
-                    <span style={{
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>
-                        Agent Phone 2
-                    </span>
-                  </div>
-                  )}
-                  {/* Listing Agent Phone 2 */}
-                  {visibleColumns.includes('listing_agent_phone_2') && (
-                    <div style={{ 
-                      flex: '0 0 160px', 
-                      marginRight: '24px',
-                      minWidth: 0
-                    }}>
-                    <span style={{
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>
-                        Listing Agent Phone 2
-                    </span>
-                  </div>
-                  )}
-                  {/* Listing Agent Phone 5 */}
-                  {visibleColumns.includes('listing_agent_phone_5') && (
-                    <div style={{ 
-                      flex: '0 0 160px', 
-                      marginRight: '24px',
-                      minWidth: 0
-                    }}>
-                    <span style={{
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>
-                        Listing Agent Phone 5
-                    </span>
-                  </div>
-                  )}
-                  {/* Year Built */}
-                  {visibleColumns.includes('year_built') && (
-                    <div style={{ 
-                      flex: '0 0 100px', 
-                      marginRight: '24px',
-                      minWidth: 0
-                    }}>
-                    <span style={{
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>
-                        Year Built
-                    </span>
-                  </div>
-                  )}
-                  {/* Last Sale Price */}
-                  {visibleColumns.includes('last_sale_price') && (
-                    <div style={{ 
-                      flex: '0 0 130px', 
-                      marginRight: '24px',
-                      minWidth: 0
-                    }}>
-                    <span style={{
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>
-                        Last Sale Price
-                    </span>
-                  </div>
-                  )}
-                  {/* Last Sale Date */}
-                  {visibleColumns.includes('last_sale_date') && (
-                    <div style={{ 
-                      flex: '0 0 130px', 
-                      marginRight: '24px',
-                      minWidth: 0
-                    }}>
-                    <span style={{
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>
-                        Last Sale Date
-                    </span>
-                  </div>
-                  )}
-                  {/* Actions */}
-                  <div style={{ 
-                    flexShrink: 0, 
-                    width: '130px', 
-                    display: 'flex', 
-                    justifyContent: 'flex-end' 
-                  }}>
-                  <span style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    Actions
-                  </span>
-                </div>
-              </div>
-
-                  {/* Virtualized table content - inside same scroll container as header */}
-                <VirtualizedListingsTable
-                    // **Key part:** this actually displays your reconstructed rows
-                  listings={listings}
-                    columns={visibleColumns}
-                    variant="embedded"
-                    scrollContainerRef={dataScrollContainerRef}
-                  filters={{ search: debouncedSearch }}
-                  selectedIds={selectedIds}
-                  onSelect={handleSelect}
-                    onListingClick={handleListingClick}
-                  crmContactIds={crmContactIds}
-                  onSave={handleSave}
-                  onAction={(action, listing) => {
-                      if (action === 'remove') {
-                      handleRemoveFromList(listing)
-                      } else if (action === 'call') {
-                        const phone =
-                          listing.agent_phone ||
-                          listing.agent_phone_2 ||
-                          listing.listing_agent_phone_2 ||
-                          listing.listing_agent_phone_5
-
-                        if (phone) {
-                          window.location.href = `tel:${phone}`
-                        }
-                      } else if (action === 'email') {
-                        if (listing.agent_email) {
-                          window.location.href = `mailto:${listing.agent_email}`
-                        }
-                      } else if (action === 'open' && listing.property_url) {
-                        window.open(listing.property_url, '_blank')
-                      }
-                    }}
-                  />
-                  </div>
-                </div>
-
-              {/* Apollo-style pagination footer */}
-              <div style={{ marginTop: '8px' }}>
-                <ApolloPagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  pageSize={pageSize}
-                  totalItems={totalCount}
-                  onPageChange={setCurrentPage}
-                  onPageSizeChange={handlePageSizeChange}
-                />
-              </div>
-            </div>
-          )}
+            </main>
+          </div>
         </div>
-
-        {/* Bulk Actions Bar */}
-        <BulkActions
-          selectedCount={selectedIds.size}
-          onEmailOwners={handleEmailOwners}
-          onExportCSV={handleBulkExportCSV}
-          onRemoveFromList={handleBulkRemove}
-        />
       </div>
     </DashboardLayout>
   )

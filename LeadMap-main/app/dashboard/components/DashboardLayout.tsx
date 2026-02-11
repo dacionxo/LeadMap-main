@@ -66,7 +66,7 @@ function DashboardLayoutContent({
       </Suspense>
       <main
         ref={mainRef as any}
-        className={`flex-1 overflow-y-auto relative z-10 bg-[#F8FAFC] dark:bg-dark h-full transition-all duration-300 ${
+        className={`flex-1 overflow-y-auto relative z-10 bg-[#F8FAFC] dark:bg-dark h-full transition-all duration-300 flex flex-col ${
           isOpen ? "ml-[270px]" : "ml-[75px]"
         }`}
       >
@@ -75,7 +75,7 @@ function DashboardLayoutContent({
         <div
           className={
             fullBleed
-              ? "relative z-10 h-full w-full min-h-0"
+              ? "flex-1 min-h-0 relative z-10 w-full overflow-hidden"
               : "container relative z-10 py-[30px]"
           }
         >

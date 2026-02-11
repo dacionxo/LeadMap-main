@@ -2,14 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreVertical, Trash2, Edit2, Download, ArrowRight } from 'lucide-react'
-import { Button } from '@/app/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/app/components/ui/dropdown-menu'
-import { Badge } from '@/app/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table'
-import { Checkbox } from '@/app/components/ui/checkbox'
-import { cn } from '@/app/lib/utils'
-import { Users, Building2 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu'
 
 interface List {
   id: string
@@ -21,34 +19,28 @@ interface List {
   user_id?: string
 }
 
-type DisplayView = 'default' | 'compact' | 'detailed' | 'map'
-
 interface ListsTableProps {
   lists: List[]
   onRefresh: () => void
-  type?: 'people' | 'properties'
-  displayView?: DisplayView
 }
 
-export default function ListsTable({ lists, onRefresh, type, displayView = 'default' }: ListsTableProps) {
+export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
   const router = useRouter()
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
-  const [menuOpen, setMenuOpen] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [allSelected, setAllSelected] = useState(false)
 
   const handleDelete = async (listId: string, listName: string) => {
     if (!confirm(`Are you sure you want to delete "${listName}"? This action cannot be undone.`)) {
       return
     }
-    
+
     try {
       setDeletingId(listId)
       const response = await fetch(`/api/lists/${listId}`, {
         method: 'DELETE',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       })
 
       const data = await response.json()
@@ -63,40 +55,28 @@ export default function ListsTable({ lists, onRefresh, type, displayView = 'defa
       alert('Failed to delete list')
     } finally {
       setDeletingId(null)
-      setMenuOpen(null)
     }
   }
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A'
+    if (!dateString) return 'Never'
     const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffSecs = Math.floor(diffMs / 1000)
-    const diffMins = Math.floor(diffSecs / 60)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-
-    if (diffSecs < 60) return `${diffSecs} second${diffSecs !== 1 ? 's' : ''} ago`
-    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`
-    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
-    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     })
   }
 
-  const handleExportCSV = async (listId: string, listName: string) => {
+  const handleExportCSV = async (listId: string, listName: string, list: List) => {
     try {
-      // Fetch all list items (we'll get all pages)
-      const response = await fetch(`/api/lists/${listId}/paginated?page=1&pageSize=1000`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/lists/${listId}/paginated?page=1&pageSize=1000`,
+        {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         }
-      })
+      )
 
       if (!response.ok) {
         alert('Failed to fetch list items for export')
@@ -111,69 +91,87 @@ export default function ListsTable({ lists, onRefresh, type, displayView = 'defa
         return
       }
 
-      // Determine headers based on list type
-      const list = lists.find(l => l.id === listId)
-      const isPropertiesList = list?.type === 'properties' || type === 'properties'
+      const isPropertiesList = list.type === 'properties'
 
       let headers: string[]
       let rows: string[][]
 
       if (isPropertiesList) {
-        // Properties list - export listing data
         headers = [
-          'Listing ID', 'Address', 'City', 'State', 'Zip Code', 'Price', 
-          'Beds', 'Baths', 'Sqft', 'Status', 'Agent Name', 'Agent Email', 
-          'Agent Phone', 'Score', 'Year Built', 'Last Sale Price', 'Last Sale Date', 'Property URL'
+          'Listing ID',
+          'Address',
+          'City',
+          'State',
+          'Zip Code',
+          'Price',
+          'Beds',
+          'Baths',
+          'Sqft',
+          'Status',
+          'Agent Name',
+          'Agent Email',
+          'Agent Phone',
+          'Score',
+          'Year Built',
+          'Last Sale Price',
+          'Last Sale Date',
+          'Property URL',
         ]
-        
-        rows = items.map((item: any) => [
-          item.listing_id || '',
-          item.street || '',
-          item.city || '',
-          item.state || '',
-          item.zip_code || '',
-          item.list_price?.toString() || '',
-          item.beds?.toString() || '',
-          item.full_baths?.toString() || '',
-          item.sqft?.toString() || '',
-          item.status || '',
-          item.agent_name || '',
-          item.agent_email || '',
-          item.agent_phone || '',
-          item.ai_investment_score?.toString() || '',
-          item.year_built?.toString() || '',
-          item.last_sale_price?.toString() || '',
-          item.last_sale_date || '',
-          item.property_url || ''
+        rows = items.map((item: Record<string, unknown>) => [
+          String(item.listing_id || ''),
+          String(item.street || ''),
+          String(item.city || ''),
+          String(item.state || ''),
+          String(item.zip_code || ''),
+          String(item.list_price ?? ''),
+          String(item.beds ?? ''),
+          String(item.full_baths ?? ''),
+          String(item.sqft ?? ''),
+          String(item.status || ''),
+          String(item.agent_name || ''),
+          String(item.agent_email || ''),
+          String(item.agent_phone || ''),
+          String(item.ai_investment_score ?? ''),
+          String(item.year_built ?? ''),
+          String(item.last_sale_price ?? ''),
+          String(item.last_sale_date || ''),
+          String(item.property_url || ''),
         ])
       } else {
-        // People list - export contact data
         headers = [
-          'Name', 'Email', 'Phone', 'Company', 'Job Title', 
-          'Address', 'City', 'State', 'Zip Code', 'Source'
+          'Name',
+          'Email',
+          'Phone',
+          'Company',
+          'Job Title',
+          'Address',
+          'City',
+          'State',
+          'Zip Code',
+          'Source',
         ]
-        
-        rows = items.map((item: any) => [
-          `${item.first_name || ''} ${item.last_name || ''}`.trim() || item.agent_name || '',
-          item.email || item.agent_email || '',
-          item.phone || item.agent_phone || '',
-          item.company || '',
-          item.job_title || '',
-          item.address || item.street || '',
-          item.city || '',
-          item.state || '',
-          item.zip_code || '',
-          item.source || ''
+        rows = items.map((item: Record<string, unknown>) => [
+          `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
+            String(item.agent_name || ''),
+          String(item.email || item.agent_email || ''),
+          String(item.phone || item.agent_phone || ''),
+          String(item.company || ''),
+          String(item.job_title || ''),
+          String(item.address || item.street || ''),
+          String(item.city || ''),
+          String(item.state || ''),
+          String(item.zip_code || ''),
+          String(item.source || ''),
         ])
       }
 
-      // Create CSV content
       const csvContent = [
         headers.join(','),
-        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ...rows.map((row) =>
+          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+        ),
       ].join('\n')
 
-      // Download file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -189,143 +187,201 @@ export default function ListsTable({ lists, onRefresh, type, displayView = 'defa
     }
   }
 
-  const handleAddToPipeline = (listId: string) => {
-    // TODO: Implement add to pipeline functionality
-    console.log('Add to pipeline:', listId)
-    alert('Add to pipeline functionality coming soon')
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleToggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+      setAllSelected(false)
+    } else {
+      setSelectedIds(new Set(lists.map((l) => l.id)))
+      setAllSelected(true)
+    }
   }
 
   if (lists.length === 0) {
     return (
-      <div className="rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-boxdark p-12 text-center">
-        <div className="text-bodydark dark:text-bodydark2 font-medium mb-2">
-          No lists found
+      <div className="bg-white/70 backdrop-blur-md border border-white rounded-xl shadow-sm-soft overflow-hidden flex-1 flex flex-col">
+        <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white/30 shrink-0">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-700">All Lists</h2>
+            <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200">
+              0
+            </span>
+          </div>
         </div>
-        <div className="text-sm text-bodydark2 dark:text-bodydark2/70">
-          Create your first list to get started
+        <div className="flex-1 flex items-center justify-center py-16">
+          <p className="text-slate-500 text-sm font-medium">No lists match your criteria</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-boxdark overflow-hidden">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50 dark:bg-gray-800/50">
-              <TableHead className="w-12">
-                <Checkbox />
-              </TableHead>
-              <TableHead className="text-base font-semibold py-4">
-                LIST NAME
-              </TableHead>
-              <TableHead className="text-base font-semibold py-4 text-right">
-                # OF RECORDS
-              </TableHead>
-              <TableHead className="text-base font-semibold py-4">
-                TYPE
-              </TableHead>
-              <TableHead className="text-base font-semibold py-4">
-                CREATED BY
-              </TableHead>
-              <TableHead className="text-base font-semibold py-4">
-                LAST MODIFIED
-              </TableHead>
-              <TableHead className="text-base font-semibold py-4 text-right">
-                ACTIONS
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+    <div className="bg-white/70 backdrop-blur-md border border-white rounded-xl shadow-sm-soft overflow-hidden flex-1 flex flex-col min-h-0">
+      <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white/30 shrink-0">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-bold text-slate-700">All Lists</h2>
+          <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200">
+            {lists.length}
+          </span>
+        </div>
+        <button
+          type="button"
+          className="text-blue-600 text-xs font-semibold hover:underline"
+          onClick={() => router.push('/dashboard/lists')}
+          aria-label="View all lists"
+        >
+          View All
+        </button>
+      </div>
+
+      <div className="overflow-auto custom-scrollbar flex-1 min-h-0">
+        <table className="w-full text-left text-sm text-slate-600" role="grid">
+          <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+            <tr>
+              <th className="px-5 py-3 w-10 font-semibold" scope="col">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={handleToggleSelectAll}
+                  aria-label="Select all lists"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3.5 h-3.5 cursor-pointer transition-colors"
+                />
+              </th>
+              <th className="px-4 py-3 font-semibold" scope="col">
+                List Name
+              </th>
+              <th className="px-4 py-3 text-center font-semibold w-24" scope="col">
+                Records
+              </th>
+              <th className="px-4 py-3 font-semibold" scope="col">
+                Type
+              </th>
+              <th className="px-4 py-3 font-semibold" scope="col">
+                Owner
+              </th>
+              <th className="px-4 py-3 font-semibold" scope="col">
+                Modified
+              </th>
+              <th className="px-5 py-3 text-right font-semibold" scope="col">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100/80">
             {lists.map((list) => {
-              const isHovered = hoveredRow === list.id
+              const listType = list.type || 'properties'
               const isDeleting = deletingId === list.id
-              const listType = list.type || type || 'properties'
-              
+              const initials = 'Y'
+
               return (
-                <TableRow
+                <tr
                   key={list.id}
-                  className={cn(
-                    "cursor-pointer transition-colors",
-                    isHovered && "bg-gray-50 dark:bg-gray-800/30"
-                  )}
-                  onMouseEnter={() => setHoveredRow(list.id)}
-                  onMouseLeave={() => setHoveredRow(null)}
+                  className="bg-white/40 hover:bg-blue-50/40 transition-colors duration-150 group cursor-pointer"
                   onClick={() => router.push(`/dashboard/lists/${list.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      router.push(`/dashboard/lists/${list.id}`)
+                    }
+                  }}
+                  tabIndex={0}
+                  role="row"
                 >
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Checkbox />
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm font-medium text-primary hover:text-primary/80 cursor-pointer transition-colors">
-                      {list.name}
+                  <td
+                    className="px-5 py-2.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(list.id)}
+                      onChange={() => handleToggleSelect(list.id)}
+                      aria-label={`Select ${list.name}`}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3.5 h-3.5 cursor-pointer transition-colors"
+                    />
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="material-symbols-outlined text-slate-400 group-hover:text-blue-500 transition-colors text-[20px]"
+                        aria-hidden
+                      >
+                        folder_open
+                      </span>
+                      <span className="font-semibold text-slate-700 text-sm cursor-pointer hover:text-blue-600 transition-colors">
+                        {list.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    <span className="font-medium text-slate-500 text-xs">
+                      {list.item_count ?? 0}
                     </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className="text-sm font-semibold text-black dark:text-white font-mono">
-                      {list.item_count || 0}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 border border-blue-100 text-blue-600 shadow-sm">
+                      <span
+                        className="material-symbols-outlined text-[14px] text-blue-500"
+                        aria-hidden
+                      >
+                        {listType === 'properties' ? 'apartment' : 'group'}
+                      </span>
+                      {listType === 'properties' ? 'Properties' : 'Prospects'}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={listType === 'people' ? "lightPrimary" : "lightWarning"}
-                      className="inline-flex items-center gap-1"
-                    >
-                      {listType === 'people' ? (
-                        <Users className="h-3 w-3" />
-                      ) : (
-                        <Building2 className="h-3 w-3" />
-                      )}
-                      {listType === 'people' ? 'Prospects' : 'Properties'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-bodydark dark:text-bodydark2">
-                    You
-                  </TableCell>
-                  <TableCell className="text-sm text-bodydark dark:text-bodydark2">
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-5 h-5 rounded-full bg-slate-200 text-[9px] flex items-center justify-center font-bold text-slate-600 ring-1 ring-white"
+                        aria-hidden
+                      >
+                        {initials}
+                      </div>
+                      <span className="text-slate-500 text-xs">You</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-500 text-xs">
                     {formatDate(list.updated_at || list.created_at)}
-                  </TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                  </td>
+                  <td
+                    className="px-5 py-2.5 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleExportCSV(list.id, list.name)
+                          handleExportCSV(list.id, list.name, list)
                         }}
-                        title="Download CSV"
-                        className="h-8 w-8"
+                        className="w-7 h-7 flex items-center justify-center hover:text-blue-600 hover:bg-blue-50/80 rounded-md transition-colors"
+                        title="Export"
+                        aria-label={`Export ${list.name}`}
                       >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <DropdownMenu open={menuOpen === list.id} onOpenChange={(open) => setMenuOpen(open ? list.id : null)}>
+                        <span className="material-symbols-outlined text-[18px]">download</span>
+                      </button>
+                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                            }}
+                          <button
+                            type="button"
+                            className="w-7 h-7 flex items-center justify-center hover:text-slate-800 hover:bg-slate-100/80 rounded-md transition-colors"
+                            aria-label={`More actions for ${list.name}`}
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
+                            <span className="material-symbols-outlined text-[18px]">
+                              more_horiz
+                            </span>
+                          </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            className="flex gap-2 items-center cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setMenuOpen(null)
-                              // TODO: Implement edit
-                              alert('Edit functionality coming soon')
-                            }}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
                           <DropdownMenuItem
                             className="flex gap-2 items-center cursor-pointer text-red-600 focus:text-red-600"
                             onClick={(e) => {
@@ -334,18 +390,17 @@ export default function ListsTable({ lists, onRefresh, type, displayView = 'defa
                             }}
                             disabled={isDeleting}
                           >
-                            <Trash2 className="h-4 w-4" />
                             {isDeleting ? 'Deleting...' : 'Delete'}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               )
             })}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
     </div>
   )
