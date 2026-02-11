@@ -287,8 +287,6 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
           />
         </div>
       )}
-        </div>
-      </div>
     </div>
     {/* Lead Detail Modal */}
     {props.showLeadModal && props.selectedListingId && (
