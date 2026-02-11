@@ -1,68 +1,26 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { 
-  Mail, 
-  Search,
-  RefreshCw
-} from 'lucide-react'
+import { Mail, Search, RefreshCw } from 'lucide-react'
+import type { UniboxThread, UniboxMailbox, UniboxFilterStatus, UniboxFilterFolder } from '../../unibox/types'
 import UniboxSidebar from '../../unibox/components/UniboxSidebar'
 import ThreadList from '../../unibox/components/ThreadList'
 import ThreadView from '../../unibox/components/ThreadView'
 import ReplyComposer from '../../unibox/components/ReplyComposer'
-
-interface Thread {
-  id: string
-  subject: string
-  mailbox: {
-    id: string
-    email: string
-    display_name: string | null
-    provider: string
-  }
-  status: string // 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
-  unread: boolean
-  unreadCount: number
-  starred: boolean
-  archived: boolean
-  lastMessage: {
-    direction: 'inbound' | 'outbound'
-    snippet: string
-    received_at: string | null
-    read: boolean
-  } | null
-  lastMessageAt: string
-  contactId: string | null
-  listingId: string | null
-  campaignId: string | null
-  messageCount: number
-  createdAt: string
-  updatedAt: string
-}
-
-interface Mailbox {
-  id: string
-  email: string
-  display_name: string | null
-  provider: string
-  active: boolean
-}
-
-type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
-type FilterFolder = 'inbox' | 'archived' | 'starred'
 
 /**
  * UniboxWrapper - Adapted version of UniboxContent for use within EmailMarketing tabs
  * Removes full-screen layout and adapts to tab context
  */
 export default function UniboxWrapper() {
-  const [threads, setThreads] = useState<Thread[]>([])
-  const [selectedThread, setSelectedThread] = useState<Thread | null>(null)
-  const [threadDetails, setThreadDetails] = useState<any>(null)
-  const [mailboxes, setMailboxes] = useState<Mailbox[]>([])
+  const [threads, setThreads] = useState<UniboxThread[]>([])
+  const [selectedThread, setSelectedThread] = useState<UniboxThread | null>(null)
+  // Thread detail from API (with messages) – passed to ThreadView and ReplyComposer
+const [threadDetails, setThreadDetails] = useState<Parameters<typeof ThreadView>[0]['thread']>(null)
+  const [mailboxes, setMailboxes] = useState<UniboxMailbox[]>([])
   const [selectedMailboxId, setSelectedMailboxId] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
-  const [folderFilter, setFolderFilter] = useState<FilterFolder>('inbox')
+  const [statusFilter, setStatusFilter] = useState<UniboxFilterStatus>('all')
+  const [folderFilter, setFolderFilter] = useState<UniboxFilterFolder>('inbox')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [loadingThread, setLoadingThread] = useState(false)
@@ -146,7 +104,7 @@ export default function UniboxWrapper() {
     }
   }
 
-  const handleThreadSelect = useCallback((thread: Thread) => {
+  const handleThreadSelect = useCallback((thread: UniboxThread) => {
     setSelectedThread(thread)
     fetchThreadDetails(thread.id)
   }, [])

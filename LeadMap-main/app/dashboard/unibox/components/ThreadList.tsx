@@ -1,38 +1,11 @@
 'use client'
 
-interface Thread {
-  id: string
-  subject: string
-  mailbox: {
-    id: string
-    email: string
-    display_name: string | null
-    provider: string
-  }
-  status: string
-  unread: boolean
-  unreadCount: number
-  starred: boolean
-  archived: boolean
-  lastMessage: {
-    direction: 'inbound' | 'outbound'
-    snippet: string
-    received_at: string | null
-    read: boolean
-  } | null
-  lastMessageAt: string
-  messageCount: number
-  contactId?: string | null
-  listingId?: string | null
-  campaignId?: string | null
-  createdAt?: string
-  updatedAt?: string
-}
+import type { UniboxThread } from '../types'
 
 interface ThreadListProps {
-  threads: Thread[]
-  selectedThread: Thread | null
-  onThreadSelect: (thread: Thread) => void
+  threads: UniboxThread[]
+  selectedThread: UniboxThread | null
+  onThreadSelect: (thread: UniboxThread) => void
   loading: boolean
 }
 
