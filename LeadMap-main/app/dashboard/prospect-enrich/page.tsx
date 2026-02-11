@@ -142,14 +142,11 @@ function ProspectContentInner(props: any) {
 function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
   return (
     <>
-    {/* TailwindAdmin Hover Table - 1:1 Match to /shadcn-tables/hover */}
-    {/* Flush under Navbar: top-[50px] so this fixed block sits directly under the Header.
-        (top-[80px] had included the container’s 30px pt; we only offset by header height here.) */}
-    <div className="fixed top-[50px] bottom-0 flex flex-col transition-all duration-300" style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}>
-      <div className="flex-1 flex flex-col overflow-hidden" style={{ width: '75%', height: '75%' }}>
+    {/* Centered prospecting component, unattached from navbar */}
+    <div className="flex-1 flex items-center justify-center min-h-0 p-6 overflow-auto">
+      <div className="w-full max-w-7xl h-full max-h-[calc(100vh-140px)] flex flex-col overflow-hidden">
         <div
-          className="border-0 bg-white dark:bg-dark card no-inset no-ring undefined dark:shadow-dark-md shadow-md p-0 m-0 flex flex-col overflow-x-visible overflow-y-hidden flex-1 min-w-0 min-h-0"
-          style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133.333%', height: '133.333%' }}
+          className="border-0 bg-white dark:bg-dark card no-inset no-ring undefined dark:shadow-dark-md shadow-md p-0 m-0 flex flex-col overflow-x-visible overflow-y-hidden flex-1 min-w-0 min-h-0 rounded-xl"
         >
         {/* Prospect Search Header */}
         <ProspectSearchHeader
@@ -1590,15 +1587,8 @@ function ProspectEnrichInner() {
   }
   
   return (
-    <DashboardLayout>
-      {/* Option C (page-level): -mt-[30px] cancels DashboardLayout's pt from py-[30px]
-          so the prospect-enrich block sits flush under the Navbar. Applies to the
-          entire content below, including the "Find Deals" header
-          (ProspectSearchHeader: Research with AI, Import, Default View, Hide Filters,
-          Search places, Create workflow, Save as new search, People Auto-Score,
-          Search settings) and the ProspectHoverTable/MapView. Only /dashboard/prospect-enrich;
-          DashboardLayout is unchanged (py-[30px]) for /dashboard and all other routes. */}
-      <div className="-mt-[30px]">
+    <DashboardLayout fullBleed>
+      <div className="flex-1 flex flex-col min-h-0">
         <ProspectContentInner
         activeCategory={activeCategory}
         resolvedTableName={resolvedTableName}

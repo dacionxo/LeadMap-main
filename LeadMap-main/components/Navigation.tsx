@@ -58,15 +58,6 @@ function Navigation() {
           <div className="flex items-center space-x-4">
             {getPlanBadge()}
             
-            {profile?.is_subscribed && (
-              <a
-                href="/admin"
-                className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                Admin
-              </a>
-            )}
-            
             <ThemeToggle />
             
             <div className="flex items-center space-x-2">

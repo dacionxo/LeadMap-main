@@ -121,16 +121,6 @@ const navSections: NavSection[] = [
       },
     ],
   },
-  {
-    title: "ADMIN",
-    items: [
-      {
-        label: "Admin Settings Panel",
-        icon: "solar:settings-linear",
-        href: "/admin",
-      },
-    ],
-  },
 ];
 
 export default function Sidebar() {
