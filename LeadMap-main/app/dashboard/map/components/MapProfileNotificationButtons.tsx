@@ -122,7 +122,7 @@ export default function MapProfileNotificationButtons() {
             setShowProfileMenu(false)
           }}
           aria-label="Notifications"
-          className="group relative w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:border-primary/30 dark:hover:border-primary/30 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),0_2px_4px_-1px_rgba(0,0,0,0.02)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+          className="group relative w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:border-primary/30 dark:hover:border-primary/30 hover:bg-slate-50 dark:hover:bg-slate-700/50 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_20px_50px_-12px_rgba(93,135,255,0.18)] dark:hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.4)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
         >
           <Icon
             icon="material-symbols:notifications"
@@ -135,7 +135,7 @@ export default function MapProfileNotificationButtons() {
           </span>
         </button>
         {showNotifications && (
-          <div className="absolute right-0 mt-2 w-full max-w-sm sm:w-[384px] bg-white dark:bg-slate-900 rounded-xl shadow-[0_20px_25px_-5px_rgba(0,0,0,0.05),0_10px_10px_-5px_rgba(0,0,0,0.01)] dark:shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[101]">
+          <div className="absolute right-0 mt-2 w-full max-w-sm sm:w-[384px] bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden z-[101]">
             <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
                 Notifications
@@ -209,10 +209,10 @@ export default function MapProfileNotificationButtons() {
             setShowProfileMenu(!showProfileMenu)
             setShowNotifications(false)
           }}
-          aria-expanded={!!showProfileMenu}
+          aria-expanded={showProfileMenu ? "true" : "false"}
           aria-haspopup="true"
           aria-label="Open profile menu"
-          className="group relative w-12 h-12 rounded-full p-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),0_2px_4px_-1px_rgba(0,0,0,0.02)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 dark:focus:ring-offset-slate-900 overflow-hidden"
+          className="group relative w-12 h-12 rounded-full p-0.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_20px_50px_-12px_rgba(93,135,255,0.18)] dark:hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.4)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 dark:focus:ring-offset-slate-900 overflow-hidden"
         >
           <div className="relative w-full h-full rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
             {avatarUrl ? (
@@ -223,7 +223,7 @@ export default function MapProfileNotificationButtons() {
           </div>
         </button>
         {showProfileMenu && (
-          <div className="absolute right-0 mt-3 w-[321px] origin-top-right rounded-2xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-black/5 border border-gray-100 dark:border-slate-700 overflow-hidden z-[101]">
+          <div className="absolute right-0 mt-3 w-[321px] origin-top-right rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden z-[101]">
             <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-gray-50 to-white dark:from-slate-800 dark:to-slate-800/50">
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700">

@@ -437,7 +437,7 @@ export default function ListDetailPage() {
                 </div>
               </div>
 
-              <div className="bg-white/70 backdrop-blur-md border border-white rounded-lg shadow-sm-soft overflow-hidden flex-1 flex flex-col relative min-h-0">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col relative min-h-0">
                 <div className="overflow-auto custom-scrollbar flex-1 pb-10 min-h-0">
                   {loading ? (
                     <div className="flex items-center justify-center py-16">
@@ -751,81 +751,72 @@ export default function ListDetailPage() {
                   )}
                 </div>
 
-                <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-3 py-1.5 flex items-center justify-between z-20">
-                  <div className="text-[10px] text-slate-500 font-medium">
+                <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 px-4 py-2 flex items-center justify-between z-20">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                     Showing{' '}
-                    <span className="font-bold text-slate-800">{startRecord}</span>{' '}
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{startRecord}</span>{' '}
                     -{' '}
-                    <span className="font-bold text-slate-800">{endRecord}</span>{' '}
-                    of <span className="font-bold text-slate-800">{totalCount}</span>{' '}
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{endRecord}</span>{' '}
+                    of <span className="font-bold text-slate-800 dark:text-slate-200">{totalCount}</span>{' '}
                     records
                   </div>
-                  <div className="flex items-center gap-0.5">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage <= 1}
-                      className="w-5 h-5 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                       aria-label="Previous page"
                     >
-                      <span className="material-symbols-outlined text-[12px]">
+                      <span className="material-symbols-outlined text-[16px]">
                         chevron_left
                       </span>
                     </button>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      const pageNum =
-                        totalPages <= 5
-                          ? i + 1
-                          : currentPage <= 3
-                            ? i + 1
-                            : currentPage >= totalPages - 2
-                              ? totalPages - 4 + i
-                              : currentPage - 2 + i
-                      if (pageNum < 1) return null
-                      const isActive = pageNum === currentPage
-                      return (
-                        <button
-                          key={pageNum}
-                          type="button"
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={`w-5 h-5 flex items-center justify-center rounded text-[9px] font-bold transition-colors ${
-                            isActive
-                              ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                              : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
+                    {(() => {
+                      const pages: (number | 'ellipsis')[] = []
+                      if (totalPages <= 5) {
+                        for (let i = 1; i <= totalPages; i++) pages.push(i)
+                      } else if (currentPage <= 3) {
+                        pages.push(1, 2, 3, 'ellipsis', totalPages)
+                      } else if (currentPage >= totalPages - 2) {
+                        pages.push(1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages)
+                      } else {
+                        pages.push(1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages)
+                      }
+                      return pages.map((p, i) =>
+                        p === 'ellipsis' ? (
+                          <span
+                            key={`ellipsis-${i}`}
+                            className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-slate-500 text-xs"
+                          >
+                            ...
+                          </span>
+                        ) : (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setCurrentPage(p)}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                              currentPage === p
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
                       )
-                    })}
-                    {totalPages > 5 && (
-                      <span className="w-5 h-5 flex items-center justify-center text-slate-400 text-[9px]">
-                        ...
-                      </span>
-                    )}
-                    {totalPages > 5 && (
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage(totalPages)}
-                        className={`w-5 h-5 flex items-center justify-center rounded text-[9px] font-bold transition-colors ${
-                          currentPage === totalPages
-                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                            : 'border border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                        }`}
-                      >
-                        {totalPages}
-                      </button>
-                    )}
+                    })()}
                     <button
                       type="button"
                       onClick={() =>
                         setCurrentPage((p) => Math.min(totalPages, p + 1))
                       }
                       disabled={currentPage >= totalPages}
-                      className="w-5 h-5 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm disabled:opacity-50 disabled:pointer-events-none"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors shadow-sm disabled:opacity-50 disabled:pointer-events-none"
                       aria-label="Next page"
                     >
-                      <span className="material-symbols-outlined text-[12px]">
+                      <span className="material-symbols-outlined text-[16px]">
                         chevron_right
                       </span>
                     </button>

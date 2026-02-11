@@ -49,7 +49,7 @@ export default function MapSearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-4xl rounded-full shadow-lg flex items-center py-1.5 px-2 pr-2 border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700"
+      className="w-full max-w-4xl rounded-full flex items-center py-1.5 px-2 pr-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)]"
       role="search"
       aria-label="Real estate search"
     >
