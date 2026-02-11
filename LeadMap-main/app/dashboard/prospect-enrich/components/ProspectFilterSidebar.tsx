@@ -1,15 +1,12 @@
 'use client'
 
+/**
+ * ProspectFilterSidebar — Elite Property Prospecting Dashboard design
+ * 1:1 match to reference: glass-sidebar, Filters header, pinned/unpinned sections,
+ * Material Symbols icons, More Filters button.
+ */
+
 import { useState, useMemo, useEffect } from 'react'
-import {
-  Search,
-  X,
-  ChevronDown,
-  ChevronRight,
-  Pin,
-  PinOff,
-  Filter
-} from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import { Checkbox } from '@/app/components/ui/checkbox'
 
@@ -22,21 +19,6 @@ interface FilterGroup {
   pinned?: boolean
 }
 
-type ViewType = 'total' | 'net_new' | 'saved'
-
-/** Format count in compact form: 9600 -> "9.6K", 0 -> "0", 1500000 -> "1.5M" */
-function formatCompactCount(n: number): string {
-  if (n >= 1_000_000) {
-    const m = n / 1_000_000
-    return m % 1 === 0 ? `${m}M` : `${m.toFixed(1)}M`
-  }
-  if (n >= 1_000) {
-    const k = n / 1_000
-    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`
-  }
-  return n.toLocaleString()
-}
-
 interface ProspectFilterSidebarProps {
   filters: Record<string, any>
   onFiltersChange: (filters: Record<string, any>) => void
@@ -47,113 +29,45 @@ interface ProspectFilterSidebarProps {
   onToggleCollapse: () => void
   listings?: any[]
   isDark?: boolean
-  viewType?: ViewType
-  onViewTypeChange?: (viewType: ViewType) => void
+  viewType?: 'total' | 'net_new' | 'saved'
+  onViewTypeChange?: (viewType: 'total' | 'net_new' | 'saved') => void
 }
 
 const FILTER_GROUPS: FilterGroup[] = [
-  {
-    id: 'status',
-    title: 'Status',
-    type: 'multi-select',
-    category: 'property',
-    options: [
-      { label: 'Active', value: 'active', count: 0 },
-      { label: 'Expired', value: 'expired', count: 0 },
-      { label: 'Sold', value: 'sold', count: 0 },
-      { label: 'Pending', value: 'pending', count: 0 }
-    ]
-  },
-  {
-    id: 'price_range',
-    title: 'Price Range',
-    type: 'range',
-    category: 'property',
-    pinned: true
-  },
-  {
-    id: 'location',
-    title: 'Location',
-    type: 'multi-select',
-    category: 'property',
-    options: [],
-    pinned: true
-  },
-  {
-    id: 'beds',
-    title: 'Bedrooms',
-    type: 'multi-select',
-    category: 'property',
-    options: [
-      { label: '1', value: '1', count: 0 },
-      { label: '2', value: '2', count: 0 },
-      { label: '3', value: '3', count: 0 },
-      { label: '4', value: '4', count: 0 },
-      { label: '5+', value: '5+', count: 0 }
-    ]
-  },
-  {
-    id: 'baths',
-    title: 'Bathrooms',
-    type: 'multi-select',
-    category: 'property',
-    options: [
-      { label: '1', value: '1', count: 0 },
-      { label: '2', value: '2', count: 0 },
-      { label: '3', value: '3', count: 0 },
-      { label: '4+', value: '4+', count: 0 }
-    ]
-  },
-  {
-    id: 'sqft',
-    title: 'Square Footage',
-    type: 'range',
-    category: 'property'
-  },
-  {
-    id: 'year_built',
-    title: 'Year Built',
-    type: 'range',
-    category: 'property'
-  },
-  {
-    id: 'ai_score',
-    title: 'AI Investment Score',
-    type: 'range',
-    category: 'property',
-    pinned: true
-  },
-  {
-    id: 'agent_name',
-    title: 'Agent Name',
-    type: 'text',
-    category: 'person'
-  },
-  {
-    id: 'agent_email',
-    title: 'Has Agent Email',
-    type: 'checkbox',
-    category: 'person'
-  },
-  {
-    id: 'agent_phone',
-    title: 'Has Agent Phone',
-    type: 'checkbox',
-    category: 'person'
-  },
-  {
-    id: 'high_value',
-    title: 'High Value ($500K+)',
-    type: 'checkbox',
-    category: 'property'
-  },
-  {
-    id: 'price_drop',
-    title: 'Price Reduction',
-    type: 'checkbox',
-    category: 'property'
-  }
+  { id: 'price_range', title: 'Price Range', type: 'range', category: 'property', pinned: true },
+  { id: 'location', title: 'Location', type: 'multi-select', category: 'property', options: [], pinned: true },
+  { id: 'ai_score', title: 'AI Investment Score', type: 'range', category: 'property', pinned: true },
+  { id: 'status', title: 'Status', type: 'multi-select', category: 'property', options: [
+    { label: 'Active', value: 'active' },
+    { label: 'Expired', value: 'expired' },
+    { label: 'Sold', value: 'sold' },
+    { label: 'Pending', value: 'pending' }
+  ]},
+  { id: 'beds', title: 'Bedrooms', type: 'multi-select', category: 'property', options: [
+    { label: '1', value: '1' },
+    { label: '2', value: '2' },
+    { label: '3', value: '3' },
+    { label: '4', value: '4' },
+    { label: '5+', value: '5+' }
+  ]},
+  { id: 'baths', title: 'Bathrooms', type: 'multi-select', category: 'property', options: [
+    { label: '1', value: '1' },
+    { label: '2', value: '2' },
+    { label: '3', value: '3' },
+    { label: '4+', value: '4+' }
+  ]},
+  { id: 'sqft', title: 'Square Footage', type: 'range', category: 'property' },
+  { id: 'year_built', title: 'Year Built', type: 'range', category: 'property' },
+  { id: 'agent_name', title: 'Agent Name', type: 'text', category: 'person' },
+  { id: 'agent_email', title: 'Has Agent Email', type: 'checkbox', category: 'person' },
+  { id: 'agent_phone', title: 'Has Agent Phone', type: 'checkbox', category: 'person' },
+  { id: 'high_value', title: 'High Value ($500K+)', type: 'checkbox', category: 'property' },
+  { id: 'price_drop', title: 'Price Reduction', type: 'checkbox', category: 'property' }
 ]
+
+const PINNED_IDS = new Set(['price_range', 'location', 'ai_score'])
+const INITIAL_VISIBLE = 8
+const HIDDEN_COUNT = FILTER_GROUPS.length - INITIAL_VISIBLE
 
 export default function ProspectFilterSidebar({
   filters,
@@ -168,807 +82,252 @@ export default function ProspectFilterSidebar({
   viewType = 'total',
   onViewTypeChange
 }: ProspectFilterSidebarProps) {
-  const [filterType, setFilterType] = useState<'person' | 'company' | 'property' | 'all'>('all')
-  const [pinnedFilters, setPinnedFilters] = useState<Set<string>>(new Set(['price_range', 'location', 'ai_score']))
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['status', 'price_range', 'location']))
-  const [filterSearch, setFilterSearch] = useState('')
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['price_range', 'location', 'ai_score']))
   const [showMoreFilters, setShowMoreFilters] = useState(false)
-  const [locationSearch, setLocationSearch] = useState<Record<'city' | 'state' | 'zip_code', string>>({
-    city: '',
-    state: '',
-    zip_code: ''
-  })
-  const [debouncedLocationSearch, setDebouncedLocationSearch] = useState<Record<'city' | 'state' | 'zip_code', string>>({
-    city: '',
-    state: '',
-    zip_code: ''
-  })
+  const [locationSearch, setLocationSearch] = useState<Record<'city' | 'state' | 'zip_code', string>>({ city: '', state: '', zip_code: '' })
   const [activeLocationTab, setActiveLocationTab] = useState<'city' | 'state' | 'zip_code'>('city')
 
-  // Debounce location search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedLocationSearch({ ...locationSearch })
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [locationSearch])
-
-  // Calculate city options from listings
   const cityOptions = useMemo(() => {
     const cities = new Map<string, number>()
-    
-    listings.forEach(listing => {
-      if (listing.city) {
-        const city = listing.city.trim()
-        if (city) {
-          cities.set(city, (cities.get(city) || 0) + 1)
-        }
-      }
+    listings.forEach(l => {
+      if (l.city?.trim()) cities.set(l.city.trim(), (cities.get(l.city.trim()) || 0) + 1)
     })
-
-    return Array.from(cities.entries())
-      .map(([label, count]) => ({ label, value: label, count }))
-      .filter(option => 
-        !debouncedLocationSearch.city || 
-        option.label.toLowerCase().includes(debouncedLocationSearch.city.toLowerCase())
-      )
-      .sort((a, b) => {
-        if (b.count !== a.count) return b.count - a.count
-        return a.label.localeCompare(b.label)
-      })
-      .slice(0, 50)
-  }, [listings, debouncedLocationSearch.city])
-
-  // Calculate state options from listings
-  const stateOptions = useMemo(() => {
-    const states = new Map<string, number>()
-    
-    listings.forEach(listing => {
-      if (listing.state) {
-        const state = listing.state.trim()
-        if (state) {
-          states.set(state, (states.get(state) || 0) + 1)
-        }
-      }
-    })
-
-    return Array.from(states.entries())
-      .map(([label, count]) => ({ label, value: label, count }))
-      .filter(option => 
-        !debouncedLocationSearch.state || 
-        option.label.toLowerCase().includes(debouncedLocationSearch.state.toLowerCase())
-      )
-      .sort((a, b) => {
-        if (b.count !== a.count) return b.count - a.count
-        return a.label.localeCompare(b.label)
-      })
-      .slice(0, 50)
-  }, [listings, debouncedLocationSearch.state])
-
-  // Calculate zip code options from listings
-  const zipCodeOptions = useMemo(() => {
-    const zipCodes = new Map<string, number>()
-    
-    listings.forEach(listing => {
-      if (listing.zip_code) {
-        const zip = String(listing.zip_code).trim()
-        if (zip) {
-          zipCodes.set(zip, (zipCodes.get(zip) || 0) + 1)
-        }
-      }
-    })
-
-    return Array.from(zipCodes.entries())
-      .map(([label, count]) => ({ label, value: label, count }))
-      .filter(option => 
-        !debouncedLocationSearch.zip_code || 
-        option.label.includes(debouncedLocationSearch.zip_code)
-      )
-      .sort((a, b) => {
-        if (b.count !== a.count) return b.count - a.count
-        return a.label.localeCompare(b.label)
-      })
-      .slice(0, 50)
-  }, [listings, debouncedLocationSearch.zip_code])
-
-  // Calculate filter option counts
-  const filterCounts = useMemo(() => {
-    const counts: Record<string, Record<string, number>> = {}
-    
-    counts.status = {
-      active: listings.filter(l => l.active === true).length,
-      expired: listings.filter(l => l.status?.toLowerCase().includes('expired')).length,
-      sold: listings.filter(l => l.status?.toLowerCase().includes('sold')).length,
-      pending: listings.filter(l => l.status?.toLowerCase().includes('pending')).length
-    }
-
-    counts.beds = {
-      '1': listings.filter(l => (l.beds || 0) === 1).length,
-      '2': listings.filter(l => (l.beds || 0) === 2).length,
-      '3': listings.filter(l => (l.beds || 0) === 3).length,
-      '4': listings.filter(l => (l.beds || 0) === 4).length,
-      '5+': listings.filter(l => (l.beds || 0) >= 5).length
-    }
-
-    counts.baths = {
-      '1': listings.filter(l => (l.full_baths || 0) === 1).length,
-      '2': listings.filter(l => (l.full_baths || 0) === 2).length,
-      '3': listings.filter(l => (l.full_baths || 0) === 3).length,
-      '4+': listings.filter(l => (l.full_baths || 0) >= 4).length
-    }
-
-    return counts
+    return Array.from(cities.entries()).map(([label, count]) => ({ label, value: label, count })).slice(0, 50)
   }, [listings])
 
-  const visibleFilters = useMemo(() => {
-    let filtered = FILTER_GROUPS.filter(fg => {
-      if (filterType !== 'all' && fg.category !== filterType) return false
-      if (filterSearch && !fg.title.toLowerCase().includes(filterSearch.toLowerCase())) return false
-      return true
+  const stateOptions = useMemo(() => {
+    const states = new Map<string, number>()
+    listings.forEach(l => {
+      if (l.state?.trim()) states.set(l.state.trim(), (states.get(l.state.trim()) || 0) + 1)
     })
+    return Array.from(states.entries()).map(([label, count]) => ({ label, value: label, count })).slice(0, 50)
+  }, [listings])
 
-    const pinned = filtered.filter(f => pinnedFilters.has(f.id))
-    const unpinned = filtered.filter(f => !pinnedFilters.has(f.id))
-    const visibleUnpinned = showMoreFilters ? unpinned : unpinned.slice(0, 5)
-
-    return [...pinned, ...visibleUnpinned]
-  }, [filterType, filterSearch, pinnedFilters, showMoreFilters])
-
-  const togglePin = (filterId: string) => {
-    setPinnedFilters(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(filterId)) {
-        newSet.delete(filterId)
-      } else {
-        newSet.add(filterId)
+  const zipCodeOptions = useMemo(() => {
+    const zips = new Map<string, number>()
+    listings.forEach(l => {
+      if (l.zip_code) {
+        const z = String(l.zip_code).trim()
+        if (z) zips.set(z, (zips.get(z) || 0) + 1)
       }
-      return newSet
     })
-  }
+    return Array.from(zips.entries()).map(([label, count]) => ({ label, value: label, count })).slice(0, 50)
+  }, [listings])
 
-  const toggleExpand = (filterId: string) => {
+  const toggleExpand = (id: string) => {
     setExpandedGroups(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(filterId)) {
-        newSet.delete(filterId)
-      } else {
-        newSet.add(filterId)
-      }
-      return newSet
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
     })
   }
 
   const updateFilter = (filterId: string, value: any) => {
-    if (value === undefined || value === null || value === '' || 
+    if (value === undefined || value === null || value === '' ||
         (Array.isArray(value) && value.length === 0) ||
-        (typeof value === 'object' && !Array.isArray(value) && 
-         (!value.min && !value.max))) {
-      const newFilters = { ...filters }
-      delete newFilters[filterId]
-      onFiltersChange(newFilters)
+        (typeof value === 'object' && !Array.isArray(value) && !value.min && !value.max)) {
+      const next = { ...filters }
+      delete next[filterId]
+      onFiltersChange(next)
     } else {
-      onFiltersChange({
-        ...filters,
-        [filterId]: value
-      })
+      onFiltersChange({ ...filters, [filterId]: value })
     }
   }
 
   const clearFilter = (filterId: string) => {
-    const newFilters = { ...filters }
-    
+    const next = { ...filters }
     if (filterId === 'location') {
-      delete newFilters.city
-      delete newFilters.state
-      delete newFilters.zip_code
+      delete next.city
+      delete next.state
+      delete next.zip_code
       setLocationSearch({ city: '', state: '', zip_code: '' })
-    } else {
-      delete newFilters[filterId]
-    }
-    
-    onFiltersChange(newFilters)
+    } else delete next[filterId]
+    onFiltersChange(next)
   }
 
-  const clearAllFilters = () => {
+  const resetAll = () => {
     onFiltersChange({})
+    setLocationSearch({ city: '', state: '', zip_code: '' })
   }
 
-  const activeFiltersCount = Object.keys(filters).filter(key => {
-    const value = filters[key]
-    if (key === 'location') {
-      return (filters.city && filters.city.length > 0) || 
-             (filters.state && filters.state.length > 0) || 
-             (filters.zip_code && filters.zip_code.length > 0)
-    }
-    if (Array.isArray(value)) return value.length > 0
-    if (typeof value === 'object' && value !== null) {
-      return value.min !== undefined || value.max !== undefined
-    }
-    return value !== undefined && value !== null && value !== ''
-  }).length
+  const visibleFilters = useMemo(() => {
+    const list = showMoreFilters ? FILTER_GROUPS : FILTER_GROUPS.slice(0, INITIAL_VISIBLE)
+    return list
+  }, [showMoreFilters])
 
   if (isCollapsed) {
     return (
-      <div className={cn(
-        "w-11 flex flex-col items-center p-2 gap-2",
-        "bg-white dark:bg-dark border-r border-ld",
-        "shadow-sm"
-      )}>
+      <div className="w-11 flex flex-col items-center p-2 gap-2 bg-white dark:bg-dark border-r border-slate-200 dark:border-slate-700 shadow-sm">
         <button
           onClick={onToggleCollapse}
-          className={cn(
-            "p-2 rounded-md",
-            "hover:bg-lightprimary dark:hover:bg-lightprimary",
-            "transition-colors duration-200"
-          )}
+          className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           title="Show Filters"
           aria-label="Show Filters"
         >
-          <Filter className="h-5 w-5 text-ld" />
+          <span className="material-symbols-outlined text-[20px] text-slate-600 dark:text-slate-400">tune</span>
         </button>
-        {activeFiltersCount > 0 && (
-          <div className={cn(
-            "min-w-[20px] h-5 rounded-full",
-            "bg-primary text-white",
-            "flex items-center justify-center",
-            "text-xs font-semibold px-1.5"
-          )}>
-            {activeFiltersCount}
-          </div>
-        )}
       </div>
     )
   }
 
   return (
-    <div className={cn(
-      "w-72 flex flex-col h-full overflow-hidden",
-      "bg-white dark:bg-dark border-r border-ld",
-      "shadow-sm"
-    )}>
-      {/* Summary Stats - Total / Net New / Saved (reference: segmented control, label over count) */}
-      <div className={cn(
-        "px-4 py-2 border-b border-ld",
-        "bg-white dark:bg-dark"
-      )}>
-        <div
-          className={cn(
-            "rounded-xl p-0.5 flex",
-            "bg-gray-100 dark:bg-gray-800/80",
-            "shadow-sm"
-          )}
-          role="tablist"
-          aria-label="View type: Total, Net New, Saved"
+    <aside className="w-80 prospect-enrich-glass-sidebar border-r border-slate-200 dark:border-slate-700 flex flex-col flex-shrink-0 h-full overflow-y-auto prospect-enrich-scrollbar-hide">
+      {/* Filters header */}
+      <div className="p-6 border-b border-slate-200/60 dark:border-slate-700/60 sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm z-10 flex justify-between items-center">
+        <h2 className="font-semibold text-slate-800 dark:text-slate-200">Filters</h2>
+        <button
+          onClick={resetAll}
+          className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={viewType === 'total' ? 'true' : 'false'}
-            aria-label={`Total: ${formatCompactCount(totalCount)} prospects`}
-            tabIndex={viewType === 'total' ? 0 : -1}
-            onClick={() => onViewTypeChange?.('total')}
-            className={cn(
-              "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
-              "rounded-l-lg rounded-r-md",
-              viewType === 'total'
-                ? "bg-[#ECF3FE] dark:bg-blue-900/30 shadow-sm"
-                : "bg-white dark:bg-gray-800 hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
-            )}
-          >
-            <span
-              className={cn(
-                "text-sm font-semibold",
-                viewType === 'total'
-                  ? "text-[#3273dc] dark:text-blue-400"
-                  : "text-gray-800 dark:text-gray-200"
-              )}
-            >
-              Total
-            </span>
-            <span
-              className={cn(
-                "text-sm mt-0",
-                viewType === 'total'
-                  ? "text-gray-600 dark:text-gray-300"
-                  : "text-gray-500 dark:text-gray-400"
-              )}
-            >
-              {formatCompactCount(totalCount)}
-            </span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={viewType === 'net_new' ? 'true' : 'false'}
-            aria-label={`Net New: ${formatCompactCount(netNewCount)} prospects`}
-            tabIndex={viewType === 'net_new' ? 0 : -1}
-            onClick={() => onViewTypeChange?.('net_new')}
-            className={cn(
-              "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
-              "rounded-md",
-              viewType === 'net_new'
-                ? "bg-[#ECF3FE] dark:bg-blue-900/30 shadow-sm"
-                : "bg-white dark:bg-gray-800 hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
-            )}
-          >
-            <span
-              className={cn(
-                "text-sm font-semibold",
-                viewType === 'net_new'
-                  ? "text-[#3273dc] dark:text-blue-400"
-                  : "text-gray-800 dark:text-gray-200"
-              )}
-            >
-              Net New
-            </span>
-            <span
-              className={cn(
-                "text-sm mt-0",
-                viewType === 'net_new'
-                  ? "text-gray-600 dark:text-gray-300"
-                  : "text-gray-500 dark:text-gray-400"
-              )}
-            >
-              {formatCompactCount(netNewCount)}
-            </span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={viewType === 'saved' ? 'true' : 'false'}
-            aria-label={`Saved: ${formatCompactCount(savedCount)} prospects`}
-            tabIndex={viewType === 'saved' ? 0 : -1}
-            onClick={() => onViewTypeChange?.('saved')}
-            className={cn(
-              "flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-200",
-              "rounded-r-lg rounded-l-md",
-              viewType === 'saved'
-                ? "bg-[#ECF3FE] dark:bg-blue-900/30 shadow-sm"
-                : "bg-white dark:bg-gray-800 hover:bg-gray-200/60 dark:hover:bg-gray-700/50"
-            )}
-          >
-            <span
-              className={cn(
-                "text-sm font-semibold",
-                viewType === 'saved'
-                  ? "text-[#3273dc] dark:text-blue-400"
-                  : "text-gray-800 dark:text-gray-200"
-              )}
-            >
-              Saved
-            </span>
-            <span
-              className={cn(
-                "text-sm mt-0",
-                viewType === 'saved'
-                  ? "text-gray-600 dark:text-gray-300"
-                  : "text-gray-500 dark:text-gray-400"
-              )}
-            >
-              {formatCompactCount(savedCount)}
-            </span>
-          </button>
-        </div>
+          Reset All
+        </button>
       </div>
 
-      {/* Filter Type Selector */}
-      <div className={cn(
-        "px-4 py-3 border-b border-ld",
-        "bg-white dark:bg-dark"
-      )}>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value as any)}
-          aria-label="Filter type"
-          className={cn(
-            "w-full px-3 py-2 rounded-md",
-            "border border-ld bg-white dark:bg-dark",
-            "text-sm text-ld",
-            "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-            "cursor-pointer transition-all duration-200"
-          )}
-        >
-          <option value="all">All Filters</option>
-          <option value="property">Property Info</option>
-          <option value="person">Person Info</option>
-          <option value="company">Company Info</option>
-        </select>
-      </div>
-
-      {/* Active Filters Summary */}
-      {activeFiltersCount > 0 && (
-        <div className={cn(
-          "px-4 py-3 border-b border-ld",
-          "bg-lightprimary dark:bg-lightprimary/20"
-        )}>
-          <div className="flex items-center justify-between mb-1">
-            <span className={cn(
-              "text-xs font-medium",
-              "text-dark dark:text-white"
-            )}>
-              {activeFiltersCount} filter{activeFiltersCount !== 1 ? 's' : ''} active
-            </span>
-            <button
-              onClick={clearAllFilters}
-              className={cn(
-                "px-2 py-1 text-xs underline",
-                "text-primary hover:text-primary/80",
-                "transition-colors duration-200"
-              )}
-            >
-              Clear all
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Filter Groups */}
-      <div className={cn(
-        "flex-1 overflow-y-auto p-2",
-        "bg-gray-50 dark:bg-gray-900/50"
-      )}>
-        {visibleFilters.map((filterGroup) => {
-          const isExpanded = expandedGroups.has(filterGroup.id)
-          const isPinned = pinnedFilters.has(filterGroup.id)
-          const filterValue = filters[filterGroup.id]
+      <div className="flex-1 flex flex-col pt-2">
+        {visibleFilters.map((fg) => {
+          const isPinned = PINNED_IDS.has(fg.id)
+          const isExpanded = expandedGroups.has(fg.id)
+          const filterValue = filters[fg.id]
+          const icon = isExpanded ? 'expand_more' : 'chevron_right'
 
           return (
-            <div
-              key={filterGroup.id}
-              className={cn(
-                "mb-1 border rounded-md",
-                "border-ld",
-                isPinned 
-                  ? "bg-yellow-50/50 dark:bg-yellow-900/10" 
-                  : "bg-white dark:bg-dark",
-                "shadow-sm"
-              )}
-            >
-              {/* Filter Header */}
+            <div key={fg.id} className="border-b border-slate-100 dark:border-slate-800">
               <div
-                className={cn(
-                  "px-3 py-2 flex items-center justify-between",
-                  "cursor-pointer select-none",
-                  "hover:bg-lightprimary dark:hover:bg-lightprimary/20",
-                  "transition-colors duration-200"
-                )}
-                onClick={() => toggleExpand(filterGroup.id)}
+                className="group flex items-center justify-between px-6 py-4 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                onClick={() => toggleExpand(fg.id)}
               >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4 text-bodytext dark:text-white/50 flex-shrink-0" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-bodytext dark:text-white/50 flex-shrink-0" />
-                  )}
+                <div className="flex items-center gap-4">
+                  <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[20px] group-hover:text-slate-600 dark:group-hover:text-slate-300">{icon}</span>
                   <span className={cn(
-                    "text-sm font-medium truncate",
-                    "text-dark dark:text-white"
+                    "text-[15px]",
+                    isPinned ? "font-semibold text-slate-700 dark:text-slate-300" : "font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200"
                   )}>
-                    {filterGroup.title}
+                    {fg.title}
                   </span>
-                  {(() => {
-                    if (filterGroup.id === 'location') {
-                      const cityCount = Array.isArray(filters.city) ? filters.city.length : 0
-                      const stateCount = Array.isArray(filters.state) ? filters.state.length : 0
-                      const zipCount = Array.isArray(filters.zip_code) ? filters.zip_code.length : 0
-                      const totalCount = cityCount + stateCount + zipCount
-                      return totalCount > 0 ? (
-                        <span className={cn(
-                          "px-1.5 py-0.5 rounded text-xs font-medium",
-                          "bg-primary text-white",
-                          "flex-shrink-0"
-                        )}>
-                          {totalCount}
-                        </span>
-                      ) : null
-                    }
-                    return filterValue ? (
-                      <span className={cn(
-                        "px-1.5 py-0.5 rounded text-xs font-medium",
-                        "bg-primary text-white",
-                        "flex-shrink-0"
-                      )}>
-                        {Array.isArray(filterValue) ? filterValue.length : 1}
-                      </span>
-                    ) : null
-                  })()}
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    togglePin(filterGroup.id)
-                  }}
-                  className={cn(
-                    "p-1 rounded hover:bg-lightprimary dark:hover:bg-lightprimary/20",
-                    "transition-colors duration-200",
-                    "flex-shrink-0"
-                  )}
-                  title={isPinned ? 'Unpin filter' : 'Pin filter'}
-                  aria-label={isPinned ? 'Unpin filter' : 'Pin filter'}
-                >
-                  {isPinned ? (
-                    <Pin className={cn(
-                      "h-4 w-4",
-                      "text-primary"
-                    )} />
-                  ) : (
-                    <PinOff className={cn(
-                      "h-4 w-4",
-                      "text-bodytext dark:text-white/50"
-                    )} />
-                  )}
-                </button>
+                {isPinned && (
+                  <span className="material-symbols-outlined text-indigo-500 dark:text-indigo-400 text-[18px]" style={{ fontVariationSettings: '"FILL" 1' }}>push_pin</span>
+                )}
               </div>
 
-              {/* Filter Content */}
               {isExpanded && (
-                <div className={cn(
-                  "px-3 py-3 border-t border-ld",
-                  "bg-white dark:bg-dark"
-                )}>
-                  {filterGroup.type === 'multi-select' && (
-                    <div className="flex flex-col gap-2">
-                      {filterGroup.id === 'location' ? (
-                        <>
-                          {/* Location Type Tabs */}
-                          <div className={cn(
-                            "flex gap-1 border-b border-ld mb-2"
-                          )}>
-                            {(['city', 'state', 'zip_code'] as const).map((tab) => (
-                              <button
-                                key={tab}
-                                onClick={() => setActiveLocationTab(tab)}
-                                className={cn(
-                                  "flex-1 px-2 py-1 text-xs font-medium",
-                                  "border-b-2 transition-colors duration-200",
-                                  activeLocationTab === tab
-                                    ? "border-primary text-primary"
-                                    : "border-transparent text-bodytext dark:text-white/70 hover:text-primary"
-                                )}
-                              >
-                                {tab === 'zip_code' ? 'Zip Code' : tab.charAt(0).toUpperCase() + tab.slice(1)}
-                              </button>
-                            ))}
-                          </div>
-                          
-                          {/* Search input for active tab */}
-                          <div className="relative mb-2">
-                            <Search className={cn(
-                              "absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4",
-                              "text-bodytext dark:text-white/50",
-                              "pointer-events-none"
-                            )} />
-                            <input
-                              type="text"
-                              value={locationSearch[activeLocationTab]}
-                              onChange={(e) => setLocationSearch(prev => ({ ...prev, [activeLocationTab]: e.target.value }))}
-                              placeholder={`Search ${activeLocationTab === 'zip_code' ? 'zip codes' : activeLocationTab + 's'}...`}
-                              className={cn(
-                                "w-full pl-8 pr-2 py-1.5 rounded-md text-sm",
-                                "border border-ld bg-white dark:bg-dark",
-                                "text-ld",
-                                "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                                "transition-all duration-200"
-                              )}
-                            />
-                          </div>
-                          
-                          {/* Options list for active tab */}
-                          <div className="max-h-[200px] overflow-y-auto">
-                            {(() => {
-                              const options = activeLocationTab === 'city' ? cityOptions 
-                                            : activeLocationTab === 'state' ? stateOptions 
-                                            : zipCodeOptions
-                              const currentFilterValue = filters[activeLocationTab] || []
-                              
-                              return options.length > 0 ? (
-                                options.map((option) => {
-                                  const isSelected = Array.isArray(currentFilterValue) && currentFilterValue.includes(option.value)
-                                  return (
-                                    <label
-                                      key={option.value}
-                                      className={cn(
-                                        "flex items-center gap-2 cursor-pointer",
-                                        "px-2 py-1 rounded",
-                                        isSelected && "bg-lightprimary dark:bg-lightprimary/20"
-                                      )}
-                                    >
-                                      <Checkbox
-                                        checked={isSelected}
-                                        onCheckedChange={(checked) => {
-                                          const current = Array.isArray(currentFilterValue) ? currentFilterValue : []
-                                          if (checked) {
-                                            updateFilter(activeLocationTab, [...current, option.value])
-                                          } else {
-                                            updateFilter(activeLocationTab, current.filter(v => v !== option.value))
-                                          }
-                                        }}
-                                      />
-                                      <span className={cn(
-                                        "text-sm flex-1",
-                                        "text-dark dark:text-white"
-                                      )}>
-                                        {option.label}
-                                      </span>
-                                      {option.count !== undefined && (
-                                        <span className={cn(
-                                          "text-xs",
-                                          "text-bodytext dark:text-white/70"
-                                        )}>
-                                          {option.count.toLocaleString()}
-                                        </span>
-                                      )}
-                                    </label>
-                                  )
-                                })
-                              ) : (
-                                <div className={cn(
-                                  "px-2 py-2 text-sm text-center",
-                                  "text-bodytext dark:text-white/70"
-                                )}>
-                                  No {activeLocationTab === 'zip_code' ? 'zip codes' : activeLocationTab + 's'} found
-                                </div>
-                              )
-                            })()}
-                          </div>
-                        </>
-                      ) : filterGroup.options ? (
-                        filterGroup.options.map((option) => {
-                          const isSelected = Array.isArray(filterValue) && filterValue.includes(option.value)
-                          const count = filterCounts[filterGroup.id]?.[option.value] ?? option.count ?? 0
-                          return (
-                            <label
-                              key={option.value}
-                              className={cn(
-                                "flex items-center gap-2 cursor-pointer",
-                                "px-2 py-1 rounded",
-                                isSelected && "bg-lightprimary dark:bg-lightprimary/20"
-                              )}
-                            >
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={(checked) => {
-                                  const current = Array.isArray(filterValue) ? filterValue : []
-                                  if (checked) {
-                                    updateFilter(filterGroup.id, [...current, option.value])
-                                  } else {
-                                    updateFilter(filterGroup.id, current.filter(v => v !== option.value))
-                                  }
-                                }}
-                              />
-                              <span className={cn(
-                                "text-sm flex-1",
-                                "text-dark dark:text-white"
-                              )}>
-                                {option.label}
-                              </span>
-                              {count > 0 && (
-                                <span className={cn(
-                                  "text-xs",
-                                  "text-bodytext dark:text-white/70"
-                                )}>
-                                  {count.toLocaleString()}
-                                </span>
-                              )}
-                            </label>
+                <div className="px-6 pb-4 pt-0 border-t border-slate-100 dark:border-slate-800">
+                  {fg.type === 'multi-select' && fg.id === 'location' && (
+                    <>
+                      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-2">
+                        {(['city', 'state', 'zip_code'] as const).map((tab) => (
+                          <button
+                            key={tab}
+                            onClick={() => setActiveLocationTab(tab)}
+                            className={cn(
+                              "flex-1 px-2 py-1 text-xs font-medium border-b-2 transition-colors",
+                              activeLocationTab === tab
+                                ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-indigo-600"
+                            )}
+                          >
+                            {tab === 'zip_code' ? 'Zip Code' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="max-h-[180px] overflow-y-auto space-y-1">
+                        {(() => {
+                          const opts = activeLocationTab === 'city' ? cityOptions : activeLocationTab === 'state' ? stateOptions : zipCodeOptions
+                          const current = filters[activeLocationTab] || []
+                          return opts.length ? opts.map((o) => {
+                            const sel = Array.isArray(current) && current.includes(o.value)
+                            return (
+                              <label key={o.value} className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <Checkbox checked={sel} onCheckedChange={(c) => {
+                                  const arr = Array.isArray(current) ? [...current] : []
+                                  if (c) arr.push(o.value)
+                                  else arr.splice(arr.indexOf(o.value), 1)
+                                  updateFilter(activeLocationTab, arr.length ? arr : undefined)
+                                }} />
+                                <span className="text-sm text-slate-700 dark:text-slate-300">{o.label}</span>
+                                {o.count != null && <span className="text-xs text-slate-500">{o.count}</span>}
+                              </label>
+                            )
+                          }) : (
+                            <div className="px-2 py-2 text-sm text-slate-500">No options</div>
                           )
-                        })
-                      ) : null}
+                        })()}
+                      </div>
+                    </>
+                  )}
+
+                  {fg.type === 'multi-select' && fg.id !== 'location' && fg.options && (
+                    <div className="space-y-1 max-h-[180px] overflow-y-auto">
+                      {fg.options.map((o) => {
+                        const sel = Array.isArray(filterValue) && filterValue.includes(o.value)
+                        return (
+                          <label key={o.value} className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <Checkbox checked={sel} onCheckedChange={(c) => {
+                              const arr = Array.isArray(filterValue) ? [...filterValue] : []
+                              if (c) arr.push(o.value)
+                              else arr.splice(arr.indexOf(o.value), 1)
+                              updateFilter(fg.id, arr.length ? arr : undefined)
+                            }} />
+                            <span className="text-sm text-slate-700 dark:text-slate-300">{o.label}</span>
+                          </label>
+                        )
+                      })}
                     </div>
                   )}
 
-                  {filterGroup.type === 'checkbox' && (
-                    <label className={cn(
-                      "flex items-center gap-2 cursor-pointer"
-                    )}>
-                      <Checkbox
-                        checked={!!filterValue}
-                        onCheckedChange={(checked) => updateFilter(filterGroup.id, checked || undefined)}
-                      />
-                      <span className={cn(
-                        "text-sm",
-                        "text-dark dark:text-white"
-                      )}>
-                        {filterGroup.title}
-                      </span>
+                  {fg.type === 'range' && (
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-0.5">Min{fg.id === 'price_range' ? ' ($)' : fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
+                        <input
+                          type="number"
+                          value={filterValue?.min ?? ''}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            updateFilter(fg.id, { ...filterValue, min: v ? (fg.id === 'year_built' ? parseInt(v) : parseFloat(v)) : undefined })
+                          }}
+                          placeholder={fg.id === 'price_range' ? 'e.g. 100000' : fg.id === 'year_built' ? 'e.g. 1950' : 'Min'}
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-0.5">Max{fg.id === 'price_range' ? ' ($)' : fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
+                        <input
+                          type="number"
+                          value={filterValue?.max ?? ''}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            updateFilter(fg.id, { ...filterValue, max: v ? (fg.id === 'year_built' ? parseInt(v) : parseFloat(v)) : undefined })
+                          }}
+                          placeholder={fg.id === 'price_range' ? 'e.g. 500000' : fg.id === 'year_built' ? 'e.g. 2024' : 'Max'}
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {fg.type === 'checkbox' && (
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox checked={!!filterValue} onCheckedChange={(c) => updateFilter(fg.id, c || undefined)} />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{fg.title}</span>
                     </label>
                   )}
 
-                  {filterGroup.type === 'range' && (
-                    <div className="flex flex-col gap-2">
-                      <div>
-                        <label className={cn(
-                          "block text-xs mb-1",
-                          "text-bodytext dark:text-white/70"
-                        )}>
-                          Min{filterGroup.id === 'price_range' ? ' ($)' : filterGroup.id === 'sqft' ? ' (sqft)' : filterGroup.id === 'ai_score' ? ' (0-100)' : filterGroup.id === 'year_built' ? ' (year)' : ''}
-                        </label>
-                        <input
-                          type="number"
-                          value={filterValue?.min !== undefined ? filterValue.min : ''}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            updateFilter(filterGroup.id, {
-                              ...filterValue,
-                              min: value ? (filterGroup.id === 'year_built' ? parseInt(value) : parseFloat(value)) : undefined
-                            })
-                          }}
-                          placeholder={filterGroup.id === 'price_range' ? 'e.g. 100000' : filterGroup.id === 'year_built' ? 'e.g. 1950' : 'Min'}
-                          min={filterGroup.id === 'ai_score' ? 0 : filterGroup.id === 'year_built' ? 1800 : undefined}
-                          max={filterGroup.id === 'ai_score' ? 100 : filterGroup.id === 'year_built' ? new Date().getFullYear() : undefined}
-                          className={cn(
-                            "w-full px-2 py-1.5 rounded-md text-sm",
-                            "border border-ld bg-white dark:bg-dark",
-                            "text-ld",
-                            "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                            "transition-all duration-200"
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <label className={cn(
-                          "block text-xs mb-1",
-                          "text-bodytext dark:text-white/70"
-                        )}>
-                          Max{filterGroup.id === 'price_range' ? ' ($)' : filterGroup.id === 'sqft' ? ' (sqft)' : filterGroup.id === 'ai_score' ? ' (0-100)' : filterGroup.id === 'year_built' ? ' (year)' : ''}
-                        </label>
-                        <input
-                          type="number"
-                          value={filterValue?.max !== undefined ? filterValue.max : ''}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            updateFilter(filterGroup.id, {
-                              ...filterValue,
-                              max: value ? (filterGroup.id === 'year_built' ? parseInt(value) : parseFloat(value)) : undefined
-                            })
-                          }}
-                          placeholder={filterGroup.id === 'price_range' ? 'e.g. 500000' : filterGroup.id === 'year_built' ? 'e.g. 2024' : 'Max'}
-                          min={filterGroup.id === 'ai_score' ? 0 : filterGroup.id === 'year_built' ? 1800 : undefined}
-                          max={filterGroup.id === 'ai_score' ? 100 : filterGroup.id === 'year_built' ? new Date().getFullYear() : undefined}
-                          className={cn(
-                            "w-full px-2 py-1.5 rounded-md text-sm",
-                            "border border-ld bg-white dark:bg-dark",
-                            "text-ld",
-                            "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                            "transition-all duration-200"
-                          )}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {filterGroup.type === 'text' && (
+                  {fg.type === 'text' && (
                     <input
                       type="text"
                       value={filterValue || ''}
-                      onChange={(e) => {
-                        const value = e.target.value.trim()
-                        updateFilter(filterGroup.id, value || undefined)
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.currentTarget.blur()
-                        }
-                      }}
-                      placeholder={`Enter ${filterGroup.title.toLowerCase()}...`}
-                      className={cn(
-                        "w-full px-2 py-1.5 rounded-md text-sm",
-                        "border border-ld bg-white dark:bg-dark",
-                        "text-ld",
-                        "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                        "transition-all duration-200"
-                      )}
+                      onChange={(e) => updateFilter(fg.id, e.target.value.trim() || undefined)}
+                      placeholder={`Enter ${fg.title.toLowerCase()}...`}
+                      className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   )}
 
-                  {filterValue && (
+                  {filterValue && (fg.id !== 'location' || filters.city?.length || filters.state?.length || filters.zip_code?.length) && (
                     <button
-                      onClick={() => clearFilter(filterGroup.id)}
-                      className={cn(
-                        "mt-2 px-2 py-1 text-xs underline",
-                        "text-primary hover:text-primary/80",
-                        "transition-colors duration-200"
-                      )}
+                      onClick={() => clearFilter(fg.id)}
+                      className="mt-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
                     >
                       Clear
                     </button>
@@ -979,21 +338,17 @@ export default function ProspectFilterSidebar({
           )
         })}
 
-        {!showMoreFilters && visibleFilters.length >= 5 && (
-          <button
-            onClick={() => setShowMoreFilters(true)}
-            className={cn(
-              "w-full px-3 py-2 mt-2 rounded-md text-sm font-medium",
-              "border border-ld bg-white dark:bg-dark",
-              "text-ld",
-              "hover:bg-lightprimary dark:hover:bg-lightprimary/20",
-              "transition-colors duration-200"
-            )}
-          >
-            More Filters ({FILTER_GROUPS.length - visibleFilters.length})
-          </button>
+        {!showMoreFilters && HIDDEN_COUNT > 0 && (
+          <div className="p-6 mt-auto">
+            <button
+              onClick={() => setShowMoreFilters(true)}
+              className="w-full py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-slate-200 transition-all shadow-sm"
+            >
+              More Filters ({HIDDEN_COUNT})
+            </button>
+          </div>
         )}
       </div>
-    </div>
+    </aside>
   )
 }

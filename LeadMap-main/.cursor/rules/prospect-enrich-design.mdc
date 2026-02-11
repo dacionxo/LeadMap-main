@@ -1,0 +1,30 @@
+---
+description: Elite Property Prospecting Dashboard design system for /dashboard/prospect-enrich
+globs: app/dashboard/prospect-enrich/**/*
+---
+
+# Prospect & Enrich — Elite Design System
+
+## Design Reference
+The prospect-enrich page follows the Elite Property Prospecting Dashboard design:
+- Glass morphism container (max-w-[1440px], h-[90vh], rounded-[2rem])
+- Mesh gradient background (prospect-enrich-mesh)
+- Slate/Indigo/Emerald palette from Tailwind
+- Material Symbols Outlined for icons
+- Inter font family
+
+## Key Heuristics
+1. **Sidebar**: glass-sidebar, w-80, Filters header + Reset All, pinned filters (Price Range, Location, AI Score) with push_pin, unpinned with chevron_right, More Filters button
+2. **Header**: Find Deals title, Import dropdown, Research with AI gradient button (indigo-purple), Search places input, Default View, Hide Filters, Search Settings
+3. **Tabs**: Total | Net New | Saved — uppercase labels, indigo active state
+4. **Table**: sticky thead bg-white/95 backdrop-blur, Address with location_on icon in slate circle, emerald status badges, indigo AI score circle
+5. **Footer**: Showing X-Y of Z, circular page buttons, Next Page with arrow_forward
+
+## CSS Classes (globals.css)
+- `.prospect-enrich-glass` — white 92% + backdrop-blur 16px
+- `.prospect-enrich-glass-sidebar` — slate-50 80%
+- `.prospect-enrich-mesh` — radial gradients background
+- `.prospect-enrich-scrollbar-hide` — hide scrollbar
+
+## API Routes
+Do not modify API routes. All /api/listings/* and /api/lists/* endpoints remain unchanged.

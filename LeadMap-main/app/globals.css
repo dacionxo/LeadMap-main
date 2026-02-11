@@ -1224,3 +1224,38 @@
 .unibox-ai-glow {
   animation: unibox-glowing 3s infinite;
 }
+
+/* Elite Property Prospecting Dashboard - Prospect & Enrich (1:1 design parity) */
+.prospect-enrich-page {
+  font-family: "Inter", var(--font-inter), sans-serif;
+}
+.prospect-enrich-glass {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.prospect-enrich-glass-sidebar {
+  background: rgba(248, 250, 252, 0.8);
+}
+.prospect-enrich-scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.prospect-enrich-mesh {
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(at 40% 20%, hsla(210, 100%, 96%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189, 100%, 96%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(341, 100%, 96%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsla(240, 100%, 96%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(220, 100%, 96%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsla(242, 100%, 96%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, hsla(343, 100%, 96%, 1) 0px, transparent 50%);
+}
+.dark .prospect-enrich-mesh {
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(at 40% 20%, hsla(225, 40%, 18%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(220, 40%, 18%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(240, 40%, 18%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsla(220, 40%, 18%, 1) 0px, transparent 50%);
+}

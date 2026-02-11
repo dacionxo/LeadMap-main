@@ -1,29 +1,12 @@
 'use client'
 
 /**
- * ProspectSearchHeader — "Find Deals" block: Research with AI, Import, Default View,
- * Hide Filters, Search places, Create workflow, Save as new search, People Auto-Score,
- * Search settings. Rendered as the first child of the prospect-enrich content; Option C
- * (-mt-[30px]) on the parent in /dashboard/prospect-enrich/page.tsx brings this block
- * (and the table below) flush under the Navbar.
+ * ProspectSearchHeader — Elite Property Prospecting Dashboard design
+ * 1:1 match: Find Deals, Import, Research with AI, Search places, Default View,
+ * Hide Filters, Search Settings, Total/Net New/Saved tabs.
  */
 
 import { useState } from 'react'
-import {
-  Search,
-  Grid3x3,
-  ChevronDown,
-  SlidersHorizontal,
-  X,
-  Sparkles,
-  Download,
-  Zap,
-  Save,
-  ArrowUpDown,
-  Settings,
-  LayoutGrid,
-  Map
-} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +31,21 @@ interface ProspectSearchHeaderProps {
   isDark?: boolean
   displayView?: DisplayView
   onDisplayViewChange?: (view: DisplayView) => void
+  totalCount: number
+  netNewCount: number
+  savedCount: number
+  viewType: 'total' | 'net_new' | 'saved'
+  onViewTypeChange?: (view: 'total' | 'net_new' | 'saved') => void
+}
+
+const getViewLabel = (view: DisplayView) => {
+  switch (view) {
+    case 'default': return 'Default View'
+    case 'compact': return 'Compact View'
+    case 'detailed': return 'Detailed View'
+    case 'map': return 'Map View'
+    default: return 'Default View'
+  }
 }
 
 export default function ProspectSearchHeader({
@@ -57,277 +55,144 @@ export default function ProspectSearchHeader({
   onToggleFilters,
   onImport,
   onResearchWithAI,
-  onCreateWorkflow,
-  onSaveSearch,
-  onAutoScore,
   onSearchSettings,
   isDark = false,
   displayView = 'default',
-  onDisplayViewChange
+  onDisplayViewChange,
+  totalCount = 0,
+  netNewCount = 0,
+  savedCount = 0,
+  viewType = 'total',
+  onViewTypeChange
 }: ProspectSearchHeaderProps) {
-  const getViewLabel = (view: DisplayView) => {
-    switch (view) {
-      case 'default': return 'Default View'
-      case 'compact': return 'Compact View'
-      case 'detailed': return 'Detailed View'
-      case 'map': return 'Map View'
-      default: return 'Default View'
-    }
-  }
-  
-  const handleViewChange = (view: DisplayView) => {
-    onDisplayViewChange?.(view)
-  }
-
-  const handleClearSearch = () => {
-    onSearchChange('')
-  }
+  const [importOpen, setImportOpen] = useState(false)
+  const [viewOpen, setViewOpen] = useState(false)
 
   return (
-    <div className={cn(
-      "bg-white dark:bg-dark border-b border-ld",
-      "flex flex-col gap-3.5 px-8 py-3.5",
-      "m-0"
-    )}>
-      {/* Top Row: Title and Primary Actions */}
-      <div className="flex items-center justify-between gap-4">
-        {/* Title */}
-        <h2 className={cn(
-          "text-2xl font-bold flex-shrink-0",
-          "text-dark dark:text-white"
-        )}>
+    <header className="p-6 pb-2">
+      {/* Top row: Title + Import + Research with AI */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">
           Find Deals
-        </h2>
-
-        {/* Right Side Actions - flex-shrink-0 keeps Research with AI / Import from being clipped */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {/* Research with AI Button */}
-          <button
-            onClick={onResearchWithAI}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-md",
-              "border border-primary text-primary",
-              "hover:bg-lightprimary hover:text-primary",
-              "transition-colors duration-200",
-              "font-medium text-sm"
-            )}
-          >
-            <Sparkles className="h-4 w-4" />
-            Research with AI
-          </button>
-
-          {/* Import Dropdown */}
-          <DropdownMenu>
+        </h1>
+        <div className="flex gap-3">
+          <DropdownMenu open={importOpen} onOpenChange={setImportOpen}>
             <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-md",
-                  "border border-ld bg-white dark:bg-dark",
-                  "hover:bg-lightprimary dark:hover:bg-lightprimary",
-                  "transition-colors duration-200",
-                  "font-medium text-sm text-ld"
-                )}
-              >
+              <button className="bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-sm transition-all flex items-center gap-2 shadow-sm">
                 Import
-                <ChevronDown className="h-4 w-4" />
+                <span className="material-symbols-outlined text-[18px]">expand_more</span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onImport}>
-                <Download className="h-4 w-4 mr-2" />
+              <DropdownMenuItem onClick={() => { onImport(); setImportOpen(false); }}>
                 Import from CSV
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Download className="h-4 w-4 mr-2" />
                 Import from Excel
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <button
+            onClick={onResearchWithAI}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium px-5 py-2 rounded-lg shadow-lg shadow-indigo-500/30 text-sm transition-all flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+            Research with AI
+          </button>
         </div>
       </div>
 
-      {/* Bottom Row: Controls and Secondary Actions */}
-      <div className="flex items-center gap-4 flex-wrap">
-        {/* Left Side: View Selector and Filter Toggle */}
-        <div className="flex items-center gap-3">
-          {/* View Selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-md",
-                  "border border-ld bg-white dark:bg-dark",
-                  "hover:bg-lightprimary dark:hover:bg-lightprimary",
-                  "transition-colors duration-200",
-                  "text-sm text-ld"
-                )}
-              >
-                <LayoutGrid className="h-4 w-4" />
-                {getViewLabel(displayView)}
-                <ChevronDown className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuItem onClick={() => handleViewChange('default')}>
-                <LayoutGrid className="h-4 w-4 mr-2" />
-                Default View
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleViewChange('compact')}>
-                <LayoutGrid className="h-4 w-4 mr-2" />
-                Compact View
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleViewChange('detailed')}>
-                <LayoutGrid className="h-4 w-4 mr-2" />
-                Detailed View
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleViewChange('map')}>
-                <Map className="h-4 w-4 mr-2" />
-                Map View
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Filter Toggle */}
-          <button
-            onClick={onToggleFilters}
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-md",
-              "border border-ld bg-white dark:bg-dark",
-              "hover:bg-lightprimary dark:hover:bg-lightprimary",
-              "transition-colors duration-200",
-              "text-sm text-ld"
-            )}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            {filtersVisible ? 'Hide Filters' : 'Show Filters'}
-          </button>
-        </div>
-
-        {/* Center: Search Input */}
-        <div className="flex-1 min-w-[300px] max-w-[600px] relative">
-          <Search className={cn(
-            "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
-            "text-bodytext dark:text-white/50",
-            "pointer-events-none"
-          )} />
+      {/* Controls row: Search, Default View, Hide Filters, Search Settings */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="relative flex-1">
+          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">search</span>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search places"
-            className={cn(
-              "w-full pl-10 pr-10 py-2 rounded-lg",
-              "border border-ld bg-white dark:bg-dark",
-              "text-sm text-ld",
-              "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-              "transition-all duration-200"
-            )}
+            placeholder="Search places..."
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
           />
-          {searchQuery && (
-            <button
-              onClick={handleClearSearch}
-              aria-label="Clear search"
-              className={cn(
-                "absolute right-3 top-1/2 -translate-y-1/2",
-                "h-5 w-5 rounded-full",
-                "bg-gray-200 dark:bg-gray-700",
-                "hover:bg-gray-300 dark:hover:bg-gray-600",
-                "flex items-center justify-center",
-                "transition-colors duration-200"
-              )}
-            >
-              <X className="h-3 w-3 text-bodytext dark:text-white/70" />
+        </div>
+        <DropdownMenu open={viewOpen} onOpenChange={setViewOpen}>
+          <DropdownMenuTrigger asChild>
+            <button className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm transition-all">
+              <span className="material-symbols-outlined text-[18px]">grid_view</span>
+              {getViewLabel(displayView)}
+              <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
             </button>
-          )}
-        </div>
-
-        {/* Right Side: Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Create Workflow */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-md",
-                  "border border-ld bg-white dark:bg-dark",
-                  "hover:bg-lightprimary dark:hover:bg-lightprimary",
-                  "transition-colors duration-200",
-                  "text-sm text-ld"
-                )}
-              >
-                <Zap className="h-4 w-4" />
-                Create workflow
-                <ChevronDown className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onCreateWorkflow}>
-                New workflow
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                From template
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Save as new search */}
-          <button
-            onClick={onSaveSearch}
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-md",
-              "border border-ld bg-white dark:bg-dark",
-              "hover:bg-lightprimary dark:hover:bg-lightprimary",
-              "transition-colors duration-200",
-              "text-sm text-ld"
-            )}
-          >
-            <Save className="h-4 w-4" />
-            Save as new search
-          </button>
-
-          {/* People Auto-Score */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-md",
-                  "border border-ld bg-white dark:bg-dark",
-                  "hover:bg-lightprimary dark:hover:bg-lightprimary",
-                  "transition-colors duration-200",
-                  "text-sm text-ld"
-                )}
-              >
-                <ArrowUpDown className="h-4 w-4" />
-                People Auto-Score
-                <ChevronDown className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onAutoScore}>
-                Score all
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                Score selected
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Search settings */}
-          <button
-            onClick={onSearchSettings}
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-md",
-              "border border-ld bg-white dark:bg-dark",
-              "hover:bg-lightprimary dark:hover:bg-lightprimary",
-              "transition-colors duration-200",
-              "text-sm text-ld"
-            )}
-          >
-            <Settings className="h-4 w-4" />
-            Search settings
-          </button>
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem onClick={() => { onDisplayViewChange?.('default'); setViewOpen(false); }}>Default View</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onDisplayViewChange?.('compact'); setViewOpen(false); }}>Compact View</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onDisplayViewChange?.('detailed'); setViewOpen(false); }}>Detailed View</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onDisplayViewChange?.('map'); setViewOpen(false); }}>Map View</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <button
+          onClick={onToggleFilters}
+          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm transition-all"
+        >
+          <span className="material-symbols-outlined text-[18px]">tune</span>
+          {filtersVisible ? 'Hide Filters' : 'Show Filters'}
+        </button>
+        <button
+          onClick={onSearchSettings}
+          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm transition-all"
+        >
+          <span className="material-symbols-outlined text-[18px]">settings</span>
+          Search Settings
+        </button>
       </div>
-    </div>
+
+      {/* Tabs: Total, Net New, Saved */}
+      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+        <button
+          onClick={() => onViewTypeChange?.('total')}
+          className={cn(
+            "px-6 py-3 border-b-2 text-sm flex flex-col items-center min-w-[120px] transition-colors",
+            viewType === 'total'
+              ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold"
+              : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium"
+          )}
+        >
+          <span className={cn(
+            "text-xs uppercase font-bold tracking-wider mb-0.5",
+            viewType === 'total' ? "text-indigo-400 dark:text-indigo-500" : "text-slate-400 dark:text-slate-500"
+          )}>Total</span>
+          {totalCount.toLocaleString()}
+        </button>
+        <button
+          onClick={() => onViewTypeChange?.('net_new')}
+          className={cn(
+            "px-6 py-3 border-b-2 text-sm flex flex-col items-center min-w-[120px] transition-colors",
+            viewType === 'net_new'
+              ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold"
+              : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium"
+          )}
+        >
+          <span className={cn(
+            "text-xs uppercase font-bold tracking-wider mb-0.5",
+            viewType === 'net_new' ? "text-indigo-400 dark:text-indigo-500" : "text-slate-400 dark:text-slate-500"
+          )}>Net New</span>
+          {netNewCount.toLocaleString()}
+        </button>
+        <button
+          onClick={() => onViewTypeChange?.('saved')}
+          className={cn(
+            "px-6 py-3 border-b-2 text-sm flex flex-col items-center min-w-[120px] transition-colors",
+            viewType === 'saved'
+              ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold"
+              : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium"
+          )}
+        >
+          <span className={cn(
+            "text-xs uppercase font-bold tracking-wider mb-0.5",
+            viewType === 'saved' ? "text-indigo-400 dark:text-indigo-500" : "text-slate-400 dark:text-slate-500"
+          )}>Saved</span>
+          {savedCount.toLocaleString()}
+        </button>
+      </div>
+    </header>
   )
 }

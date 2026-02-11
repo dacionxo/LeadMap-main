@@ -1,6 +1,10 @@
 'use client'
 
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+/**
+ * TailwindAdminPagination — Elite Property Prospecting Dashboard footer design
+ * 1:1 match: Showing 1-30 of N, page numbers with chevrons, Next Page button.
+ */
+
 import { cn } from '@/app/lib/utils'
 
 interface TailwindAdminPaginationProps {
@@ -9,11 +13,9 @@ interface TailwindAdminPaginationProps {
   pageSize: number
   totalItems: number
   onPageChange: (page: number) => void
-  onPageSizeChange: (size: number) => void
+  onPageSizeChange?: (size: number) => void
   isDark?: boolean
 }
-
-const PAGE_SIZE_OPTIONS = [30, 60, 90] as const
 
 export default function TailwindAdminPagination({
   currentPage,
@@ -21,7 +23,6 @@ export default function TailwindAdminPagination({
   pageSize,
   totalItems,
   onPageChange,
-  onPageSizeChange,
 }: TailwindAdminPaginationProps) {
   const safeTotalPages = Math.max(1, totalPages || 1)
   const safeCurrentPage = Math.min(Math.max(1, currentPage || 1), safeTotalPages)
@@ -29,131 +30,85 @@ export default function TailwindAdminPagination({
   const startItem = totalItems === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1
   const endItem = totalItems === 0 ? 0 : Math.min(safeCurrentPage * pageSize, totalItems)
 
-  const getPageNumbers = () => {
+  const getPageNumbers = (): (number | '...')[] => {
     const pages: (number | '...')[] = []
-    const maxVisible = 7
-
-    if (safeTotalPages <= maxVisible) {
+    if (safeTotalPages <= 8) {
       for (let i = 1; i <= safeTotalPages; i++) pages.push(i)
       return pages
     }
-
     if (safeCurrentPage <= 3) {
-      pages.push(1, 2, 3, 4, 5, '...', safeTotalPages)
-      return pages
+      return [1, 2, 3, 4, 5, '...', safeTotalPages]
     }
-
     if (safeCurrentPage >= safeTotalPages - 2) {
-      pages.push(1, '...', safeTotalPages - 4, safeTotalPages - 3, safeTotalPages - 2, safeTotalPages - 1, safeTotalPages)
-      return pages
+      return [1, '...', safeTotalPages - 4, safeTotalPages - 3, safeTotalPages - 2, safeTotalPages - 1, safeTotalPages]
     }
-
-    pages.push(1, '...', safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, '...', safeTotalPages)
-    return pages
-  }
-
-  const handlePageSizeClick = (size: number) => {
-    if (size === pageSize) return
-    onPageSizeChange(size)
-    if (safeCurrentPage !== 1) onPageChange(1)
+    return [1, '...', safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, '...', safeTotalPages]
   }
 
   return (
-    <div className="sm:flex gap-2 p-3 items-center justify-between">
-      {/* Left: page summary */}
-      <div className="text-sm text-bodytext dark:text-white/70 whitespace-nowrap">
-        Showing {startItem.toLocaleString()} - {endItem.toLocaleString()} of {totalItems.toLocaleString()}
+    <footer className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-between flex-wrap gap-4">
+      <div className="text-sm text-slate-500 dark:text-slate-400">
+        Showing <span className="font-semibold text-slate-800 dark:text-slate-200">{startItem.toLocaleString()} - {endItem.toLocaleString()}</span> of <span className="font-semibold text-slate-800 dark:text-slate-200">{totalItems.toLocaleString()}</span>
       </div>
 
-      {/* Center: page numbers */}
-      <div className="flex items-center justify-center gap-2 my-2 sm:my-0">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => onPageChange(safeCurrentPage - 1)}
           disabled={safeCurrentPage === 1}
-          className={cn(
-            'h-9 w-9 inline-flex items-center justify-center rounded-md border border-ld bg-white dark:bg-dark text-ld',
-            'hover:bg-lightprimary disabled:opacity-50 disabled:cursor-not-allowed'
-          )}
+          className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Previous page"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <span className="material-symbols-outlined text-sm">chevron_left</span>
         </button>
 
-        <div className="flex items-center gap-1">
-          {getPageNumbers().map((page, idx) => {
-            if (page === '...') {
-              return (
-                <span
-                  key={`ellipsis-${idx}`}
-                  className="h-9 min-w-9 px-2 inline-flex items-center justify-center text-sm text-bodytext dark:text-white/50"
-                >
-                  ...
-                </span>
-              )
-            }
-
-            const isActive = page === safeCurrentPage
+        {getPageNumbers().map((page, idx) => {
+          if (page === '...') {
             return (
-              <button
-                key={page}
-                type="button"
-                onClick={() => onPageChange(page)}
-                className={cn(
-                  'h-9 min-w-9 px-3 inline-flex items-center justify-center rounded-md border text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary border-primary text-white'
-                    : 'bg-white dark:bg-dark border-ld text-ld hover:bg-lightprimary'
-                )}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {page}
-              </button>
+              <span key={`ellipsis-${idx}`} className="text-slate-400 dark:text-slate-500 text-sm px-1">
+                ...
+              </span>
             )
-          })}
-        </div>
+          }
+          const isActive = page === safeCurrentPage
+          return (
+            <button
+              key={page}
+              type="button"
+              onClick={() => onPageChange(page)}
+              className={cn(
+                "w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/50"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {page}
+            </button>
+          )
+        })}
 
         <button
           type="button"
           onClick={() => onPageChange(safeCurrentPage + 1)}
           disabled={safeCurrentPage === safeTotalPages}
-          className={cn(
-            'h-9 w-9 inline-flex items-center justify-center rounded-md border border-ld bg-white dark:bg-dark text-ld',
-            'hover:bg-lightprimary disabled:opacity-50 disabled:cursor-not-allowed'
-          )}
+          className="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Next page"
         >
-          <ChevronRight className="h-4 w-4" />
+          <span className="material-symbols-outlined text-sm">chevron_right</span>
         </button>
       </div>
 
-      {/* Right: page size tabs */}
-      <div className="flex items-center gap-2 justify-end">
-        <span className="text-sm text-bodytext dark:text-white/70 whitespace-nowrap">Rows per page</span>
-        <div className="inline-flex rounded-md border border-ld overflow-hidden bg-white dark:bg-dark">
-          {PAGE_SIZE_OPTIONS.map((size) => {
-            const isActive = size === pageSize
-            return (
-              <button
-                key={size}
-                type="button"
-                onClick={() => handlePageSizeClick(size)}
-                className={cn(
-                  'px-3 py-1.5 text-sm font-medium border-r last:border-r-0 border-ld transition-colors',
-                  isActive
-                    ? 'bg-primary text-white'
-                    : 'text-ld hover:bg-lightprimary dark:hover:bg-lightprimary'
-                )}
-                aria-label={`Rows per page: ${size}`}
-                data-active={isActive ? 'true' : 'false'}
-              >
-                {size}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    </div>
+      <button
+        type="button"
+        onClick={() => onPageChange(safeCurrentPage + 1)}
+        disabled={safeCurrentPage === safeTotalPages}
+        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/50 rounded-lg px-4 py-2 flex items-center gap-2 transition-transform hover:-translate-y-0.5 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+      >
+        Next Page
+        <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+      </button>
+    </footer>
   )
 }
-

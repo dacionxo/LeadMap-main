@@ -26,7 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/app/components/ui/table'
-import { Badge } from '@/app/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '@/app/components/ui/dropdown-menu'
 import { Checkbox } from '@/app/components/ui/checkbox'
-import { MoreVertical, Mail, Phone, Bookmark, BookmarkCheck, ExternalLink, DollarSign, Target, MapPin } from 'lucide-react'
+import { MoreVertical, Mail, Phone, Bookmark, BookmarkCheck } from 'lucide-react'
 import TailwindAdminPagination from './TailwindAdminPagination'
 import SaveButton from './AddToCrmButton'
 
@@ -150,8 +149,6 @@ const DEFAULT_COLUMNS = [
   'last_sale_date',
   'actions'
 ]
-
-const HEADER_CELL_CLASS = 'whitespace-nowrap'
 
 function isValidTableName(tableName: string): boolean {
   return VALID_TABLE_NAMES.includes(tableName as any)
@@ -389,82 +386,6 @@ export default function ProspectHoverTable({
     fetchListings(currentPage)
   }, [fetchListings, currentPage])
 
-  // #region agent log
-  useEffect(() => {
-    const inspectStickyHeader = () => {
-      const thead = document.querySelector('.prospect-hover-table thead') as HTMLElement
-      const theadTr = document.querySelector('.prospect-hover-table thead tr') as HTMLElement
-      
-      if (!thead || !theadTr) {
-        fetch('http://127.0.0.1:7243/ingest/6bcf8343-0ce9-4f25-aed7-5654fd6e2c79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProspectHoverTable.tsx:392',message:'thead element not found',data:{theadExists:!!thead,theadTrExists:!!theadTr},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-        return
-      }
-
-      const theadStyles = window.getComputedStyle(thead)
-      const theadTrStyles = window.getComputedStyle(theadTr)
-      const table = thead.closest('table')
-      const scrollContainer = thead.closest('.overflow-y-auto')
-      
-      // Hypothesis A: Nested overflow containers
-      const parentOverflows = []
-      let parent = thead.parentElement
-      while (parent && parent !== document.body) {
-        const styles = window.getComputedStyle(parent)
-        if (styles.overflow !== 'visible' || styles.overflowY !== 'visible' || styles.overflowX !== 'visible') {
-          parentOverflows.push({
-            element: parent.tagName + (parent.className ? '.' + parent.className.split(' ')[0] : ''),
-            overflow: styles.overflow,
-            overflowY: styles.overflowY,
-            overflowX: styles.overflowX
-          })
-        }
-        parent = parent.parentElement
-      }
-      fetch('http://127.0.0.1:7243/ingest/6bcf8343-0ce9-4f25-aed7-5654fd6e2c79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProspectHoverTable.tsx:410',message:'Parent overflow containers',data:{parentOverflows,scrollContainerExists:!!scrollContainer},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-
-      // Hypothesis B: CSS not applied
-      fetch('http://127.0.0.1:7243/ingest/6bcf8343-0ce9-4f25-aed7-5654fd6e2c79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProspectHoverTable.tsx:415',message:'Computed styles for thead',data:{position:theadStyles.position,top:theadStyles.top,zIndex:theadStyles.zIndex,backgroundColor:theadStyles.backgroundColor,className:thead.className},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{})
-
-      // Hypothesis C: Wrong scroll container
-      const scrollContainerInfo = scrollContainer ? {
-        tagName: scrollContainer.tagName,
-        className: scrollContainer.className,
-        isParentOfThead: scrollContainer.contains(thead),
-        scrollHeight: scrollContainer.scrollHeight,
-        clientHeight: scrollContainer.clientHeight
-      } : null
-      fetch('http://127.0.0.1:7243/ingest/6bcf8343-0ce9-4f25-aed7-5654fd6e2c79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProspectHoverTable.tsx:425',message:'Scroll container analysis',data:{scrollContainerInfo,tableExists:!!table},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{})
-
-      // Hypothesis D: Computed styles check
-      fetch('http://127.0.0.1:7243/ingest/6bcf8343-0ce9-4f25-aed7-5654fd6e2c79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProspectHoverTable.tsx:430',message:'thead tr computed styles',data:{position:theadTrStyles.position,top:theadTrStyles.top,zIndex:theadTrStyles.zIndex,backgroundColor:theadTrStyles.backgroundColor},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{})
-
-      // Hypothesis E: Stacking context
-      const theadZIndex = parseInt(theadStyles.zIndex) || 0
-      const parentZIndexes = []
-      let checkParent = thead.parentElement
-      while (checkParent && parentZIndexes.length < 5) {
-        const parentStyles = window.getComputedStyle(checkParent)
-        const zIdx = parseInt(parentStyles.zIndex) || 0
-        if (zIdx !== 0 || parentStyles.position !== 'static') {
-          parentZIndexes.push({
-            element: checkParent.tagName + (checkParent.className ? '.' + checkParent.className.split(' ')[0] : ''),
-            zIndex: parentStyles.zIndex,
-            position: parentStyles.position,
-            transform: parentStyles.transform,
-            opacity: parentStyles.opacity
-          })
-        }
-        checkParent = checkParent.parentElement
-      }
-      fetch('http://127.0.0.1:7243/ingest/6bcf8343-0ce9-4f25-aed7-5654fd6e2c79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProspectHoverTable.tsx:445',message:'Stacking context analysis',data:{theadZIndex,parentZIndexes},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{})
-    }
-
-    // Run inspection after a short delay to ensure DOM is ready
-    const timeoutId = setTimeout(inspectStickyHeader, 100)
-    return () => clearTimeout(timeoutId)
-  }, [listings.length, loading])
-  // #endregion agent log
-
   const totalPages = Math.ceil(totalCount / pageSize)
   const startItem = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const endItem = totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount)
@@ -507,26 +428,17 @@ export default function ProspectHoverTable({
     )
   }
 
-  // EXACT 1:1 MATCH TO TAILWINDADMIN'S HOVERTABLE STRUCTURE
+  // Elite Property Prospecting Dashboard - 1:1 table design
   return (
-    <div className="border rounded-lg border-ld overflow-hidden h-full flex flex-col bg-white dark:bg-dark">
-      {/* Single scroll container - fixes nested overflow issue (Hypothesis A) */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto" style={{ position: 'relative' }}>
-        <table className="prospect-hover-table min-w-full table-auto w-full caption-bottom text-sm" style={{ position: 'relative' }}>
-            <TableHeader 
-              className="sticky top-0 z-20 bg-white dark:bg-dark shadow-sm"
-              style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 20,
-                backgroundColor: isDark ? '#1c2536' : '#ffffff'
-              }}
+    <div className="h-full flex flex-col bg-white/50 dark:bg-slate-900/50 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-auto px-6 pb-6">
+        <table className="prospect-hover-table min-w-full table-auto w-full text-left border-collapse">
+            <TableHeader
+              className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10"
             >
-            <TableRow style={{
-              backgroundColor: isDark ? '#1c2536' : '#ffffff'
-            }}>
+            <TableRow className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               {showSelectionColumn && (
-                  <TableHead className="w-[56px] px-3 text-center">
+                  <TableHead className="px-4 py-4 w-10">
                     <button
                       type="button"
                       className={`flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-ld focus:border-ld focus:outline-none ${
@@ -549,32 +461,32 @@ export default function ProspectHoverTable({
                   </button>
                 </TableHead>
               )}
-              {columns.includes('address') && <TableHead className={HEADER_CELL_CLASS}>Address</TableHead>}
-              {columns.includes('price') && <TableHead className={HEADER_CELL_CLASS}>Price</TableHead>}
-              {columns.includes('status') && <TableHead className={HEADER_CELL_CLASS}>Status</TableHead>}
-              {columns.includes('score') && <TableHead className={HEADER_CELL_CLASS}>AI Score</TableHead>}
-              {columns.includes('beds') && <TableHead className={HEADER_CELL_CLASS}>Beds</TableHead>}
-              {columns.includes('full_baths') && <TableHead className={HEADER_CELL_CLASS}>Baths</TableHead>}
-              {columns.includes('sqft') && <TableHead className={HEADER_CELL_CLASS}>Sqft</TableHead>}
-              {columns.includes('description') && <TableHead className={HEADER_CELL_CLASS}>Description</TableHead>}
-              {columns.includes('agent_name') && <TableHead className={HEADER_CELL_CLASS}>Agent Name</TableHead>}
-              {columns.includes('agent_email') && <TableHead className={HEADER_CELL_CLASS}>Agent Email</TableHead>}
-              {columns.includes('agent_phone') && <TableHead className={HEADER_CELL_CLASS}>Agent Phone</TableHead>}
-              {columns.includes('agent_phone_2') && <TableHead className={HEADER_CELL_CLASS}>Agent Phone 2</TableHead>}
-              {columns.includes('listing_agent_phone_2') && <TableHead className={HEADER_CELL_CLASS}>Listing Agent Phone 2</TableHead>}
-              {columns.includes('listing_agent_phone_5') && <TableHead className={HEADER_CELL_CLASS}>Listing Agent Phone 5</TableHead>}
-              {columns.includes('year_built') && <TableHead className={HEADER_CELL_CLASS}>Year Built</TableHead>}
-              {columns.includes('last_sale_price') && <TableHead className={HEADER_CELL_CLASS}>Last Sale Price</TableHead>}
-              {columns.includes('last_sale_date') && <TableHead className={HEADER_CELL_CLASS}>Last Sale Date</TableHead>}
-              {columns.includes('actions') && <TableHead className={HEADER_CELL_CLASS}></TableHead>}
+              {columns.includes('address') && <TableHead className="px-4 py-4">Address</TableHead>}
+              {columns.includes('price') && <TableHead className="px-4 py-4">Price</TableHead>}
+              {columns.includes('status') && <TableHead className="px-4 py-4">Status</TableHead>}
+              {columns.includes('score') && <TableHead className="px-4 py-4">AI Score</TableHead>}
+              {columns.includes('beds') && <TableHead className="px-4 py-4">Beds</TableHead>}
+              {columns.includes('full_baths') && <TableHead className="px-4 py-4">Baths</TableHead>}
+              {columns.includes('sqft') && <TableHead className="px-4 py-4">Sqft</TableHead>}
+              {columns.includes('description') && <TableHead className="px-4 py-4">Description</TableHead>}
+              {columns.includes('agent_name') && <TableHead className="px-4 py-4">Agent Name</TableHead>}
+              {columns.includes('agent_email') && <TableHead className="px-4 py-4">Agent Email</TableHead>}
+              {columns.includes('agent_phone') && <TableHead className="px-4 py-4">Agent Phone</TableHead>}
+              {columns.includes('agent_phone_2') && <TableHead className="px-4 py-4">Agent Phone 2</TableHead>}
+              {columns.includes('listing_agent_phone_2') && <TableHead className="px-4 py-4">Listing Agent Phone 2</TableHead>}
+              {columns.includes('listing_agent_phone_5') && <TableHead className="px-4 py-4">Listing Agent Phone 5</TableHead>}
+              {columns.includes('year_built') && <TableHead className="px-4 py-4">Year Built</TableHead>}
+              {columns.includes('last_sale_price') && <TableHead className="px-4 py-4">Last Sale Price</TableHead>}
+              {columns.includes('last_sale_date') && <TableHead className="px-4 py-4">Last Sale Date</TableHead>}
+              {columns.includes('actions') && <TableHead className="px-4 py-4"></TableHead>}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="text-sm divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
             {listings.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length + (showSelectionColumn ? 1 : 0)}
-                  className="text-center py-8 text-bodytext dark:text-white/70"
+                  className="text-center py-8 text-slate-500 dark:text-slate-400"
                 >
                   No listings found
                 </TableCell>
@@ -587,11 +499,11 @@ export default function ProspectHoverTable({
                 return (
                   <TableRow
                     key={listing.listing_id}
-                    className="group/row bg-hover dark:bg-transparent cursor-pointer"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
                     onClick={() => onListingClick?.(listing)}
                   >
                     {showSelectionColumn && (
-                      <TableCell className="px-3">
+                      <TableCell className="px-4 py-4 w-10">
                         <button
                           type="button"
                           className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-ld focus:border-ld focus:outline-none"
@@ -606,61 +518,53 @@ export default function ProspectHoverTable({
                       </TableCell>
                     )}
                     {columns.includes('address') && (
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex gap-3 items-center">
-                          <MapPin className="h-4 w-4 text-bodytext" />
-                          <div className="truncat line-clamp-2 max-w-56">
-                            <h6 className="text-sm font-medium">{street}</h6>
-                            <p className="text-xs text-bodytext">{cityStateZip}</p>
+                      <TableCell className="px-4 py-4">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 text-slate-400 dark:text-slate-500">
+                            <span className="material-symbols-outlined text-[18px]">location_on</span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-900 dark:text-slate-100">{street}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{cityStateZip}</div>
                           </div>
                         </div>
                       </TableCell>
                     )}
                     
                     {columns.includes('price') && (
-                      <TableCell className="whitespace-nowrap">
-                        <p className="text-base">{formatPrice(listing.list_price)}</p>
-                      </TableCell>
+                      <TableCell className="px-4 py-4 font-semibold text-slate-700 dark:text-slate-300">{formatPrice(listing.list_price)}</TableCell>
                     )}
                     
                     {columns.includes('status') && (
-                      <TableCell className="whitespace-nowrap">
-                        {listing.active ? (
-                          <Badge variant="lightSuccess">{listing.status || 'Active'}</Badge>
-                        ) : listing.status?.toLowerCase().includes('expired') || listing.status?.toLowerCase().includes('sold') ? (
-                          <Badge variant="lightError">{listing.status}</Badge>
-                        ) : (
-                          <Badge variant="lightWarning">{listing.status || 'Pending'}</Badge>
-                        )}
+                      <TableCell className="px-4 py-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
+                          {listing.status || (listing.active ? 'Active' : 'Foreclosures')}
+                        </span>
                       </TableCell>
                     )}
                     
                     {columns.includes('score') && (
-                      <TableCell className="whitespace-nowrap">
-                        {listing.ai_investment_score !== null && listing.ai_investment_score !== undefined ? (
-                          <p className="text-base">{listing.ai_investment_score.toFixed(1)}</p>
-                        ) : (
-                          <p className="text-base">-</p>
-                        )}
+                      <TableCell className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          {listing.ai_investment_score != null ? (
+                            <div className="w-8 h-8 rounded-full border-2 border-indigo-100 dark:border-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30">
+                              {Math.round(listing.ai_investment_score)}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 dark:text-slate-500 text-lg">-</span>
+                          )}
+                        </div>
                       </TableCell>
                     )}
                     
                     {columns.includes('beds') && (
-                      <TableCell className="whitespace-nowrap">
-                        <p className="text-base">{listing.beds ?? '-'}</p>
-                      </TableCell>
+                      <TableCell className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.beds ?? '-'}</TableCell>
                     )}
-                    
                     {columns.includes('full_baths') && (
-                      <TableCell className="whitespace-nowrap">
-                        <p className="text-base">{formatBaths(listing.full_baths)}</p>
-                      </TableCell>
+                      <TableCell className="px-4 py-4 text-slate-600 dark:text-slate-400">{formatBaths(listing.full_baths)}</TableCell>
                     )}
-                    
                     {columns.includes('sqft') && (
-                      <TableCell className="whitespace-nowrap">
-                        <p className="text-base">{listing.sqft ? listing.sqft.toLocaleString() : '-'}</p>
-                      </TableCell>
+                      <TableCell className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.sqft ? listing.sqft.toLocaleString() : '-'}</TableCell>
                     )}
                     
                     {columns.includes('description') && (
@@ -813,21 +717,16 @@ export default function ProspectHoverTable({
       </div>
       
       {showPagination && (
-        <div className="pt-4 p-6">
-          <TailwindAdminPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            totalItems={totalCount}
-            onPageChange={(page) => {
-              pagination?.onPageChange(page) || setInternalCurrentPage(page)
-            }}
-            onPageSizeChange={(size) => {
-              pagination?.onPageSizeChange(size) || setInternalPageSize(size)
-            }}
-            isDark={isDark}
-          />
-        </div>
+        <TailwindAdminPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={totalCount}
+          onPageChange={(page) => {
+            pagination?.onPageChange(page) || setInternalCurrentPage(page)
+          }}
+          isDark={isDark}
+        />
       )}
     </div>
   )

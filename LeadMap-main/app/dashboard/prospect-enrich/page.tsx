@@ -142,63 +142,46 @@ function ProspectContentInner(props: any) {
 function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
   return (
     <>
-    {/* Centered prospecting component, unattached from navbar */}
-    <div className="flex-1 flex items-center justify-center min-h-0 p-6 overflow-auto">
-      <div className="w-full max-w-7xl h-full max-h-[calc(100vh-140px)] flex flex-col overflow-hidden">
-        <div
-          className="border-0 bg-white dark:bg-dark card no-inset no-ring undefined dark:shadow-dark-md shadow-md p-0 m-0 flex flex-col overflow-x-visible overflow-y-hidden flex-1 min-w-0 min-h-0 rounded-xl"
-        >
-        {/* Prospect Search Header */}
-        <ProspectSearchHeader
-          searchQuery={props.searchTerm || ''}
-          onSearchChange={props.setSearchTerm}
-          filtersVisible={props.filtersVisible}
-          onToggleFilters={() => props.setFiltersVisible(!props.filtersVisible)}
-          onImport={() => props.setShowImportModal(true)}
-          onResearchWithAI={() => {
-            // Research with AI - can be implemented later
-            console.log('Research with AI clicked')
-          }}
-          onCreateWorkflow={() => {
-            // Create workflow - can be implemented later
-            console.log('Create workflow clicked')
-          }}
-          onSaveSearch={() => {
-            // Save search - can be implemented later
-            console.log('Save search clicked')
-          }}
-          onAutoScore={() => {
-            // Auto score - can be implemented later
-            console.log('Auto score clicked')
-          }}
-          onSearchSettings={() => {
-            // Search settings - can be implemented later
-            console.log('Search settings clicked')
-          }}
-          isDark={props.isDark}
-          displayView={props.displayView}
-          onDisplayViewChange={props.setDisplayView}
-        />
-        {/* Main Content Area with Filter Sidebar and Table */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar - Filter Sidebar */}
-          {props.filtersVisible && (
-            <ProspectFilterSidebar
-              filters={props.apolloFilters}
-              onFiltersChange={props.setApolloFilters}
-              totalCount={props.totalCount || 0}
-              netNewCount={props.netNewCount || 0}
-              savedCount={props.savedCount || 0}
-              isCollapsed={!props.filtersVisible}
-              onToggleCollapse={() => props.setFiltersVisible(!props.filtersVisible)}
-              listings={props.allListings || []}
-              isDark={props.isDark}
-              viewType={props.viewType}
-              onViewTypeChange={props.setViewType}
-            />
-          )}
-          {/* Right Side - Table or Map */}
-          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+    {/* Elite Property Prospecting Dashboard - mesh gradient + glass container */}
+    <div className="prospect-enrich-page prospect-enrich-mesh min-h-screen font-sans text-slate-800 dark:text-slate-200 p-6 flex items-center justify-center">
+      <div className="prospect-enrich-glass w-full max-w-[1440px] h-[90vh] rounded-[2rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-none border border-white/50 dark:border-slate-700/50 flex overflow-hidden relative">
+        {/* Left Sidebar - Filter Sidebar */}
+        {props.filtersVisible && (
+          <ProspectFilterSidebar
+            filters={props.apolloFilters}
+            onFiltersChange={props.setApolloFilters}
+            totalCount={props.totalCount || 0}
+            netNewCount={props.netNewCount || 0}
+            savedCount={props.savedCount || 0}
+            isCollapsed={!props.filtersVisible}
+            onToggleCollapse={() => props.setFiltersVisible(!props.filtersVisible)}
+            listings={props.allListings || []}
+            isDark={props.isDark}
+          />
+        )}
+        {/* Main content: header + table/map */}
+        <main className="flex-1 flex flex-col h-full bg-white/50 dark:bg-slate-900/50 relative min-w-0 overflow-hidden">
+          <ProspectSearchHeader
+            searchQuery={props.searchTerm || ''}
+            onSearchChange={props.setSearchTerm}
+            filtersVisible={props.filtersVisible}
+            onToggleFilters={() => props.setFiltersVisible(!props.filtersVisible)}
+            onImport={() => props.setShowImportModal(true)}
+            onResearchWithAI={() => {
+              console.log('Research with AI clicked')
+            }}
+            onSearchSettings={() => {
+              console.log('Search settings clicked')
+            }}
+            isDark={props.isDark}
+            displayView={props.displayView}
+            onDisplayViewChange={props.setDisplayView}
+            totalCount={props.totalCount || 0}
+            netNewCount={props.netNewCount || 0}
+            savedCount={props.savedCount || 0}
+            viewType={props.viewType}
+            onViewTypeChange={props.setViewType}
+          />
             {props.displayView === 'map' ? (
               <div className="flex-1 flex flex-col bg-white dark:bg-dark">
                 <MapView
@@ -273,8 +256,8 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
           showPagination={true}
             />
             )}
-          </div>
-        </div>
+        </main>
+      </div>
         {/* SelectionActionBar: fixed at bottom, centered, not edge-to-edge */}
         {props.selectedIds.size > 0 && (
           <div className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 md:px-6">
