@@ -16,6 +16,7 @@ import AddToCampaignModal from './components/AddToCampaignModal'
 import AddToListModal from './components/AddToListModal'
 import ImportLeadsModal from './components/ImportLeadsModal'
 import LeadDetailModal from './components/LeadDetailModal'
+import FindDealsModal from './components/FindDealsModal'
 import ProspectHoverTable from './components/ProspectHoverTable'
 import ProspectSearchHeader from './components/ProspectSearchHeader'
 import ProspectFilterSidebar from './components/ProspectFilterSidebar'
@@ -327,6 +328,32 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
       }}
     />
 
+    {/* Find Deals Modal (opens when user clicks Compose) */}
+    <FindDealsModal
+      isOpen={props.showFindDealsModal}
+      onClose={() => {
+        props.setShowFindDealsModal(false)
+        props.setSelectedLead(null)
+      }}
+      listings={props.paginatedListings}
+      totalCount={props.totalCount}
+      netNewCount={props.netNewCount}
+      savedCount={props.savedCount}
+      viewType={props.viewType}
+      onViewTypeChange={props.setViewType}
+      searchQuery={props.searchTerm || ''}
+      onSearchChange={props.setSearchTerm}
+      currentPage={props.currentPage}
+      totalPages={Math.max(1, Math.ceil((props.viewType === 'total' ? props.totalCount : props.viewType === 'net_new' ? props.netNewCount : props.savedCount) / props.itemsPerPage))}
+      pageSize={props.itemsPerPage}
+      onPageChange={props.setCurrentPage}
+      onComposeLead={props.onComposeLeadFromModal}
+      onImport={() => props.setShowImportModal(true)}
+      onResearchWithAI={() => {}}
+      isDark={props.isDark}
+      initialSelectedListingId={props.selectedLead ? (props.selectedLead.listing_id || props.selectedLead.property_url || null) : null}
+    />
+
     {/* Email Template Modal */}
     {props.showEmailModal && props.selectedLead && (
       <EmailTemplateModal
@@ -410,6 +437,7 @@ function ProspectEnrichInner() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [showAddToListModal, setShowAddToListModal] = useState(false)
   const [showAddToCampaignModal, setShowAddToCampaignModal] = useState(false)
+  const [showFindDealsModal, setShowFindDealsModal] = useState(false)
   // Removed useVirtualizedTable - only using ProspectHoverTable now
   const [remoteListingsCount, setRemoteListingsCount] = useState(0)
   
@@ -502,6 +530,12 @@ function ProspectEnrichInner() {
 
   const handleGenerateEmail = (lead: Listing) => {
     setSelectedLead(lead)
+    setShowFindDealsModal(true)
+  }
+
+  const handleComposeLeadFromModal = (listing: Listing) => {
+    setSelectedLead(listing)
+    setShowFindDealsModal(false)
     setShowEmailModal(true)
   }
 
@@ -1622,6 +1656,9 @@ function ProspectEnrichInner() {
         selectedLead={selectedLead}
         setShowEmailModal={setShowEmailModal}
         setSelectedLead={setSelectedLead}
+        showFindDealsModal={showFindDealsModal}
+        setShowFindDealsModal={setShowFindDealsModal}
+        onComposeLeadFromModal={handleComposeLeadFromModal}
         showAddToListModal={showAddToListModal}
         setShowAddToListModal={setShowAddToListModal}
         handleBulkAddToList={handleBulkAddToList}

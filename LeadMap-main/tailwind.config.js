@@ -265,6 +265,9 @@ module.exports = {
         "action-btn": "0 2px 5px rgba(59, 130, 246, 0.3)",
         "unibox-soft": "0 10px 40px -10px rgba(43, 108, 238, 0.1)",
         "unibox-glass": "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        /* Elite CRM Compose Modal (1:1 reference) */
+        "modal-depth":
+          "0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.02)",
       },
       fontFamily: {
         display: ["Inter", "var(--font-inter)", "sans-serif"],

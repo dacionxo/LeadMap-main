@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { Suspense } from 'react'
-import DashboardLayout from '../components/DashboardLayout'
-import { useSidebar } from '../components/SidebarContext'
-import DealsNavbar from '../crm/deals/components/DealsNavbar'
-import UniboxContent from './components/UniboxContent'
+import { Suspense } from "react";
+import DashboardLayout from "../components/DashboardLayout";
+import { useSidebar } from "../components/SidebarContext";
+import DealsNavbar from "../crm/deals/components/DealsNavbar";
+import UniboxContent from "./components/UniboxContent";
 
 function UniboxPageContent() {
-  const { isOpen: isSidebarOpen } = useSidebar()
+  const { isOpen: isSidebarOpen } = useSidebar();
 
   return (
     <div className="-mt-[30px]">
       <div
         className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
-        style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
+        style={{ left: isSidebarOpen ? "274px" : "79px", right: 0 }}
       >
         <DealsNavbar />
         <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
@@ -38,7 +38,7 @@ function UniboxPageContent() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function UniboxPage() {
@@ -46,5 +46,5 @@ export default function UniboxPage() {
     <DashboardLayout fullBleed hideHeader>
       <UniboxPageContent />
     </DashboardLayout>
-  )
+  );
 }
