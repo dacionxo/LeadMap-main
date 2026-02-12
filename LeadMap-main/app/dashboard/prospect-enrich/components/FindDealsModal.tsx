@@ -3,7 +3,7 @@
 /**
  * FindDealsModal — Elite Property Prospecting Dashboard design (1:1 reference HTML).
  * Opens when user clicks Compose. Same size as current modal (max-w-4xl max-h-[90vh]).
- * Matches ProspectHoverTable column widths (px-4 py-4) and Tailwind design heuristics.
+ * Tailwind design heuristics: fd-* colors, Filters sidebar, Find Deals main, purple tabs/CTA.
  */
 
 import { useState, useMemo, useEffect } from 'react'
@@ -36,14 +36,14 @@ interface FindDealsModalProps {
 }
 
 const FILTER_SECTIONS = [
-  { id: 'price', label: 'Price Range', icon: 'expand_more', pinned: true },
-  { id: 'location', label: 'Location', icon: 'expand_more', pinned: true },
-  { id: 'ai_score', label: 'AI Investment Score', icon: 'expand_more', pinned: true },
-  { id: 'status', label: 'Status', icon: 'chevron_right', pinned: false },
-  { id: 'beds', label: 'Bedrooms', icon: 'chevron_right', pinned: false },
-  { id: 'baths', label: 'Bathrooms', icon: 'chevron_right', pinned: false },
-  { id: 'sqft', label: 'Square Footage', icon: 'chevron_right', pinned: false },
-  { id: 'year', label: 'Year Built', icon: 'chevron_right', pinned: false },
+  { id: 'price', label: 'Price Range', pinned: true },
+  { id: 'location', label: 'Location', pinned: true },
+  { id: 'ai_score', label: 'AI Investment Score', pinned: true },
+  { id: 'status', label: 'Status', pinned: false },
+  { id: 'beds', label: 'Bedrooms', pinned: false },
+  { id: 'baths', label: 'Bathrooms', pinned: false },
+  { id: 'sqft', label: 'Square Footage', pinned: false },
+  { id: 'year', label: 'Year Built', pinned: false },
 ]
 
 function formatAddress(listing: Listing) {
@@ -107,59 +107,69 @@ export default function FindDealsModal({
       role="dialog"
       onClick={onClose}
     >
-      {/* Same size as current modal: max-w-4xl max-h-[90vh] */}
+      {/* Same size as current modal: max-w-4xl max-h-[90vh] — 1:1 reference layout */}
       <div
         className={cn(
-          'prospect-enrich-glass dark:bg-slate-900/95 border border-white/50 dark:border-slate-700 shadow-glass rounded-[2rem] flex overflow-hidden w-full max-w-4xl max-h-[90vh]'
+          'bg-fd-surface-light border border-fd-border-light shadow-modal rounded-2xl flex overflow-hidden w-full max-w-4xl max-h-[90vh] font-display'
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Sidebar - Filters (reference: w-80 glass-sidebar) */}
-        <aside className="w-64 flex-shrink-0 prospect-enrich-glass-sidebar dark:bg-slate-800/90 border-r border-slate-200 dark:border-slate-700 flex flex-col h-full overflow-y-auto prospect-enrich-scrollbar-hide">
-          <div className="p-4 border-b border-slate-200/60 dark:border-slate-700 sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm z-10 flex justify-between items-center">
-            <h2 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Filters</h2>
-            <button type="button" className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700">
+        {/* Sidebar — Filters (1:1 reference: w-80 bg-white border-r) */}
+        <aside className="w-80 bg-fd-surface-light border-r border-fd-border-light flex flex-col overflow-hidden shrink-0 find-deals-sidebar-gradient-border">
+          <div className="p-6 flex items-center justify-between border-b border-fd-border-light shrink-0">
+            <h2 className="text-base font-bold text-fd-text-primary">Filters</h2>
+            <button
+              type="button"
+              className="text-sm text-blue-500 font-medium hover:text-blue-600"
+              aria-label="Reset all filters"
+            >
               Reset All
             </button>
           </div>
-          <div className="flex-1 flex flex-col pt-2">
+          <div className="flex-1 overflow-y-auto find-deals-no-scrollbar">
             {FILTER_SECTIONS.map((section) => (
-              <div key={section.id} className="border-b border-slate-100 dark:border-slate-800">
-                <div className="group flex items-center justify-between px-4 py-3 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-slate-400 text-[18px] group-hover:text-slate-600 dark:group-hover:text-slate-300">
-                      {section.icon}
+              <div key={section.id} className="border-b border-fd-border-light">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 group transition-colors"
+                  aria-expanded="false"
+                  aria-label={section.label}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-fd-text-secondary text-lg group-hover:text-fd-text-primary transition-colors">
+                      chevron_right
                     </span>
-                    <span className={cn('text-[13px]', section.pinned ? 'font-semibold text-slate-700 dark:text-slate-300' : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200')}>
-                      {section.label}
-                    </span>
+                    <span className="text-sm font-semibold text-fd-text-primary">{section.label}</span>
                   </div>
                   {section.pinned && (
-                    <span className="material-symbols-outlined fill-1 text-indigo-500 text-[16px]">
+                    <span className="material-symbols-outlined fill-1 text-blue-500 text-[20px]" aria-hidden>
                       push_pin
                     </span>
                   )}
-                </div>
+                </button>
               </div>
             ))}
-            <div className="p-4 mt-auto">
-              <button type="button" className="w-full py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 font-medium text-xs hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm">
-                More Filters (5)
-              </button>
-            </div>
+          </div>
+          <div className="p-6 shrink-0">
+            <button
+              type="button"
+              className="w-full border border-fd-border-light rounded-lg py-2.5 text-sm font-medium text-fd-text-secondary hover:bg-slate-50 hover:text-fd-text-primary transition-colors"
+            >
+              More Filters (5)
+            </button>
           </div>
         </aside>
 
-        {/* Main */}
-        <main className="flex-1 flex flex-col min-w-0 h-full bg-white/50 dark:bg-slate-900/50 relative">
-          <header className="p-4 pb-2 flex-shrink-0">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">Find Deals</h1>
-              <div className="flex gap-2 items-center">
+        {/* Main — Find Deals content (1:1 reference) */}
+        <main className="flex-1 bg-fd-surface-light overflow-hidden flex flex-col relative min-w-0">
+          <div className="px-8 pt-8 pb-4 shrink-0">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-fd-text-primary">Find Deals</h1>
+              <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-lg text-fd-text-secondary hover:text-fd-text-primary hover:bg-slate-50 transition-colors"
                   aria-label="Close modal"
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
@@ -167,109 +177,124 @@ export default function FindDealsModal({
                 <button
                   type="button"
                   onClick={onImport}
-                  className="bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-xs transition-all flex items-center gap-1.5"
+                  className="bg-fd-surface-light border border-fd-border-light text-fd-text-secondary text-sm font-medium rounded-lg px-3 py-2 flex items-center gap-2 hover:bg-slate-50"
                 >
                   Import
-                  <span className="material-symbols-outlined text-[16px]">expand_more</span>
+                  <span className="material-symbols-outlined text-lg">expand_more</span>
                 </button>
                 <button
                   type="button"
                   onClick={onResearchWithAI}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-lg shadow-indigo-500/30 text-xs transition-all flex items-center gap-1.5"
+                  className="bg-purple-600 text-white rounded-lg px-4 py-2 flex items-center gap-2 font-medium text-sm hover:bg-purple-700 shadow-sm shadow-purple-200"
                 >
-                  <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
+                  <span className="material-symbols-outlined text-lg">auto_awesome</span>
                   Research with AI
                 </button>
               </div>
             </div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="relative flex-1">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 max-w-lg">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]" aria-hidden>
+                  search
+                </span>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder="Search places..."
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
+                  className="w-full border border-fd-border-light rounded-lg py-2.5 pl-10 pr-4 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 text-fd-text-primary bg-fd-surface-light"
                 />
               </div>
-              <button type="button" className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-sm">
-                <span className="material-symbols-outlined text-[16px]">grid_view</span>
+              <button
+                type="button"
+                className="border border-fd-border-light rounded-lg px-3 py-2.5 flex items-center gap-2 text-sm text-fd-text-secondary font-medium hover:bg-slate-50"
+              >
+                <span className="material-symbols-outlined text-[20px]">grid_view</span>
                 Default View
-                <span className="material-symbols-outlined text-[14px] text-slate-400">expand_more</span>
+                <span className="material-symbols-outlined text-[18px]">expand_more</span>
               </button>
-              <button type="button" className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-sm">
-                <span className="material-symbols-outlined text-[16px]">tune</span>
+              <button
+                type="button"
+                className="border border-fd-border-light rounded-lg px-3 py-2.5 flex items-center gap-2 text-sm text-fd-text-secondary font-medium hover:bg-slate-50"
+              >
+                <span className="material-symbols-outlined text-[20px]">tune</span>
                 Hide Filters
               </button>
-              <button type="button" className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-sm">
-                <span className="material-symbols-outlined text-[16px]">settings</span>
+              <button
+                type="button"
+                className="border border-fd-border-light rounded-lg px-3 py-2.5 flex items-center gap-2 text-sm text-fd-text-secondary font-medium hover:bg-slate-50"
+              >
+                <span className="material-symbols-outlined text-[20px]">settings</span>
                 Search Settings
               </button>
             </div>
-            <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex gap-8 mt-6 border-b border-fd-border-light">
               <button
                 type="button"
                 onClick={() => onViewTypeChange('total')}
                 className={cn(
-                  'px-4 py-2.5 border-b-2 text-xs flex flex-col items-center min-w-[90px] transition-colors',
+                  'pb-3 px-2 border-b-2 text-xs uppercase tracking-wide flex flex-col items-center gap-1 transition-colors',
                   viewType === 'total'
-                    ? 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold'
-                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium'
+                    ? 'border-purple-600 text-purple-700 font-semibold'
+                    : 'border-transparent text-gray-500 font-medium hover:text-gray-700'
                 )}
               >
-                <span className={cn('text-[10px] uppercase font-bold tracking-wider mb-0.5', viewType === 'total' ? 'text-indigo-400' : 'text-slate-400')}>Total</span>
-                {totalCount.toLocaleString()}
+                <span className={cn('text-[10px] font-medium', viewType === 'total' ? 'text-gray-500' : 'text-gray-400')}>TOTAL</span>
+                <span className="text-sm">{totalCount.toLocaleString()}</span>
               </button>
               <button
                 type="button"
                 onClick={() => onViewTypeChange('net_new')}
                 className={cn(
-                  'px-4 py-2.5 border-b-2 text-xs flex flex-col items-center min-w-[90px] transition-colors',
+                  'pb-3 px-2 border-b-2 text-xs uppercase tracking-wide flex flex-col items-center gap-1 transition-colors',
                   viewType === 'net_new'
-                    ? 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold'
-                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium'
+                    ? 'border-purple-600 text-purple-700 font-semibold'
+                    : 'border-transparent text-gray-500 font-medium hover:text-gray-700'
                 )}
               >
-                <span className={cn('text-[10px] uppercase font-bold tracking-wider mb-0.5', viewType === 'net_new' ? 'text-indigo-400' : 'text-slate-400')}>Net New</span>
-                {netNewCount.toLocaleString()}
+                <span className={cn('text-[10px] font-medium', viewType === 'net_new' ? 'text-gray-500' : 'text-gray-400')}>NET NEW</span>
+                <span className="text-sm">{netNewCount.toLocaleString()}</span>
               </button>
               <button
                 type="button"
                 onClick={() => onViewTypeChange('saved')}
                 className={cn(
-                  'px-4 py-2.5 border-b-2 text-xs flex flex-col items-center min-w-[90px] transition-colors',
+                  'pb-3 px-2 border-b-2 text-xs uppercase tracking-wide flex flex-col items-center gap-1 transition-colors',
                   viewType === 'saved'
-                    ? 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold'
-                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium'
+                    ? 'border-purple-600 text-purple-700 font-semibold'
+                    : 'border-transparent text-gray-500 font-medium hover:text-gray-700'
                 )}
               >
-                <span className={cn('text-[10px] uppercase font-bold tracking-wider mb-0.5', viewType === 'saved' ? 'text-indigo-400' : 'text-slate-400')}>Saved</span>
-                {savedCount.toLocaleString()}
+                <span className={cn('text-[10px] font-medium', viewType === 'saved' ? 'text-gray-500' : 'text-gray-400')}>SAVED</span>
+                <span className="text-sm">{savedCount.toLocaleString()}</span>
               </button>
             </div>
-          </header>
+          </div>
 
-          <div className="flex-1 overflow-auto px-4 pb-4 min-h-0">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10">
-                <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-4 py-4 w-10">
-                    <span className="sr-only">Select</span>
+          <div className="flex-1 overflow-auto bg-fd-surface-light min-h-0">
+            <table className="w-full min-w-[1200px]" role="grid">
+              <thead className="bg-fd-surface-light sticky top-0 z-10">
+                <tr className="text-left">
+                  <th className="p-4 w-12 border-b border-fd-border-light">
+                    <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" aria-label="Select all" />
                   </th>
-                  <th className="px-4 py-4">Address</th>
-                  <th className="px-4 py-4">Price</th>
-                  <th className="px-4 py-4">Status</th>
-                  <th className="px-4 py-4">AI Score</th>
-                  <th className="px-4 py-4">Beds</th>
-                  <th className="px-4 py-4">Baths</th>
-                  <th className="px-4 py-4">Sqft</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Address</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Price</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Status</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">AI Score</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Beds</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Baths</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Sqft</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Description</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Agent Name</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Agent Email</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">AI PI</th>
                 </tr>
               </thead>
-              <tbody className="text-sm divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              <tbody className="divide-y divide-fd-border-light">
                 {filteredListings.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                    <td colSpan={12} className="p-4 py-8 text-center text-fd-text-secondary">
                       No listings found
                     </td>
                   </tr>
@@ -282,49 +307,45 @@ export default function FindDealsModal({
                       <tr
                         key={key}
                         className={cn(
-                          'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer',
-                          isSelected && 'bg-indigo-50/50 dark:bg-indigo-900/20'
+                          'hover:bg-slate-50 group transition-colors',
+                          isSelected && 'bg-fd-primary-bg/50'
                         )}
                         onClick={() => setSelectedId(isSelected ? null : key)}
                       >
-                        <td className="px-4 py-4 w-10" onClick={(e) => e.stopPropagation()}>
+                        <td className="p-4 align-top pt-5" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={() => setSelectedId(isSelected ? null : key)}
-                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"
                           />
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-start gap-3">
-                            <div className="mt-0.5 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 text-slate-400">
+                        <td className="p-4">
+                          <div className="flex gap-3">
+                            <div className="bg-blue-100 text-blue-600 rounded-full h-8 w-8 flex items-center justify-center shrink-0">
                               <span className="material-symbols-outlined text-[18px]">location_on</span>
                             </div>
                             <div>
-                              <div className="font-medium text-slate-900 dark:text-slate-100">{street}</div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{cityStateZip}</div>
+                              <div className="font-medium text-sm text-fd-text-primary">{street}</div>
+                              <div className="text-xs text-fd-text-secondary mt-0.5">{cityStateZip}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 font-semibold text-slate-700 dark:text-slate-300">{formatPrice(listing.list_price)}</td>
-                        <td className="px-4 py-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
+                        <td className="p-4 text-sm font-bold text-fd-text-primary align-top pt-5">{formatPrice(listing.list_price)}</td>
+                        <td className="p-4 align-top pt-5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
                             {listing.status || (listing.active ? 'Active' : 'Foreclosures')}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            {listing.ai_investment_score != null ? (
-                              <div className="w-8 h-8 rounded-full border-2 border-indigo-100 dark:border-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30">
-                                {Math.round(listing.ai_investment_score)}
-                              </div>
-                            ) : (
-                              <span className="text-slate-400 text-lg">-</span>
-                            )}
-                          </div>
+                        <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">
+                          {listing.ai_investment_score != null ? Math.round(listing.ai_investment_score) : '-'}
                         </td>
-                        <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.beds ?? '-'}</td>
-                        <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.full_baths ?? '-'}</td>
-                        <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.sqft ? listing.sqft.toLocaleString() : '-'}</td>
+                        <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">{listing.beds ?? '-'}</td>
+                        <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">{listing.full_baths ?? '-'}</td>
+                        <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">{listing.sqft != null ? listing.sqft.toLocaleString() : '-'}</td>
+                        <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">-</td>
+                        <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">-</td>
+                        <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">-</td>
+                        <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">-</td>
                       </tr>
                     )
                   })
@@ -333,7 +354,7 @@ export default function FindDealsModal({
             </table>
           </div>
 
-          <footer className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-between flex-wrap gap-2 flex-shrink-0">
+          <div className="px-8 py-4 border-t border-fd-border-light bg-fd-surface-light shrink-0 flex items-center justify-between flex-wrap gap-2">
             <TailwindAdminPagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -346,13 +367,13 @@ export default function FindDealsModal({
               <button
                 type="button"
                 onClick={() => onComposeLead(selectedListing)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/50 rounded-lg px-4 py-2 flex items-center gap-2 font-medium text-sm transition-colors"
+                className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl py-2 px-4 shadow-lg shadow-blue-200 flex items-center gap-2 font-medium text-sm transition-all"
               >
+                <span className="material-symbols-outlined fill-1 text-[18px]">mail</span>
                 Compose email
-                <span className="material-symbols-outlined text-[18px]">mail</span>
               </button>
             )}
-          </footer>
+          </div>
         </main>
       </div>
     </div>

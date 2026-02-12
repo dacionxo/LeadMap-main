@@ -219,6 +219,21 @@ module.exports = {
           "surface-light": "#ffffff",
           "surface-dark": "#1e293b",
         },
+        /* Find Deals Dashboard (1:1 reference HTML) */
+        fd: {
+          primary: "#5A8CFF",
+          "primary-bg": "#EFF4FF",
+          "background-light": "#F3F6FC",
+          "surface-light": "#FFFFFF",
+          "text-primary": "#1E293B",
+          "text-secondary": "#64748B",
+          "border-light": "#E2E8F0",
+          "badge-bg": "#DBEAFE",
+          "badge-text": "#3B82F6",
+          "purple-btn": "#8B5CF6",
+          "sidebar-lavender": "#F7FAFF",
+          "sidebar-border": "#E8EAF3",
+        },
       },
       fontSize: {
         "heading-1": ["60px", "72px"],
