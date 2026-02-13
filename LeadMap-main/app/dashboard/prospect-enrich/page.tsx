@@ -20,6 +20,7 @@ import FindDealsModal from './components/FindDealsModal'
 import ProspectHoverTable from './components/ProspectHoverTable'
 import ProspectSearchHeader from './components/ProspectSearchHeader'
 import ProspectFilterSidebar from './components/ProspectFilterSidebar'
+import ProspectNavSidebar from './components/ProspectNavSidebar'
 import SelectionActionBar from './components/SelectionActionBar'
 import MapView from '@/components/MapView'
 import { FilterType, getPrimaryCategory, Listing, useProspectData } from './hooks/useProspectData'
@@ -152,8 +153,12 @@ function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
       >
         <DealsNavbar />
         <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
-          <div className="prospect-enrich-glass dark:bg-dark/90 border border-slate-200 dark:border-slate-700 shadow-glass dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-row h-full min-h-0 overflow-hidden">
-            <div className="flex flex-row h-full w-full">
+          {/* Reference layout: nav sidebar (rounded-l) + content card (rounded-r) */}
+          <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+            {/* Inline nav sidebar — same height as content card */}
+            <ProspectNavSidebar />
+            {/* Content card: filters + table */}
+            <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-row h-full min-h-0 overflow-hidden">
             {/* Left Sidebar - Filter Sidebar */}
             {props.filtersVisible && (
               <ProspectFilterSidebar
