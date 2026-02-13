@@ -1248,13 +1248,6 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 /* Find Deals sidebar gradient border (1:1 reference) */
 .find-deals-sidebar-gradient-border {
   position: relative;
@@ -1269,6 +1262,7 @@
   background: linear-gradient(to bottom, transparent, #E8EAF3 15%, #E8EAF3 85%, transparent);
   pointer-events: none;
 }
+/* Dashboard main sidebar (1:1 reference) */
 .sidebar-gradient-border {
   position: relative;
 }
@@ -1281,6 +1275,13 @@
   width: 1px;
   background: linear-gradient(to bottom, transparent, #E8EAF3 15%, #E8EAF3 85%, transparent);
   pointer-events: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 .material-symbols-outlined.fill-1 {
   font-variation-settings: "FILL" 1;

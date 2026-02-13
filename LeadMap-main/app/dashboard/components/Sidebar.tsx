@@ -1,14 +1,10 @@
 "use client";
 
 import { useApp } from "@/app/providers";
-import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { useSidebar } from "./SidebarContext";
-// @ts-ignore
-import SimpleBar from "simplebar-react";
-import "simplebar-react/dist/simplebar.min.css";
+import { cn } from "@/app/lib/utils";
 
 interface NavItem {
   label: string;
@@ -18,108 +14,50 @@ interface NavItem {
 }
 
 interface NavSection {
-  title?: string;
+  title: string;
   items: NavItem[];
 }
 
+// 1:1 reference: Material Symbols icon names, same sections as reference HTML
 const navSections: NavSection[] = [
   {
     title: "Home",
     items: [
-      { label: "Dashboard", icon: "solar:widget-2-linear", href: "/dashboard" },
-      { label: "Maps", icon: "solar:map-point-linear", href: "/dashboard/map" },
+      { label: "Dashboard", icon: "dashboard", href: "/dashboard" },
+      { label: "Maps", icon: "map", href: "/dashboard/map" },
     ],
   },
   {
-    // Match visual label from design while keeping routing intact
     title: "Prospect & Enrich",
     items: [
-      {
-        label: "All Prospects",
-        icon: "solar:users-group-rounded-linear",
-        href: "/dashboard/prospect-enrich",
-      },
-      {
-        label: "For Sale",
-        icon: "solar:home-2-linear",
-        href: "/dashboard/prospect-enrich?filter=fsbo",
-      },
-      {
-        label: "For Rent",
-        icon: "solar:home-2-linear",
-        href: "/dashboard/prospect-enrich?filter=frbo",
-      },
-      {
-        label: "Foreclosures",
-        icon: "solar:home-2-linear",
-        href: "/dashboard/prospect-enrich?filter=foreclosure",
-      },
-      {
-        label: "Probate",
-        icon: "solar:bill-list-linear",
-        href: "/dashboard/prospect-enrich?filter=probate",
-      },
-      {
-        label: "Expired Listings",
-        icon: "solar:clock-circle-linear",
-        href: "/dashboard/prospect-enrich?filter=expired",
-      },
-      {
-        label: "Imports",
-        icon: "solar:server-minimalistic-linear",
-        href: "/dashboard/prospect-enrich?filter=imports",
-      },
+      { label: "All Prospects", icon: "group", href: "/dashboard/prospect-enrich" },
+      { label: "For Sale", icon: "sell", href: "/dashboard/prospect-enrich?filter=fsbo" },
+      { label: "For Rent", icon: "key", href: "/dashboard/prospect-enrich?filter=frbo" },
+      { label: "Foreclosures", icon: "gavel", href: "/dashboard/prospect-enrich?filter=foreclosure" },
+      { label: "Probate", icon: "policy", href: "/dashboard/prospect-enrich?filter=probate" },
+      { label: "Expired Listings", icon: "timer_off", href: "/dashboard/prospect-enrich?filter=expired" },
+      { label: "Imports", icon: "cloud_upload", href: "/dashboard/prospect-enrich?filter=imports" },
     ],
   },
   {
     title: "Customer Relationship",
     items: [
-      {
-        label: "Lists",
-        icon: "solar:user-circle-linear",
-        href: "/dashboard/lists",
-      },
-      {
-        label: "Deals",
-        icon: "solar:case-linear",
-        href: "/dashboard/crm/deals",
-      },
-      {
-        label: "Calendar",
-        icon: "solar:calendar-linear",
-        href: "/dashboard/crm/calendar",
-      },
+      { label: "Lists", icon: "list_alt", href: "/dashboard/lists" },
+      { label: "Deals", icon: "handshake", href: "/dashboard/crm/deals" },
+      { label: "Calendar", icon: "calendar_month", href: "/dashboard/crm/calendar" },
     ],
   },
   {
     title: "Email Marketing",
     items: [
-      {
-        label: "Unibox",
-        icon: "solar:letter-linear",
-        href: "/dashboard/unibox",
-      },
-      {
-        label: "Email Campaigns",
-        icon: "solar:letter-linear",
-        href: "/dashboard/email/campaigns",
-      },
-      {
-        label: "Email Analytics",
-        icon: "solar:chart-2-linear",
-        href: "/dashboard/marketing/analytics",
-      },
+      { label: "Unibox", icon: "mail", href: "/dashboard/unibox" },
+      { label: "Email Campaigns", icon: "send", href: "/dashboard/email/campaigns" },
+      { label: "Email Analytics", icon: "analytics", href: "/dashboard/marketing/analytics" },
     ],
   },
   {
     title: "TOOLS & AUTOMATION",
-    items: [
-      {
-        label: "Analytics",
-        icon: "solar:chart-2-linear",
-        href: "/dashboard/crm/analytics",
-      },
-    ],
+    items: [{ label: "Analytics", icon: "monitoring", href: "/dashboard/crm/analytics" }],
   },
 ];
 
@@ -128,26 +66,13 @@ export default function Sidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { profile, signOut } = useApp();
-  const { isOpen, toggle } = useSidebar();
+  const { isOpen } = useSidebar();
   const initials =
     profile?.name
       ?.split(" ")
       .map((n) => n.charAt(0).toUpperCase())
       .slice(0, 2)
       .join("") || "U";
-
-  // Collapsible sections: track which are expanded (default all true)
-  const [expandedSections, setExpandedSections] = useState<
-    Record<number, boolean>
-  >({});
-  const toggleSection = (sectionIdx: number) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [sectionIdx]: !prev[sectionIdx],
-    }));
-  };
-  const isSectionExpanded = (sectionIdx: number) =>
-    expandedSections[sectionIdx] !== false;
 
   const handleSignOut = async () => {
     await signOut();
@@ -158,284 +83,122 @@ export default function Sidebar() {
     if (href === "/dashboard") {
       return pathname === "/dashboard" || pathname === "/dashboard/";
     }
-
     const hrefPath = href.split("?")[0];
     const hrefParams = new URLSearchParams(
       href.includes("?") ? href.split("?")[1] : ""
     );
-
-    // Check if pathname matches
-    if (!pathname.startsWith(hrefPath)) {
-      return false;
-    }
-
-    // For prospect-enrich page, check filter parameter
+    if (!pathname.startsWith(hrefPath)) return false;
     if (hrefPath === "/dashboard/prospect-enrich") {
       const currentFilter = searchParams.get("filter");
       const hrefFilter = hrefParams.get("filter");
-
-      // If href has no filter param, it's "All Prospects" - only active when no filter is set
-      if (!hrefFilter) {
-        return !currentFilter;
-      }
-
-      // Otherwise, check if filters match exactly
+      if (!hrefFilter) return !currentFilter;
       return currentFilter === hrefFilter;
     }
-
-    // For other pages, just check pathname
     return true;
   };
 
-  return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col border-r border-[#e5e5e5] bg-white dark:bg-dark shadow-sm transition-[width] duration-200 ease-in group ${
-        isOpen
-          ? "w-[270px]"
-          : "w-[75px] xl:hover:w-[270px] overflow-hidden xl:hover:overflow-visible"
-      }`}
-    >
-      {/* Brand / collapse - styled to match NextDeal design */}
-      <div
-        className={`flex min-h-[80px] items-center brand-logo overflow-hidden ${
-          isOpen ? "px-6" : "px-5 xl:group-hover:px-6"
-        }`}
-      >
-        {isOpen ? (
-          <div className="flex w-full items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="group flex items-center gap-3 cursor-pointer"
-            >
-              <div className="relative w-9 h-9 flex items-center justify-center bg-primary rounded-xl text-white shadow-lg shadow-blue-200/80 dark:shadow-none">
-                <Icon icon="solar:home-2-linear" className="w-5 h-5" />
-              </div>
-              <span className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight font-nav-display">
-                Next<span className="text-primary">Deal</span>
-              </span>
-            </Link>
-          </div>
-        ) : (
-          <div className="flex w-full items-center justify-center">
-            <Link
-              href="/dashboard"
-              className="group flex items-center justify-center rounded-md px-2 py-1.5 cursor-pointer transition-colors"
-            >
-              <div className="w-9 h-9 flex items-center justify-center bg-primary rounded-xl text-white shadow-md shadow-blue-200/70 dark:shadow-none">
-                <Icon icon="solar:home-2-linear" className="w-5 h-5" />
-              </div>
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Navigation */}
-      <SimpleBar className="h-[calc(100vh_-_180px)] sidebar-scroll px-0">
-        <nav
-          className={`sidebar-nav flex-1 pb-4 ${
-            isOpen ? "px-4" : "px-2 xl:group-hover:px-4"
-          }`}
-        >
-          {navSections.map((section, sectionIdx) => {
-            const expanded = isSectionExpanded(sectionIdx);
-            const hasTitle = !!section.title;
-            return (
-              <div key={sectionIdx} className="mb-1.5">
-                {sectionIdx > 0 && hasTitle && (
-                  <div
-                    className={`h-px bg-slate-100 dark:bg-slate-800 ${
-                      isOpen ? "mx-3 mb-2" : "mx-2 mb-2 xl:group-hover:mx-3"
-                    }`}
-                  />
-                )}
-                {hasTitle && (
-                  <button
-                    type="button"
-                    onClick={() => hasTitle && toggleSection(sectionIdx)}
-                    className={`caption w-full text-left mb-1 focus:outline-none focus:ring-0 group ${
-                      sectionIdx === 0 ? "mt-0" : "mt-4"
-                    }`}
-                  >
-                    <h5 className="leading-[26px] flex items-center justify-between gap-2">
-                      {isOpen ? (
-                        <>
-                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-                            {section.title}
-                          </span>
-                          <Icon
-                            icon={
-                              expanded
-                                ? "solar:alt-arrow-up-linear"
-                                : "solar:alt-arrow-down-linear"
-                            }
-                            className={`flex-shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors ${
-                              sectionIdx === 0
-                                ? ""
-                                : "opacity-0 group-hover:opacity-100"
-                            }`}
-                            height={14}
-                            width={14}
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <span className="hidden xl:group-hover:inline leading-21">
-                            {section.title}
-                          </span>
-                          <div className="flex justify-center xl:group-hover:hidden">
-                            <Icon
-                              icon="tabler:dots"
-                              className="text-ld leading-6 dark:text-opacity-60"
-                              height={18}
-                            />
-                          </div>
-                        </>
-                      )}
-                    </h5>
-                  </button>
-                )}
-                {(!hasTitle || expanded) && (
-                  <div
-                    className={
-                      isOpen
-                        ? "space-y-1"
-                        : "flex flex-col items-center gap-2 xl:group-hover:items-start xl:group-hover:gap-0.5 xl:group-hover:space-y-0.5"
-                    }
-                  >
-                    {section.items.map((item) => {
-                      const active = isActive(item.href);
-
-                      const handleClick = () => {
-                        if (item.href === "/dashboard/prospect-enrich") {
-                          router.push("/dashboard/prospect-enrich");
-                        } else {
-                          router.push(item.href);
-                        }
-                      };
-
-                      if (isOpen) {
-                        return (
-                          <button
-                            key={item.href}
-                            onClick={handleClick}
-                            className={`group/item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start truncate cursor-pointer leading-normal transition-all duration-200 ${
-                              active
-                                ? "bg-primary text-white shadow-[0_4px_6px_-1px_rgba(93,135,255,0.2),0_2px_4px_-1px_rgba(93,135,255,0.12)] font-semibold"
-                                : "text-slate-700 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium"
-                            }`}
-                          >
-                            <Icon
-                              icon={item.icon}
-                              className={`flex-shrink-0 ${
-                                active
-                                  ? "text-white"
-                                  : "text-slate-400 dark:text-slate-500 group-hover/item:text-primary"
-                              }`}
-                              height={21}
-                              width={21}
-                            />
-                            <span className="truncate text-sm flex-1">
-                              {item.label}
-                            </span>
-                            {item.badge && (
-                              <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                                {item.badge}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      }
-
-                      return (
-                        <div key={item.href} className="group/item relative">
-                          <button
-                            onClick={handleClick}
-                            className={`flex h-9 w-9 items-center justify-center rounded-md border transition-all duration-200 xl:group-hover:w-full xl:group-hover:justify-start xl:group-hover:gap-3 xl:group-hover:p-3 xl:group-hover:h-auto ${
-                              active
-                                ? "border-primary bg-primary text-white"
-                                : "border-transparent text-link hover:bg-lightprimary hover:text-primary dark:text-darklink dark:hover:bg-lightprimary"
-                            }`}
-                            aria-label={item.label}
-                          >
-                            <Icon
-                              icon={item.icon}
-                              className="flex-shrink-0"
-                              height={21}
-                              width={21}
-                            />
-                            <span className="hidden xl:group-hover:block truncate text-sm ml-3 flex-1">
-                              {item.label}
-                            </span>
-                          </button>
-                          <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 rounded-md bg-dark px-2 py-1 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity duration-150 group-hover/item:opacity-100 dark:bg-gray-800 xl:hidden">
-                            {item.label}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-      </SimpleBar>
-
-      {/* Upgrade CTA */}
-      {profile && !profile.is_subscribed && isOpen && (
-        <div className="border-t border-[#e5e5e5] px-4 pb-3 pt-2 dark:border-[#333f55]">
-          <div className="rounded-md bg-lightsecondary p-4 text-xs text-white overflow-hidden">
-            <p className="mb-2 text-base font-semibold text-link dark:text-darklink">
-              Upgrade to unlock full NextDeal
-            </p>
-            <button
-              onClick={() => router.push("/pricing")}
-              className="inline-flex w-full items-center justify-center rounded-md bg-primary px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-primary/90"
-            >
-              Upgrade plan
-            </button>
+  // Collapsed: narrow icon strip (keep existing width behavior)
+  if (!isOpen) {
+    return (
+      <aside className="fixed inset-y-0 left-0 z-40 flex h-screen w-[75px] flex-col border-r border-fd-border-light bg-fd-sidebar-lavender dark:bg-dark shadow-sm transition-[width] duration-200">
+        <div className="flex flex-col py-4 px-2 overflow-y-auto no-scrollbar flex-1">
+          {navSections.map((section) =>
+            section.items.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
+                    active ? "bg-white text-fd-primary shadow-sm ring-1 ring-black/5" : "text-fd-text-secondary hover:bg-white/80 hover:text-fd-primary"
+                  )}
+                  aria-label={item.label}
+                >
+                  <span className={cn("material-symbols-outlined text-[20px]", active && "fill-1")}>{item.icon}</span>
+                </Link>
+              );
+            })
+          )}
+        </div>
+        <div className="p-2 border-t border-fd-border-light">
+          <div className="h-10 w-10 rounded-full bg-fd-primary flex items-center justify-center text-white text-sm font-bold">
+            {initials}
           </div>
         </div>
-      )}
+      </aside>
+    );
+  }
 
-      {/* User Section */}
-      <div className={`my-4 ${isOpen ? "mx-4" : "mx-1.5 xl:group-hover:mx-4"}`}>
-        <div
-          className={`rounded-xl border border-[#e5e5e5] dark:border-[#333f55] bg-[#f8fafc]/60 dark:bg-[#0f172a]/60 overflow-hidden transition-all duration-200 ease-in ${
-            isOpen ? "px-3 py-3" : "px-2 py-2 xl:group-hover:px-3 xl:group-hover:py-3"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-800">
+  // Expanded: 1:1 reference layout (lavender, gradient border, rounded-l-[24px], sections)
+  return (
+    <aside
+      className="fixed inset-y-0 left-0 z-40 flex h-screen w-64 flex-col shrink-0 overflow-y-auto no-scrollbar py-4 px-3 bg-fd-sidebar-lavender dark:bg-[#0f172a] sidebar-gradient-border rounded-l-[24px] my-3 ml-3 mr-0 shadow-sm transition-[width] duration-200"
+      aria-label="Main navigation"
+    >
+      {/* Brand - minimal to match reference */}
+      <div className="px-3 mb-4 flex items-center gap-3">
+        <Link href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 text-fd-text-secondary hover:bg-white/80 hover:text-fd-primary transition-colors">
+          <div className="w-9 h-9 rounded-xl bg-fd-primary flex items-center justify-center text-white text-sm font-bold shadow-sm">
+            N
+          </div>
+          <span className="text-sm font-semibold text-fd-text-primary">NextDeal</span>
+        </Link>
+      </div>
+
+      {/* Nav sections - 1:1 reference structure */}
+      <nav className="flex-1">
+        {navSections.map((section) => (
+          <div key={section.title} className="mb-5">
+            <div className="px-3 mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold text-fd-text-secondary uppercase tracking-wider">{section.title}</span>
+            </div>
+            <div className="space-y-0.5">
+              {section.items.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group",
+                      active
+                        ? "text-fd-primary bg-white shadow-sm ring-1 ring-black/5"
+                        : "text-fd-text-secondary hover:bg-white/80 hover:text-fd-primary"
+                    )}
+                  >
+                    <span className={cn("material-symbols-outlined text-[20px]", active && "fill-1")}>{item.icon}</span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* User section - compact */}
+      {profile && (
+        <div className="mt-auto pt-4 border-t border-fd-sidebar-border dark:border-slate-700 px-3">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+            <div className="h-10 w-10 rounded-full bg-fd-primary flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0">
               {initials}
             </div>
-            <div
-              className={`min-w-0 flex-1 transition-all duration-200 ease-in ${
-                isOpen ? "block" : "hidden xl:group-hover:block"
-              }`}
-            >
-              <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                {profile?.name || "User"}
-              </h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <p className="truncate text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {profile?.email || "Admin"}
-                </p>
-              </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-fd-text-primary">{profile.name || "User"}</p>
+              <p className="truncate text-[10px] font-bold text-fd-badge-text bg-fd-badge-bg px-1.5 py-0.5 rounded uppercase tracking-wide mt-0.5 inline-block">Free Plan</p>
             </div>
             <button
               type="button"
               onClick={handleSignOut}
-              className="ml-auto text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+              className="p-1.5 rounded-lg text-fd-text-secondary hover:text-fd-text-primary hover:bg-white/80 transition-colors"
               aria-label="Sign out"
-              title="Sign out"
             >
-              <Icon icon="solar:logout-2-linear" className="w-5 h-5" />
+              <span className="material-symbols-outlined text-[20px]">logout</span>
             </button>
           </div>
         </div>
-      </div>
+      )}
     </aside>
   );
 }

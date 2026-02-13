@@ -61,13 +61,13 @@ function DashboardLayoutContent({
 
   return (
     <div className="flex h-screen relative overflow-x-hidden">
-      <Suspense fallback={<div className="w-[270px]" />}>
+      <Suspense fallback={<div className="w-64" />}>
         <Sidebar />
       </Suspense>
       <main
         ref={mainRef as any}
         className={`flex-1 overflow-y-auto relative z-10 bg-[#F8FAFC] dark:bg-dark h-full transition-all duration-300 flex flex-col ${
-          isOpen ? "ml-[270px]" : "ml-[75px]"
+          isOpen ? "ml-[268px]" : "ml-[75px]"
         }`}
       >
         {!hideHeader && <Header scrollContainerRef={mainRef} />}
