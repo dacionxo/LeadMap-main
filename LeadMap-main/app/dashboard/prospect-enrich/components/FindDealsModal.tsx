@@ -35,61 +35,50 @@ interface FindDealsModalProps {
   initialSelectedListingId?: string | null
 }
 
-const FILTER_SECTIONS = [
-  { id: 'price', label: 'Price Range', pinned: true },
-  { id: 'location', label: 'Location', pinned: true },
-  { id: 'ai_score', label: 'AI Investment Score', pinned: true },
-  { id: 'status', label: 'Status', pinned: false },
-  { id: 'beds', label: 'Bedrooms', pinned: false },
-  { id: 'baths', label: 'Bathrooms', pinned: false },
-  { id: 'sqft', label: 'Square Footage', pinned: false },
-  { id: 'year', label: 'Year Built', pinned: false },
-]
-
-const APP_SIDEBAR_SECTIONS = [
+const NAV_SECTIONS = [
   {
     id: 'home',
     title: 'Home',
     items: [
-      { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
-      { id: 'maps', icon: 'map', label: 'Maps' },
+      { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+      { id: 'maps', label: 'Maps', icon: 'map' },
     ],
   },
   {
     id: 'prospect-enrich',
     title: 'Prospect & Enrich',
     items: [
-      { id: 'all-prospects', icon: 'group', label: 'All Prospects' },
-      { id: 'for-sale', icon: 'sell', label: 'For Sale' },
-      { id: 'for-rent', icon: 'key', label: 'For Rent' },
-      { id: 'foreclosures', icon: 'gavel', label: 'Foreclosures', active: true },
-      { id: 'probate', icon: 'policy', label: 'Probate' },
-      { id: 'expired', icon: 'timer_off', label: 'Expired Listings' },
-      { id: 'imports', icon: 'cloud_upload', label: 'Imports' },
+      { id: 'all-prospects', label: 'All Prospects', icon: 'group' },
+      { id: 'for-sale', label: 'For Sale', icon: 'sell' },
+      { id: 'for-rent', label: 'For Rent', icon: 'key' },
+      { id: 'foreclosures', label: 'Foreclosures', icon: 'gavel', active: true, filled: true },
+      { id: 'probate', label: 'Probate', icon: 'policy' },
+      { id: 'expired-listings', label: 'Expired Listings', icon: 'timer_off' },
+      { id: 'imports', label: 'Imports', icon: 'cloud_upload' },
     ],
   },
   {
-    id: 'crm',
+    id: 'customer-relationship',
     title: 'Customer Relationship',
     items: [
-      { id: 'lists', icon: 'list_alt', label: 'Lists' },
-      { id: 'deals', icon: 'handshake', label: 'Deals' },
-      { id: 'calendar', icon: 'calendar_month', label: 'Calendar' },
+      { id: 'lists', label: 'Lists', icon: 'list_alt' },
+      { id: 'deals', label: 'Deals', icon: 'handshake' },
+      { id: 'calendar', label: 'Calendar', icon: 'calendar_month' },
     ],
   },
   {
     id: 'email-marketing',
     title: 'Email Marketing',
     items: [
-      { id: 'unibox', icon: 'mail', label: 'Unibox' },
-      { id: 'campaigns', icon: 'send', label: 'Email Campaigns' },
-      { id: 'analytics', icon: 'analytics', label: 'Email Analytics' },
+      { id: 'unibox', label: 'Unibox', icon: 'mail' },
+      { id: 'email-campaigns', label: 'Email Campaigns', icon: 'send' },
+      { id: 'email-analytics', label: 'Email Analytics', icon: 'analytics' },
     ],
   },
   {
     id: 'tools',
-    title: 'Tools & Automation',
-    items: [{ id: 'monitoring', icon: 'monitoring', label: 'Analytics' }],
+    title: 'TOOLS & AUTOMATION',
+    items: [{ id: 'analytics', label: 'Analytics', icon: 'monitoring' }],
   },
 ]
 
@@ -157,89 +146,41 @@ export default function FindDealsModal({
       {/* Same size as current modal: max-w-4xl max-h-[90vh] — 1:1 reference layout */}
       <div
         className={cn(
-          'bg-fd-background-light border border-fd-border-light shadow-modal rounded-2xl flex overflow-hidden w-full max-w-4xl max-h-[90vh] font-display'
+          'bg-fd-surface-light border border-fd-border-light shadow-modal rounded-2xl flex overflow-hidden w-full max-w-4xl max-h-[90vh] font-display'
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex h-screen max-h-full min-h-0 relative overflow-x-hidden flex-1 p-0 gap-0">
-          {/* Left Sidebar — selector parity: body > div.flex.h-screen.relative.overflow-x-hidden > aside */}
-          <aside className="w-64 flex flex-col shrink-0 overflow-y-auto no-scrollbar py-4 px-3 bg-fd-sidebar-lavender sidebar-gradient-border rounded-l-[24px] relative z-20 my-3 ml-3 mr-0">
-            {APP_SIDEBAR_SECTIONS.map((section) => (
-              <div key={section.id} className="mb-5">
-                <div className="px-3 mb-2 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-fd-text-secondary uppercase tracking-wider">{section.title}</span>
-                </div>
-                <div className="space-y-0.5">
-                  {section.items.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group',
-                        item.active
-                          ? 'text-fd-primary bg-white shadow-sm ring-1 ring-black/5'
-                          : 'text-fd-text-secondary hover:bg-white/80 hover:text-fd-primary'
-                      )}
-                      aria-label={item.label}
-                    >
-                      <span className={cn('material-symbols-outlined text-[20px]', item.active && 'fill-1')}>{item.icon}</span>
-                      <span className="text-sm font-medium">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
+        {/* Sidebar — primary app nav (1:1 reference selector sidebar) */}
+        <aside className="w-64 flex flex-col shrink-0 overflow-y-auto find-deals-no-scrollbar py-4 px-3 bg-fd-sidebar-lavender find-deals-sidebar-gradient-border rounded-l-[24px] relative z-20 my-3 ml-3 mr-0">
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.id} className="mb-5">
+              <div className="px-3 mb-2 flex items-center justify-between">
+                <span className="text-xs font-semibold text-fd-text-secondary uppercase tracking-wider">{section.title}</span>
               </div>
-            ))}
-          </aside>
-
-          <div className="flex-1 bg-fd-surface-light rounded-r-[20px] rounded-l-[0] shadow-sm flex overflow-hidden border-l-0 border-fd-border-light relative z-10 my-3 ml-0 mr-3 min-w-0">
-            {/* Sidebar — Filters (1:1 reference: w-80 bg-white border-r) */}
-            <aside className="w-80 bg-fd-surface-light border-r border-fd-border-light flex flex-col overflow-hidden shrink-0">
-          <div className="p-6 flex items-center justify-between border-b border-fd-border-light shrink-0">
-            <h2 className="text-base font-bold text-fd-text-primary">Filters</h2>
-            <button
-              type="button"
-              className="text-sm text-blue-500 font-medium hover:text-blue-600"
-              aria-label="Reset all filters"
-            >
-              Reset All
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto find-deals-no-scrollbar">
-            {FILTER_SECTIONS.map((section) => (
-              <div key={section.id} className="border-b border-fd-border-light">
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 group transition-colors"
-                  aria-expanded="false"
-                  aria-label={section.label}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-fd-text-secondary text-lg group-hover:text-fd-text-primary transition-colors">
-                      chevron_right
-                    </span>
-                    <span className="text-sm font-semibold text-fd-text-primary">{section.label}</span>
-                  </div>
-                  {section.pinned && (
-                    <span className="material-symbols-outlined fill-1 text-blue-500 text-[20px]" aria-hidden>
-                      push_pin
-                    </span>
-                  )}
-                </button>
+              <div className="space-y-0.5">
+                {section.items.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={cn(
+                      'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group',
+                      item.active
+                        ? 'text-fd-primary bg-white shadow-sm ring-1 ring-black/5'
+                        : 'text-fd-text-secondary hover:bg-white/80 hover:text-fd-primary'
+                    )}
+                    aria-label={item.label}
+                  >
+                    <span className={cn('material-symbols-outlined text-[20px]', item.filled && 'fill-1')}>{item.icon}</span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="p-6 shrink-0">
-            <button
-              type="button"
-              className="w-full border border-fd-border-light rounded-lg py-2.5 text-sm font-medium text-fd-text-secondary hover:bg-slate-50 hover:text-fd-text-primary transition-colors"
-            >
-              More Filters (5)
-            </button>
-          </div>
-            </aside>
+            </div>
+          ))}
+        </aside>
 
-            {/* Main — Find Deals content (1:1 reference) */}
-            <main className="flex-1 bg-fd-surface-light overflow-hidden flex flex-col relative min-w-0">
+        {/* Main — Find Deals content (1:1 reference) */}
+        <main className="flex-1 bg-fd-surface-light overflow-hidden flex flex-col relative min-w-0">
           <div className="px-8 pt-8 pb-4 shrink-0">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold text-fd-text-primary">Find Deals</h1>
@@ -452,9 +393,7 @@ export default function FindDealsModal({
               </button>
             )}
           </div>
-            </main>
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   )
