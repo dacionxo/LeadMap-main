@@ -1,9 +1,23 @@
 "use client";
 
 import { ReactNode, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import Header from "./Header";
 import { SidebarProvider } from "./SidebarContext";
 import ProspectNavSidebar from "../prospect-enrich/components/ProspectNavSidebar";
+
+/** Routes that show the Prospect & Enrich–style sidebar (Lists, Deals, Calendar, Unibox, Prospect-enrich). Dashboard and Maps do not. */
+function useShowProspectSidebar(): boolean {
+  const pathname = usePathname() ?? "";
+  if (pathname === "/dashboard" || pathname === "/dashboard/") return false;
+  if (pathname.startsWith("/dashboard/map")) return false;
+  if (pathname.startsWith("/dashboard/prospect-enrich")) return true;
+  if (pathname.startsWith("/dashboard/lists")) return true;
+  if (pathname.startsWith("/dashboard/crm/deals")) return true;
+  if (pathname.startsWith("/dashboard/crm/calendar")) return true;
+  if (pathname.startsWith("/dashboard/unibox")) return true;
+  return false;
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -20,6 +34,7 @@ function DashboardLayoutContent({
 }: DashboardLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
+  const showSidebar = useShowProspectSidebar();
 
   useEffect(() => {
     setMounted(true);
@@ -65,17 +80,26 @@ function DashboardLayoutContent({
         className="flex-1 overflow-y-auto relative z-10 bg-[#F8FAFC] dark:bg-dark h-full flex flex-col min-w-0"
       >
         {!hideHeader && <Header scrollContainerRef={mainRef} />}
-        {/* Nav sidebar + content card on all dashboard pages */}
-        <div className="flex-1 flex min-h-0 overflow-hidden">
-          <ProspectNavSidebar />
-          <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 bg-white dark:bg-dark/90">
-            {fullBleed ? (
-              <div className="flex-1 min-h-0 overflow-hidden">{mounted && children}</div>
-            ) : (
-              <div className="container relative z-10 py-[30px] flex-1">{mounted && children}</div>
-            )}
+        {showSidebar ? (
+          /* Nav sidebar + content card (Dashboard border/shadow) on Lists, Deals, Calendar, Unibox, Prospect-enrich only */
+          <div className="flex-1 flex min-h-0 overflow-hidden">
+            <ProspectNavSidebar />
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 bg-white dark:bg-dark/90">
+              {fullBleed ? (
+                <div className="flex-1 min-h-0 overflow-hidden">{mounted && children}</div>
+              ) : (
+                <div className="container relative z-10 py-[30px] flex-1">{mounted && children}</div>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Dashboard and Maps: no sidebar, content only */
+          fullBleed ? (
+            <div className="flex-1 min-h-0 overflow-hidden">{mounted && children}</div>
+          ) : (
+            <div className="container relative z-10 py-[30px] flex-1">{mounted && children}</div>
+          )
+        )}
       </main>
     </div>
   );
