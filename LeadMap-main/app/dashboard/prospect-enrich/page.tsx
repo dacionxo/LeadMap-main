@@ -19,6 +19,7 @@ import FindDealsModal from './components/FindDealsModal'
 import ProspectHoverTable from './components/ProspectHoverTable'
 import ProspectSearchHeader from './components/ProspectSearchHeader'
 import ProspectFilterSidebar from './components/ProspectFilterSidebar'
+import AppNavSidebar from '../components/AppNavSidebar'
 import SelectionActionBar from './components/SelectionActionBar'
 import MapView from '@/components/MapView'
 import { FilterType, getPrimaryCategory, Listing, useProspectData } from './hooks/useProspectData'
@@ -142,12 +143,21 @@ function ProspectContentInner(props: any) {
 function ProspectContentWithSidebar(props: any) {
   return (
     <>
-    {/* Fills layout content card: DealsNavbar + filters + main (nav from DashboardLayout) */}
-    <div className="-mt-[30px] h-full flex flex-col min-h-0 bg-mesh dark:bg-dark">
-      <DealsNavbar />
-      <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
-        <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
-          {props.filtersVisible && (
+    {/* Same layout as Deals: fixed full-bleed, DealsNavbar, container with Dashboard border/shadow */}
+    <div className="-mt-[30px]">
+      <div
+        className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden"
+      >
+        <DealsNavbar />
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+          {/* Reference layout: nav sidebar (rounded-l) + content card (rounded-r) */}
+          <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+            {/* Inline nav sidebar — same height as content card */}
+            <AppNavSidebar />
+            {/* Content card: filters + table */}
+            <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-row h-full min-h-0 overflow-hidden relative">
+            {/* Left Sidebar - Filter Sidebar */}
+            {props.filtersVisible && (
               <ProspectFilterSidebar
             filters={props.apolloFilters}
             onFiltersChange={props.setApolloFilters}
@@ -258,12 +268,14 @@ function ProspectContentWithSidebar(props: any) {
             />
             )}
             </main>
+            </div>
           </div>
         </div>
-      {/* SelectionActionBar: fixed at bottom, centered, not edge-to-edge */}
-      {props.selectedIds.size > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 md:px-6">
-          <SelectionActionBar
+      </div>
+        {/* SelectionActionBar: fixed at bottom, centered, not edge-to-edge */}
+        {props.selectedIds.size > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 md:px-6">
+            <SelectionActionBar
             selectedCount={props.selectedIds.size}
             onClose={() => props.setSelectedIds(new Set())}
             onMassEmail={() => {
