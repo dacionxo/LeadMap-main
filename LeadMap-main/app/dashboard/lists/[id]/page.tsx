@@ -288,7 +288,7 @@ function ListDetailContent() {
 
   if (loading && !list) {
     return (
-      <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
+      <div className="h-full flex flex-col bg-mesh dark:bg-dark overflow-hidden min-h-0">
         <DealsNavbar />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" aria-hidden />
@@ -299,8 +299,8 @@ function ListDetailContent() {
   }
 
   return (
-    <div className="-mt-[30px]">
-        <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
+    <div className="-mt-[30px] h-full flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col bg-mesh dark:bg-dark overflow-hidden min-h-0">
           <DealsNavbar />
           <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
             <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-col h-full min-h-0 overflow-hidden relative font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-100 selection:text-blue-700">

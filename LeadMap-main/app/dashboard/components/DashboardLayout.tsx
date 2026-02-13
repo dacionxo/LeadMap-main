@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Header from "./Header";
 import { SidebarProvider } from "./SidebarContext";
+import ProspectNavSidebar from "../prospect-enrich/components/ProspectNavSidebar";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -59,21 +60,21 @@ function DashboardLayoutContent({
 
   return (
     <div className="flex h-screen relative overflow-x-hidden">
-      {/* Global Sidebar (NextDeal nav) hidden from all pages; design kept in ./Sidebar.tsx */}
       <main
         ref={mainRef as any}
         className="flex-1 overflow-y-auto relative z-10 bg-[#F8FAFC] dark:bg-dark h-full flex flex-col min-w-0"
       >
         {!hideHeader && <Header scrollContainerRef={mainRef} />}
-        {/* Main Content */}
-        <div
-          className={
-            fullBleed
-              ? "flex-1 min-h-0 relative z-10 w-full overflow-hidden"
-              : "container relative z-10 py-[30px]"
-          }
-        >
-          {mounted && children}
+        {/* Nav sidebar + content card on all dashboard pages */}
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          <ProspectNavSidebar />
+          <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 bg-white dark:bg-dark/90">
+            {fullBleed ? (
+              <div className="flex-1 min-h-0 overflow-hidden">{mounted && children}</div>
+            ) : (
+              <div className="container relative z-10 py-[30px] flex-1">{mounted && children}</div>
+            )}
+          </div>
         </div>
       </main>
     </div>
