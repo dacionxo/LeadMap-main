@@ -112,7 +112,7 @@ export default function DealsNavbar() {
     : 'FREE PLAN'
 
   return (
-    <nav className="shrink-0 px-6 py-4 flex items-center justify-between z-30 bg-transparent">
+    <nav className="shrink-0 px-6 py-[14.4px] flex items-center justify-between z-30 bg-transparent">
       <div className="flex items-center gap-1">
         <button
           type="button"
@@ -125,11 +125,11 @@ export default function DealsNavbar() {
         <Search />
       </div>
 
-      <div className="flex items-center justify-center gap-1 p-1 bg-slate-100/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-600 rounded-full shadow-sm">
+      <div className="flex items-center justify-center gap-1 p-[3.6px] bg-slate-100/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-600 rounded-full shadow-sm">
         <AppLinks />
         <Link
           href="/dashboard/crm/calendar"
-          className="flex items-center gap-2 px-5 py-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
+          className="flex items-center gap-2 px-5 py-[5.4px] rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
         >
           <Icon
             icon="material-symbols:calendar-month"
@@ -139,7 +139,7 @@ export default function DealsNavbar() {
         </Link>
         <Link
           href="/dashboard/email/campaigns"
-          className="flex items-center gap-2 px-5 py-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
+          className="flex items-center gap-2 px-5 py-[5.4px] rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
         >
           <Icon
             icon="material-symbols:campaign"
@@ -149,7 +149,7 @@ export default function DealsNavbar() {
         </Link>
         <Link
           href="/dashboard/unibox"
-          className="flex items-center gap-2 px-5 py-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
+          className="flex items-center gap-2 px-5 py-[5.4px] rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
         >
           <Icon
             icon="material-symbols:mark-email-unread"
@@ -163,7 +163,7 @@ export default function DealsNavbar() {
         <button
           type="button"
           onClick={handleToggleTheme}
-          className="flex items-center justify-center w-10 h-10 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
+          className="flex items-center justify-center w-9 h-9 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
           aria-label="Toggle theme"
         >
           {theme === 'light' ? (
@@ -181,10 +181,10 @@ export default function DealsNavbar() {
               setShowProfileMenu(false)
             }}
             aria-label="Notifications"
-            className="relative flex items-center justify-center w-10 h-10 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
+            className="relative flex items-center justify-center w-9 h-9 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
           >
             <Icon icon="material-symbols:notifications" className="text-[22px]" />
-            <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-primary rounded-full shadow-[0_0_8px_rgba(93,135,255,0.4)] border-2 border-white dark:border-slate-800" />
+            <span className="absolute top-2.25 right-2.25 w-2.25 h-2.25 bg-primary rounded-full shadow-[0_0_8px_rgba(93,135,255,0.4)] border-2 border-white dark:border-slate-800" />
           </button>
 
           {showNotifications && (
@@ -300,7 +300,7 @@ export default function DealsNavbar() {
             </div>
             <div className="relative group-hover:scale-105 transition-transform duration-300">
               <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-purple-500 rounded-full opacity-0 group-hover:opacity-40 blur-[4px] transition-opacity duration-300" />
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm">
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm">
                 {userInitial}
               </div>
             </div>
