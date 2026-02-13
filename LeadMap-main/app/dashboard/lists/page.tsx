@@ -5,7 +5,6 @@ import { Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DashboardLayout from '../components/DashboardLayout'
 import DealsNavbar from '../crm/deals/components/DealsNavbar'
-import { useSidebar } from '../components/SidebarContext'
 import CreateListModal from './components/CreateListModal'
 import ImportListModal from './components/ImportListModal'
 import ListsTable from './components/ListsTable'
@@ -22,9 +21,8 @@ interface List {
 
 type SortBy = 'lastModified' | 'name' | 'created'
 
-/** Must be inside DashboardLayout (useSidebar). */
+/** Must be inside DashboardLayout. */
 function ListsPageContent() {
-  const { isOpen: isSidebarOpen } = useSidebar()
   const [lists, setLists] = useState<List[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -100,10 +98,7 @@ function ListsPageContent() {
 
   return (
     <div className="-mt-[30px]">
-      <div
-        className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
-        style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
-      >
+      <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
         <DealsNavbar />
         <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
           <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-col h-full min-h-0 overflow-hidden relative">

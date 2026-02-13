@@ -10,7 +10,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Map as MapIcon } from 'lucide-react'
 import DashboardLayout from '../components/DashboardLayout'
-import { useSidebar } from '../components/SidebarContext'
 import DealsNavbar from '../crm/deals/components/DealsNavbar'
 import AddToCampaignModal from './components/AddToCampaignModal'
 import AddToListModal from './components/AddToListModal'
@@ -138,18 +137,16 @@ const META_FILTERS = new Set<FilterType>(['all', 'high_value', 'price_drop', 'ne
 
 // Component that uses sidebar - must be inside DashboardLayout
 function ProspectContentInner(props: any) {
-  const { isOpen: isSidebarOpen } = useSidebar()
-  return <ProspectContentWithSidebar {...props} isSidebarOpen={isSidebarOpen} />
+  return <ProspectContentWithSidebar {...props} />
 }
 
-function ProspectContentWithSidebar({ isSidebarOpen, ...props }: any) {
+function ProspectContentWithSidebar(props: any) {
   return (
     <>
     {/* Same layout as Deals: fixed full-bleed, DealsNavbar, container with Dashboard border/shadow */}
     <div className="-mt-[30px]">
       <div
-        className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
-        style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
+        className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden"
       >
         <DealsNavbar />
         <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">

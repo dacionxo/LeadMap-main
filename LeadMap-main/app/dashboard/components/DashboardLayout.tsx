@@ -1,9 +1,8 @@
 "use client";
 
-import { ReactNode, Suspense, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import Header from "./Header";
-import Sidebar from "./Sidebar";
-import { SidebarProvider, useSidebar } from "./SidebarContext";
+import { SidebarProvider } from "./SidebarContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -19,7 +18,6 @@ function DashboardLayoutContent({
   fullBleed,
 }: DashboardLayoutProps) {
   const [mounted, setMounted] = useState(false);
-  const { isOpen } = useSidebar();
   const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -61,14 +59,10 @@ function DashboardLayoutContent({
 
   return (
     <div className="flex h-screen relative overflow-x-hidden">
-      <Suspense fallback={<div className="w-[270px]" />}>
-        <Sidebar />
-      </Suspense>
+      {/* Global Sidebar (NextDeal nav) hidden from all pages; design kept in ./Sidebar.tsx */}
       <main
         ref={mainRef as any}
-        className={`flex-1 overflow-y-auto relative z-10 bg-[#F8FAFC] dark:bg-dark h-full transition-all duration-300 flex flex-col ${
-          isOpen ? "ml-[270px]" : "ml-[75px]"
-        }`}
+        className="flex-1 overflow-y-auto relative z-10 bg-[#F8FAFC] dark:bg-dark h-full flex flex-col min-w-0"
       >
         {!hideHeader && <Header scrollContainerRef={mainRef} />}
         {/* Main Content */}

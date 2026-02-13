@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import DashboardLayout from '../../components/DashboardLayout'
-import { useSidebar } from '../../components/SidebarContext'
 import DealsNavbar from '../../crm/deals/components/DealsNavbar'
 import Link from 'next/link'
 
@@ -92,11 +91,10 @@ function StatusBadge({ status }: { status?: string | null }) {
   )
 }
 
-/** Must be inside DashboardLayout (useSidebar). */
+/** Must be inside DashboardLayout. */
 function ListDetailContent() {
   const params = useParams()
   const router = useRouter()
-  const { isOpen: isSidebarOpen } = useSidebar()
   const listId = params.id as string
 
   const [list, setList] = useState<List | null>(null)
@@ -290,10 +288,7 @@ function ListDetailContent() {
 
   if (loading && !list) {
     return (
-      <div
-        className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
-        style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
-      >
+      <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
         <DealsNavbar />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" aria-hidden />
@@ -305,10 +300,7 @@ function ListDetailContent() {
 
   return (
     <div className="-mt-[30px]">
-        <div
-          className="fixed top-0 bottom-0 flex flex-col bg-mesh dark:bg-dark transition-all duration-300 overflow-hidden"
-          style={{ left: isSidebarOpen ? '274px' : '79px', right: 0 }}
-        >
+        <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
           <DealsNavbar />
           <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
             <div className="bg-white/80 dark:bg-dark/90 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] flex flex-col h-full min-h-0 overflow-hidden relative font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-100 selection:text-blue-700">
