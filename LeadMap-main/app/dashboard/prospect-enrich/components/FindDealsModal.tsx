@@ -150,8 +150,8 @@ export default function FindDealsModal({
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Sidebar — primary app nav (1:1 reference selector sidebar) */}
-        <aside className="w-64 flex flex-col shrink-0 overflow-y-auto find-deals-no-scrollbar py-4 px-3 bg-fd-sidebar-lavender find-deals-sidebar-gradient-border rounded-l-[24px] relative z-20 my-3 ml-3 mr-0">
+        {/* Sidebar — primary app nav with border + box shading (1:1 reference) */}
+        <aside className="w-64 flex flex-col shrink-0 overflow-y-auto find-deals-no-scrollbar py-4 px-3 bg-fd-sidebar-lavender find-deals-sidebar-gradient-border border border-fd-sidebar-border rounded-l-[24px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_12px_24px_rgba(16,24,40,0.06)] relative z-20 my-3 ml-3 mr-0 overflow-hidden">
           {NAV_SECTIONS.map((section) => (
             <div key={section.id} className="mb-5">
               <div className="px-3 mb-2 flex items-center justify-between">
