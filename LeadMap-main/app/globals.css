@@ -1248,11 +1248,31 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 /* Find Deals sidebar gradient border (1:1 reference) */
 .find-deals-sidebar-gradient-border {
   position: relative;
 }
 .find-deals-sidebar-gradient-border::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, #E8EAF3 15%, #E8EAF3 85%, transparent);
+  pointer-events: none;
+}
+.sidebar-gradient-border {
+  position: relative;
+}
+.sidebar-gradient-border::after {
   content: "";
   position: absolute;
   top: 0;
