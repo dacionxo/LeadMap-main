@@ -120,12 +120,21 @@ interface ProspectCheckboxTableProps {
 }
 
 function getStatusLabel(listing: Listing, tableName?: string, category?: string): string {
-  const source = tableName || category
+  // Map FilterType category to table names for "all prospects" view
+  const categoryToTable: Record<string, string> = {
+    'fsbo': 'fsbo_leads',
+    'frbo': 'frbo_leads',
+    'foreclosure': 'foreclosure_listings',
+    'imports': 'imports',
+  }
+  
+  // Use category to infer table name when tableName is undefined (e.g., "all prospects" view)
+  const effectiveTableName = tableName || (category ? categoryToTable[category] : undefined)
 
   // Normalize status based on primary source table/category first so that
   // FSBO/FRBO/Foreclosure/Imports always show the desired labels, even if the
   // raw backend status is different (e.g. "FSBO", "FRBO", etc.).
-  switch (source) {
+  switch (effectiveTableName) {
     case 'fsbo_leads':
       return 'For Sale'
     case 'frbo_leads':
@@ -134,6 +143,15 @@ function getStatusLabel(listing: Listing, tableName?: string, category?: string)
       return 'Foreclosure'
     case 'imports':
       return 'Imported'
+  }
+
+  // Check listing.status for category indicators (for "all prospects" view)
+  if (listing.status) {
+    const statusLower = listing.status.toLowerCase()
+    if (statusLower.includes('fsbo') || statusLower.includes('for sale')) return 'For Sale'
+    if (statusLower.includes('frbo') || statusLower.includes('for rent')) return 'For Rent'
+    if (statusLower.includes('foreclosure')) return 'Foreclosure'
+    if (statusLower.includes('imported') || statusLower.includes('import')) return 'Imported'
   }
 
   // Otherwise fall back to explicit status from backend when present
@@ -148,24 +166,34 @@ function getStatusLabel(listing: Listing, tableName?: string, category?: string)
 function getStatusBadgeClasses(status: string, tableName?: string, category?: string): string {
   // Normalize status to lowercase for comparison
   const normalizedStatus = status.toLowerCase()
-  const source = tableName || category
+  
+  // Map FilterType category to table names for "all prospects" view
+  const categoryToTable: Record<string, string> = {
+    'fsbo': 'fsbo_leads',
+    'frbo': 'frbo_leads',
+    'foreclosure': 'foreclosure_listings',
+    'imports': 'imports',
+  }
+  
+  // Use category to infer table name when tableName is undefined
+  const effectiveTableName = tableName || (category ? categoryToTable[category] : undefined)
   
   // Determine status based on label or table name
-  if (normalizedStatus.includes('for sale') || source === 'fsbo_leads') {
-    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800'
+  if (normalizedStatus.includes('for sale') || effectiveTableName === 'fsbo_leads' || category === 'fsbo') {
+    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800 whitespace-nowrap'
   }
-  if (normalizedStatus.includes('for rent') || source === 'frbo_leads') {
-    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800'
+  if (normalizedStatus.includes('for rent') || effectiveTableName === 'frbo_leads' || category === 'frbo') {
+    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800 whitespace-nowrap'
   }
-  if (normalizedStatus.includes('foreclosure') || source === 'foreclosure_listings') {
-    // Foreclosure: distinct, non-orange treatment
-    return 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-800'
+  if (normalizedStatus.includes('foreclosure') || effectiveTableName === 'foreclosure_listings' || category === 'foreclosure') {
+    // Foreclosure: green color
+    return 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800 whitespace-nowrap'
   }
-  if (normalizedStatus.includes('imported') || source === 'imports') {
-    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'
+  if (normalizedStatus.includes('imported') || effectiveTableName === 'imports' || category === 'imports') {
+    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800 whitespace-nowrap'
   }
   // Default: emerald for active/generic status
-  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800'
+  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 whitespace-nowrap'
 }
 
 const VALID_TABLE_NAMES = [
@@ -514,7 +542,7 @@ export default function ProspectCheckboxTable({
         )}
         
         {columns.includes('status') && (
-          <TableCell className="whitespace-nowrap">
+          <TableCell className="whitespace-nowrap min-w-[100px]">
             <span
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, tableName, category), tableName, category)}`}
             >
@@ -738,7 +766,7 @@ export default function ProspectCheckboxTable({
                   <TableHead className="text-base font-semibold py-3">Price</TableHead>
                 )}
                 {columns.includes('status') && (
-                  <TableHead className="text-base font-semibold py-3">Status</TableHead>
+                  <TableHead className="text-base font-semibold py-3 min-w-[100px]">Status</TableHead>
                 )}
                 {columns.includes('score') && (
                   <TableHead className="text-base font-semibold py-3">AI Score</TableHead>

@@ -139,11 +139,22 @@ function isValidTableName(tableName: string): boolean {
   return VALID_TABLE_NAMES.includes(tableName as any)
 }
 
-function getStatusLabel(listing: Listing, tableName?: string): string {
+function getStatusLabel(listing: Listing, tableName?: string, category?: string): string {
+  // Map FilterType category to table names for "all prospects" view
+  const categoryToTable: Record<string, string> = {
+    'fsbo': 'fsbo_leads',
+    'frbo': 'frbo_leads',
+    'foreclosure': 'foreclosure_listings',
+    'imports': 'imports',
+  }
+  
+  // Use category to infer table name when tableName is undefined (e.g., "all prospects" view)
+  const effectiveTableName = tableName || (category ? categoryToTable[category] : undefined)
+  
   // Normalize status based on primary source table/category first so that
   // FSBO/FRBO/Foreclosure/Imports always show the desired labels, even if the
   // raw backend status is different (e.g. "FSBO", "FRBO", etc.).
-  switch (tableName) {
+  switch (effectiveTableName) {
     case 'fsbo_leads':
       return 'For Sale'
     case 'frbo_leads':
@@ -152,6 +163,15 @@ function getStatusLabel(listing: Listing, tableName?: string): string {
       return 'Foreclosure'
     case 'imports':
       return 'Imported'
+  }
+
+  // Check listing.status for category indicators (for "all prospects" view)
+  if (listing.status) {
+    const statusLower = listing.status.toLowerCase()
+    if (statusLower.includes('fsbo') || statusLower.includes('for sale')) return 'For Sale'
+    if (statusLower.includes('frbo') || statusLower.includes('for rent')) return 'For Rent'
+    if (statusLower.includes('foreclosure')) return 'Foreclosure'
+    if (statusLower.includes('imported') || statusLower.includes('import')) return 'Imported'
   }
 
   // Otherwise fall back to explicit status from backend when present
@@ -163,26 +183,37 @@ function getStatusLabel(listing: Listing, tableName?: string): string {
   return listing.active ? 'Active' : 'Foreclosure'
 }
 
-function getStatusBadgeClasses(status: string, tableName?: string): string {
+function getStatusBadgeClasses(status: string, tableName?: string, category?: string): string {
   // Normalize status to lowercase for comparison
   const normalizedStatus = status.toLowerCase()
   
+  // Map FilterType category to table names for "all prospects" view
+  const categoryToTable: Record<string, string> = {
+    'fsbo': 'fsbo_leads',
+    'frbo': 'frbo_leads',
+    'foreclosure': 'foreclosure_listings',
+    'imports': 'imports',
+  }
+  
+  // Use category to infer table name when tableName is undefined
+  const effectiveTableName = tableName || (category ? categoryToTable[category] : undefined)
+  
   // Determine status based on label or table name
-  if (normalizedStatus.includes('for sale') || tableName === 'fsbo_leads') {
-    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800'
+  if (normalizedStatus.includes('for sale') || effectiveTableName === 'fsbo_leads' || category === 'fsbo') {
+    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800 whitespace-nowrap'
   }
-  if (normalizedStatus.includes('for rent') || tableName === 'frbo_leads') {
-    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800'
+  if (normalizedStatus.includes('for rent') || effectiveTableName === 'frbo_leads' || category === 'frbo') {
+    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800 whitespace-nowrap'
   }
-  if (normalizedStatus.includes('foreclosure') || tableName === 'foreclosure_listings') {
-    // Foreclosure: distinct, non-orange treatment
-    return 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-800'
+  if (normalizedStatus.includes('foreclosure') || effectiveTableName === 'foreclosure_listings' || category === 'foreclosure') {
+    // Foreclosure: green color
+    return 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800 whitespace-nowrap'
   }
-  if (normalizedStatus.includes('imported') || tableName === 'imports') {
-    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'
+  if (normalizedStatus.includes('imported') || effectiveTableName === 'imports' || category === 'imports') {
+    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800 whitespace-nowrap'
   }
   // Default: emerald for active/generic status
-  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800'
+  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 whitespace-nowrap'
 }
 
 // ============================================================================
@@ -494,7 +525,7 @@ export default function ProspectHoverTable({
                 </th>
               )}
               {columns.includes('price') && <th className="px-4 py-4">Price</th>}
-              {columns.includes('status') && <th className="px-4 py-4">Status</th>}
+              {columns.includes('status') && <th className="px-4 py-4 min-w-[100px]">Status</th>}
               {columns.includes('score') && <th className="px-4 py-4">AI Score</th>}
               {columns.includes('beds') && <th className="px-4 py-4">Beds</th>}
               {columns.includes('full_baths') && <th className="px-4 py-4">Baths</th>}
@@ -576,9 +607,9 @@ export default function ProspectHoverTable({
                       </td>
                     )}
                     {columns.includes('status') && (
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, tableName), tableName)}`}>
-                          {getStatusLabel(listing, tableName)}
+                      <td className="px-4 py-4 min-w-[100px]">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, tableName, category), tableName, category)}`}>
+                          {getStatusLabel(listing, tableName, category)}
                         </span>
                       </td>
                     )}

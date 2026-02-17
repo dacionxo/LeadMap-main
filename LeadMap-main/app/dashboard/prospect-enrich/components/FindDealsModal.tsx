@@ -110,6 +110,15 @@ function getStatusLabel(listing: Listing, activeCategory?: FilterType): string {
       return 'Imported'
   }
 
+  // Check listing.status for category indicators (for "all prospects" view)
+  if (listing.status) {
+    const statusLower = listing.status.toLowerCase()
+    if (statusLower.includes('fsbo') || statusLower.includes('for sale')) return 'For Sale'
+    if (statusLower.includes('frbo') || statusLower.includes('for rent')) return 'For Rent'
+    if (statusLower.includes('foreclosure')) return 'Foreclosure'
+    if (statusLower.includes('imported') || statusLower.includes('import')) return 'Imported'
+  }
+
   // Otherwise fall back to explicit status from backend when present
   if (listing.status && listing.status.trim().length > 0) {
     return listing.status
@@ -125,20 +134,20 @@ function getStatusBadgeClasses(status: string, activeCategory?: FilterType): str
   
   // Determine status based on label
   if (normalizedStatus.includes('for sale') || activeCategory === 'fsbo') {
-    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800'
+    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800 whitespace-nowrap'
   }
   if (normalizedStatus.includes('for rent') || activeCategory === 'frbo') {
-    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800'
+    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800 whitespace-nowrap'
   }
   if (normalizedStatus.includes('foreclosure') || activeCategory === 'foreclosure') {
-    // Foreclosure: distinct, non-orange treatment
-    return 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-800'
+    // Foreclosure: green color
+    return 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800 whitespace-nowrap'
   }
   if (normalizedStatus.includes('imported') || activeCategory === 'imports') {
-    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'
+    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800 whitespace-nowrap'
   }
   // Default: emerald for active/generic status
-  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800'
+  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 whitespace-nowrap'
 }
 
 export default function FindDealsModal({
@@ -351,7 +360,7 @@ export default function FindDealsModal({
                   </th>
                   <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Address</th>
                   <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Price</th>
-                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Status</th>
+                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light min-w-[100px]">Status</th>
                   <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">AI Score</th>
                   <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Beds</th>
                   <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-fd-border-light">Baths</th>
@@ -402,7 +411,7 @@ export default function FindDealsModal({
                           </div>
                         </td>
                         <td className="p-4 text-sm font-bold text-fd-text-primary align-top pt-5">{formatPrice(listing.list_price)}</td>
-                        <td className="p-4 align-top pt-5">
+                        <td className="p-4 align-top pt-5 min-w-[100px]">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, activeCategory), activeCategory)}`}>
                             {getStatusLabel(listing, activeCategory)}
                           </span>
