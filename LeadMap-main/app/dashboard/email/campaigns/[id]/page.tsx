@@ -481,11 +481,19 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   if (loading) {
     return (
       <DashboardLayout fullBleed hideHeader>
-        <DealsNavbar />
-        <AppNavSidebar />
-        <div className="flex-1 flex min-h-0">
-          <div className="flex items-center justify-center flex-1">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <div className="-mt-[30px]">
+          <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden">
+            <DealsNavbar />
+            <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+              <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+                <AppNavSidebar />
+                <div className="flex-1 bg-white dark:bg-[#1c2536] rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative">
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -495,11 +503,19 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   if (!campaign) {
     return (
       <DashboardLayout fullBleed hideHeader>
-        <DealsNavbar />
-        <AppNavSidebar />
-        <div className="flex-1 flex min-h-0">
-          <div className="flex items-center justify-center flex-1">
-            <p className="text-gray-600 dark:text-gray-400">Campaign not found</p>
+        <div className="-mt-[30px]">
+          <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden">
+            <DealsNavbar />
+            <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+              <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+                <AppNavSidebar />
+                <div className="flex-1 bg-white dark:bg-[#1c2536] rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative">
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-gray-600 dark:text-gray-400">Campaign not found</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -508,21 +524,27 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <DashboardLayout fullBleed hideHeader>
-      <DealsNavbar />
-      <AppNavSidebar />
-      <div className="flex-1 flex min-h-0 relative">
-        {/* Campaign detail overlay: full viewport modal (data attributes for CSS selectors) */}
-        <div data-campaign-detail-overlay className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] transition-opacity" aria-hidden />
-          <div
-            data-campaign-detail-modal
-            className="relative w-full max-w-7xl h-full max-h-[90vh] bg-white dark:bg-slate-800 rounded-xl shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_10px_40px_-10px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
-          >
-            {/* Header */}
-            <header
-              data-campaign-detail-header
-              className="flex-none px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-600 flex items-center justify-between z-10"
-            >
+      {/* Campaign detail: Unibox-style layout (sidebar + main card), no lightbox. Selectors: [data-campaign-detail-modal], [data-campaign-detail-header], [data-campaign-detail-tabs], [data-campaign-detail-content]. */}
+      <div className="-mt-[30px]">
+        <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden">
+          <DealsNavbar />
+          <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+            <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+              <AppNavSidebar />
+              <div
+                data-campaign-detail-modal
+                className="flex-1 bg-white dark:bg-[#1c2536] rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative"
+              >
+                <div
+                  className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+                  aria-hidden
+                />
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                  {/* Header */}
+                  <header
+                    data-campaign-detail-header
+                    className="flex-none px-6 py-4 bg-white dark:bg-[#1c2536] border-b border-slate-200 dark:border-slate-600 flex items-center justify-between z-10"
+                  >
               <div className="flex items-center gap-4">
                 <button
                   type="button"
@@ -616,7 +638,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {/* Sticky tabs */}
             <div
               data-campaign-detail-tabs
-              className="sticky top-0 z-20 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-600 px-6 sm:px-8"
+              className="sticky top-0 z-20 bg-white dark:bg-[#1c2536] border-b border-slate-200 dark:border-slate-600 px-6 sm:px-8"
             >
               <nav aria-label="Tabs" className="flex space-x-6">
                 {(['analytics', 'leads', 'sequences', 'schedule', 'options'] as TabType[]).map((tab) => (
@@ -829,6 +851,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     Analytics updated 5 minutes ago
                   </div>
                 )}
+              </div>
+            </div>
+                </div>
               </div>
             </div>
           </div>
