@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '../../../components/DashboardLayout'
+import AppNavSidebar from '../../../components/AppNavSidebar'
+import DealsNavbar from '../../../crm/deals/components/DealsNavbar'
 import SequencesTabContent from './components/SequencesTab'
 import LeadsTabContent from './components/LeadsTabContent'
 import AddLeadsModal from './components/AddLeadsModal'
@@ -10,29 +12,7 @@ import ScheduleTab from './components/ScheduleTab'
 import OptionsTab from './components/OptionsTab'
 import StepAnalytics from './components/StepAnalytics'
 import ActivityFeed from './components/ActivityFeed'
-import { 
-  Loader2,
-  Play,
-  Pause,
-  Share2,
-  Settings,
-  ChevronDown,
-  Info,
-  MoreVertical,
-  Plus,
-  Search,
-  Trash2,
-  Mail,
-  ArrowLeft,
-  Eye,
-  Zap,
-  Paperclip,
-  Code,
-  Type,
-  Sparkles,
-  FileText,
-  Tag
-} from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 interface Campaign {
   id: string
@@ -422,17 +402,23 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   }
 
   const getStatusBadge = (status: string) => {
-    const styles = {
-      draft: 'bg-gray-800 text-white',
-      scheduled: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
-      running: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
-      paused: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400',
-      completed: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
-      cancelled: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+    if (status === 'paused') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5" aria-hidden />
+          Paused
+        </span>
+      )
     }
-
+    const styles: Record<string, string> = {
+      draft: 'bg-gray-800 text-white border border-transparent',
+      scheduled: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800',
+      running: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800',
+      completed: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
+      cancelled: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+    }
     return (
-      <span className={`px-3 py-1 text-sm font-medium rounded-full ${styles[status as keyof typeof styles] || styles.draft}`}>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'}`}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     )
@@ -494,9 +480,13 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <DashboardLayout fullBleed hideHeader>
+        <DealsNavbar />
+        <AppNavSidebar />
+        <div className="flex-1 flex min-h-0">
+          <div className="flex items-center justify-center flex-1">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
         </div>
       </DashboardLayout>
     )
@@ -504,350 +494,357 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   if (!campaign) {
     return (
-      <DashboardLayout>
-        <div className="p-12 text-center">
-          <p className="text-gray-600 dark:text-gray-400">Campaign not found</p>
+      <DashboardLayout fullBleed hideHeader>
+        <DealsNavbar />
+        <AppNavSidebar />
+        <div className="flex-1 flex min-h-0">
+          <div className="flex items-center justify-center flex-1">
+            <p className="text-gray-600 dark:text-gray-400">Campaign not found</p>
+          </div>
         </div>
       </DashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Back Button */}
-        <button
-          onClick={() => router.push('/dashboard/email/campaigns')}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-2"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Back to Campaigns</span>
-        </button>
-
-        {/* Top Navigation Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-8" aria-label="Campaign sections">
-            {(['analytics', 'leads', 'sequences', 'schedule', 'options'] as TabType[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`${
-                  activeTab === tab
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize`}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Top Action Bar - Status and Resume Button */}
-        <div className="flex items-center justify-between">
-          {/* Status and Progress */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
-              {getStatusBadge(campaign.status)}
-            </div>
-            {isDraft && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{progress}%</span>
-                <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-green-500 transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
+    <DashboardLayout fullBleed hideHeader>
+      <DealsNavbar />
+      <AppNavSidebar />
+      <div className="flex-1 flex min-h-0 relative">
+        {/* Campaign detail overlay: full viewport modal (data attributes for CSS selectors) */}
+        <div data-campaign-detail-overlay className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] transition-opacity" aria-hidden />
+          <div
+            data-campaign-detail-modal
+            className="relative w-full max-w-7xl h-full max-h-[90vh] bg-white dark:bg-slate-800 rounded-xl shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_10px_40px_-10px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
+          >
+            {/* Header */}
+            <header
+              data-campaign-detail-header
+              className="flex-none px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-600 flex items-center justify-between z-10"
+            >
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard/email/campaigns')}
+                  className="flex items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-3 py-2 -ml-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 mr-2"
+                >
+                  <span className="material-icons-outlined text-[18px] mr-1" aria-hidden>arrow_back</span>
+                  Back to Campaigns
+                </button>
+                <div className="h-6 w-px bg-slate-200 dark:bg-slate-600 mr-4" aria-hidden />
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                  {campaign.name}
+                </h2>
+                {getStatusBadge(campaign.status)}
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="flex items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700"
+                  >
+                    <span className="material-icons-outlined text-[18px] mr-2" aria-hidden>share</span>
+                    Share
+                  </button>
+                  <div className="h-5 w-px bg-slate-200 dark:bg-slate-600 mx-1" aria-hidden />
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowDropdown(!showDropdown)}
+                      className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-1.5 px-3 inline-flex justify-between items-center text-sm font-medium text-slate-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2563eb] shadow-sm"
+                    >
+                      {timeRange}
+                      <span className="material-icons-outlined text-lg ml-2 text-slate-500 dark:text-slate-400" aria-hidden>expand_more</span>
+                    </button>
+                    {showDropdown && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)} aria-hidden />
+                        <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-600 z-20 py-1">
+                          {['Last 7 days', 'Last 4 weeks', 'Last 3 months', 'All time'].map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => { setTimeRange(opt); setShowDropdown(false); }}
+                              className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => { handleDownloadCSV(); setShowDropdown(false); }}
+                            className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 border-t border-slate-200 dark:border-slate-600"
+                          >
+                            Download CSV
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {(campaign.status === 'paused' || campaign.status === 'draft') && (
+                    <button
+                      type="button"
+                      onClick={handleResume}
+                      disabled={actionLoading}
+                      className="inline-flex items-center px-4 py-1.5 border border-transparent shadow-sm text-sm font-semibold rounded-lg text-white bg-[#2563eb] hover:bg-[#1d4ed8] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2563eb] transition-all disabled:opacity-50"
+                    >
+                      <span className="material-icons-outlined text-[18px] mr-1.5" aria-hidden>play_arrow</span>
+                      {actionLoading ? (campaign.status === 'draft' ? 'Starting...' : 'Resuming...') : 'Resume'}
+                    </button>
+                  )}
+                  {(campaign.status === 'running' || campaign.status === 'scheduled') && (
+                    <button
+                      type="button"
+                      onClick={handlePause}
+                      disabled={actionLoading}
+                      className="inline-flex items-center px-4 py-1.5 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50"
+                    >
+                      Pause
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <span className="material-icons-outlined text-[20px]" aria-hidden>settings</span>
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
+            </header>
 
-          {/* Right Side Actions */}
-          <div className="flex items-center gap-3">
-            {(campaign.status === 'paused' || campaign.status === 'draft') && (
-              <button
-                onClick={handleResume}
-                disabled={actionLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
-              >
-                <Play className="w-4 h-4" />
-                {actionLoading 
-                  ? (campaign.status === 'draft' ? 'Starting...' : 'Resuming...') 
-                  : (campaign.status === 'draft' ? 'Start campaign' : 'Resume campaign')
-                }
-              </button>
-            )}
-            {(campaign.status === 'running' || campaign.status === 'scheduled') && (
-              <button
-                onClick={handlePause}
-                disabled={actionLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50"
-              >
-                <Pause className="w-4 h-4" />
-                {actionLoading ? 'Pausing...' : 'Pause campaign'}
-              </button>
-            )}
-            <div className="relative">
-              <button 
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
-              {showDropdown && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setShowDropdown(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
-                    <button
-                      onClick={handleDownloadCSV}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
-                    >
-                      <FileText className="w-4 h-4" />
-                      Download CSV
-                    </button>
+            {/* Sticky tabs */}
+            <div
+              data-campaign-detail-tabs
+              className="sticky top-0 z-20 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-600 px-6 sm:px-8"
+            >
+              <nav aria-label="Tabs" className="flex space-x-6">
+                {(['analytics', 'leads', 'sequences', 'schedule', 'options'] as TabType[]).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={`border-b-2 px-1 py-4 font-medium text-sm transition-colors whitespace-nowrap capitalize ${
+                      activeTab === tab
+                        ? 'border-[#2563eb] text-[#2563eb] font-semibold'
+                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Scrollable content */}
+            <div
+              data-campaign-detail-content
+              className="flex-1 overflow-y-auto modal-scroll bg-gray-50/50 dark:bg-slate-900/50"
+            >
+              <div className="p-6 sm:p-8 space-y-8">
+                {/* KPI cards - analytics tab */}
+                {activeTab === 'analytics' && (
+                  <div data-campaign-detail-kpi className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Sequence started</p>
+                        <span className="material-icons-outlined text-gray-400 text-sm cursor-help hover:text-gray-600 transition-colors" title="Info" aria-hidden>info</span>
+                      </div>
+                      <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                        {isDraft ? '0' : (analytics?.sequence_started ?? 0)}
+                      </p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Open rate</p>
+                        <span className="material-icons-outlined text-gray-400 text-sm cursor-help hover:text-gray-600 transition-colors" title="Info" aria-hidden>info</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                          {isDraft ? '0%' : `${analytics?.open_rate?.percentage.toFixed(0) ?? 0}%`}
+                        </p>
+                        <span className="text-gray-300 dark:text-gray-600 text-lg font-light" aria-hidden>|</span>
+                        <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
+                          {isDraft ? '0' : (analytics?.open_rate?.count ?? 0)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Click rate</p>
+                        <span className="material-icons-outlined text-gray-400 text-sm cursor-help hover:text-gray-600 transition-colors" title="Info" aria-hidden>info</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                          {isDraft ? '0%' : `${analytics?.click_rate?.percentage.toFixed(0) ?? 0}%`}
+                        </p>
+                        <span className="text-gray-300 dark:text-gray-600 text-lg font-light" aria-hidden>|</span>
+                        <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
+                          {isDraft ? '0' : (analytics?.click_rate?.count ?? 0)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Opportunities</p>
+                        <span className="material-icons-outlined text-gray-400 text-sm cursor-help hover:text-gray-600 transition-colors" title="Info" aria-hidden>info</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                          {analytics?.opportunities?.count ?? 0}
+                        </p>
+                        <span className="text-gray-300 dark:text-gray-600 text-lg font-light" aria-hidden>|</span>
+                        <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
+                          ${analytics?.opportunities?.revenue.toLocaleString() ?? 0}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Conversions</p>
+                        <span className="material-icons-outlined text-gray-400 text-sm cursor-help hover:text-gray-600 transition-colors" title="Info" aria-hidden>info</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                          {analytics?.conversions?.count ?? 0}
+                        </p>
+                        <span className="text-gray-300 dark:text-gray-600 text-lg font-light" aria-hidden>|</span>
+                        <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
+                          ${analytics?.conversions?.revenue.toLocaleString() ?? 0}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </>
-              )}
+                )}
+
+                {/* Tab content areas */}
+                {activeTab === 'sequences' && campaignId && (
+                  <SequencesTabContent campaignId={campaignId} campaignStatus={campaign?.status || 'draft'} />
+                )}
+                {activeTab === 'schedule' && campaignId && (
+                  <ScheduleTab
+                    campaignId={campaignId}
+                    campaignStatus={campaign?.status || 'draft'}
+                    initialSchedule={scheduleData || {
+                      name: campaign?.name,
+                      start_at: campaign?.start_at,
+                      end_at: campaign?.end_at,
+                      timezone: campaign?.timezone,
+                      send_window_start: campaign?.send_window_start,
+                      send_window_end: campaign?.send_window_end,
+                      send_days_of_week: campaign?.send_days_of_week
+                    }}
+                  />
+                )}
+                {activeTab === 'leads' && (
+                  <LeadsTabContent
+                    recipients={recipients}
+                    loading={recipientsLoading}
+                    searchQuery={recipientSearchQuery}
+                    onSearchChange={setRecipientSearchQuery}
+                    onRefresh={fetchRecipients}
+                    campaignId={campaignId || ''}
+                    campaignStatus={campaign?.status || 'draft'}
+                    onAddLeads={() => setShowAddLeadsModal(true)}
+                  />
+                )}
+                {activeTab === 'options' && campaignId && campaign && (
+                  <OptionsTab
+                    campaignId={campaignId}
+                    campaignStatus={campaign?.status || 'draft'}
+                    mailboxId={campaign?.mailbox_id}
+                    initialOptions={{
+                      stop_on_reply: campaign?.stop_on_reply,
+                      open_tracking_enabled: campaign?.open_tracking_enabled,
+                      link_tracking_enabled: campaign?.link_tracking_enabled,
+                      text_only_mode: campaign?.text_only_mode,
+                      first_email_text_only: campaign?.first_email_text_only,
+                      daily_cap: campaign?.daily_cap,
+                      hourly_cap: campaign?.hourly_cap,
+                      total_cap: campaign?.total_cap,
+                      warmup_enabled: campaign?.warmup_enabled,
+                      warmup_schedule: campaign?.warmup_schedule,
+                      owner_id: campaign?.owner_id,
+                      tags: campaign?.tags,
+                      time_gap_min: campaign?.time_gap_min,
+                      time_gap_random: campaign?.time_gap_random,
+                      max_new_leads_per_day: campaign?.max_new_leads_per_day,
+                      prioritize_new_leads: campaign?.prioritize_new_leads,
+                      auto_optimize_split_test: campaign?.auto_optimize_split_test,
+                      split_test_winning_metric: (campaign?.split_test_winning_metric && ['open_rate', 'click_rate', 'reply_rate', 'conversion_rate'].includes(campaign.split_test_winning_metric))
+                        ? campaign.split_test_winning_metric as 'open_rate' | 'click_rate' | 'reply_rate' | 'conversion_rate'
+                        : undefined,
+                      provider_matching_enabled: campaign?.provider_matching_enabled,
+                      esp_routing_rules: campaign?.esp_routing_rules,
+                      stop_company_on_reply: campaign?.stop_company_on_reply,
+                      stop_on_auto_reply: campaign?.stop_on_auto_reply,
+                      unsubscribe_link_header: campaign?.unsubscribe_link_header,
+                      allow_risky_emails: campaign?.allow_risky_emails
+                    }}
+                    onUpdate={fetchCampaign}
+                  />
+                )}
+
+                {/* Analytics: Step Analytics card + Activity */}
+                {activeTab === 'analytics' && (
+                  <div data-campaign-step-analytics className="bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-600 rounded-xl overflow-hidden">
+                    <div className="border-b border-slate-200 dark:border-slate-600 px-6 flex items-center justify-between bg-white dark:bg-slate-800/50">
+                      <nav aria-label="Content tabs" className="flex space-x-6">
+                        <button
+                          type="button"
+                          onClick={() => setActiveContentTab('step-analytics')}
+                          className={`px-1 py-4 font-medium text-sm transition-colors ${
+                            activeContentTab === 'step-analytics'
+                              ? 'text-[#2563eb] border-b-2 border-[#2563eb] font-semibold'
+                              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-b-2 border-transparent hover:border-gray-200'
+                          }`}
+                        >
+                          Step Analytics
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveContentTab('activity')}
+                          className={`px-1 py-4 font-medium text-sm transition-colors ${
+                            activeContentTab === 'activity'
+                              ? 'text-[#2563eb] border-b-2 border-[#2563eb] font-semibold'
+                              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-b-2 border-transparent hover:border-gray-200'
+                          }`}
+                        >
+                          Activity
+                        </button>
+                      </nav>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-600">
+                      {activeContentTab === 'step-analytics' && (
+                        <StepAnalytics campaignId={campaignId || ''} timeRange={timeRange} />
+                      )}
+                      {activeContentTab === 'activity' && (
+                        <ActivityFeed campaignId={campaignId || ''} timeRange={timeRange} />
+                      )}
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'analytics' && (
+                  <div className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4 pb-2">
+                    Analytics updated 5 minutes ago
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Secondary Action Bar - Only show for analytics tab */}
-        {activeTab === 'analytics' && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <Share2 className="w-4 h-4" />
-                Share
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option>Last 7 days</option>
-                <option>Last 4 weeks</option>
-                <option>Last 3 months</option>
-                <option>All time</option>
-              </select>
-              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* KPI Cards - Only show for analytics tab */}
-        {activeTab === 'analytics' && (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {/* Sequence started */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Sequence started</span>
-                <Info className="w-4 h-4 text-gray-400" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {isDraft ? '-' : (analytics?.sequence_started ?? '-')}
-              </div>
-            </div>
-
-            {/* Open rate */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Open rate</span>
-                <Info className="w-4 h-4 text-gray-400" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {isDraft ? '0% | -' : `${analytics?.open_rate?.percentage.toFixed(0) ?? 0}% ${analytics?.open_rate?.count != null ? `| ${analytics.open_rate.count}` : '| -'}`}
-              </div>
-            </div>
-
-            {/* Click rate */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Click rate</span>
-                <Info className="w-4 h-4 text-gray-400" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {isDraft ? '0% | -' : `${analytics?.click_rate?.percentage.toFixed(0) ?? 0}% ${analytics?.click_rate?.count != null ? `| ${analytics.click_rate.count}` : '| -'}`}
-              </div>
-            </div>
-
-            {/* Opportunities */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Opportunities</span>
-                <Info className="w-4 h-4 text-gray-400" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {analytics?.opportunities.count ?? 0} | ${analytics?.opportunities.revenue.toLocaleString() ?? 0}
-              </div>
-            </div>
-
-            {/* Conversions */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Conversions</span>
-                <Info className="w-4 h-4 text-gray-400" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {analytics?.conversions.count ?? 0} | ${analytics?.conversions.revenue.toLocaleString() ?? 0}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sequences Tab Content */}
-        {activeTab === 'sequences' && campaignId && (
-          <SequencesTabContent
-            campaignId={campaignId}
-            campaignStatus={campaign?.status || 'draft'}
-          />
-        )}
-
-        {/* Schedule Tab Content */}
-        {activeTab === 'schedule' && campaignId && (
-          <ScheduleTab
-            campaignId={campaignId}
-            campaignStatus={campaign?.status || 'draft'}
-            initialSchedule={scheduleData || {
-              name: campaign?.name,
-              start_at: campaign?.start_at,
-              end_at: campaign?.end_at,
-              timezone: campaign?.timezone,
-              send_window_start: campaign?.send_window_start,
-              send_window_end: campaign?.send_window_end,
-              send_days_of_week: campaign?.send_days_of_week
-            }}
-          />
-        )}
-
-        {/* Leads Tab Content */}
-        {activeTab === 'leads' && (
-          <LeadsTabContent
-            recipients={recipients}
-            loading={recipientsLoading}
-            searchQuery={recipientSearchQuery}
-            onSearchChange={setRecipientSearchQuery}
-            onRefresh={fetchRecipients}
-            campaignId={campaignId || ''}
-            campaignStatus={campaign?.status || 'draft'}
-            onAddLeads={() => setShowAddLeadsModal(true)}
-          />
-        )}
-
-        {/* Analytics Tab Content */}
-        {activeTab === 'analytics' && (
-          <>
-            {/* No Data Message */}
-            {isDraft && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-                <p className="text-gray-600 dark:text-gray-400">No data available for specified time</p>
-              </div>
-            )}
-
-            {/* Content Tabs */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="border-b border-gray-200 dark:border-gray-700">
-                <nav className="flex space-x-8 px-6" aria-label="Content sections">
-                  {(['step-analytics', 'activity'] as ContentTabType[]).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveContentTab(tab)}
-                      className={`${
-                        activeContentTab === tab
-                          ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize`}
-                    >
-                      {tab === 'step-analytics' ? 'Step Analytics' : 'Activity'}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-
-              {/* Tab Content */}
-              <div className="p-8">
-                {activeContentTab === 'step-analytics' && (
-                  <StepAnalytics
-                    campaignId={campaignId || ''}
-                    timeRange={timeRange}
-                  />
-                )}
-                {activeContentTab === 'activity' && (
-                  <ActivityFeed
-                    campaignId={campaignId || ''}
-                    timeRange={timeRange}
-                  />
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Options Tab Content */}
-        {activeTab === 'options' && campaignId && campaign && (
-          <OptionsTab
-            campaignId={campaignId}
-            campaignStatus={campaign?.status || 'draft'}
-            mailboxId={campaign?.mailbox_id}
-            initialOptions={{
-              stop_on_reply: campaign?.stop_on_reply,
-              open_tracking_enabled: campaign?.open_tracking_enabled,
-              link_tracking_enabled: campaign?.link_tracking_enabled,
-              text_only_mode: campaign?.text_only_mode,
-              first_email_text_only: campaign?.first_email_text_only,
-              daily_cap: campaign?.daily_cap,
-              hourly_cap: campaign?.hourly_cap,
-              total_cap: campaign?.total_cap,
-              warmup_enabled: campaign?.warmup_enabled,
-              warmup_schedule: campaign?.warmup_schedule,
-              // CRM
-              owner_id: campaign?.owner_id,
-              tags: campaign?.tags,
-              // Sending Pattern
-              time_gap_min: campaign?.time_gap_min,
-              time_gap_random: campaign?.time_gap_random,
-              max_new_leads_per_day: campaign?.max_new_leads_per_day,
-              prioritize_new_leads: campaign?.prioritize_new_leads,
-              // Auto Optimize A/B Testing
-              auto_optimize_split_test: campaign?.auto_optimize_split_test,
-              split_test_winning_metric: (campaign?.split_test_winning_metric && 
-                ['open_rate', 'click_rate', 'reply_rate', 'conversion_rate'].includes(campaign.split_test_winning_metric))
-                ? campaign.split_test_winning_metric as 'open_rate' | 'click_rate' | 'reply_rate' | 'conversion_rate'
-                : undefined,
-              // Provider Matching
-              provider_matching_enabled: campaign?.provider_matching_enabled,
-              esp_routing_rules: campaign?.esp_routing_rules,
-              // Email Compliance
-              stop_company_on_reply: campaign?.stop_company_on_reply,
-              stop_on_auto_reply: campaign?.stop_on_auto_reply,
-              unsubscribe_link_header: campaign?.unsubscribe_link_header,
-              allow_risky_emails: campaign?.allow_risky_emails
-            }}
-            onUpdate={fetchCampaign}
-          />
-        )}
-
-        {/* Add Leads Modal */}
-        {showAddLeadsModal && campaignId && (
-          <AddLeadsModal
-            campaignId={campaignId}
-            onClose={() => setShowAddLeadsModal(false)}
-            onSuccess={() => {
-              fetchRecipients()
-              setShowAddLeadsModal(false)
-            }}
-          />
-        )}
       </div>
+
+      {showAddLeadsModal && campaignId && (
+        <AddLeadsModal
+          campaignId={campaignId}
+          onClose={() => setShowAddLeadsModal(false)}
+          onSuccess={() => {
+            fetchRecipients()
+            setShowAddLeadsModal(false)
+          }}
+        />
+      )}
     </DashboardLayout>
   )
 }
