@@ -6,6 +6,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSearchParams } from "next/navigation";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
+import AppNavSidebar from "../components/AppNavSidebar";
 import MapProfileNotificationButtons from "./components/MapProfileNotificationButtons";
 import MapRouteGeocodeSearch from "./components/MapRouteGeocodeSearch";
 import MapsOnboardingModal from "./components/MapsOnboardingModal";
@@ -336,10 +337,11 @@ export default function MapPage() {
 
   return (
     <DashboardLayout hideHeader fullBleed>
-      <div className="flex flex-col h-full w-full min-h-0 bg-white dark:bg-gray-900">
-        {/* Main Content Area - Map and Sidebar (full screen) */}
+      <div className="flex flex-row h-full w-full min-h-0 bg-white dark:bg-gray-900">
+        <AppNavSidebar />
+        {/* Main Content Area - Map (full height next to sidebar) */}
         <div className="flex-1 flex overflow-hidden min-h-0">
-          {/* Map Section - full screen */}
+          {/* Map Section - full screen within remaining space */}
           <div className="flex-1 relative">
             {/* Search bar - top center overlay */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-4xl px-4 space-y-1">
@@ -356,7 +358,7 @@ export default function MapPage() {
               <MapProfileNotificationButtons />
             </div>
 
-            {/* Map Component - full screen */}
+            {/* Map Component - full screen within content area */}
             <div className="w-full h-full">
               <MapView
                 isActive={true}
