@@ -132,7 +132,7 @@ export default function ComposeEmailModal({
 
   return (
     <div
-      className="compose-modal-mesh fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 font-sans"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 font-sans bg-slate-900/40 backdrop-blur-sm"
       onKeyDown={handleKeyDown}
       role="dialog"
       aria-modal="true"

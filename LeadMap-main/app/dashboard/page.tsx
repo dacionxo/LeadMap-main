@@ -1,7 +1,7 @@
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import DashboardHomeWithSidebar from "./components/DashboardHomeWithSidebar";
+import DashboardHomeWithProspectSidebar from "./components/DashboardHomeWithProspectSidebar";
 import DashboardLayout from "./components/DashboardLayout";
 
 // Force dynamic rendering to prevent static generation issues with cookies
@@ -20,8 +20,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHomeWithSidebar />
+    <DashboardLayout fullBleed>
+      <DashboardHomeWithProspectSidebar />
     </DashboardLayout>
   );
 }
