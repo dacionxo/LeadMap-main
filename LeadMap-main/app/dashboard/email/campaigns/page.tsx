@@ -383,6 +383,7 @@ export default function CampaignsPage() {
 
   return (
     <DashboardLayout fullBleed hideHeader>
+      {/* Campaigns layout: scrollable modal = [data-campaigns-modal] or [data-campaigns-scrollable]; card = [data-campaigns-container] > [data-campaigns-card] */}
       <div className="-mt-[30px]">
         <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden">
           <DealsNavbar />
@@ -394,16 +395,28 @@ export default function CampaignsPage() {
                   className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
                   aria-hidden
                 />
-                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto font-display antialiased selection:bg-[#2563EB] selection:text-white p-6 sm:p-10 text-slate-700 dark:text-slate-200">
+                <div
+                  className="flex-1 flex flex-col min-h-0 overflow-y-auto font-display antialiased selection:bg-[#2563EB] selection:text-white p-6 sm:p-10 text-slate-700 dark:text-slate-200"
+                  data-campaigns-modal
+                  data-campaigns-scrollable
+                >
                   <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none" aria-hidden>
                     <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-100/50 dark:bg-blue-900/10 blur-3xl" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-100/50 dark:bg-indigo-900/10 blur-3xl" />
                   </div>
 
-                  <div className="max-w-[1400px] mx-auto w-full relative z-0">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-8 pb-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+                  <div
+                    className="max-w-[1400px] mx-auto w-full relative z-0"
+                    data-campaigns-container
+                  >
+                    <div
+                      className="bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
+                      data-campaigns-card
+                      role="region"
+                      aria-label="Campaigns table"
+                    >
+                      <div className="p-8 pb-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                   Campaigns
                 </h1>
