@@ -396,7 +396,7 @@ export default function CampaignsPage() {
                   aria-hidden
                 />
                 <div
-                  className="flex-1 flex flex-col min-h-0 overflow-y-auto font-display antialiased selection:bg-[#2563EB] selection:text-white p-6 sm:p-10 text-slate-700 dark:text-slate-200"
+                  className="flex-1 flex flex-col min-h-0 w-full h-full overflow-y-auto font-display antialiased selection:bg-[#2563EB] selection:text-white p-6 sm:p-10 text-slate-700 dark:text-slate-200"
                   data-campaigns-modal
                   data-campaigns-scrollable
                 >
@@ -406,16 +406,16 @@ export default function CampaignsPage() {
                   </div>
 
                   <div
-                    className="max-w-[1400px] mx-auto w-full relative z-0"
+                    className="max-w-[1400px] mx-auto w-full relative z-0 flex-1 flex flex-col min-h-0"
                     data-campaigns-container
                   >
                     <div
-                      className="bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
+                      className="bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden flex-1 flex flex-col min-h-0"
                       data-campaigns-card
                       role="region"
                       aria-label="Campaigns table"
                     >
-                      <div className="p-8 pb-4">
+                      <div className="p-8 pb-4 flex-shrink-0">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                   Campaigns
@@ -572,7 +572,7 @@ export default function CampaignsPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto custom-scrollbar border-t border-slate-200 dark:border-slate-700 mt-4">
+            <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto custom-scrollbar border-t border-slate-200 dark:border-slate-700 mt-4">
               <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                 <thead className="bg-slate-50 dark:bg-slate-800/50">
                   <tr>
@@ -835,7 +835,7 @@ export default function CampaignsPage() {
               </table>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0">
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-slate-700 dark:text-slate-400">
