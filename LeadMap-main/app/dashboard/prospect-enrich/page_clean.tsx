@@ -528,7 +528,8 @@ function ProspectEnrichContent() {
       listings: 0,
       high_value: 0,
       price_drop: 0,
-      new_listings: 0
+      new_listings: 0,
+      imports: 0
     }
 
     sourceListings.forEach(listing => {
