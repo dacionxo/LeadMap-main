@@ -3,6 +3,8 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '../../components/DashboardLayout'
+import AppNavSidebar from '../../components/AppNavSidebar'
+import DealsNavbar from '../../crm/deals/components/DealsNavbar'
 
 interface Campaign {
   id: string
@@ -380,14 +382,25 @@ export default function CampaignsPage() {
   }
 
   return (
-    <DashboardLayout fullBleed>
-      <div className="relative min-h-screen font-display antialiased selection:bg-[#2563EB] selection:text-white p-6 sm:p-10 text-slate-700 dark:text-slate-200 bg-[#F8FAFC] dark:bg-[#0F172A]">
-        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-100/50 dark:bg-blue-900/10 blur-3xl" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-100/50 dark:bg-indigo-900/10 blur-3xl" />
-        </div>
+    <DashboardLayout fullBleed hideHeader>
+      <div className="-mt-[30px]">
+        <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden">
+          <DealsNavbar />
+          <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+            <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+              <AppNavSidebar />
+              <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative">
+                <div
+                  className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+                  aria-hidden
+                />
+                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto font-display antialiased selection:bg-[#2563EB] selection:text-white p-6 sm:p-10 text-slate-700 dark:text-slate-200">
+                  <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none" aria-hidden>
+                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-100/50 dark:bg-blue-900/10 blur-3xl" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-100/50 dark:bg-indigo-900/10 blur-3xl" />
+                  </div>
 
-        <div className="max-w-[1400px] mx-auto w-full">
+                  <div className="max-w-[1400px] mx-auto w-full relative z-0">
           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div className="p-8 pb-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
@@ -862,6 +875,12 @@ export default function CampaignsPage() {
                       </span>
                     </button>
                   </nav>
+                </div>
+              </div>
+            </div>
+            </div>
+                  </div>
+                  </div>
                 </div>
               </div>
             </div>
