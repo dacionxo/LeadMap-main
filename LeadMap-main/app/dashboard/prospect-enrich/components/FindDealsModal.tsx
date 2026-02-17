@@ -29,6 +29,8 @@ interface FindDealsModalProps {
   onPageChange: (page: number) => void
   onComposeLead?: (listing: Listing) => void
   onImport?: () => void
+  /** When false, the Import button is hidden. Show only when filter=imports. */
+  showImportButton?: boolean
   onResearchWithAI?: () => void
   isDark?: boolean
   /** When opening from a row compose action, pre-select this listing id */
@@ -52,8 +54,6 @@ const NAV_SECTIONS = [
       { id: 'for-sale', label: 'For Sale', icon: 'sell' },
       { id: 'for-rent', label: 'For Rent', icon: 'key' },
       { id: 'foreclosures', label: 'Foreclosures', icon: 'gavel', active: true, filled: true },
-      { id: 'probate', label: 'Probate', icon: 'policy' },
-      { id: 'expired-listings', label: 'Expired Listings', icon: 'timer_off' },
       { id: 'imports', label: 'Imports', icon: 'cloud_upload' },
     ],
   },
@@ -93,6 +93,36 @@ function formatPrice(price: number | null | undefined) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price)
 }
 
+function getStatusLabel(listing: Listing): string {
+  // Explicit status from backend always wins
+  if (listing.status && listing.status.trim().length > 0) {
+    return listing.status
+  }
+  // Default fallback
+  return listing.active ? 'Active' : 'Foreclosure'
+}
+
+function getStatusBadgeClasses(status: string): string {
+  // Normalize status to lowercase for comparison
+  const normalizedStatus = status.toLowerCase()
+  
+  // Determine status based on label
+  if (normalizedStatus.includes('for sale')) {
+    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800'
+  }
+  if (normalizedStatus.includes('for rent')) {
+    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800'
+  }
+  if (normalizedStatus.includes('foreclosure')) {
+    return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-100 dark:border-orange-800'
+  }
+  if (normalizedStatus.includes('imported')) {
+    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'
+  }
+  // Default: emerald for active/generic status
+  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800'
+}
+
 export default function FindDealsModal({
   isOpen,
   onClose,
@@ -110,6 +140,7 @@ export default function FindDealsModal({
   onPageChange,
   onComposeLead,
   onImport,
+  showImportButton = true,
   onResearchWithAI,
   isDark = false,
   initialSelectedListingId,
@@ -193,14 +224,16 @@ export default function FindDealsModal({
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={onImport}
-                  className="bg-fd-surface-light border border-fd-border-light text-fd-text-secondary text-sm font-medium rounded-lg px-3 py-2 flex items-center gap-2 hover:bg-slate-50"
-                >
-                  Import
-                  <span className="material-symbols-outlined text-lg">expand_more</span>
-                </button>
+                {showImportButton && onImport && (
+                  <button
+                    type="button"
+                    onClick={onImport}
+                    className="bg-fd-surface-light border border-fd-border-light text-fd-text-secondary text-sm font-medium rounded-lg px-3 py-2 flex items-center gap-2 hover:bg-slate-50"
+                  >
+                    Import
+                    <span className="material-symbols-outlined text-lg">expand_more</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={onResearchWithAI}
@@ -228,16 +261,16 @@ export default function FindDealsModal({
                 type="button"
                 className="border border-fd-border-light rounded-lg px-3 py-2.5 flex items-center gap-2 text-sm text-fd-text-secondary font-medium hover:bg-slate-50"
               >
-                <span className="material-symbols-outlined text-[20px]">grid_view</span>
-                Default View
-                <span className="material-symbols-outlined text-[18px]">expand_more</span>
+                <span className="material-symbols-outlined text-[20px]">tune</span>
+                Hide Filters
               </button>
               <button
                 type="button"
                 className="border border-fd-border-light rounded-lg px-3 py-2.5 flex items-center gap-2 text-sm text-fd-text-secondary font-medium hover:bg-slate-50"
               >
-                <span className="material-symbols-outlined text-[20px]">tune</span>
-                Hide Filters
+                <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                Default View
+                <span className="material-symbols-outlined text-[18px]">expand_more</span>
               </button>
               <button
                 type="button"
@@ -351,8 +384,8 @@ export default function FindDealsModal({
                         </td>
                         <td className="p-4 text-sm font-bold text-fd-text-primary align-top pt-5">{formatPrice(listing.list_price)}</td>
                         <td className="p-4 align-top pt-5">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-                            {listing.status || (listing.active ? 'Active' : 'Foreclosures')}
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing))}`}>
+                            {getStatusLabel(listing)}
                           </span>
                         </td>
                         <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">

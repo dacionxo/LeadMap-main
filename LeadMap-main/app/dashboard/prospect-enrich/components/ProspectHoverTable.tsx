@@ -139,6 +139,49 @@ function isValidTableName(tableName: string): boolean {
   return VALID_TABLE_NAMES.includes(tableName as any)
 }
 
+function getStatusLabel(listing: Listing, tableName?: string): string {
+  // Explicit status from backend always wins
+  if (listing.status && listing.status.trim().length > 0) {
+    return listing.status
+  }
+
+  // Fall back based on source table/category
+  switch (tableName) {
+    case 'fsbo_leads':
+      return 'For Sale'
+    case 'frbo_leads':
+      return 'For Rent'
+    case 'foreclosure_listings':
+      return 'Foreclosure'
+    case 'imports':
+      return 'Imported'
+    default:
+      // Generic fallback for other tables
+      return listing.active ? 'Active' : 'Foreclosure'
+  }
+}
+
+function getStatusBadgeClasses(status: string, tableName?: string): string {
+  // Normalize status to lowercase for comparison
+  const normalizedStatus = status.toLowerCase()
+  
+  // Determine status based on label or table name
+  if (normalizedStatus.includes('for sale') || tableName === 'fsbo_leads') {
+    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800'
+  }
+  if (normalizedStatus.includes('for rent') || tableName === 'frbo_leads') {
+    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800'
+  }
+  if (normalizedStatus.includes('foreclosure') || tableName === 'foreclosure_listings') {
+    return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-100 dark:border-orange-800'
+  }
+  if (normalizedStatus.includes('imported') || tableName === 'imports') {
+    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'
+  }
+  // Default: emerald for active/generic status
+  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800'
+}
+
 // ============================================================================
 // Main Component - 1:1 Match to TailwindAdmin's HoverTable
 // ============================================================================
@@ -531,8 +574,8 @@ export default function ProspectHoverTable({
                     )}
                     {columns.includes('status') && (
                       <td className="px-4 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
-                          {listing.status || (listing.active ? 'Active' : 'Foreclosures')}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, tableName), tableName)}`}>
+                          {getStatusLabel(listing, tableName)}
                         </span>
                       </td>
                     )}

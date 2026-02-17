@@ -24,6 +24,8 @@ interface ApolloActionBarProps {
   sortBy: string
   onSortChange: (sort: string) => void
   onImport: () => void
+  /** When false, the Import button is hidden. Show only when filter=imports. */
+  showImportButton?: boolean
   onExport?: () => void
   onSaveSearch: () => void
   onCreateWorkflow: () => void
@@ -45,6 +47,7 @@ export default function ApolloActionBar({
   sortBy,
   onSortChange,
   onImport,
+  showImportButton = true,
   onExport,
   onSaveSearch,
   onCreateWorkflow,
@@ -357,41 +360,43 @@ export default function ApolloActionBar({
           <Sparkles style={{ width: '20px', height: '20px' }} />
         </button>
 
-        <button
-          onClick={onImport}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px',
-            border: '2px solid rgba(34, 197, 94, 0.3)',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
-            color: '#22c55e',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            width: '40px',
-            height: '40px',
-            boxShadow: '0 2px 8px rgba(34, 197, 94, 0.2)'
-          }}
-          title="Import"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #22c55e 0%, #10b981 100%)'
-            e.currentTarget.style.color = '#ffffff'
-            e.currentTarget.style.borderColor = '#22c55e'
-            e.currentTarget.style.transform = 'translateY(-2px) scale(1.1)'
-            e.currentTarget.style.boxShadow = '0 8px 16px rgba(34, 197, 94, 0.4)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)'
-            e.currentTarget.style.color = '#22c55e'
-            e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.3)'
-            e.currentTarget.style.transform = 'translateY(0) scale(1)'
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.2)'
-          }}
-        >
-          <Plus style={{ width: '20px', height: '20px' }} />
-        </button>
+        {showImportButton && (
+          <button
+            onClick={onImport}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '8px',
+              border: '2px solid rgba(34, 197, 94, 0.3)',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
+              color: '#22c55e',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              width: '40px',
+              height: '40px',
+              boxShadow: '0 2px 8px rgba(34, 197, 94, 0.2)'
+            }}
+            title="Import"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, #22c55e 0%, #10b981 100%)'
+              e.currentTarget.style.color = '#ffffff'
+              e.currentTarget.style.borderColor = '#22c55e'
+              e.currentTarget.style.transform = 'translateY(-2px) scale(1.1)'
+              e.currentTarget.style.boxShadow = '0 8px 16px rgba(34, 197, 94, 0.4)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)'
+              e.currentTarget.style.color = '#22c55e'
+              e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.3)'
+              e.currentTarget.style.transform = 'translateY(0) scale(1)'
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.2)'
+            }}
+          >
+            <Plus style={{ width: '20px', height: '20px' }} />
+          </button>
+        )}
 
         {onExport && (
           <button

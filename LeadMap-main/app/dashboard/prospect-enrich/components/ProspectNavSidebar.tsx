@@ -40,8 +40,6 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'For Sale', icon: 'sell', href: '/dashboard/prospect-enrich?filter=fsbo' },
       { label: 'For Rent', icon: 'key', href: '/dashboard/prospect-enrich?filter=frbo' },
       { label: 'Foreclosures', icon: 'gavel', href: '/dashboard/prospect-enrich?filter=foreclosure' },
-      { label: 'Probate', icon: 'policy', href: '/dashboard/prospect-enrich?filter=probate' },
-      { label: 'Expired Listings', icon: 'timer_off', href: '/dashboard/prospect-enrich?filter=expired' },
       { label: 'Imports', icon: 'cloud_upload', href: '/dashboard/prospect-enrich?filter=imports' },
     ],
   },

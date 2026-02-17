@@ -178,6 +178,7 @@ function ProspectContentWithSidebar(props: any) {
             filtersVisible={props.filtersVisible}
             onToggleFilters={() => props.setFiltersVisible(!props.filtersVisible)}
             onImport={() => props.setShowImportModal(true)}
+            showImportButton={props.activeCategory === 'imports'}
             onResearchWithAI={() => {
               console.log('Research with AI clicked')
             }}
@@ -348,6 +349,7 @@ function ProspectContentWithSidebar(props: any) {
       onPageChange={props.setCurrentPage}
       onComposeLead={props.onComposeLeadFromModal}
       onImport={() => props.setShowImportModal(true)}
+      showImportButton={props.activeCategory === 'imports'}
       onResearchWithAI={() => {}}
       isDark={props.isDark}
       initialSelectedListingId={props.selectedLead ? (props.selectedLead.listing_id || props.selectedLead.property_url || null) : null}
@@ -1523,16 +1525,19 @@ function ProspectEnrichInner() {
     })
   }, [baseListings, searchTerm])
 
-  // Calculate view-specific counts - these are now category-specific
-  // IMPORTANT: These counts are independent of viewType - they always show the complete counts
-  // allListings already contains only the current category's listings (excluding CRM contacts)
-  const totalCount = allListings.length
+  // Calculate view-specific counts - these now respect Apollo sidebar filters
+  // Apply Apollo filters to get filtered counts for Total, Net New, and Saved
+  const totalCount = useMemo(() => {
+    // Total = all listings in current category, with Apollo filters applied
+    const filtered = applyApolloFilters(allListings)
+    return filtered.length
+  }, [allListings, applyApolloFilters])
   
   const netNewCount = useMemo(() => {
     // Net new = listings created or updated in last 30 days, excluding saved listings and listings in lists
     // Must match the exact logic used in baseListings for 'net_new' viewType
     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
-    return listings.filter(l => {
+    const netNewListings = listings.filter(l => {
       // Check both created_at and updated_at for "new to user" listings
       const createdTime = l.created_at ? new Date(l.created_at).getTime() : 0
       const updatedTime = l.updated_at ? new Date(l.updated_at).getTime() : 0
@@ -1552,12 +1557,30 @@ function ProspectEnrichInner() {
       if (sourceId && listItemIds.has(sourceId)) return false
       
       return true
-    }).length
-  }, [listings, crmContactIds, listItemIds])
+    })
+    // Apply Apollo filters to net new listings
+    const filtered = applyApolloFilters(netNewListings)
+    return filtered.length
+  }, [listings, crmContactIds, listItemIds, applyApolloFilters])
   
-  // Saved count is now category-specific - savedListings is fetched from current category's table
-  // Always shows the complete count of saved listings in this category, regardless of viewType
-  const savedCount = savedListings.length
+  // Saved count is now category-specific and respects Apollo filters
+  const savedCount = useMemo(() => {
+    // Filter saved listings to only show those that exist in the current category
+    const currentCategoryListingIds = new Set(allListings.map(l => l.listing_id))
+    const savedMap = new Map<string, Listing>()
+    savedListings.forEach(listing => {
+      const listingId = listing.listing_id
+      if (listingId && currentCategoryListingIds.has(listingId)) {
+        if (!savedMap.has(listingId)) {
+          savedMap.set(listingId, listing)
+        }
+      }
+    })
+    const categorySavedListings = Array.from(savedMap.values())
+    // Apply Apollo filters to saved listings
+    const filtered = applyApolloFilters(categorySavedListings)
+    return filtered.length
+  }, [savedListings, allListings, applyApolloFilters])
 
   const paginatedListings = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage

@@ -55,16 +55,6 @@ const navSections: NavSection[] = [
         href: "/dashboard/prospect-enrich?filter=foreclosure",
       },
       {
-        label: "Probate",
-        icon: "solar:bill-list-linear",
-        href: "/dashboard/prospect-enrich?filter=probate",
-      },
-      {
-        label: "Expired Listings",
-        icon: "solar:clock-circle-linear",
-        href: "/dashboard/prospect-enrich?filter=expired",
-      },
-      {
         label: "Imports",
         icon: "solar:server-minimalistic-linear",
         href: "/dashboard/prospect-enrich?filter=imports",

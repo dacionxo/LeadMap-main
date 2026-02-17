@@ -107,7 +107,7 @@ interface Listing {
   lng?: number | null
 }
 
-type FilterType = 'all' | 'expired' | 'probate' | 'geo' | 'enriched' | 'listings' | 'high_value' | 'price_drop' | 'new_listings'
+type FilterType = 'all' | 'expired' | 'probate' | 'geo' | 'enriched' | 'listings' | 'high_value' | 'price_drop' | 'new_listings' | 'imports'
 type ViewType = 'table' | 'map' | 'analytics' | 'insights'
 type SortField = 'price' | 'date' | 'score' | 'location' | 'status'
 type SortOrder = 'asc' | 'desc'
@@ -785,6 +785,7 @@ function ProspectEnrichContent() {
           sortBy={sortBy}
           onSortChange={setSortBy}
           onImport={() => router.push('/admin')}
+          showImportButton={selectedFilters.has('imports')}
           onExport={handleExportCSV}
           onSaveSearch={() => alert('Save search functionality coming soon')}
           onCreateWorkflow={() => alert('Create workflow functionality coming soon')}

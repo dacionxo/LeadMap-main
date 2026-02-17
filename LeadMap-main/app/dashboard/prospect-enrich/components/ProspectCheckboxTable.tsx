@@ -119,6 +119,51 @@ interface ProspectCheckboxTableProps {
   category?: string
 }
 
+function getStatusLabel(listing: Listing, tableName?: string, category?: string): string {
+  // Explicit status from backend always wins
+  if (listing.status && listing.status.trim().length > 0) {
+    return listing.status
+  }
+
+  // Fall back based on source table/category
+  const source = tableName || category
+  switch (source) {
+    case 'fsbo_leads':
+      return 'For Sale'
+    case 'frbo_leads':
+      return 'For Rent'
+    case 'foreclosure_listings':
+      return 'Foreclosure'
+    case 'imports':
+      return 'Imported'
+    default:
+      // Generic fallback for other tables
+      return listing.active ? 'Active' : 'Foreclosure'
+  }
+}
+
+function getStatusBadgeClasses(status: string, tableName?: string, category?: string): string {
+  // Normalize status to lowercase for comparison
+  const normalizedStatus = status.toLowerCase()
+  const source = tableName || category
+  
+  // Determine status based on label or table name
+  if (normalizedStatus.includes('for sale') || source === 'fsbo_leads') {
+    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800'
+  }
+  if (normalizedStatus.includes('for rent') || source === 'frbo_leads') {
+    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800'
+  }
+  if (normalizedStatus.includes('foreclosure') || source === 'foreclosure_listings') {
+    return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-100 dark:border-orange-800'
+  }
+  if (normalizedStatus.includes('imported') || source === 'imports') {
+    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'
+  }
+  // Default: emerald for active/generic status
+  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800'
+}
+
 const VALID_TABLE_NAMES = [
   'listings',
   'expired_listings',
@@ -467,15 +512,9 @@ export default function ProspectCheckboxTable({
         {columns.includes('status') && (
           <TableCell className="whitespace-nowrap">
             <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                listing.active
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                  : listing.status?.toLowerCase().includes('expired') || listing.status?.toLowerCase().includes('sold')
-                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-              }`}
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, tableName, category), tableName, category)}`}
             >
-              {listing.status || (listing.active ? 'Active' : 'Inactive')}
+              {getStatusLabel(listing, tableName, category)}
             </span>
           </TableCell>
         )}
