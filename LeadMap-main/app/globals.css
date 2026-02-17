@@ -1296,6 +1296,38 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Glass panel for SelectionActionBar */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.dark .glass-panel {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Fade-in-up animation for SelectionActionBar */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
+/* Font display utility */
+.font-display {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
 .material-symbols-outlined.fill-1 {
   font-variation-settings: "FILL" 1;
 }

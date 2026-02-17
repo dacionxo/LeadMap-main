@@ -1,36 +1,17 @@
 'use client'
 
 /**
- * SelectionActionBar
+ * SelectionActionBar — Modern Floating Bulk Action Bar V2
  *
- * A 1-to-1 recreation of the bottom action bar shown when one or more items
- * are selected in ProspectHoverTable. Appears fixed at the bottom of the
- * content area with a teal selection count, action buttons (icon + label),
- * and a close control.
+ * A 1-to-1 recreation of the floating glass-panel action bar shown when
+ * prospects are selected. Features glassmorphism design, rounded-pill shape,
+ * blue gradient badge, and horizontal scrollable action buttons.
  *
  * Actions: Mass email, Add to sequence, Add to List, Add to CRM, Duplicate,
  * Export, Archive, Delete, Convert, Move to, Sidekick, Apps.
- *
- * Uses design tokens from the provided CSS baseline (--primary-text-color,
- * --icon-color, --layout-border-color, --color-teal, --box-shadow-small, etc.)
  */
 
 import React from 'react'
-import {
-  Mail,
-  Layers,
-  Copy,
-  Download,
-  Archive,
-  Trash2,
-  RefreshCw,
-  ArrowRight,
-  Sparkles,
-  Puzzle,
-  List,
-  Bookmark,
-  X,
-} from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 
 export interface SelectionActionBarProps {
@@ -52,40 +33,49 @@ export interface SelectionActionBarProps {
 }
 
 interface ActionButtonProps {
-  icon: React.ReactNode
+  icon: string
   label: string
   onClick?: () => void
   isDark?: boolean
+  isDelete?: boolean
 }
 
-const ActionButton = ({ icon, label, onClick, isDark }: ActionButtonProps) => (
+const ActionButton = ({ icon, label, onClick, isDark, isDelete, minWidth }: ActionButtonProps & { minWidth?: string }) => (
   <button
     type="button"
     onClick={onClick}
     className={cn(
-      'flex flex-col items-center justify-center gap-1 py-1.5 px-2.5',
-      'rounded-md transition-colors duration-[70ms]',
-      'hover:bg-[var(--primary-background-hover-color, rgba(103,104,121,0.1))]',
-      'dark:hover:bg-white/10',
-      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-color,#0073ea)] focus-visible:ring-offset-2',
-      'disabled:opacity-[var(--disabled-component-opacity,0.38)] disabled:cursor-not-allowed'
+      'group flex flex-col items-center justify-center px-4 py-2 rounded-lg',
+      'transition-all duration-200',
+      minWidth || 'min-w-[72px]',
+      isDelete
+        ? 'hover:bg-red-50/80 dark:hover:bg-red-900/30'
+        : 'hover:bg-white/80 dark:hover:bg-gray-700/50'
     )}
     aria-label={label}
-    style={{
-      color: 'var(--primary-text-color, #323338)',
-      fontFamily: 'var(--font-family, Figtree, Roboto, sans-serif)',
-      fontSize: 'var(--font-size-10, 14px)',
-      lineHeight: 'var(--font-line-height-10, 18px)',
-      fontWeight: 'var(--font-weight-normal, 400)',
-    }}
   >
     <span
-      className="flex items-center justify-center text-[var(--icon-color,#676879)] dark:text-white/70"
+      className={cn(
+        'material-symbols-outlined text-[22px] mb-1.5 leading-none transition-colors',
+        'text-slate-500 dark:text-slate-400',
+        isDelete
+          ? 'group-hover:text-red-500 dark:group-hover:text-red-400'
+          : 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+      )}
       aria-hidden
     >
       {icon}
     </span>
-    <span className="whitespace-nowrap">{label}</span>
+    <span
+      className={cn(
+        'text-[11px] font-medium whitespace-nowrap tracking-wide transition-colors',
+        isDelete
+          ? 'text-slate-500 dark:text-slate-400 group-hover:text-red-600 dark:group-hover:text-red-400'
+          : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
+      )}
+    >
+      {label}
+    </span>
   </button>
 )
 
@@ -115,138 +105,119 @@ export default function SelectionActionBar({
       role="toolbar"
       aria-label={`${selectedCount} ${label}. Actions for selected prospects.`}
       className={cn(
-        'flex items-center gap-4 px-4 py-3',
-        'w-full max-w-5xl mx-auto',
-        'rounded-xl',
-        'bg-[var(--primary-background-color,#ffffff)] dark:bg-[#1c2536]',
-        'border border-[var(--layout-border-color,#d0d4e4)] dark:border-white/10',
-        'shadow-[var(--box-shadow-small,0px_4px_8px_rgba(0,0,0,0.2))]'
+        'relative z-10 w-full max-w-[85rem] px-4 animate-fade-in-up flex justify-center',
+        'font-display transition-colors duration-200'
       )}
-      style={{ minHeight: 'var(--spacing-xl, 32px)' }}
     >
-      {/* Selection indicator: teal circle + count + label */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <div
-          className="flex items-center justify-center w-7 h-7 rounded-full text-white flex-shrink-0"
-          style={{
-            backgroundColor: 'var(--color-teal, #175a63)',
-            fontFamily: 'var(--font-family)',
-            fontSize: 'var(--font-size-20, 14px)',
-            fontWeight: 'var(--font-weight-bold, 500)',
-          }}
-          aria-hidden
-        >
-          {selectedCount}
+      <div
+        className={cn(
+          'glass-panel rounded-full shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)]',
+          'p-2.5 flex items-center justify-between gap-1 transition-all duration-200',
+          'bg-white/85 dark:bg-slate-800/85',
+          'backdrop-blur-[8px]',
+          'border border-white/60 dark:border-white/10'
+        )}
+      >
+        {/* Selection indicator: blue gradient badge + count + label */}
+        <div className="flex items-center gap-3 pl-5 pr-6 border-r border-gray-200/60 dark:border-gray-700/60 shrink-0 py-1">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-bold h-6 w-6 rounded-full flex items-center justify-center shadow-md ring-2 ring-white/50 dark:ring-gray-800/50">
+            {selectedCount}
+          </div>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap tracking-tight">
+            {label}
+          </span>
         </div>
-        <span
-          className="text-[var(--primary-text-color,#323338)] dark:text-white/90"
-          style={{
-            fontFamily: 'var(--font-family)',
-            fontSize: 'var(--font-size-20, 14px)',
-            lineHeight: 'var(--font-line-height-20, 24px)',
-            fontWeight: 'var(--font-weight-normal, 400)',
-          }}
-        >
-          {label}
-        </span>
-      </div>
 
-      {/* Action buttons: icon + label below */}
-      <div className="flex items-center gap-0.5 flex-wrap flex-1 min-w-0">
-        <ActionButton
-          icon={<Mail className="h-4 w-4" />}
-          label="Mass email"
-          onClick={onMassEmail}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<Layers className="h-4 w-4" />}
-          label="Add to sequence"
-          onClick={onAddToSequence}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<List className="h-4 w-4" />}
-          label="Add to List"
-          onClick={onAddToList}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<Bookmark className="h-4 w-4" />}
-          label="Add to CRM"
-          onClick={onAddToCrm}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<Copy className="h-4 w-4" />}
-          label="Duplicate"
-          onClick={onDuplicate}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<Download className="h-4 w-4" />}
-          label="Export"
-          onClick={onExport}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<Archive className="h-4 w-4" />}
-          label="Archive"
-          onClick={onArchive}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<Trash2 className="h-4 w-4" />}
-          label="Delete"
-          onClick={onDelete}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<RefreshCw className="h-4 w-4" />}
-          label="Convert"
-          onClick={onConvert}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<ArrowRight className="h-4 w-4" />}
-          label="Move to"
-          onClick={onMoveTo}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<Sparkles className="h-4 w-4" />}
-          label="Sidekick"
-          onClick={onSidekick}
-          isDark={isDark}
-        />
-        <ActionButton
-          icon={<Puzzle className="h-4 w-4" />}
-          label="Apps"
-          onClick={onApps}
-          isDark={isDark}
-        />
-      </div>
+        {/* Action buttons: horizontal scrollable */}
+        <div className="flex-1 flex items-center gap-0.5 overflow-x-auto no-scrollbar px-2">
+          <ActionButton
+            icon="email"
+            label="Mass email"
+            onClick={onMassEmail}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="playlist_add"
+            label="Add to sequence"
+            onClick={onAddToSequence}
+            isDark={isDark}
+            minWidth="min-w-[84px]"
+          />
+          <ActionButton
+            icon="list"
+            label="Add to List"
+            onClick={onAddToList}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="bookmark_border"
+            label="Add to CRM"
+            onClick={onAddToCrm}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="content_copy"
+            label="Duplicate"
+            onClick={onDuplicate}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="file_download"
+            label="Export"
+            onClick={onExport}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="inventory_2"
+            label="Archive"
+            onClick={onArchive}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="delete"
+            label="Delete"
+            onClick={onDelete}
+            isDark={isDark}
+            isDelete={true}
+          />
+          <div className="w-px h-8 bg-gray-200/60 dark:bg-gray-700/60 mx-1" aria-hidden />
+          <ActionButton
+            icon="cached"
+            label="Convert"
+            onClick={onConvert}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="arrow_forward"
+            label="Move to"
+            onClick={onMoveTo}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="auto_awesome"
+            label="Sidekick"
+            onClick={onSidekick}
+            isDark={isDark}
+          />
+          <ActionButton
+            icon="extension"
+            label="Apps"
+            onClick={onApps}
+            isDark={isDark}
+          />
+        </div>
 
-      {/* Separator + Close */}
-      <div className="flex items-center gap-3 flex-shrink-0 pl-2">
-        <div
-          className="w-px h-6 bg-[var(--layout-border-color,#d0d4e4)] dark:bg-white/20"
-          aria-hidden
-        />
-        <button
-          type="button"
-          onClick={onClose}
-          className={cn(
-            'flex items-center justify-center w-8 h-8 rounded-md',
-            'text-[var(--icon-color,#676879)] dark:text-white/70',
-            'hover:bg-[var(--primary-background-hover-color)] dark:hover:bg-white/10',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-color)] focus-visible:ring-offset-2',
-            'transition-colors duration-[70ms]'
-          )}
-          aria-label="Clear selection"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        {/* Close button */}
+        <div className="flex items-center pl-2 pr-4 border-l border-gray-200/60 dark:border-gray-700/60 shrink-0 h-10">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Clear selection"
+          >
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
+        </div>
       </div>
     </div>
   )
