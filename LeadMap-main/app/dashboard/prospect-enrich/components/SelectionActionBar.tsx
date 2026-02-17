@@ -105,7 +105,7 @@ export default function SelectionActionBar({
       role="toolbar"
       aria-label={`${selectedCount} ${label}. Actions for selected prospects.`}
       className={cn(
-        'relative z-10 w-full max-w-[85rem] px-4 animate-fade-in-up flex justify-center',
+        'relative z-10 w-full max-w-[85rem] px-4 mx-auto animate-fade-in-up flex justify-center',
         'font-display transition-colors duration-200'
       )}
     >

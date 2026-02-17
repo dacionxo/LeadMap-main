@@ -10,7 +10,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Checkbox } from '@/app/components/ui/checkbox'
 import TailwindAdminPagination from './TailwindAdminPagination'
 import { cn } from '@/app/lib/utils'
-import type { Listing } from '../hooks/useProspectData'
+import type { Listing, FilterType } from '../hooks/useProspectData'
 
 interface FindDealsModalProps {
   isOpen: boolean
@@ -35,6 +35,8 @@ interface FindDealsModalProps {
   isDark?: boolean
   /** When opening from a row compose action, pre-select this listing id */
   initialSelectedListingId?: string | null
+  /** Primary category/filter driving the current listings (fsbo, frbo, foreclosure, imports, etc.) */
+  activeCategory?: FilterType
 }
 
 const NAV_SECTIONS = [
@@ -93,30 +95,46 @@ function formatPrice(price: number | null | undefined) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price)
 }
 
-function getStatusLabel(listing: Listing): string {
-  // Explicit status from backend always wins
+function getStatusLabel(listing: Listing, activeCategory?: FilterType): string {
+  // Normalize status based on primary category first so that
+  // FSBO/FRBO/Foreclosure/Imports always show the desired labels, even if the
+  // raw backend status is different (e.g. "FSBO", "FRBO", etc.).
+  switch (activeCategory) {
+    case 'fsbo':
+      return 'For Sale'
+    case 'frbo':
+      return 'For Rent'
+    case 'foreclosure':
+      return 'Foreclosure'
+    case 'imports':
+      return 'Imported'
+  }
+
+  // Otherwise fall back to explicit status from backend when present
   if (listing.status && listing.status.trim().length > 0) {
     return listing.status
   }
-  // Default fallback
+
+  // Generic fallback for other categories
   return listing.active ? 'Active' : 'Foreclosure'
 }
 
-function getStatusBadgeClasses(status: string): string {
+function getStatusBadgeClasses(status: string, activeCategory?: FilterType): string {
   // Normalize status to lowercase for comparison
   const normalizedStatus = status.toLowerCase()
   
   // Determine status based on label
-  if (normalizedStatus.includes('for sale')) {
+  if (normalizedStatus.includes('for sale') || activeCategory === 'fsbo') {
     return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800'
   }
-  if (normalizedStatus.includes('for rent')) {
+  if (normalizedStatus.includes('for rent') || activeCategory === 'frbo') {
     return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800'
   }
-  if (normalizedStatus.includes('foreclosure')) {
-    return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-100 dark:border-orange-800'
+  if (normalizedStatus.includes('foreclosure') || activeCategory === 'foreclosure') {
+    // Foreclosure: distinct, non-orange treatment
+    return 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-800'
   }
-  if (normalizedStatus.includes('imported')) {
+  if (normalizedStatus.includes('imported') || activeCategory === 'imports') {
     return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'
   }
   // Default: emerald for active/generic status
@@ -144,6 +162,7 @@ export default function FindDealsModal({
   onResearchWithAI,
   isDark = false,
   initialSelectedListingId,
+  activeCategory,
 }: FindDealsModalProps) {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedListingId ?? null)
 
@@ -384,8 +403,8 @@ export default function FindDealsModal({
                         </td>
                         <td className="p-4 text-sm font-bold text-fd-text-primary align-top pt-5">{formatPrice(listing.list_price)}</td>
                         <td className="p-4 align-top pt-5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing))}`}>
-                            {getStatusLabel(listing)}
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, activeCategory), activeCategory)}`}>
+                            {getStatusLabel(listing, activeCategory)}
                           </span>
                         </td>
                         <td className="p-4 text-sm text-fd-text-secondary align-top pt-5">

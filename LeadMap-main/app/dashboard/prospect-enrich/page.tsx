@@ -353,6 +353,7 @@ function ProspectContentWithSidebar(props: any) {
       onResearchWithAI={() => {}}
       isDark={props.isDark}
       initialSelectedListingId={props.selectedLead ? (props.selectedLead.listing_id || props.selectedLead.property_url || null) : null}
+      activeCategory={props.activeCategory}
     />
 
     {/* Email Template Modal */}
@@ -508,8 +509,8 @@ function ProspectEnrichInner() {
       { key: 'all' as FilterType, label: 'All Prospects', count: counts.all || 0 },
       { key: 'expired' as FilterType, label: 'Expired Listings', count: counts.expired || 0 },
       { key: 'probate' as FilterType, label: 'Probate Leads', count: counts.probate || 0 },
-      { key: 'fsbo' as FilterType, label: 'FSBO Leads', count: counts.fsbo || 0 },
-      { key: 'frbo' as FilterType, label: 'FRBO Leads', count: counts.frbo || 0 },
+      { key: 'fsbo' as FilterType, label: 'For Sale', count: counts.fsbo || 0 },
+      { key: 'frbo' as FilterType, label: 'For Rent', count: counts.frbo || 0 },
       { key: 'imports' as FilterType, label: 'Imports', count: counts.imports || 0 },
       { key: 'trash' as FilterType, label: 'Trash', count: counts.trash || 0 },
       { key: 'foreclosure' as FilterType, label: 'Foreclosure', count: counts.foreclosure || 0 },

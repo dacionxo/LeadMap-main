@@ -140,12 +140,9 @@ function isValidTableName(tableName: string): boolean {
 }
 
 function getStatusLabel(listing: Listing, tableName?: string): string {
-  // Explicit status from backend always wins
-  if (listing.status && listing.status.trim().length > 0) {
-    return listing.status
-  }
-
-  // Fall back based on source table/category
+  // Normalize status based on primary source table/category first so that
+  // FSBO/FRBO/Foreclosure/Imports always show the desired labels, even if the
+  // raw backend status is different (e.g. "FSBO", "FRBO", etc.).
   switch (tableName) {
     case 'fsbo_leads':
       return 'For Sale'
@@ -155,10 +152,15 @@ function getStatusLabel(listing: Listing, tableName?: string): string {
       return 'Foreclosure'
     case 'imports':
       return 'Imported'
-    default:
-      // Generic fallback for other tables
-      return listing.active ? 'Active' : 'Foreclosure'
   }
+
+  // Otherwise fall back to explicit status from backend when present
+  if (listing.status && listing.status.trim().length > 0) {
+    return listing.status
+  }
+
+  // Generic fallback for other tables
+  return listing.active ? 'Active' : 'Foreclosure'
 }
 
 function getStatusBadgeClasses(status: string, tableName?: string): string {
@@ -173,7 +175,8 @@ function getStatusBadgeClasses(status: string, tableName?: string): string {
     return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800'
   }
   if (normalizedStatus.includes('foreclosure') || tableName === 'foreclosure_listings') {
-    return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-100 dark:border-orange-800'
+    // Foreclosure: distinct, non-orange treatment
+    return 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-800'
   }
   if (normalizedStatus.includes('imported') || tableName === 'imports') {
     return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'
