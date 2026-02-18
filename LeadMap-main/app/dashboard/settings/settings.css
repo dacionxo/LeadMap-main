@@ -90,3 +90,92 @@
 [data-settings="content-scroll"].custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.7);
 }
+
+/* Security section – Change Password form */
+[data-settings="security-section"] {
+  max-width: 48rem;
+}
+
+[data-settings="security-heading"] {
+  letter-spacing: -0.025em;
+}
+
+[data-settings="security-form"] {
+  /* Form spacing handled by Tailwind space-y-8 */
+}
+
+[data-settings="security-field-current"],
+[data-settings="security-field-new"],
+[data-settings="security-field-confirm"] {
+  /* Field layout */
+}
+
+[data-settings="security-divider"] {
+  border-color: rgba(226, 232, 240, 0.6);
+}
+
+.dark [data-settings="security-divider"] {
+  border-color: rgba(71, 85, 105, 0.4);
+}
+
+[data-settings="security-strength"] {
+  /* Strength bar container */
+}
+
+[data-settings="security-strength-segment"] {
+  transition: background-color 0.2s ease;
+}
+
+[data-settings="security-requirements"] {
+  /* Requirement checklist grid */
+}
+
+[data-settings="security-footer"] {
+  border-color: rgba(226, 232, 240, 0.5);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark [data-settings="security-footer"] {
+  border-color: rgba(71, 85, 105, 0.5);
+  background: rgba(30, 41, 59, 0.6);
+}
+
+/* Notifications section */
+[data-settings="notifications-section"] {
+  max-width: 48rem;
+}
+
+[data-settings="notifications-channels-heading"],
+[data-settings="notifications-frequency-heading"] {
+  letter-spacing: -0.025em;
+}
+
+[data-settings="notifications-channel-card"] {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-settings="notifications-frequency-group"] {
+  gap: 0;
+}
+
+[data-settings="notifications-category-heading"] {
+  letter-spacing: 0.05em;
+}
+
+[data-settings="notifications-category-card"] {
+  transition: box-shadow 0.2s ease;
+}
+
+[data-settings="notifications-footer"] {
+  border-color: rgba(226, 232, 240, 0.5);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark [data-settings="notifications-footer"] {
+  border-color: rgba(71, 85, 105, 0.5);
+  background: rgba(30, 41, 59, 0.6);
+}

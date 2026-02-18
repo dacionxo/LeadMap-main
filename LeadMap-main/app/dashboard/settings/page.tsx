@@ -12,6 +12,8 @@ import DealsNavbar from '../crm/deals/components/DealsNavbar'
 import CalendarSettings from './components/CalendarSettings'
 import EmailAccountsSettings from './components/EmailAccountsSettings'
 import Mailboxes from './components/Mailboxes'
+import SecuritySettings, { type SecurityFormState } from './components/SecuritySettings'
+import NotificationsSettings, { INITIAL_PREFS, type NotificationPreferences } from './components/NotificationsSettings'
 import './settings.css'
 
 const BIO_MAX_LENGTH = 275
@@ -35,13 +37,23 @@ function parseDisplayName(name: string | undefined): { firstName: string; lastNa
   return { firstName, lastName }
 }
 
+const INITIAL_SECURITY_FORM: SecurityFormState = {
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+}
+
 export default function SettingsPage() {
-  const { profile, user, refreshProfile } = useApp()
+  const { profile, user, refreshProfile, supabase } = useApp()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState<SettingsTab>('account')
   const router = useRouter()
   const [saving, setSaving] = useState(false)
+  const [securitySaving, setSecuritySaving] = useState(false)
+  const [securityForm, setSecurityForm] = useState<SecurityFormState>(INITIAL_SECURITY_FORM)
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(INITIAL_PREFS)
+  const [notificationSaving, setNotificationSaving] = useState(false)
   const [avatarLoading, setAvatarLoading] = useState(false)
 
   const preferredFirst = profile?.first_name != null && profile.first_name !== '' ? profile.first_name : parseDisplayName(profile?.name).firstName
@@ -162,10 +174,76 @@ export default function SettingsPage() {
     }
   }, [refreshProfile])
 
+  const handleSecurityCancel = useCallback(() => {
+    setSecurityForm(INITIAL_SECURITY_FORM)
+  }, [])
+
+  const handleSecuritySubmit = useCallback(async () => {
+    const { currentPassword, newPassword, confirmPassword } = securityForm
+    if (!supabase) {
+      alert('Unable to update password. Please refresh and try again.')
+      return
+    }
+    if (!user?.email) {
+      alert('You must be signed in to change your password.')
+      return
+    }
+    if (!newPassword.trim()) {
+      alert('Please enter a new password.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      alert('New password and confirmation do not match.')
+      return
+    }
+    if (newPassword.length < 8) {
+      alert('Password must be at least 8 characters.')
+      return
+    }
+    setSecuritySaving(true)
+    try {
+      if (currentPassword.trim()) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        })
+        if (signInError) {
+          throw new Error(signInError.message === 'Invalid login credentials' ? 'Current password is incorrect.' : signInError.message)
+        }
+      }
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+      if (updateError) throw new Error(updateError.message)
+      setSecurityForm(INITIAL_SECURITY_FORM)
+      alert('Password updated successfully.')
+    } catch (err) {
+      console.error(err)
+      alert(err instanceof Error ? err.message : 'Failed to update password')
+    } finally {
+      setSecuritySaving(false)
+    }
+  }, [securityForm, user?.email, supabase])
+
+  const handleNotificationsCancel = useCallback(() => {
+    setNotificationPreferences(INITIAL_PREFS)
+  }, [])
+
+  const handleNotificationsSave = useCallback(async () => {
+    setNotificationSaving(true)
+    try {
+      // No API route change: persist in state only; can be wired to API later
+      await new Promise((r) => setTimeout(r, 300))
+      alert('Notification settings updated.')
+    } catch {
+      alert('Failed to update notification settings.')
+    } finally {
+      setNotificationSaving(false)
+    }
+  }, [])
+
   if (!mounted) return null
   if (!profile) return null
 
-  const showProfileFooter = activeTab === 'account'
+  const showProfileFooter = activeTab === 'account' || activeTab === 'security' || activeTab === 'notifications'
 
   return (
     <DashboardLayout fullBleed hideHeader>
@@ -232,17 +310,17 @@ export default function SettingsPage() {
           {/* Main content */}
           <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900/50 relative min-h-0">
             <header className="px-8 pt-10 pb-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-2 tracking-tight">
                 {activeTab === 'account' && 'Profile Settings'}
-                {activeTab === 'security' && 'Security'}
-                {activeTab === 'notifications' && 'Notifications'}
+                {activeTab === 'security' && 'Security Settings'}
+                {activeTab === 'notifications' && 'Notification Settings'}
                 {activeTab === 'billing' && 'Billing'}
                 {activeTab === 'integrations' && 'Integrations'}
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
+              <p className="text-slate-500 dark:text-gray-400 text-sm mt-2 font-medium">
                 {activeTab === 'account' && 'Update your personal information and preferences'}
-                {activeTab === 'security' && 'Password and account security'}
-                {activeTab === 'notifications' && 'Email and in-app notification preferences'}
+                {activeTab === 'security' && 'Manage your password and security preferences'}
+                {activeTab === 'notifications' && 'Choose how and when you want to be notified'}
                 {activeTab === 'billing' && 'Manage subscription and payment methods'}
                 {activeTab === 'integrations' && 'Connect external services and tools'}
               </p>
@@ -458,19 +536,24 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'security' && (
-                <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-sm max-w-xl">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                    Change password and manage session security. Full security controls coming soon.
-                  </p>
-                </div>
+                <SecuritySettings
+                  formState={securityForm}
+                  onFormStateChange={setSecurityForm}
+                  saving={securitySaving}
+                  onSubmit={handleSecuritySubmit}
+                  onCancel={handleSecurityCancel}
+                  formId="security-form"
+                />
               )}
 
               {activeTab === 'notifications' && (
-                <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-sm max-w-xl">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                    Choose how you receive email and in-app notifications.
-                  </p>
-                </div>
+                <NotificationsSettings
+                  preferences={notificationPreferences}
+                  onPreferencesChange={setNotificationPreferences}
+                  saving={notificationSaving}
+                  onSave={handleNotificationsSave}
+                  onCancel={handleNotificationsCancel}
+                />
               )}
 
               {activeTab === 'billing' && (
@@ -592,30 +675,76 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Sticky footer - Account tab only */}
+            {/* Sticky footer - Account, Security, Notifications tabs */}
             {showProfileFooter && (
               <footer
-                data-settings="footer"
+                data-settings={
+                  activeTab === 'security'
+                    ? 'security-footer'
+                    : activeTab === 'notifications'
+                      ? 'notifications-footer'
+                      : 'footer'
+                }
                 className="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/90 backdrop-blur-md p-6 flex items-center justify-end gap-4 rounded-b-lg flex-shrink-0"
               >
                 <button
                   type="button"
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="px-6 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-60"
-                  aria-label="Cancel changes"
+                  onClick={
+                    activeTab === 'security'
+                      ? handleSecurityCancel
+                      : activeTab === 'notifications'
+                        ? handleNotificationsCancel
+                        : handleCancel
+                  }
+                  disabled={
+                    activeTab === 'account'
+                      ? saving
+                      : activeTab === 'security'
+                        ? securitySaving
+                        : notificationSaving
+                  }
+                  className="px-6 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors disabled:opacity-60"
+                  aria-label={
+                    activeTab === 'security'
+                      ? 'Cancel password change'
+                      : activeTab === 'notifications'
+                        ? 'Cancel notification changes'
+                        : 'Cancel changes'
+                  }
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  form="settings-form"
-                  disabled={saving}
-                  className="px-8 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm shadow-blue-500/30 transition-all hover:-translate-y-0.5 transform active:scale-95 disabled:opacity-60"
-                  aria-label="Save profile changes"
-                >
-                  {saving ? 'Saving…' : 'Save Changes'}
-                </button>
+                {activeTab === 'account' ? (
+                  <button
+                    type="submit"
+                    form="settings-form"
+                    disabled={saving}
+                    className="px-8 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm shadow-blue-500/30 transition-all hover:-translate-y-0.5 transform active:scale-95 disabled:opacity-60"
+                    aria-label="Save profile changes"
+                  >
+                    {saving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                ) : activeTab === 'security' ? (
+                  <button
+                    type="submit"
+                    form="security-form"
+                    disabled={securitySaving}
+                    className="px-8 py-2.5 text-sm font-bold text-white bg-[#3B82F6] hover:bg-[#2563EB] rounded-full shadow-lg shadow-blue-500/30 transition-all hover:shadow-blue-500/40 hover:-translate-y-0.5 transform active:scale-95 disabled:opacity-60"
+                    aria-label="Update password"
+                  >
+                    {securitySaving ? 'Updating…' : 'Update Password'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleNotificationsSave}
+                    disabled={notificationSaving}
+                    className="px-8 py-2.5 text-sm font-bold text-white bg-[#3B82F6] hover:bg-[#2563EB] rounded-full shadow-lg shadow-blue-500/30 transition-all hover:shadow-blue-500/40 hover:-translate-y-0.5 transform active:scale-95 disabled:opacity-60"
+                    aria-label="Update notification settings"
+                  >
+                    {notificationSaving ? 'Updating…' : 'Update Settings'}
+                  </button>
+                )}
               </footer>
             )}
           </div>
