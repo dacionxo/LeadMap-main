@@ -14,45 +14,48 @@
     radial-gradient(at 0% 100%, hsla(200, 100%, 70%, 0.08) 0px, transparent 50%);
 }
 
-/* Main glass panel */
-[data-settings="glass-panel"] {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
-}
-
+/* Main panel – dashboard card: shadow-sm, border-gray-200 */
+[data-settings="glass-panel"],
 .settings-glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+  background: #ffffff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* Input glass - used by form fields */
+.dark [data-settings="glass-panel"],
+.dark .settings-glass-panel {
+  background: rgba(17, 25, 40, 0.95);
+}
+
+/* Inputs – dashboard form style */
 [data-settings="input-glass"],
 .settings-input-glass {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(4px);
+  background: #f9fafb;
   transition: all 0.2s ease;
+}
+
+.dark [data-settings="input-glass"],
+.dark .settings-input-glass {
+  background: rgba(31, 41, 55, 0.6);
 }
 
 [data-settings="input-glass"]:focus,
 .settings-input-glass:focus {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-/* Card shadow */
+.dark [data-settings="input-glass"]:focus,
+.dark .settings-input-glass:focus {
+  background: rgba(31, 41, 55, 0.9);
+}
+
+/* Card shadow – match dashboard */
 .settings-shadow-card {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 10px 15px -3px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* Primary button glow */
 .settings-shadow-glow {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* Sidebar nav item - active state applied via class */
@@ -60,10 +63,9 @@
   transition: all 0.2s ease;
 }
 
-/* Profile card container */
+/* Profile card – dashboard section card */
 [data-settings="profile-card"] {
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* Content area scrollbar */
