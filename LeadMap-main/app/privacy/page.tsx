@@ -109,8 +109,8 @@ export default function PrivacyPage() {
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => router.push('/')}>
                 <img 
-                  src="/nextdeal-logo.png"
-                  alt="NextDeal"
+                  src="/stackdeal-logo.png"
+                  alt="StackDeal"
                   className="h-8 w-auto"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -125,7 +125,7 @@ export default function PrivacyPage() {
                     <MapPin className="h-7 w-7 text-primary relative z-10" />
                   </div>
                   <span className="text-xl font-bold text-gray-900">
-                    NextDeal
+                    StackDeal
                   </span>
                 </div>
               </div>
@@ -174,10 +174,10 @@ export default function PrivacyPage() {
                       }}
                     >
                       <div className="grid grid-cols-4 gap-8">
-                        {/* Column 1: LEADMAP SOLUTIONS */}
+                        {/* Column 1: STACKDEAL SOLUTIONS */}
                         <div className="col-span-2">
                           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-6">
-                            LEADMAP SOLUTIONS
+                            STACKDEAL SOLUTIONS
                           </h3>
                           <div className="space-y-8">
                             {/* Lead Discovery */}
@@ -287,7 +287,7 @@ export default function PrivacyPage() {
                           <div className="bg-gradient-to-br from-pink-500 via-purple-500 to-green-500 rounded-xl p-6 text-white cursor-pointer hover:shadow-xl transition-all transform hover:scale-[1.02]">
                             <div className="mb-3">
                               <span className="text-xs font-semibold uppercase tracking-wider opacity-90">
-                                NextDeal AI
+                                StackDeal AI
                               </span>
                             </div>
                             <h4 className="text-2xl font-bold mb-2 leading-tight">
@@ -441,14 +441,14 @@ export default function PrivacyPage() {
               id="summary"
             >
               <p className="text-gray-700 mb-4">
-                This Privacy Notice for <strong>Galapagos Digital LLC</strong> (doing business as <strong>NextDeal LLC</strong>) ("we," "us," or "our"), describes how and why we might access, collect, store, use, and/or share ("process") your personal information when you use our services ("Services"), including when you:
+                This Privacy Notice for <strong>Galapagos Digital LLC</strong> (doing business as <strong>StackDeal LLC</strong>) ("we," "us," or "our"), describes how and why we might access, collect, store, use, and/or share ("process") your personal information when you use our services ("Services"), including when you:
               </p>
               <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
-                <li>Visit our website at <a href="https://nextdealus.com" className="text-primary hover:underline">https://nextdealus.com</a> or any website of ours that links to this Privacy Notice</li>
+                <li>Visit our website at <a href="https://www.stackdeal.io" className="text-primary hover:underline">https://www.stackdeal.io</a> or any website of ours that links to this Privacy Notice</li>
                 <li>Engage with us in other related ways, including any sales, marketing, or events</li>
               </ul>
               <p className="text-gray-700 mb-4">
-                <strong>Questions or concerns?</strong> Reading this Privacy Notice will help you understand your privacy rights and choices. We are responsible for making decisions about how your personal information is processed. If you do not agree with our policies and practices, please do not use our Services. If you still have any questions or concerns, please contact us at <a href="mailto:contact@nextdeal.com" className="text-primary hover:underline">contact@nextdeal.com</a>.
+                <strong>Questions or concerns?</strong> Reading this Privacy Notice will help you understand your privacy rights and choices. We are responsible for making decisions about how your personal information is processed. If you do not agree with our policies and practices, please do not use our Services. If you still have any questions or concerns, please contact us at <a href="mailto:legal@stackdeal.io" className="text-primary hover:underline">legal@stackdeal.io</a>.
               </p>
               
               <h2 className="text-2xl font-bold text-gray-900 mb-6 mt-8">SUMMARY OF KEY POINTS</h2>
@@ -656,7 +656,7 @@ export default function PrivacyPage() {
                 Except as set out in this section or elsewhere in our Legal Terms, no part of the Services and no Content or Marks may be copied, reproduced, aggregated, republished, uploaded, posted, publicly displayed, encoded, translated, transmitted, distributed, sold, licensed, or otherwise exploited for any commercial purpose whatsoever, without our express prior written permission.
               </p>
               <p className="text-gray-700 mb-4">
-                If you wish to make any use of the Services, Content, or Marks other than as set out in this section or elsewhere in our Legal Terms, please address your request to: <a href="mailto:contact@nextdeal.com" className="text-primary hover:underline">contact@nextdeal.com</a>. If we ever grant you the permission to post, reproduce, or publicly display any part of our Services or Content, you must identify us as the owners or licensors of the Services, Content, or Marks and ensure that any copyright or proprietary notice appears or is visible on posting, reproducing, or displaying our Content.
+                If you wish to make any use of the Services, Content, or Marks other than as set out in this section or elsewhere in our Legal Terms, please address your request to: <a href="mailto:legal@stackdeal.io" className="text-primary hover:underline">legal@stackdeal.io</a>. If we ever grant you the permission to post, reproduce, or publicly display any part of our Services or Content, you must identify us as the owners or licensors of the Services, Content, or Marks and ensure that any copyright or proprietary notice appears or is visible on posting, reproducing, or displaying our Content.
               </p>
               <p className="text-gray-700 mb-4">
                 We reserve all rights not expressly granted to you in and to the Services, Content, and Marks.
@@ -785,7 +785,7 @@ export default function PrivacyPage() {
               </p>
               <h3 className="text-xl font-semibold text-gray-900 mb-4 mt-6">Cancellation</h3>
               <p className="text-gray-700 mb-4">
-                You can cancel your subscription at any time by logging into your account. Your cancellation will take effect at the end of the current paid term. If you have any questions or are unsatisfied with our Services, please email us at <a href="mailto:contact@nextdeal.com" className="text-primary hover:underline">contact@nextdeal.com</a>.
+                You can cancel your subscription at any time by logging into your account. Your cancellation will take effect at the end of the current paid term. If you have any questions or are unsatisfied with our Services, please email us at <a href="mailto:legal@stackdeal.io" className="text-primary hover:underline">legal@stackdeal.io</a>.
               </p>
               <h3 className="text-xl font-semibold text-gray-900 mb-4 mt-6">Fee Changes</h3>
               <p className="text-gray-700 mb-4">
@@ -1136,7 +1136,7 @@ export default function PrivacyPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">25. SMS TEXT MESSAGING</h2>
               <h3 className="text-xl font-semibold text-gray-900 mb-4 mt-6">Program Description</h3>
               <p className="text-gray-700 mb-4">
-                By opting into any NextDeal text messaging program, you expressly consent to receive text messages (SMS) to your mobile number. NextDeal text messages may include: marketing communications, account alerts and special offers.
+                By opting into any StackDeal text messaging program, you expressly consent to receive text messages (SMS) to your mobile number. StackDeal text messages may include: marketing communications, account alerts and special offers.
               </p>
               <h3 className="text-xl font-semibold text-gray-900 mb-4 mt-6">Opting Out</h3>
               <p className="text-gray-700 mb-4">
@@ -1148,7 +1148,7 @@ export default function PrivacyPage() {
               </p>
               <h3 className="text-xl font-semibold text-gray-900 mb-4 mt-6">Support</h3>
               <p className="text-gray-700 mb-4">
-                If you have any questions or need assistance regarding our SMS communications, please email us at <a href="mailto:contact@nextdeal.com" className="text-primary hover:underline">contact@nextdeal.com</a> or call at 7575778882.
+                If you have any questions or need assistance regarding our SMS communications, please email us at <a href="mailto:legal@stackdeal.io" className="text-primary hover:underline">legal@stackdeal.io</a> or call at 7575778882.
               </p>
             </section>
 
@@ -1201,7 +1201,7 @@ export default function PrivacyPage() {
                 <p>Norfolk, VA 23504</p>
                 <p>United States</p>
                 <p className="mt-2">Phone: 7575778882</p>
-                <p>Email: <a href="mailto:contact@nextdeal.com" className="text-primary hover:underline">contact@nextdeal.com</a></p>
+                <p>Email: <a href="mailto:legal@stackdeal.io" className="text-primary hover:underline">legal@stackdeal.io</a></p>
               </div>
             </section>
           </div>
@@ -1216,8 +1216,8 @@ export default function PrivacyPage() {
             <div className="flex flex-col gap-6 desktop-s:w-1/4">
               <div>
                 <img 
-                  src="/nextdeal-logo.png"
-                  alt="NextDeal"
+                  src="/stackdeal-logo.png"
+                  alt="StackDeal"
                   className="h-8 w-32 object-contain mb-2"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -1226,7 +1226,7 @@ export default function PrivacyPage() {
                     if (fallback) fallback.style.display = 'block';
                   }}
                 />
-                <h3 className="text-2xl font-heading font-bold text-black" style={{ display: 'none' }}>NextDeal</h3>
+                <h3 className="text-2xl font-heading font-bold text-black" style={{ display: 'none' }}>StackDeal</h3>
               </div>
               <nav className="flex flex-col gap-3">
                 <Link href="/privacy" className="text-sm font-light text-black hover:underline transition-colors">Privacy Policy</Link>

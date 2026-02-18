@@ -510,7 +510,7 @@ function EmailAnalyticsPageContent() {
                   </div>
 
                   {/* Email Health Monitoring + Performance by Mailbox - 1:1 reference, no API */}
-                  <div className="space-y-10" data-email-analytics-health-mailbox-section>
+                  <div className="space-y-10 mt-10" data-email-analytics-health-mailbox-section>
                     <div
                       className="relative w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/5 flex flex-col overflow-hidden"
                       data-email-health-monitoring
