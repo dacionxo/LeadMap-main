@@ -4,20 +4,17 @@ import { useState, Suspense } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 import AppNavSidebar from '../../components/AppNavSidebar'
 import DealsNavbar from '../../crm/deals/components/DealsNavbar'
-import CrossChannelReporting from '../components/CrossChannelReporting'
 import ABTestingDashboard from '../components/ABTestingDashboard'
 import CampaignPerformanceDashboard from '../components/CampaignPerformanceDashboard'
 import TemplatePerformanceDashboard from '../components/TemplatePerformanceDashboard'
 import ComparativeAnalyticsDashboard from '../components/ComparativeAnalyticsDashboard'
 
-type MainTab = 'email' | 'cross-channel'
 type SubTab = 'overview' | 'ab-testing' | 'campaign-performance' | 'template-performance' | 'comparative'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
 /** Email analytics: same size and design as /dashboard/crm/calendar (full viewport, sidebar + main card). */
 function EmailAnalyticsPageContent() {
-  const [mainTab, setMainTab] = useState<MainTab>('email')
   const [subTab, setSubTab] = useState<SubTab>('overview')
   const [mailboxFilter, setMailboxFilter] = useState('All Mailboxes')
   const [dateRange, setDateRange] = useState('Last 30 days')
@@ -39,41 +36,6 @@ function EmailAnalyticsPageContent() {
               />
               <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
                 <main className="flex-1 min-h-0 overflow-y-auto p-8" data-email-analytics-main>
-          <nav
-            className="flex space-x-8 border-b border-slate-200 mb-8"
-            data-email-analytics-nav
-            aria-label="Main tabs"
-          >
-            <button
-              type="button"
-              onClick={() => setMainTab('email')}
-              className={`pb-3 border-b-2 font-semibold text-sm transition-all ${
-                mainTab === 'email'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 font-medium'
-              }`}
-            >
-              Email Analytics
-            </button>
-            <button
-              type="button"
-              onClick={() => setMainTab('cross-channel')}
-              className={`pb-3 border-b-2 font-medium text-sm transition-all ${
-                mainTab === 'cross-channel'
-                  ? 'border-blue-600 text-blue-600 font-semibold'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              Cross-Channel Reporting
-            </button>
-          </nav>
-
-          {mainTab === 'cross-channel' ? (
-            <div data-email-analytics-cross-channel>
-              <CrossChannelReporting />
-            </div>
-          ) : (
-            <>
               <div
                 className="flex flex-col xl:flex-row xl:items-end justify-between mb-10 gap-6"
                 data-email-analytics-header
@@ -362,8 +324,6 @@ function EmailAnalyticsPageContent() {
                   <ComparativeAnalyticsDashboard />
                 </div>
               )}
-            </>
-          )}
                 </main>
               </div>
             </div>
