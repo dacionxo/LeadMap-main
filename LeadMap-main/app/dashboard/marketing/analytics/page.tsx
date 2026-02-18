@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { useRouter } from 'next/navigation'
 import DashboardLayout from '../../components/DashboardLayout'
+import AppNavSidebar from '../../components/AppNavSidebar'
+import DealsNavbar from '../../crm/deals/components/DealsNavbar'
 import CrossChannelReporting from '../components/CrossChannelReporting'
 import ABTestingDashboard from '../components/ABTestingDashboard'
 import CampaignPerformanceDashboard from '../components/CampaignPerformanceDashboard'
@@ -14,34 +15,30 @@ type SubTab = 'overview' | 'ab-testing' | 'campaign-performance' | 'template-per
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
+/** Email analytics: same size and design as /dashboard/crm/calendar (full viewport, sidebar + main card). */
 function EmailAnalyticsPageContent() {
-  const router = useRouter()
   const [mainTab, setMainTab] = useState<MainTab>('email')
   const [subTab, setSubTab] = useState<SubTab>('overview')
   const [mailboxFilter, setMailboxFilter] = useState('All Mailboxes')
   const [dateRange, setDateRange] = useState('Last 30 days')
 
   return (
-    <div
-      className="bg-slate-900/60 backdrop-blur-sm font-sans antialiased min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8"
-      data-email-analytics-lightbox-wrapper
-    >
-      <div
-        className="relative w-full max-w-7xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]"
-        data-email-analytics-lightbox
-      >
-        <div className="absolute top-5 right-5 z-20" data-email-analytics-close>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            aria-label="Close"
-          >
-            <span className="material-icons-round text-xl">close</span>
-          </button>
-        </div>
-
-        <main className="flex-1 overflow-y-auto p-8" data-email-analytics-main>
+    <div className="-mt-[30px]" data-email-analytics-wrapper>
+      <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
+        <DealsNavbar />
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+          <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+            <AppNavSidebar />
+            <div
+              className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative"
+              data-email-analytics-card
+            >
+              <div
+                className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+                aria-hidden
+              />
+              <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+                <main className="flex-1 min-h-0 overflow-y-auto p-8" data-email-analytics-main>
           <nav
             className="flex space-x-8 border-b border-slate-200 mb-8"
             data-email-analytics-nav
@@ -367,7 +364,11 @@ function EmailAnalyticsPageContent() {
               )}
             </>
           )}
-        </main>
+                </main>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -375,7 +376,7 @@ function EmailAnalyticsPageContent() {
 
 export default function EmailAnalyticsPage() {
   return (
-    <DashboardLayout>
+    <DashboardLayout fullBleed hideHeader>
       <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
         <EmailAnalyticsPageContent />
       </Suspense>
