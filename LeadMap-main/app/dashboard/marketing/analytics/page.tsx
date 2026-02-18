@@ -508,6 +508,161 @@ function EmailAnalyticsPageContent() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Email Health Monitoring + Performance by Mailbox - 1:1 reference, no API */}
+                  <div className="space-y-10" data-email-analytics-health-mailbox-section>
+                    <div
+                      className="relative w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/5 flex flex-col overflow-hidden"
+                      data-email-health-monitoring
+                    >
+                      <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50" data-email-health-monitoring-header>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-50 tracking-tight" data-email-health-monitoring-title>Email Health Monitoring</h3>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50" data-email-health-monitoring-badge>
+                                <span className="material-icons-round text-[16px]">check_circle</span>
+                                System Healthy
+                              </span>
+                              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" data-email-health-monitoring-live>
+                                <span className="relative flex h-1.5 w-1.5" aria-hidden>
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                                </span>
+                                Live Updates
+                              </span>
+                            </div>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1" data-email-health-monitoring-subtitle>Real-time system diagnostics and core delivery metrics.</p>
+                          </div>
+                          <button type="button" className="text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 focus:outline-none transition-colors self-start sm:self-center p-1 rounded focus:ring-2 focus:ring-blue-500" aria-label="Close">
+                            <span className="material-icons-round">close</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/50 px-6 pb-6" data-email-health-monitoring-metrics>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                          <div className="flex flex-col gap-1" data-email-health-metric="failures">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">24h Failures</span>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white font-display">0</span>
+                              <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 rounded text-center h-fit">-</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1 relative md:pl-6 md:border-l border-slate-100 dark:border-slate-800" data-email-health-metric="bounce">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Bounce Rate</span>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white font-display">0.00%</span>
+                              <span className="text-[10px] text-slate-400 font-medium">avg</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1 relative md:pl-6 md:border-l border-slate-100 dark:border-slate-800" data-email-health-metric="complaint">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Complaint Rate</span>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white font-display">0.00%</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1 relative md:pl-6 md:border-l border-slate-100 dark:border-slate-800" data-email-health-metric="sent">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Emails Sent</span>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white font-display">1,248</span>
+                              <span className="flex items-center text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-1.5 rounded h-fit">
+                                <span className="material-icons-round text-[10px] mr-0.5">arrow_upward</span> 12%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/5 flex flex-col overflow-hidden" data-performance-by-mailbox>
+                      <div className="h-px w-full bg-slate-100 dark:bg-slate-800" aria-hidden />
+                      <div className="flex items-center justify-between px-6 py-5 bg-slate-50/50 dark:bg-slate-800/30" data-performance-by-mailbox-header>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50 tracking-tight">Performance by Mailbox</h3>
+                        <div className="flex items-center gap-3">
+                          <button type="button" className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 rounded-lg transition-colors border border-blue-100 dark:border-blue-900/50 focus:outline-none focus:ring-2 focus:ring-blue-500" data-performance-by-mailbox-export>
+                            <span className="material-icons-round text-[16px]">download</span>
+                            Export
+                          </button>
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto" data-performance-by-mailbox-table-wrap>
+                        <table className="w-full text-left text-sm whitespace-nowrap" data-performance-by-mailbox-table>
+                          <thead className="bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-700">
+                            <tr>
+                              <th className="px-8 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px]" scope="col">Mailbox Identity</th>
+                              <th className="px-8 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px] text-right" scope="col">Delivered</th>
+                              <th className="px-8 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px] w-1/4" scope="col">Open Rate</th>
+                              <th className="px-8 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px] w-1/4" scope="col">Click Rate</th>
+                              <th className="px-8 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px] text-right" scope="col">Bounce Rate</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50" data-performance-by-mailbox-tbody>
+                            {[
+                              { initials: 'TW', email: 'tyquanwilkerson1118345@gmail.com', label: 'Primary Inbox', delivered: '842', openRate: 45.0, clickRate: 12.0, bounceRate: '0.0%', bounceVariant: 'emerald' as const },
+                              { initials: 'SJ', email: 'sarah.j@corporate.co', label: 'Marketing', delivered: '1,029', openRate: 62.3, clickRate: 24.1, bounceRate: '0.2%', bounceVariant: 'slate' as const },
+                              { initials: 'NS', email: 'noreply@service.io', label: 'Transactional', delivered: '4,500', openRate: 88.5, clickRate: 35.2, bounceRate: '0.1%', bounceVariant: 'slate' as const },
+                              { initials: 'PD', email: 'product@updates.com', label: 'Newsletter', delivered: '892', openRate: 32.1, clickRate: 5.4, bounceRate: '1.2%', bounceVariant: 'amber' as const },
+                            ].map((row, idx) => {
+                              const avatarColors = ['from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30', 'from-purple-100 to-purple-50 dark:from-purple-900/40 dark:to-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900/30', 'from-orange-100 to-orange-50 dark:from-orange-900/40 dark:to-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-100 dark:border-orange-900/30', 'from-pink-100 to-pink-50 dark:from-pink-900/40 dark:to-pink-900/20 text-pink-600 dark:text-pink-400 border-pink-100 dark:border-pink-900/30'][idx]
+                              const bounceClasses = row.bounceVariant === 'emerald' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30' : row.bounceVariant === 'amber' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-amber-100 dark:border-amber-900/30' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                              return (
+                                <tr key={row.email} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer" data-performance-by-mailbox-row data-performance-by-mailbox-email={row.email}>
+                                  <td className="px-8 py-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${avatarColors} flex items-center justify-center font-bold text-[10px] shrink-0 shadow-sm border`} data-performance-by-mailbox-avatar>
+                                        {row.initials}
+                                      </div>
+                                      <div>
+                                        <p className="font-semibold text-slate-900 dark:text-slate-50 text-sm">{row.email}</p>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{row.label}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-8 py-4 text-right">
+                                    <span className="font-bold text-slate-900 dark:text-slate-50 font-display text-sm">{row.delivered}</span>
+                                  </td>
+                                  <td className="px-8 py-4">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-xs font-medium text-slate-900 dark:text-slate-50 w-9 text-right">{row.openRate}%</span>
+                                      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-full overflow-hidden min-w-[80px]">
+                                        <div className="h-full bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.3)]" style={{ width: `${row.openRate}%` }} />
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-8 py-4">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-xs font-medium text-slate-900 dark:text-slate-50 w-9 text-right">{row.clickRate}%</span>
+                                      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-full overflow-hidden min-w-[80px]">
+                                        <div className="h-full bg-indigo-400 rounded-full opacity-90" style={{ width: `${row.clickRate}%` }} />
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-8 py-4 text-right">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${bounceClasses}`}>{row.bounceRate}</span>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="bg-slate-50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between" data-performance-by-mailbox-footer>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-4 flex-wrap">
+                          <span data-performance-by-mailbox-summary>Showing <span className="font-bold text-slate-900 dark:text-slate-50">1-4</span> of <span className="font-bold text-slate-900 dark:text-slate-50">24</span> results</span>
+                          <span className="w-px h-3 bg-slate-300 dark:bg-slate-700 mx-1" aria-hidden />
+                          <span data-performance-by-mailbox-node>Server Node: US-East-1a</span>
+                        </div>
+                        <div className="flex gap-2" data-performance-by-mailbox-pagination>
+                          <button type="button" className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-white hover:text-blue-600 dark:hover:bg-slate-700 dark:hover:text-white disabled:opacity-50 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Previous
+                          </button>
+                          <button type="button" className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-white hover:text-blue-600 dark:hover:bg-slate-700 dark:hover:text-white transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </>
               )}
 
