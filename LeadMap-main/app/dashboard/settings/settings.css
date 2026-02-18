@@ -1,8 +1,11 @@
-/* Elite User Profile Settings - 1:1 design tokens */
-.settings-page-wrap {
+/* Elite User Profile Settings - 1:1 design tokens & CSS selectors */
+
+/* Page wrapper - mesh gradient background */
+[data-settings="page-wrap"] {
   background-color: #F8FAFC;
 }
-.settings-mesh-gradient {
+
+[data-settings="page-wrap"].settings-mesh-gradient {
   background-color: #EEF2FF;
   background-image:
     radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.08) 0px, transparent 50%),
@@ -10,6 +13,16 @@
     radial-gradient(at 80% 50%, hsla(260, 100%, 70%, 0.08) 0px, transparent 50%),
     radial-gradient(at 0% 100%, hsla(200, 100%, 70%, 0.08) 0px, transparent 50%);
 }
+
+/* Main glass panel */
+[data-settings="glass-panel"] {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+}
+
 .settings-glass-panel {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
@@ -17,18 +30,61 @@
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
 }
+
+/* Input glass - used by form fields */
+[data-settings="input-glass"],
 .settings-input-glass {
   background: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(4px);
   transition: all 0.2s ease;
 }
+
+[data-settings="input-glass"]:focus,
 .settings-input-glass:focus {
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
 }
+
+/* Card shadow */
 .settings-shadow-card {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 10px 15px -3px rgba(0, 0, 0, 0.03);
 }
+
+/* Primary button glow */
 .settings-shadow-glow {
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+/* Sidebar nav item - active state applied via class */
+[data-settings="nav-item"] {
+  transition: all 0.2s ease;
+}
+
+/* Profile card container */
+[data-settings="profile-card"] {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Content area scrollbar */
+[data-settings="content-scroll"].custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+}
+
+[data-settings="content-scroll"].custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-settings="content-scroll"].custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-settings="content-scroll"].custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 4px;
+}
+
+[data-settings="content-scroll"].custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
 }
