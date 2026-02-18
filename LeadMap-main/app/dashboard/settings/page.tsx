@@ -73,15 +73,15 @@ export default function SettingsPage() {
   const showProfileFooter = activeTab === 'profile'
 
   return (
-    <DashboardLayout>
-      <div className="settings-page-wrap settings-mesh-gradient min-h-full font-sans text-slate-800 flex items-center justify-center p-4 md:p-8">
-        <div className="settings-glass-panel settings-shadow-card w-full max-w-6xl rounded-[1.5rem] overflow-hidden flex flex-col md:flex-row min-h-[750px] relative bg-white/70">
+    <DashboardLayout fullBleed>
+      <div className="settings-page-wrap settings-mesh-gradient h-full font-sans text-slate-800 flex flex-col overflow-hidden">
+        <div className="settings-glass-panel w-full flex-1 min-h-0 overflow-hidden flex flex-col md:flex-row relative bg-white/70 border-0 rounded-none shadow-none">
           {/* Top gradient bar */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-300 via-[#3B82F6] to-purple-300 opacity-30" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-300 via-[#3B82F6] to-purple-300 opacity-30 z-10" />
 
           {/* Sidebar */}
           <div
-            className="w-full md:w-72 border-b md:border-b-0 md:border-r p-6 md:p-8 flex-shrink-0 bg-white/40 backdrop-blur-md"
+            className="w-full md:w-72 border-b md:border-b-0 md:border-r p-6 md:p-8 flex-shrink-0 bg-white/40 backdrop-blur-md min-h-0"
             style={{ borderColor: `${SOFT_BORDER}99` }}
           >
             <div className="mb-10 pl-2">
@@ -113,7 +113,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Main content */}
-          <div className="flex-1 flex flex-col min-w-0 bg-white/20 relative">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-white/20 relative overflow-hidden">
             <div className="px-8 pt-10 pb-6 border-b flex-shrink-0" style={{ borderColor: `${SOFT_BORDER}66` }}>
               <h1 className="text-2xl font-bold tracking-tight" style={{ color: SLATE_MAIN }}>
                 {activeTab === 'profile' && 'Profile Settings'}
@@ -401,7 +401,7 @@ export default function SettingsPage() {
             {/* Sticky footer - Profile tab only */}
             {showProfileFooter && (
               <div
-                className="absolute bottom-0 left-0 right-0 border-t bg-white/60 backdrop-blur-md p-6 flex items-center justify-end gap-4 rounded-br-[1.5rem] flex-shrink-0"
+                className="absolute bottom-0 left-0 right-0 border-t bg-white/60 backdrop-blur-md p-6 flex items-center justify-end gap-4 flex-shrink-0"
                 style={{ borderColor: `${SOFT_BORDER}80` }}
               >
                 <button
