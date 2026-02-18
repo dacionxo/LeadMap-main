@@ -101,16 +101,6 @@ const navSections: NavSection[] = [
       },
     ],
   },
-  {
-    title: "TOOLS & AUTOMATION",
-    items: [
-      {
-        label: "Analytics",
-        icon: "solar:chart-2-linear",
-        href: "/dashboard/crm/analytics",
-      },
-    ],
-  },
 ];
 
 export default function Sidebar() {

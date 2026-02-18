@@ -59,12 +59,6 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Email Analytics', icon: 'analytics', href: '/dashboard/marketing/analytics' },
     ],
   },
-  {
-    title: 'TOOLS & AUTOMATION',
-    items: [
-      { label: 'Analytics', icon: 'monitoring', href: '/dashboard/crm/analytics' },
-    ],
-  },
 ]
 
 const isActiveHref = (href: string, pathname: string, searchParams: ReturnType<typeof useSearchParams>) => {
