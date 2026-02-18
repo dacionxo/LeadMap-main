@@ -383,7 +383,7 @@ export default function CampaignsPage() {
 
   return (
     <DashboardLayout fullBleed hideHeader>
-      {/* Campaigns layout: same visual size as /dashboard/email/campaigns/[id]. Selectors: [data-campaigns-modal], [data-campaigns-scrollable], [data-campaigns-container], [data-campaigns-card] */}
+      {/* Campaigns layout: same size and design as /dashboard/crm/calendar. Selectors: [data-campaigns-modal], [data-campaigns-scrollable], [data-campaigns-container], [data-campaigns-card] */}
       <div className="-mt-[30px]">
         <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
           <DealsNavbar />
@@ -396,25 +396,16 @@ export default function CampaignsPage() {
                   aria-hidden
                 />
                 <div
-                  className="flex-1 flex flex-col min-h-0 overflow-hidden"
+                  className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
                   data-campaigns-modal
                 >
                   <div
-                    className="flex-1 overflow-y-auto modal-scroll p-6 sm:p-8 text-slate-700 dark:text-slate-200 font-display antialiased selection:bg-[#2563EB] selection:text-white"
+                    className="flex-1 min-h-0 flex flex-col overflow-hidden p-6 text-slate-700 dark:text-slate-200 font-display antialiased selection:bg-[#2563EB] selection:text-white"
                     data-campaigns-scrollable
+                    data-campaigns-container
                   >
-                    <div
-                      className="w-full flex-1 flex flex-col min-h-0 min-w-0"
-                      data-campaigns-container
-                    >
-                      <div
-                        className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex-1 flex flex-col min-h-0"
-                        data-campaigns-card
-                        role="region"
-                        aria-label="Campaigns table"
-                      >
-                        <div className="p-8 pb-4 flex-shrink-0">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+                    <div className="flex-shrink-0 pb-4 space-y-4" data-campaigns-card role="region" aria-label="Campaigns header">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                   Campaigns
                 </h1>
@@ -889,8 +880,6 @@ export default function CampaignsPage() {
                 </div>
               </div>
             </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
