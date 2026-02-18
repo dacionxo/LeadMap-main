@@ -6,7 +6,7 @@ import { useTheme } from '@/components/ThemeProvider'
 import { useSidebar } from '../../../components/SidebarContext'
 
 export default function CalendarNavbar() {
-  const { profile } = useApp()
+  const { profile, user } = useApp()
   const { theme, setTheme } = useTheme()
   const { toggle: toggleSidebar } = useSidebar()
 
@@ -14,6 +14,7 @@ export default function CalendarNavbar() {
     setTheme(theme === 'light' ? 'dark' : 'light')
   }
 
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
   const userName = profile?.name || 'User'
   const userInitial = userName.charAt(0).toUpperCase()
   const planLabel = profile?.plan_tier
@@ -100,8 +101,12 @@ export default function CalendarNavbar() {
               {planLabel}
             </p>
           </div>
-          <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
-            {userInitial}
+          <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm shadow-md overflow-hidden">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              userInitial
+            )}
           </div>
         </div>
       </div>

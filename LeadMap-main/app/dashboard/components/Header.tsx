@@ -17,7 +17,7 @@ type HeaderProps = {
 };
 
 export default function Header({ scrollContainerRef }: HeaderProps) {
-  const { profile, signOut } = useApp();
+  const { profile, user, signOut } = useApp();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const { toggle: toggleSidebar, isOpen } = useSidebar();
@@ -27,6 +27,8 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
   const [mobileMenu, setMobileMenu] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null;
 
   useEffect(() => {
     const el = scrollContainerRef?.current;
@@ -268,8 +270,12 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                     </div>
                     <div className="relative group-hover:scale-105 transition-transform duration-300">
                       <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-purple-500 rounded-full opacity-0 group-hover:opacity-40 blur-[4px] transition-opacity duration-300" />
-                      <div className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm">
-                        {profile?.name?.charAt(0).toUpperCase() || "U"}
+                      <div className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm overflow-hidden">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          profile?.name?.charAt(0).toUpperCase() || "U"
+                        )}
                       </div>
                     </div>
                   </button>
@@ -279,8 +285,12 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                       <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-gray-50 to-white dark:from-slate-800 dark:to-slate-800/50">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-4">
-                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700">
-                              {profile?.name?.charAt(0).toUpperCase() || "U"}
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700 overflow-hidden">
+                              {avatarUrl ? (
+                                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                profile?.name?.charAt(0).toUpperCase() || "U"
+                              )}
                             </div>
                             <div>
                               <h3 className="text-lg font-bold text-gray-900 dark:text-slate-50 leading-tight">

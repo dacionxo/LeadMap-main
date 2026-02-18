@@ -9,8 +9,11 @@ interface ProfileProps {
 }
 
 const Profile = ({ activeDir = 'ltr' }: ProfileProps) => {
-  const { profile, signOut } = useApp()
+  const { profile, user, signOut } = useApp()
   const router = useRouter()
+
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
+  const initial = profile?.name?.charAt(0).toUpperCase() || 'U'
 
   const handleSignOut = async () => {
     await signOut()
@@ -21,8 +24,12 @@ const Profile = ({ activeDir = 'ltr' }: ProfileProps) => {
   return (
     <div className="relative group/menu ps-4">
       <span className="hover:text-primary hover:bg-lightprimary rounded-full flex justify-center items-center cursor-pointer group-hover/menu:bg-lightprimary group-hover/menu:text-primary">
-        <div className="flex h-[35px] w-[35px] items-center justify-center rounded-full bg-primary text-xs font-bold text-white shadow-sm">
-          {profile?.name?.charAt(0).toUpperCase() || 'U'}
+        <div className="flex h-[35px] w-[35px] items-center justify-center rounded-full bg-primary text-xs font-bold text-white shadow-sm overflow-hidden">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            initial
+          )}
         </div>
       </span>
     </div>

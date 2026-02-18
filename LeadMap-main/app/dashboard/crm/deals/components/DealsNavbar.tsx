@@ -12,13 +12,15 @@ import Search from '../../../components/header/Search'
 import NotificationsDropdown from '../../../components/NotificationsDropdown'
 
 export default function DealsNavbar() {
-  const { profile, signOut } = useApp()
+  const { profile, user, signOut } = useApp()
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const { toggle: toggleSidebar } = useSidebar()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -137,8 +139,12 @@ export default function DealsNavbar() {
             </div>
             <div className="relative group-hover:scale-105 transition-transform duration-300">
               <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-purple-500 rounded-full opacity-0 group-hover:opacity-40 blur-[4px] transition-opacity duration-300" />
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm">
-                {userInitial}
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm overflow-hidden">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  userInitial
+                )}
               </div>
             </div>
           </button>
@@ -148,8 +154,12 @@ export default function DealsNavbar() {
               <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-gray-50 to-white dark:from-slate-800 dark:to-slate-800/50">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700">
-                      {userInitial}
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700 overflow-hidden">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        userInitial
+                      )}
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-gray-900 dark:text-slate-50 leading-tight">

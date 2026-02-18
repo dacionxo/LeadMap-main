@@ -10,6 +10,9 @@ function Navigation() {
   const { user, profile, signOut } = useApp()
   const router = useRouter()
 
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
+  const initial = profile?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'
+
   const handleSignOut = async () => {
     await signOut()
     router.push('/')
@@ -61,6 +64,13 @@ function Navigation() {
             <ThemeToggle />
             
             <div className="flex items-center space-x-2">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white overflow-hidden">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  initial
+                )}
+              </div>
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 {profile?.name || user?.email}
               </span>

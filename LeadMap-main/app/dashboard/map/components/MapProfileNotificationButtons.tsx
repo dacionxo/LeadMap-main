@@ -18,7 +18,7 @@ export default function MapProfileNotificationButtons() {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const avatarUrl = (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,8 +76,12 @@ export default function MapProfileNotificationButtons() {
           <div className="absolute right-0 mt-3 w-[321px] origin-top-right rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden z-[101]">
             <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-gray-50 to-white dark:from-slate-800 dark:to-slate-800/50">
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700">
-                  {profile?.name?.charAt(0).toUpperCase() || 'U'}
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700 overflow-hidden">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    profile?.name?.charAt(0).toUpperCase() || 'U'
+                  )}
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-slate-50 leading-tight">{profile?.name || 'User'}</h3>

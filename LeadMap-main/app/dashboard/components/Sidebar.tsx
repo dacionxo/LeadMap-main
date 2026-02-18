@@ -107,8 +107,9 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { profile, signOut } = useApp();
+  const { profile, user, signOut } = useApp();
   const { isOpen, toggle } = useSidebar();
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null;
   const initials =
     profile?.name
       ?.split(" ")
@@ -386,8 +387,12 @@ export default function Sidebar() {
           }`}
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-800">
-              {initials}
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-800 overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
             </div>
             <div
               className={`min-w-0 flex-1 transition-all duration-200 ease-in ${
