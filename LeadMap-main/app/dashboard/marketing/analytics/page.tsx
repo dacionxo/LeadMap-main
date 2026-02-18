@@ -254,7 +254,7 @@ function EmailAnalyticsPageContent() {
                   </div>
 
                   <div
-                    className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 lg:p-10"
+                    className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 lg:p-10 mb-10"
                     data-engagement-heatmap
                   >
                     <div
@@ -353,7 +353,7 @@ function EmailAnalyticsPageContent() {
                   </div>
 
                   {/* Platform Distribution & Top Cities - deterministic data, no API */}
-                  <div className="space-y-6" data-email-analytics-city-device-section>
+                  <div className="space-y-10" data-email-analytics-city-device-section>
                     <div
                       className="bg-white dark:bg-slate-800/90 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5"
                       data-platform-distribution
