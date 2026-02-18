@@ -14,6 +14,7 @@ import EmailAccountsSettings from './components/EmailAccountsSettings'
 import Mailboxes from './components/Mailboxes'
 import SecuritySettings, { type SecurityFormState } from './components/SecuritySettings'
 import NotificationsSettings, { INITIAL_PREFS, type NotificationPreferences } from './components/NotificationsSettings'
+import BillingSettings from './components/BillingSettings'
 import './settings.css'
 
 const BIO_MAX_LENGTH = 275
@@ -314,14 +315,14 @@ export default function SettingsPage() {
                 {activeTab === 'account' && 'Profile Settings'}
                 {activeTab === 'security' && 'Security Settings'}
                 {activeTab === 'notifications' && 'Notification Settings'}
-                {activeTab === 'billing' && 'Billing'}
+                {activeTab === 'billing' && 'Billing & Subscription'}
                 {activeTab === 'integrations' && 'Integrations'}
               </h1>
               <p className="text-slate-500 dark:text-gray-400 text-sm mt-2 font-medium">
                 {activeTab === 'account' && 'Update your personal information and preferences'}
                 {activeTab === 'security' && 'Manage your password and security preferences'}
                 {activeTab === 'notifications' && 'Choose how and when you want to be notified'}
-                {activeTab === 'billing' && 'Manage subscription and payment methods'}
+                {activeTab === 'billing' && 'Manage your subscription plan, payment methods, and download invoices.'}
                 {activeTab === 'integrations' && 'Connect external services and tools'}
               </p>
             </header>
@@ -556,22 +557,7 @@ export default function SettingsPage() {
                 />
               )}
 
-              {activeTab === 'billing' && (
-                <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-sm max-w-xl">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
-                    Manage your subscription and payment methods.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => router.push('/dashboard/billing')}
-                    className="inline-flex items-center justify-center px-6 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition-all shadow-sm shadow-blue-500/30"
-                    aria-label="Go to Billing page"
-                  >
-                    Go to Billing
-                    <ArrowRight className="w-4 h-4 ml-2" aria-hidden />
-                  </button>
-                </div>
-              )}
+              {activeTab === 'billing' && <BillingSettings />}
 
               {activeTab === 'integrations' && (
                 <div className="space-y-6">

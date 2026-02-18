@@ -179,3 +179,37 @@
   border-color: rgba(71, 85, 105, 0.5);
   background: rgba(30, 41, 59, 0.6);
 }
+
+/* Billing section – glass card and selectors */
+.billing-glass-card,
+[data-settings="billing-plan-card"],
+[data-settings="billing-payment-card"],
+[data-settings="billing-address-card"],
+[data-settings="billing-invoices-table-wrap"] {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.dark .billing-glass-card,
+.dark [data-settings="billing-plan-card"],
+.dark [data-settings="billing-payment-card"],
+.dark [data-settings="billing-address-card"],
+.dark [data-settings="billing-invoices-table-wrap"] {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(71, 85, 105, 0.5);
+}
+
+[data-settings="billing-section"] {
+  max-width: 56rem;
+}
+
+[data-settings="billing-heading"] {
+  letter-spacing: -0.025em;
+}
+
+[data-settings="billing-usage-bar"] {
+  transition: width 0.3s ease;
+}
