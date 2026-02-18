@@ -351,6 +351,163 @@ function EmailAnalyticsPageContent() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Platform Distribution & Top Cities - deterministic data, no API */}
+                  <div className="space-y-6" data-email-analytics-city-device-section>
+                    <div
+                      className="bg-white dark:bg-slate-800/90 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5"
+                      data-platform-distribution
+                    >
+                      <div className="flex items-center justify-between mb-6" data-platform-distribution-header>
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-50">Platform Distribution</h3>
+                        <button
+                          type="button"
+                          className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          aria-label="More options"
+                        >
+                          <span className="material-icons-round text-[20px]">more_horiz</span>
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-700">
+                        <div className="flex items-center justify-between pr-0 md:pr-4" data-platform-distribution-device>
+                          <div className="relative w-28 h-28 flex-shrink-0" data-platform-distribution-device-donut>
+                            <div
+                              className="w-full h-full rounded-full bg-transparent"
+                              style={{
+                                background: 'conic-gradient(#3B82F6 0% 55%, #10B981 55% 85%, #F59E0B 85% 100%)',
+                                maskImage: 'radial-gradient(transparent 60%, black 61%)',
+                                WebkitMaskImage: 'radial-gradient(transparent 60%, black 61%)',
+                              }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                              <span className="text-lg font-bold text-slate-900 dark:text-slate-50">82%</span>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Mobile</span>
+                            </div>
+                          </div>
+                          <div className="flex-1 ml-6 space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" aria-hidden />
+                                <span className="text-slate-500 dark:text-slate-400">Mobile</span>
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-50">55%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden />
+                                <span className="text-slate-500 dark:text-slate-400">Desktop</span>
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-50">30%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" aria-hidden />
+                                <span className="text-slate-500 dark:text-slate-400">Tablet</span>
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-50">15%</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-6 md:pt-0 pl-0 md:pl-8" data-platform-distribution-browser>
+                          <div className="relative w-28 h-28 flex-shrink-0" data-platform-distribution-browser-donut>
+                            <div
+                              className="w-full h-full rounded-full bg-transparent"
+                              style={{
+                                background: 'conic-gradient(#6366F1 0% 60%, #EC4899 60% 80%, #8B5CF6 80% 95%, #9CA3AF 95% 100%)',
+                                maskImage: 'radial-gradient(transparent 60%, black 61%)',
+                                WebkitMaskImage: 'radial-gradient(transparent 60%, black 61%)',
+                              }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                              <span className="text-lg font-bold text-slate-900 dark:text-slate-50">60%</span>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Chrome</span>
+                            </div>
+                          </div>
+                          <div className="flex-1 ml-6 space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="w-2 h-2 rounded-full bg-indigo-500" aria-hidden />
+                                <span className="text-slate-500 dark:text-slate-400">Chrome</span>
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-50">60%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="w-2 h-2 rounded-full bg-pink-500" aria-hidden />
+                                <span className="text-slate-500 dark:text-slate-400">Safari</span>
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-50">20%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="w-2 h-2 rounded-full bg-violet-500" aria-hidden />
+                                <span className="text-slate-500 dark:text-slate-400">Firefox</span>
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-50">15%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="w-2 h-2 rounded-full bg-slate-400" aria-hidden />
+                                <span className="text-slate-500 dark:text-slate-400">Other</span>
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-50">5%</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      className="bg-white dark:bg-slate-800/90 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden"
+                      data-top-cities
+                    >
+                      <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between" data-top-cities-header>
+                        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">Top Cities</h2>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            className="text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            View Details
+                          </button>
+                          <button
+                            type="button"
+                            className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            aria-label="More options"
+                          >
+                            <span className="material-icons-round text-[20px]">more_horiz</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="p-5" data-top-cities-body>
+                        <div className="space-y-6" data-top-cities-list>
+                          {[
+                            { city: 'New York', count: '12,402', widthPercent: 85, opacity: 100 },
+                            { city: 'London', count: '8,140', widthPercent: 65, opacity: 80 },
+                            { city: 'Berlin', count: '6,980', widthPercent: 50, opacity: 70 },
+                            { city: 'Tokyo', count: '5,432', widthPercent: 40, opacity: 60 },
+                            { city: 'Sydney', count: '2,120', widthPercent: 20, opacity: 50 },
+                          ].map((row) => (
+                            <div key={row.city} className="group" data-top-cities-row data-top-cities-city={row.city}>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-2.5">
+                                  <span className="material-icons-round text-slate-500 dark:text-slate-400 text-[18px]" aria-hidden>location_on</span>
+                                  <span className="text-sm font-medium text-slate-900 dark:text-slate-50">{row.city}</span>
+                                </div>
+                                <span className="text-sm font-bold text-slate-900 dark:text-slate-50">{row.count}</span>
+                              </div>
+                              <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                                <div
+                                  className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out"
+                                  style={{ width: `${row.widthPercent}%`, opacity: row.opacity / 100 }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </>
               )}
 
