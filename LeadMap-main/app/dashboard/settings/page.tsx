@@ -93,15 +93,17 @@ export default function SettingsPage() {
   const showProfileFooter = activeTab === 'account'
 
   return (
-    <DashboardLayout fullBleed>
-      <div
-        data-settings="page-wrap"
-        className="settings-mesh-gradient font-sans flex-1 min-h-0 flex items-center justify-center p-4 md:p-8 text-slate-800 dark:text-slate-200"
-      >
+    <DashboardLayout fullBleed hideHeader>
+      <div className="-mt-[30px]">
         <div
-          data-settings="glass-panel"
-          className="settings-glass-panel w-full max-w-6xl rounded-3xl shadow-card-soft overflow-hidden flex flex-col md:flex-row min-h-[750px] flex-1 relative border border-white/60"
+          data-settings="page-wrap"
+          className="settings-mesh-gradient font-sans fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden text-slate-800 dark:text-slate-200"
         >
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pb-6 min-w-0">
+            <div
+              data-settings="glass-panel"
+              className="settings-glass-panel w-full max-w-6xl rounded-3xl shadow-card-soft overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 relative border border-white/60 mx-auto"
+            >
           {/* Top gradient bar */}
           <div
             className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-300 via-[#3B82F6] to-purple-300 opacity-30 z-10 rounded-t-3xl"
@@ -531,6 +533,8 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
+        </div>
+      </div>
       </div>
     </DashboardLayout>
   )
