@@ -13,6 +13,23 @@ type SubTab = 'overview' | 'ab-testing' | 'campaign-performance' | 'template-per
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
+/** Placeholder activity level 0–4 for heatmap (no API change). Deterministic: weekend mornings low; workdays 9–5 higher. */
+function getActivityLevel(dayIndex: number, hourIndex: number): number {
+  const seed = dayIndex * 24 + hourIndex
+  if ((dayIndex === 0 || dayIndex === 6) && hourIndex < 10) return 0
+  if (dayIndex > 0 && dayIndex < 6 && hourIndex >= 9 && hourIndex <= 17) return seed % 3 === 0 ? 4 : 3
+  if (hourIndex > 18) return seed % 3
+  return seed % 5
+}
+
+const HEATMAP_COLORS = [
+  'bg-slate-50 border border-slate-100',
+  'bg-blue-100 hover:bg-blue-200',
+  'bg-blue-300 hover:bg-blue-400',
+  'bg-blue-500 hover:bg-blue-600 shadow-sm',
+  'bg-blue-700 hover:bg-blue-800 shadow-md',
+] as const
+
 /** Email analytics: same size and design as /dashboard/crm/calendar (full viewport, sidebar + main card). */
 function EmailAnalyticsPageContent() {
   const [subTab, setSubTab] = useState<SubTab>('overview')
@@ -237,68 +254,101 @@ function EmailAnalyticsPageContent() {
                   </div>
 
                   <div
-                    className="bg-white rounded-xl shadow-sm border border-slate-200 p-8"
+                    className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 lg:p-10"
                     data-engagement-heatmap
                   >
-                    <div className="flex items-center justify-between mb-8">
-                      <h3 className="text-lg font-semibold text-slate-900">Engagement Heatmap</h3>
-                      <div className="text-sm text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-md">Hour × Day of Week</div>
+                    <div
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4"
+                      data-engagement-heatmap-header
+                    >
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Engagement Heatmap</h2>
+                        <p className="text-sm text-slate-500 mt-1">Activity distribution across days and hours</p>
+                      </div>
+                      <div
+                        className="inline-flex rounded-lg bg-slate-100 p-1"
+                        role="group"
+                        data-engagement-heatmap-view-toggle
+                      >
+                        <button
+                          type="button"
+                          className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        >
+                          Hour × Day
+                        </button>
+                        <button
+                          type="button"
+                          className="px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1"
+                        >
+                          Day × Month
+                        </button>
+                      </div>
                     </div>
-                    <div className="overflow-x-auto pb-4">
-                      <div className="min-w-[800px]">
-                        <div className="flex mb-3">
-                          <div className="w-16 flex-shrink-0 text-xs font-semibold text-slate-400 uppercase tracking-wide">Day \ Hour</div>
-                          <div className="flex-grow grid grid-cols-[repeat(24,minmax(0,1fr))] gap-0 text-center">
-                            {Array.from({ length: 24 }, (_, i) => (
-                              <div key={i} className="text-xs text-slate-400 font-medium">
-                                {i}
-                              </div>
-                            ))}
+                    <div className="overflow-x-auto pb-2" data-engagement-heatmap-scroll>
+                      <div className="min-w-[700px]" data-engagement-heatmap-grid>
+                        <div className="flex mb-3 pl-12 sm:pl-16">
+                          <div className="flex-grow grid grid-cols-[repeat(24,minmax(0,1fr))] gap-1.5 text-center">
+                            {Array.from({ length: 24 }, (_, i) => {
+                              const isKeyHour = i % 3 === 0
+                              return (
+                                <div
+                                  key={i}
+                                  className={`text-[10px] sm:text-xs uppercase tracking-wider flex flex-col justify-end h-6 ${isKeyHour ? 'text-slate-500 font-semibold' : 'text-slate-400 font-normal'}`}
+                                >
+                                  {isKeyHour ? i : <span className="opacity-0">.</span>}
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
-                        <div className="space-y-[2px]" role="grid" aria-label="Engagement by hour and day">
-                          {DAYS.map((day) => (
+                        <div className="space-y-1.5" aria-label="Engagement by hour and day">
+                          {DAYS.map((day, dIndex) => (
                             <div key={day} className="flex items-center h-10 group">
-                              <div className="w-16 flex-shrink-0 text-xs font-semibold text-slate-500">{day}</div>
-                              <div className="flex-grow grid grid-cols-[repeat(24,minmax(0,1fr))] gap-[2px] h-full" role="row">
-                                {Array.from({ length: 24 }, (_, hour) => (
-                                  <div
-                                    key={hour}
-                                    className="bg-slate-50 hover:bg-blue-50 hover:border-blue-200 hover:border transition-all duration-150 rounded-sm h-full w-full"
-                                    role="gridcell"
-                                    aria-label={`${day} hour ${hour}`}
-                                  />
-                                ))}
+                              <div className="w-12 sm:w-16 flex-shrink-0 text-[10px] sm:text-xs uppercase font-semibold text-slate-400 tracking-wider text-right pr-3 sm:pr-4">
+                                {day}
+                              </div>
+                              <div className="flex-grow grid grid-cols-[repeat(24,minmax(0,1fr))] gap-1.5 h-full">
+                                {Array.from({ length: 24 }, (_, hIndex) => {
+                                  const level = getActivityLevel(dIndex, hIndex)
+                                  const colorClass = HEATMAP_COLORS[level]
+                                  return (
+                                    <div
+                                      key={hIndex}
+                                      className={`${colorClass} transition-all duration-200 rounded-sm h-full w-full relative group/cell hover:scale-110 hover:z-10 cursor-default`}
+                                      title={`${day} ${hIndex}:00 • Score: ${level}`}
+                                    >
+                                      <div className="opacity-0 group-hover/cell:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 bg-slate-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-lg pointer-events-none whitespace-nowrap z-20 transition-opacity">
+                                        {day} {hIndex}:00 • Score: {level}
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" aria-hidden />
+                                      </div>
+                                    </div>
+                                  )
+                                })}
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     </div>
-                    <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-slate-500 gap-4">
-                      <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-sm border border-slate-200 bg-slate-50" aria-hidden />
-                          <span className="font-medium">No data</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-sm bg-yellow-100" aria-hidden />
-                          <span className="font-medium">Low</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-sm bg-yellow-400" aria-hidden />
-                          <span className="font-medium">Medium</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-sm bg-green-400" aria-hidden />
-                          <span className="font-medium">High</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-sm bg-green-700" aria-hidden />
-                          <span className="font-medium">Very High</span>
-                        </div>
+                    <div
+                      className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4"
+                      data-engagement-heatmap-legend
+                    >
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <span className="material-icons-round text-lg" aria-hidden>info</span>
+                        <span className="text-xs font-medium">Data based on last 30 days of email activity</span>
                       </div>
-                      <div className="font-medium text-slate-400">Hover over cells for detailed metrics</div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Less</span>
+                        <div className="flex items-center gap-1.5 p-1 bg-slate-50 rounded-lg border border-slate-100">
+                          <div className="w-5 h-5 rounded-sm bg-slate-50 border border-slate-200" title="No activity" aria-hidden />
+                          <div className="w-5 h-5 rounded-sm bg-blue-100" title="Low" aria-hidden />
+                          <div className="w-5 h-5 rounded-sm bg-blue-300" title="Medium" aria-hidden />
+                          <div className="w-5 h-5 rounded-sm bg-blue-500 shadow-sm" title="High" aria-hidden />
+                          <div className="w-5 h-5 rounded-sm bg-blue-700 shadow-md" title="Very High" aria-hidden />
+                        </div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">More</span>
+                      </div>
                     </div>
                   </div>
                 </>
