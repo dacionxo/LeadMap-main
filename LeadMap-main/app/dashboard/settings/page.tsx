@@ -7,6 +7,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
 import { Icon } from '@iconify/react'
 import { ArrowRight, Moon, Sun, Monitor, Zap } from 'lucide-react'
+import AppNavSidebar from '../components/AppNavSidebar'
+import DealsNavbar from '../crm/deals/components/DealsNavbar'
 import CalendarSettings from './components/CalendarSettings'
 import EmailAccountsSettings from './components/EmailAccountsSettings'
 import Mailboxes from './components/Mailboxes'
@@ -99,11 +101,20 @@ export default function SettingsPage() {
           data-settings="page-wrap"
           className="settings-mesh-gradient font-sans fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden text-slate-800 dark:text-slate-200"
         >
-          <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pb-6 min-w-0">
-            <div
-              data-settings="glass-panel"
-              className="settings-glass-panel w-full max-w-6xl rounded-3xl shadow-card-soft overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 relative border border-white/60 mx-auto"
-            >
+          <DealsNavbar />
+          <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+            <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+              <AppNavSidebar />
+              <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative">
+                <div
+                  className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+                  aria-hidden
+                />
+                <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+                  <div
+                    data-settings="glass-panel"
+                    className="settings-glass-panel w-full h-full rounded-2xl shadow-card-soft overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 relative border border-slate-200/60 dark:border-slate-700/60"
+                  >
           {/* Top gradient bar */}
           <div
             className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-300 via-[#3B82F6] to-purple-300 opacity-30 z-10 rounded-t-3xl"
@@ -533,8 +544,11 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
       </div>
     </DashboardLayout>
   )
