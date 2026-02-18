@@ -12,6 +12,12 @@ interface UserProfile {
   trial_end: string
   is_subscribed: boolean
   plan_tier: string
+  first_name?: string | null
+  last_name?: string | null
+  phone?: string | null
+  job_title?: string | null
+  bio?: string | null
+  avatar_url?: string | null
 }
 
 interface AppContextType {

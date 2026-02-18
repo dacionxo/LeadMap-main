@@ -3,7 +3,7 @@
 import DashboardLayout from '../components/DashboardLayout'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/app/providers'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
 import { Icon } from '@iconify/react'
 import { ArrowRight, Moon, Sun, Monitor, Zap } from 'lucide-react'
@@ -36,22 +36,25 @@ function parseDisplayName(name: string | undefined): { firstName: string; lastNa
 }
 
 export default function SettingsPage() {
-  const { profile, user } = useApp()
+  const { profile, user, refreshProfile } = useApp()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState<SettingsTab>('account')
   const router = useRouter()
+  const [saving, setSaving] = useState(false)
+  const [avatarLoading, setAvatarLoading] = useState(false)
 
-  const { firstName: initialFirst, lastName: initialLast } = parseDisplayName(profile?.name)
-  const [firstName, setFirstName] = useState(initialFirst)
-  const [lastName, setLastName] = useState(initialLast)
+  const preferredFirst = profile?.first_name != null && profile.first_name !== '' ? profile.first_name : parseDisplayName(profile?.name).firstName
+  const preferredLast = profile?.last_name != null && profile.last_name !== '' ? profile.last_name : parseDisplayName(profile?.name).lastName
+  const [firstName, setFirstName] = useState(preferredFirst)
+  const [lastName, setLastName] = useState(preferredLast)
   const [email, setEmail] = useState(profile?.email ?? '')
-  const [phone, setPhone] = useState('')
-  const [jobTitle, setJobTitle] = useState('')
-  const [bio, setBio] = useState('')
+  const [phone, setPhone] = useState(profile?.phone ?? '')
+  const [jobTitle, setJobTitle] = useState(profile?.job_title ?? '')
+  const [bio, setBio] = useState(profile?.bio ?? '')
 
-  const avatarUrl = (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
-  const initial = profile?.name?.charAt(0).toUpperCase() || 'U'
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
+  const initial = profile?.name?.charAt(0).toUpperCase() || firstName?.charAt(0).toUpperCase() || lastName?.charAt(0).toUpperCase() || 'U'
   const bioLeft = Math.max(0, BIO_MAX_LENGTH - bio.length)
 
   useEffect(() => {
@@ -65,26 +68,99 @@ export default function SettingsPage() {
   }, [mounted, profile, router])
 
   useEffect(() => {
-    const { firstName: f, lastName: l } = parseDisplayName(profile?.name)
+    const f = profile?.first_name != null && profile.first_name !== '' ? profile.first_name : parseDisplayName(profile?.name).firstName
+    const l = profile?.last_name != null && profile.last_name !== '' ? profile.last_name : parseDisplayName(profile?.name).lastName
     setFirstName(f)
     setLastName(l)
     setEmail(profile?.email ?? '')
-  }, [profile?.name, profile?.email])
+    setPhone(profile?.phone ?? '')
+    setJobTitle(profile?.job_title ?? '')
+    setBio(profile?.bio ?? '')
+  }, [profile?.name, profile?.email, profile?.first_name, profile?.last_name, profile?.phone, profile?.job_title, profile?.bio])
 
   const handleCancel = useCallback(() => {
-    const { firstName: f, lastName: l } = parseDisplayName(profile?.name)
+    const f = profile?.first_name != null && profile.first_name !== '' ? profile.first_name : parseDisplayName(profile?.name).firstName
+    const l = profile?.last_name != null && profile.last_name !== '' ? profile.last_name : parseDisplayName(profile?.name).lastName
     setFirstName(f)
     setLastName(l)
     setEmail(profile?.email ?? '')
-  }, [profile?.name, profile?.email])
+    setPhone(profile?.phone ?? '')
+    setJobTitle(profile?.job_title ?? '')
+    setBio(profile?.bio ?? '')
+  }, [profile?.name, profile?.email, profile?.first_name, profile?.last_name, profile?.phone, profile?.job_title, profile?.bio])
 
   const handleSave = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault()
-      // TODO: call profile update API when available; for now no-op
+      setSaving(true)
+      try {
+        const res = await fetch('/api/users/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            first_name: firstName.trim() || null,
+            last_name: lastName.trim() || null,
+            email: email.trim() || '',
+            phone: phone.trim() || null,
+            job_title: jobTitle.trim() || null,
+            bio: bio.length > BIO_MAX_LENGTH ? bio.slice(0, BIO_MAX_LENGTH) : (bio.trim() || null),
+          }),
+        })
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          throw new Error(data.error || data.details || 'Failed to save')
+        }
+        await refreshProfile()
+      } catch (err) {
+        console.error(err)
+        alert(err instanceof Error ? err.message : 'Failed to save profile')
+      } finally {
+        setSaving(false)
+      }
     },
-    []
+    [firstName, lastName, email, phone, jobTitle, bio, refreshProfile]
   )
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const handleUpdatePhoto = useCallback(() => fileInputRef.current?.click(), [])
+  const onAvatarFileChange = useCallback(async () => {
+    const file = fileInputRef.current?.files?.[0]
+    if (!file) return
+    setAvatarLoading(true)
+    try {
+      const form = new FormData()
+      form.set('file', file)
+      const res = await fetch('/api/users/avatar', { method: 'POST', body: form })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Upload failed')
+      }
+      await refreshProfile()
+    } catch (err) {
+      console.error(err)
+      alert(err instanceof Error ? err.message : 'Failed to update photo')
+    } finally {
+      setAvatarLoading(false)
+      fileInputRef.current && (fileInputRef.current.value = '')
+    }
+  }, [refreshProfile])
+
+  const handleRemovePhoto = useCallback(async () => {
+    setAvatarLoading(true)
+    try {
+      const res = await fetch('/api/users/avatar', { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to remove photo')
+      }
+      await refreshProfile()
+    } catch (err) {
+      console.error(err)
+      alert(err instanceof Error ? err.message : 'Failed to remove photo')
+    } finally {
+      setAvatarLoading(false)
+    }
+  }, [refreshProfile])
 
   if (!mounted) return null
   if (!profile) return null
@@ -211,20 +287,32 @@ export default function SettingsPage() {
                         Profile Picture
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 mt-1 font-medium">
-                        Supports PNG, JPG up to 10MB
+                        PNG, JPG, GIF or WebP, max 2MB
                       </p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        className="sr-only"
+                        aria-label="Choose profile photo file"
+                        onChange={onAvatarFileChange}
+                      />
                       <div className="flex gap-3 flex-wrap">
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 border border-blue-600 transition-all duration-200"
+                          disabled={avatarLoading}
+                          onClick={handleUpdatePhoto}
+                          className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 border border-blue-600 transition-all duration-200 disabled:opacity-60"
                           aria-label="Update profile photo"
                         >
                           <Icon icon="material-symbols:upload-outline" className="w-[18px] h-[18px] mr-2" aria-hidden />
-                          Update Photo
+                          {avatarLoading ? 'Uploading…' : 'Update Photo'}
                         </button>
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center px-4 py-2.5 text-gray-600 dark:text-gray-400 hover:text-red-500 text-sm font-medium transition-colors"
+                          disabled={avatarLoading || !avatarUrl}
+                          onClick={handleRemovePhoto}
+                          className="inline-flex items-center justify-center px-4 py-2.5 text-gray-600 dark:text-gray-400 hover:text-red-500 text-sm font-medium transition-colors disabled:opacity-60"
                           aria-label="Remove profile photo"
                         >
                           Remove
@@ -513,7 +601,8 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="px-6 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  disabled={saving}
+                  className="px-6 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-60"
                   aria-label="Cancel changes"
                 >
                   Cancel
@@ -521,10 +610,11 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   form="settings-form"
-                  className="px-8 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm shadow-blue-500/30 transition-all hover:-translate-y-0.5 transform active:scale-95"
+                  disabled={saving}
+                  className="px-8 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm shadow-blue-500/30 transition-all hover:-translate-y-0.5 transform active:scale-95 disabled:opacity-60"
                   aria-label="Save profile changes"
                 >
-                  Save Changes
+                  {saving ? 'Saving…' : 'Save Changes'}
                 </button>
               </footer>
             )}
