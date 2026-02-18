@@ -24,6 +24,7 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
   const [isSticky, setIsSticky] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
