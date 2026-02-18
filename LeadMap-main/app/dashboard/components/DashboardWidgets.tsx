@@ -46,6 +46,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-funnel-pipeline/dist/index.css";
@@ -539,7 +540,16 @@ function RecentActivityWidget({
       }}
     >
       <div className="mb-3">
-        <h4 className="card-title text-center">Recent Activity</h4>
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="card-title">Recent Activity</h4>
+          <Link
+            href="/dashboard/notifications"
+            className="text-xs font-medium text-primary hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors flex items-center gap-1"
+          >
+            View All
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
         <p className="card-subtitle text-center">
           Preparation for the upcoming activity
         </p>

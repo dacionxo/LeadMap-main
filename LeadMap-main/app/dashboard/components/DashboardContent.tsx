@@ -302,7 +302,11 @@ export default function DashboardContent() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Recent Activity
             </h2>
-            <button className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/notifications')}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
               View All
             </button>
           </div>

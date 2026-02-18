@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRouteHandlerClient } from '@/lib/supabase-singleton'
 
+const VALID_NOTIFICATION_CODES = [
+  'sequence_alert',
+  'trial_reminder',
+  'plan_overdue',
+  'account_overdue',
+  'autopay_failed',
+  'subscription_upgrade',
+] as const
+
 /**
  * POST /api/notifications/create
  * Create a notification for the authenticated user
- * Body: { title: string, message: string, type?: 'comment'|'system'|'file'|'warning', link?: string, attachment?: string }
+ * Body: { title: string, message: string, type?: 'comment'|'system'|'file'|'warning', link?: string, attachment?: string, notification_code?: string }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, message, type = 'system', link, attachment } = body
+    const { title, message, type = 'system', link, attachment, notification_code } = body
 
     if (!title || !message) {
       return NextResponse.json(
@@ -33,6 +42,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (notification_code != null && !VALID_NOTIFICATION_CODES.includes(notification_code)) {
+      return NextResponse.json(
+        { error: `notification_code must be one of: ${VALID_NOTIFICATION_CODES.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
     const { data, error } = await supabase
       .from('notifications')
       .insert({
@@ -42,6 +58,7 @@ export async function POST(request: NextRequest) {
         type: type || 'system',
         link: link || null,
         attachment: attachment || null,
+        notification_code: notification_code || null,
         read: false,
       })
       .select()

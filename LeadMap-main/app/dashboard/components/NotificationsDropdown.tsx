@@ -9,6 +9,14 @@ import { formatTimeAgo } from '@/lib/format-time-ago'
 
 export type NotificationType = 'comment' | 'system' | 'file' | 'warning'
 
+export type NotificationCode =
+  | 'sequence_alert'
+  | 'trial_reminder'
+  | 'plan_overdue'
+  | 'account_overdue'
+  | 'autopay_failed'
+  | 'subscription_upgrade'
+
 export interface Notification {
   id: string
   type: NotificationType
@@ -18,6 +26,7 @@ export interface Notification {
   attachment?: string | null
   read: boolean
   created_at: string
+  notification_code?: string | null
 }
 
 interface NotificationsDropdownProps {
@@ -41,7 +50,7 @@ export default function NotificationsDropdown({
   variant = 'header',
 }: NotificationsDropdownProps) {
   const router = useRouter()
-  const { profile } = useApp()
+  const { profile, supabase } = useApp()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(false)
   const [internalOpen, setInternalOpen] = useState(false)
@@ -58,9 +67,9 @@ export default function NotificationsDropdown({
 
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (silent = false) => {
     if (!profile?.id) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       const res = await fetch('/api/notifications?limit=20', { credentials: 'include' })
       if (res.ok) {
@@ -70,7 +79,7 @@ export default function NotificationsDropdown({
     } catch (err) {
       console.error('Failed to fetch notifications:', err)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [profile?.id])
 
@@ -80,6 +89,29 @@ export default function NotificationsDropdown({
       onOpen?.()
     }
   }, [open, fetchNotifications, onOpen])
+
+  // Real-time: refetch when notifications change (new insert or update e.g. read state)
+  useEffect(() => {
+    if (!profile?.id || !supabase) return
+    const channel = supabase
+      .channel('notifications-dropdown-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${profile.id}`,
+        },
+        () => {
+          fetchNotifications(true)
+        }
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [profile?.id, supabase, fetchNotifications])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -127,12 +159,34 @@ export default function NotificationsDropdown({
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
+  /** Icon + wrapper for a notification by notification_code or type */
+  function NotificationIcon({ item }: { item: Notification }) {
+    const code = item.notification_code as NotificationCode | undefined
+    const wrapper = (icon: string, bg: string, iconClass: string) => (
+      <div className={`h-10 w-10 rounded-full flex items-center justify-center border ${bg}`}>
+        <Icon icon={icon} className={iconClass} />
+      </div>
+    )
+    if (code === 'sequence_alert') return wrapper('solar:plain-2-linear', 'bg-violet-50 dark:bg-violet-900/30 border-violet-100 dark:border-violet-800', 'h-5 w-5 text-violet-600 dark:text-violet-400')
+    if (code === 'trial_reminder') return wrapper('solar:clock-circle-linear', 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50', 'h-5 w-5 text-amber-500 dark:text-amber-400')
+    if (code === 'plan_overdue' || code === 'account_overdue') return wrapper('solar:calendar-mark-linear', 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/50', 'h-5 w-5 text-red-500 dark:text-red-400')
+    if (code === 'autopay_failed') return wrapper('solar:card-withdraw-linear', 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800/50', 'h-5 w-5 text-orange-500 dark:text-orange-400')
+    if (code === 'subscription_upgrade') return wrapper('solar:star-linear', 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-100 dark:border-emerald-800', 'h-5 w-5 text-emerald-600 dark:text-emerald-400')
+    if (item.type === 'comment' || item.type === 'file') return (
+      <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold shadow-sm border border-gray-100 dark:border-gray-600">
+        {item.title.charAt(0)}
+      </div>
+    )
+    if (item.type === 'system') return wrapper('solar:shield-check-linear', 'bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-800', 'h-5 w-5 text-blue-600 dark:text-blue-400')
+    return wrapper('solar:danger-triangle-linear', 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50', 'h-5 w-5 text-amber-500 dark:text-amber-400')
+  }
+
   const triggerButton = (
     <button
       type="button"
       onClick={() => setOpen(!open)}
       aria-label="Notifications"
-      aria-expanded={open}
+      aria-expanded={open ? 'true' : 'false'}
       className={
         variant === 'header'
           ? `relative flex items-center justify-center w-10 h-10 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 ${buttonClassName}`
@@ -214,25 +268,7 @@ export default function NotificationsDropdown({
                 >
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0">
-                      {item.type === 'comment' || item.type === 'file' ? (
-                        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold shadow-sm border border-gray-100 dark:border-gray-600">
-                          {item.title.charAt(0)}
-                        </div>
-                      ) : item.type === 'system' ? (
-                        <div className="h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center border border-blue-100 dark:border-blue-800">
-                          <Icon
-                            icon="solar:shield-check-linear"
-                            className="h-5 w-5 text-blue-600 dark:text-blue-400"
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border border-amber-100 dark:border-amber-800/50">
-                          <Icon
-                            icon="solar:danger-triangle-linear"
-                            className="h-5 w-5 text-amber-500 dark:text-amber-400"
-                          />
-                        </div>
-                      )}
+                      <NotificationIcon item={item} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">

@@ -3,6 +3,7 @@
 import { useApp } from "@/app/providers";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatTimeAgo } from "@/lib/format-time-ago";
 import DashboardOverviewModern from "./DashboardOverviewModern";
 
 export default function CustomizableDashboard() {
@@ -142,6 +143,24 @@ export default function CustomizableDashboard() {
         .limit(5);
 
       if (tasksError) console.warn("Error fetching tasks:", tasksError);
+
+      // Fetch in-app notifications for Recent Activity (so View All shows full activity)
+      let recentActivityFromNotifications: Array<{ id: string; title: string; description?: string; time: string }> = [];
+      try {
+        const notifRes = await fetch("/api/notifications?limit=20", { credentials: "include" });
+        if (notifRes.ok) {
+          const notifData = await notifRes.json();
+          const list = notifData.notifications || [];
+          recentActivityFromNotifications = list.map((n: { id: string; title: string; message: string; created_at: string }) => ({
+            id: n.id,
+            title: n.title,
+            description: n.message,
+            time: formatTimeAgo(n.created_at),
+          }));
+        }
+      } catch (e) {
+        console.warn("Error fetching notifications for dashboard:", e);
+      }
 
       // Calculate metrics with validation
       const total = allLeads?.length || 0;
@@ -343,9 +362,11 @@ export default function CustomizableDashboard() {
           trend: conversionRateTrend.trend,
         },
         "recent-activity":
-          hasRealData && recentActivities.length > 0
-            ? recentActivities
-            : [
+          recentActivityFromNotifications.length > 0
+            ? recentActivityFromNotifications
+            : hasRealData && recentActivities.length > 0
+              ? recentActivities
+              : [
                 {
                   id: "1",
                   type: "contact",

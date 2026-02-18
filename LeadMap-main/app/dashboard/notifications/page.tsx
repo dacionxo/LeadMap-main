@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '../components/DashboardLayout'
 import { Icon } from '@iconify/react'
 import { formatTimeAgo } from '@/lib/format-time-ago'
-import type { Notification } from '../components/NotificationsDropdown'
+import type { Notification, NotificationCode } from '../components/NotificationsDropdown'
 
 export default function NotificationsPage() {
   const { profile } = useApp()
@@ -68,6 +68,27 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
+  function NotificationIcon({ item }: { item: Notification }) {
+    const code = item.notification_code as NotificationCode | undefined
+    const wrapper = (icon: string, bg: string, iconClass: string) => (
+      <div className={`h-10 w-10 rounded-full flex items-center justify-center border ${bg}`}>
+        <Icon icon={icon} className={iconClass} />
+      </div>
+    )
+    if (code === 'sequence_alert') return wrapper('solar:plain-2-linear', 'bg-violet-50 dark:bg-violet-900/30 border-violet-100 dark:border-violet-800', 'h-5 w-5 text-violet-600 dark:text-violet-400')
+    if (code === 'trial_reminder') return wrapper('solar:clock-circle-linear', 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50', 'h-5 w-5 text-amber-500 dark:text-amber-400')
+    if (code === 'plan_overdue' || code === 'account_overdue') return wrapper('solar:calendar-mark-linear', 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/50', 'h-5 w-5 text-red-500 dark:text-red-400')
+    if (code === 'autopay_failed') return wrapper('solar:card-withdraw-linear', 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800/50', 'h-5 w-5 text-orange-500 dark:text-orange-400')
+    if (code === 'subscription_upgrade') return wrapper('solar:star-linear', 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-100 dark:border-emerald-800', 'h-5 w-5 text-emerald-600 dark:text-emerald-400')
+    if (item.type === 'comment' || item.type === 'file') return (
+      <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold shadow-sm">
+        {item.title.charAt(0)}
+      </div>
+    )
+    if (item.type === 'system') return wrapper('solar:shield-check-linear', 'bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-800', 'h-5 w-5 text-blue-600 dark:text-blue-400')
+    return wrapper('solar:danger-triangle-linear', 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50', 'h-5 w-5 text-amber-500 dark:text-amber-400')
+  }
+
   if (!profile) return null
 
   return (
@@ -116,25 +137,7 @@ export default function NotificationsPage() {
                 >
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0">
-                      {item.type === 'comment' || item.type === 'file' ? (
-                        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold shadow-sm">
-                          {item.title.charAt(0)}
-                        </div>
-                      ) : item.type === 'system' ? (
-                        <div className="h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center border border-blue-100 dark:border-blue-800">
-                          <Icon
-                            icon="solar:shield-check-linear"
-                            className="h-5 w-5 text-blue-600 dark:text-blue-400"
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border border-amber-100 dark:border-amber-800/50">
-                          <Icon
-                            icon="solar:danger-triangle-linear"
-                            className="h-5 w-5 text-amber-500 dark:text-amber-400"
-                          />
-                        </div>
-                      )}
+                      <NotificationIcon item={item} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">

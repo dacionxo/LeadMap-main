@@ -8,6 +8,32 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
+/** Insert in-app notification for a user by Stripe customer id */
+async function notifyUserByStripeCustomerId(
+  supabase: ReturnType<typeof getServiceRoleClient>,
+  customerId: string,
+  type: 'warning' | 'system',
+  title: string,
+  message: string,
+  link: string | null,
+  notificationCode: string
+) {
+  const { data: userRow } = await (supabase.from('users') as any)
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .single()
+  if (!userRow?.id) return
+  await (supabase.from('notifications') as any).insert({
+    user_id: userRow.id,
+    type,
+    title,
+    message,
+    link,
+    notification_code: notificationCode,
+    read: false,
+  })
+}
+
 /**
  * Map Stripe subscription status to our subscription_status enum
  */
@@ -88,6 +114,15 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 })
         }
 
+        await notifyUserByStripeCustomerId(
+          supabase,
+          customerId,
+          'system',
+          'Subscription upgraded',
+          'Your subscription is now active. Thank you for upgrading!',
+          '/dashboard/billing',
+          'subscription_upgrade'
+        )
         break
       }
 
@@ -106,7 +141,6 @@ export async function POST(request: NextRequest) {
             is_subscribed: isActive,
             subscription_status: subscriptionStatus,
             stripe_subscription_id: subscription.id,
-            // Optionally update current_period_end if you add that column
           })
           .eq('stripe_customer_id', customerId)
 
@@ -114,6 +148,17 @@ export async function POST(request: NextRequest) {
           console.error('Error updating subscription status:', error)
         }
 
+        if (subscription.status === 'past_due') {
+          await notifyUserByStripeCustomerId(
+            supabase,
+            customerId,
+            'warning',
+            'Payment overdue',
+            'Your paid plan payment is overdue. Please update your payment method to avoid service interruption.',
+            '/dashboard/billing',
+            'plan_overdue'
+          )
+        }
         break
       }
 
@@ -122,7 +167,6 @@ export async function POST(request: NextRequest) {
         const customerId = subscription.customer as string
 
         // Mark subscription as canceled
-        // Type assertion needed because service role client doesn't have database schema types
         const { error } = await (supabase
           .from('users') as any)
           .update({
@@ -136,6 +180,30 @@ export async function POST(request: NextRequest) {
           console.error('Error updating subscription status:', error)
         }
 
+        await notifyUserByStripeCustomerId(
+          supabase,
+          customerId,
+          'system',
+          'Subscription canceled',
+          'Your subscription has been canceled. Resubscribe anytime from Billing.',
+          '/dashboard/billing',
+          'system'
+        )
+        break
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice
+        const customerId = invoice.customer as string
+        await notifyUserByStripeCustomerId(
+          supabase,
+          customerId,
+          'warning',
+          'Payment failed',
+          'We couldn’t charge your payment method. Please update it to avoid service interruption.',
+          '/dashboard/billing',
+          'account_overdue'
+        )
         break
       }
 
