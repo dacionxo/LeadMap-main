@@ -316,6 +316,7 @@ function ProspectContentWithSidebar(props: any) {
         onUpdate={(updatedListing) => {
           props.updateListing(updatedListing)
         }}
+        sourceTable={props.resolvedTableName}
       />
     )}
 

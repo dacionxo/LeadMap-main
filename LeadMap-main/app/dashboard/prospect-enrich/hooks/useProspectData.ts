@@ -58,6 +58,51 @@ export interface Listing {
   // Compatibility fields for probate_leads (which uses latitude/longitude)
   latitude?: number | null
   longitude?: number | null
+  // FSBO / fsbo_leads property attributes (from Supabase schema)
+  living_area?: string | null
+  year_built_pagination?: string | null
+  bedrooms?: string | null
+  bathrooms?: string | null
+  property_type?: string | null
+  construction_type?: string | null
+  building_style?: string | null
+  effective_year_built?: string | null
+  number_of_units?: string | null
+  stories?: string | null
+  garage?: string | null
+  heating_type?: string | null
+  heating_gas?: string | null
+  air_conditioning?: string | null
+  basement?: string | null
+  deck?: string | null
+  interior_walls?: string | null
+  exterior_walls?: string | null
+  fireplaces?: string | null
+  flooring_cover?: string | null
+  driveway?: string | null
+  pool?: string | null
+  patio?: string | null
+  porch?: string | null
+  roof?: string | null
+  sewer?: string | null
+  water?: string | null
+  apn?: string | null
+  lot_size?: string | null
+  legal_name?: string | null
+  legal_description?: string | null
+  property_class?: string | null
+  county_name?: string | null
+  elementary_school_district?: string | null
+  high_school_district?: string | null
+  zoning?: string | null
+  flood_zone?: string | null
+  tax_year?: string | null
+  tax_amount?: string | null
+  assessment_year?: string | null
+  total_assessed_value?: string | null
+  assessed_improvement_value?: string | null
+  total_market_value?: string | null
+  amenities?: string | null
 }
 
 export type FilterType = 'all' | 'expired' | 'probate' | 'fsbo' | 'frbo' | 'imports' | 'trash' | 'foreclosure' | 'high_value' | 'price_drop' | 'new_listings'

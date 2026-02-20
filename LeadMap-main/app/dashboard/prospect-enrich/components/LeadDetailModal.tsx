@@ -102,6 +102,51 @@ interface Listing {
   // Compatibility fields for probate_leads (which uses latitude/longitude)
   latitude?: number | null;
   longitude?: number | null;
+  // FSBO / fsbo_leads property attributes (from Supabase)
+  living_area?: string | null;
+  year_built_pagination?: string | null;
+  bedrooms?: string | null;
+  bathrooms?: string | null;
+  property_type?: string | null;
+  construction_type?: string | null;
+  building_style?: string | null;
+  effective_year_built?: string | null;
+  number_of_units?: string | null;
+  stories?: string | null;
+  garage?: string | null;
+  heating_type?: string | null;
+  heating_gas?: string | null;
+  air_conditioning?: string | null;
+  basement?: string | null;
+  deck?: string | null;
+  interior_walls?: string | null;
+  exterior_walls?: string | null;
+  fireplaces?: string | null;
+  flooring_cover?: string | null;
+  driveway?: string | null;
+  pool?: string | null;
+  patio?: string | null;
+  porch?: string | null;
+  roof?: string | null;
+  sewer?: string | null;
+  water?: string | null;
+  apn?: string | null;
+  lot_size?: string | null;
+  legal_name?: string | null;
+  legal_description?: string | null;
+  property_class?: string | null;
+  county_name?: string | null;
+  elementary_school_district?: string | null;
+  high_school_district?: string | null;
+  zoning?: string | null;
+  flood_zone?: string | null;
+  tax_year?: string | null;
+  tax_amount?: string | null;
+  assessment_year?: string | null;
+  total_assessed_value?: string | null;
+  assessed_improvement_value?: string | null;
+  total_market_value?: string | null;
+  amenities?: string | null;
 }
 
 interface LeadDetailModalProps {
@@ -109,6 +154,8 @@ interface LeadDetailModalProps {
   listingList: Listing[]; // Array of all listings for pagination
   onClose: () => void;
   onUpdate?: (updatedListing: Listing) => void;
+  /** Supabase table name for this category (e.g. fsbo_leads). Used for fetch/update when not "listings". */
+  sourceTable?: string | null;
 }
 
 // Scrollable photo carousel from photos_json — shown first in the left panel
@@ -201,12 +248,16 @@ function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
   );
 }
 
+const VALID_LISTING_TABLES = ['listings', 'expired_listings', 'fsbo_leads', 'frbo_leads', 'imports', 'foreclosure_listings', 'probate_leads', 'trash'];
+
 export default function LeadDetailModal({
   listingId,
   listingList,
   onClose,
   onUpdate,
+  sourceTable,
 }: LeadDetailModalProps) {
+  const tableName = sourceTable && VALID_LISTING_TABLES.includes(sourceTable) ? sourceTable : 'listings';
   const { profile } = useApp();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
@@ -245,11 +296,11 @@ export default function LeadDetailModal({
 
   const fetchListing = useCallback(
     async (id: string) => {
-      // Only fetch if we need fresh data (e.g., after updates)
+      // Only fetch if we need fresh data (e.g., after updates). Use source table so fsbo_leads etc. return all columns.
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from("listings")
+          .from(tableName)
           .select("*")
           .eq("listing_id", id)
           .single();
@@ -271,7 +322,7 @@ export default function LeadDetailModal({
         setLoading(false);
       }
     },
-    [supabase, listingList]
+    [supabase, listingList, tableName]
   );
 
   const handleUpdate = useCallback(
@@ -280,7 +331,7 @@ export default function LeadDetailModal({
 
       try {
         const { data, error } = await supabase
-          .from("listings")
+          .from(tableName)
           .update(updates)
           .eq("listing_id", listing.listing_id)
           .select()
@@ -297,7 +348,7 @@ export default function LeadDetailModal({
         console.error("Error updating listing:", err);
       }
     },
-    [listing, supabase, onUpdate]
+    [listing, supabase, onUpdate, tableName]
   );
 
   useEffect(() => {
@@ -1281,238 +1332,227 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       ? formatBaths(listing.full_baths)
       : "--";
 
-  // Property details data structure - using actual listing data where available
+  // Property details: prefer fsbo_leads root-level columns when present (from Supabase), else listing.other
   const propertyDetails = [
     {
       label: "Living area",
-      value: listing?.sqft ? `${listing.sqft.toLocaleString()} sqft` : "--",
+      value: listing?.living_area ?? (listing?.sqft ? `${listing.sqft.toLocaleString()} sqft` : "--"),
       help: "Total square footage of living space in the property",
     },
     {
       label: "Year built",
-      value: listing?.year_built?.toString() || "--",
+      value: listing?.year_built_pagination ?? listing?.year_built?.toString() ?? "--",
       help: "The year the property was originally constructed",
     },
     {
       label: "Bedrooms",
-      value: listing?.beds?.toString() || "--",
+      value: listing?.bedrooms ?? listing?.beds?.toString() ?? "--",
       help: "Number of bedrooms in the property",
     },
     {
       label: "Bathrooms",
-      value: bathroomsDisplay,
+      value: listing?.bathrooms ?? bathroomsDisplay,
       help: "Number of full and half bathrooms",
     },
     {
       label: "Property type",
-      value: listing?.other?.property_type || "Single Family",
+      value: listing?.property_type ?? listing?.other?.property_type ?? "Single Family",
       help: "The type of property (e.g., Single Family, Condo, Townhouse)",
     },
     {
       label: "Construction type",
-      value: listing?.other?.construction_type || "Frame",
+      value: listing?.construction_type ?? listing?.other?.construction_type ?? "Frame",
       help: "Primary construction material used for the property",
     },
     {
       label: "Building style",
-      value: listing?.other?.building_style || "Conventional",
+      value: listing?.building_style ?? listing?.other?.building_style ?? "Conventional",
       help: "Architectural style of the building",
     },
     {
       label: "Effective year built",
-      value:
-        listing?.other?.effective_year_built ||
-        listing?.year_built?.toString() ||
-        "--",
+      value: listing?.effective_year_built ?? listing?.other?.effective_year_built ?? listing?.year_built?.toString() ?? "--",
       help: "Year of construction after accounting for major renovations",
     },
     {
       label: "Number of units",
-      value: listing?.other?.num_units?.toString() || "--",
+      value: listing?.number_of_units ?? listing?.other?.num_units?.toString() ?? "--",
       help: "Total number of residential units in the property",
     },
     {
       label: "Number of buildings",
-      value: listing?.other?.num_buildings?.toString() || "--",
+      value: listing?.other?.num_buildings?.toString() ?? "--",
       help: "Number of separate buildings on the property",
     },
     {
       label: "Number of commercial units",
-      value: listing?.other?.num_commercial_units?.toString() || "--",
+      value: listing?.other?.num_commercial_units?.toString() ?? "--",
       help: "Number of commercial units if mixed-use property",
     },
     {
       label: "Stories",
-      value: listing?.other?.stories || "2 Stories",
+      value: listing?.stories ?? listing?.other?.stories ?? "2 Stories",
       help: "Number of stories or levels in the building",
     },
     {
       label: "Garage area",
-      value: listing?.other?.garage_area
-        ? `${listing.other.garage_area} sqft`
-        : "344 sqft",
+      value: listing?.garage ?? (listing?.other?.garage_area ? `${listing.other.garage_area} sqft` : "344 sqft"),
       help: "Total square footage of garage space",
     },
     {
       label: "Heating type",
-      value: listing?.other?.heating_type || "Heat Pump",
+      value: listing?.heating_type ?? listing?.other?.heating_type ?? "Heat Pump",
       help: "Type of heating system installed",
     },
     {
       label: "Heating fuel",
-      value: listing?.other?.heating_fuel || "--",
+      value: listing?.heating_gas ?? listing?.other?.heating_fuel ?? "--",
       help: "Fuel source for the heating system",
     },
     {
       label: "Air conditioning",
-      value: listing?.other?.air_conditioning || "Central",
+      value: listing?.air_conditioning ?? listing?.other?.air_conditioning ?? "Central",
       help: "Type of air conditioning system",
     },
     {
       label: "Basement",
-      value: listing?.other?.basement || "--",
+      value: listing?.basement ?? listing?.other?.basement ?? "--",
       help: "Presence and type of basement",
     },
     {
       label: "Deck",
-      value: listing?.other?.deck || "No",
+      value: listing?.deck ?? listing?.other?.deck ?? "No",
       help: "Whether the property has a deck",
     },
     {
       label: "Exterior walls",
-      value: listing?.other?.exterior_walls || "Siding (Alum/Vinyl)",
+      value: listing?.exterior_walls ?? listing?.other?.exterior_walls ?? "Siding (Alum/Vinyl)",
       help: "Material used for exterior walls",
     },
     {
       label: "Interior Walls",
-      value:
-        listing?.other?.interior_walls ||
-        "Gypsum Board/Drywall/Sheetrock/Wallboard",
+      value: listing?.interior_walls ?? listing?.other?.interior_walls ?? "Gypsum Board/Drywall/Sheetrock/Wallboard",
       help: "Material used for interior walls",
     },
     {
       label: "Number of fireplaces",
-      value: listing?.other?.num_fireplaces?.toString() || "1",
+      value: listing?.fireplaces ?? listing?.other?.num_fireplaces?.toString() ?? "1",
       help: "Total number of fireplaces in the property",
     },
     {
       label: "Floor cover",
-      value: listing?.other?.floor_cover || "--",
+      value: listing?.flooring_cover ?? listing?.other?.floor_cover ?? "--",
       help: "Primary flooring material",
     },
     {
       label: "Garage",
-      value: listing?.other?.garage || "Attached Garage",
+      value: listing?.garage ?? listing?.other?.garage ?? "Attached Garage",
       help: "Type and configuration of garage",
     },
     {
       label: "Driveway",
-      value: listing?.other?.driveway || "--",
+      value: listing?.driveway ?? listing?.other?.driveway ?? "--",
       help: "Type of driveway surface",
     },
     {
       label: "Amenities",
-      value: listing?.other?.amenities || "--",
+      value: listing?.amenities ?? listing?.other?.amenities ?? "--",
       help: "Special features and amenities of the property",
     },
     {
       label: "Other rooms",
-      value: listing?.other?.other_rooms || "--",
+      value: listing?.other?.other_rooms ?? "--",
       help: "Additional rooms beyond standard bedrooms and bathrooms",
     },
     {
       label: "Pool",
-      value: listing?.other?.pool || "No",
+      value: listing?.pool ?? listing?.other?.pool ?? "No",
       help: "Whether the property has a pool",
     },
     {
       label: "Patio",
-      value: listing?.other?.patio || "--",
+      value: listing?.patio ?? listing?.other?.patio ?? "--",
       help: "Presence and type of patio",
     },
     {
       label: "Porch",
-      value: listing?.other?.porch || "--",
+      value: listing?.porch ?? listing?.other?.porch ?? "--",
       help: "Presence and type of porch",
     },
     {
       label: "Roof cover",
-      value: listing?.other?.roof_cover || "Asphalt",
+      value: listing?.roof ?? listing?.other?.roof_cover ?? "Asphalt",
       help: "Material used for roof covering",
     },
     {
       label: "Roof type",
-      value: listing?.other?.roof_type || "Gable",
+      value: listing?.other?.roof_type ?? "Gable",
       help: "Architectural style of the roof",
     },
     {
       label: "Sewer",
-      value: listing?.other?.sewer || "--",
+      value: listing?.sewer ?? listing?.other?.sewer ?? "--",
       help: "Type of sewer system (public, septic, etc.)",
     },
     {
       label: "Topography",
-      value: listing?.other?.topography || "--",
+      value: listing?.other?.topography ?? "--",
       help: "Land topography and terrain features",
     },
     {
       label: "Water",
-      value: listing?.other?.water || "--",
+      value: listing?.water ?? listing?.other?.water ?? "--",
       help: "Water source and supply type",
     },
     {
       label: "Geographic features",
-      value: listing?.other?.geographic_features || "--",
+      value: listing?.other?.geographic_features ?? "--",
       help: "Notable geographic features near the property",
     },
   ];
 
-  // Land information data structure
+  // Land information: prefer fsbo_leads root-level columns when present
   const landDetails = [
     {
       label: "APN (Parcel ID)",
-      value: listing?.other?.apn || listing?.other?.parcel_id || "17819000",
+      value: listing?.apn ?? listing?.other?.apn ?? listing?.other?.parcel_id ?? "17819000",
       help: "Assessor Parcel Number - unique identifier for the property parcel",
     },
     {
       label: "Lot size (Sqft)",
-      value: listing?.other?.lot_size_sqft
+      value: listing?.lot_size ?? (listing?.other?.lot_size_sqft
         ? `${parseInt(listing.other.lot_size_sqft).toLocaleString()} sqft`
-        : "6,416 sqft",
+        : "6,416 sqft"),
       help: "Total lot size in square feet",
     },
     {
       label: "Legal description",
-      value: listing?.other?.legal_description || "60 GHENT COMMONS",
+      value: listing?.legal_description ?? listing?.other?.legal_description ?? "60 GHENT COMMONS",
       help: "Official legal description of the property as recorded in public records",
     },
     {
-      label: "Subdivision name",
-      value: listing?.other?.subdivision_name || "Ghent Commons Sd",
+      label: "Legal name",
+      value: listing?.legal_name ?? listing?.other?.subdivision_name ?? "Ghent Commons Sd",
       help: "Name of the subdivision or development where the property is located",
     },
     {
       label: "Property class",
-      value: listing?.other?.property_class || "Residential",
+      value: listing?.property_class ?? listing?.other?.property_class ?? "Residential",
       help: "Classification of the property type (Residential, Commercial, etc.)",
     },
     {
       label: "Standardized Land Use",
-      value:
-        listing?.other?.standardized_land_use || "Single Family Residential",
+      value: listing?.other?.standardized_land_use ?? "Single Family Residential",
       help: "Standardized classification of land use type",
     },
     {
       label: "County land use code",
-      value: listing?.other?.county_land_use_code || "513",
+      value: listing?.other?.county_land_use_code ?? "513",
       help: "County-specific code for land use classification",
     },
     {
       label: "County name",
-      value:
-        listing?.other?.county_name || listing?.city
-          ? `${listing.city} City`
-          : "Norfolk City",
+      value: listing?.county_name ?? listing?.other?.county_name ?? (listing?.city ? `${listing.city} City` : "Norfolk City"),
       help: "Name of the county where the property is located",
     },
     {
@@ -1536,14 +1576,54 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       help: "Lot number within the subdivision",
     },
     {
-      label: "School district",
-      value: listing?.other?.school_district || "Norfolk City Public Schools",
-      help: "School district serving the property",
+      label: "Elementary school district",
+      value: listing?.elementary_school_district ?? listing?.other?.school_district ?? "Norfolk City Public Schools",
+      help: "Elementary school district serving the property",
+    },
+    {
+      label: "High school district",
+      value: listing?.high_school_district ?? listing?.other?.high_school_district ?? "--",
+      help: "High school district serving the property",
     },
     {
       label: "Zoning",
-      value: listing?.other?.zoning || "PDMU4",
+      value: listing?.zoning ?? listing?.other?.zoning ?? "PDMU4",
       help: "Zoning classification that determines permitted uses and building requirements",
+    },
+    {
+      label: "Flood zone",
+      value: listing?.flood_zone ?? listing?.other?.flood_zone ?? "--",
+      help: "FEMA flood zone designation",
+    },
+    {
+      label: "Tax year",
+      value: listing?.tax_year ?? listing?.other?.tax_year ?? "--",
+      help: "Year of the tax assessment",
+    },
+    {
+      label: "Tax amount",
+      value: listing?.tax_amount ?? listing?.other?.tax_amount ?? "--",
+      help: "Property tax amount",
+    },
+    {
+      label: "Assessment year",
+      value: listing?.assessment_year ?? listing?.other?.assessment_year ?? "--",
+      help: "Year of the property assessment",
+    },
+    {
+      label: "Total assessed value",
+      value: listing?.total_assessed_value ?? listing?.other?.total_assessed_value ?? "--",
+      help: "Total assessed value of the property",
+    },
+    {
+      label: "Assessed improvement value",
+      value: listing?.assessed_improvement_value ?? listing?.other?.assessed_improvement_value ?? "--",
+      help: "Assessed value of improvements",
+    },
+    {
+      label: "Total market value",
+      value: listing?.total_market_value ?? listing?.other?.total_market_value ?? "--",
+      help: "Total market value of the property",
     },
     {
       label: "Flood zone",

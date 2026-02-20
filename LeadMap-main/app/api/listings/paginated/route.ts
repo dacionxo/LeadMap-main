@@ -79,6 +79,27 @@ export async function GET(request: NextRequest) {
     query = query.or(`street.ilike.%${search}%,city.ilike.%${search}%,state.ilike.%${search}%,zip_code.ilike.%${search}%,listing_id.ilike.%${search}%,agent_name.ilike.%${search}%`)
   }
 
+  const city = searchParams.get('city')
+  if (city && city.trim()) {
+    query = query.ilike('city', city.trim())
+  }
+  const state = searchParams.get('state')
+  if (state && state.trim()) {
+    query = query.ilike('state', state.trim())
+  }
+  const minPrice = searchParams.get('minPrice')
+  if (minPrice && !isNaN(parseFloat(minPrice))) {
+    query = query.gte('list_price', parseFloat(minPrice))
+  }
+  const maxPrice = searchParams.get('maxPrice')
+  if (maxPrice && !isNaN(parseFloat(maxPrice))) {
+    query = query.lte('list_price', parseFloat(maxPrice))
+  }
+  const status = searchParams.get('status')
+  if (status && status.trim()) {
+    query = query.ilike('status', `%${status.trim()}%`)
+  }
+
   // When table is fsbo_leads, apply dynamic column filters from query params
   if (safeTable === 'fsbo_leads') {
     for (const col of Array.from(FSBO_FILTER_COLUMNS)) {
