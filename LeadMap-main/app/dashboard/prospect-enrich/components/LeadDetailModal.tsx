@@ -142,17 +142,17 @@ function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
   };
 
   return (
-    <div className="relative flex flex-col flex-shrink-0 w-full bg-gray-900">
+    <div className="relative w-full h-full flex flex-col bg-gray-900">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-0"
+        className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-0 flex-1 min-h-0"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {urls.map((url, i) => (
           <div
             key={i}
             data-photo-index={i}
-            className="flex-shrink-0 w-full snap-center aspect-[4/3] bg-gray-800"
+            className="flex-shrink-0 w-full h-full snap-center bg-gray-800 min-w-full"
           >
             <img
               src={url}
@@ -574,32 +574,45 @@ export default function LeadDetailModal({
           <X size={20} />
         </button>
 
-        {/* Left Panel: Photos carousel first, then Google Maps / Street View (55%) */}
-        <div ref={streetViewContainerRef} className="hidden lg:flex lg:flex-col lg:w-[55%] h-full bg-gray-900 group overflow-hidden">
-          {/* 1. Scrollable photo carousel from photos_json — shown first */}
-          {listing && getPhotoUrls(listing.photos_json).length > 0 && (
-            <div className="flex-shrink-0 w-full" style={{ minHeight: "220px", maxHeight: "42%" }}>
+        {/* Left Panel: one view only — full-height carousel when photos exist, else full-height Street View (55%) */}
+        <div ref={streetViewContainerRef} className="hidden lg:block lg:w-[55%] h-full bg-gray-900 group overflow-hidden relative">
+          {listing && getPhotoUrls(listing.photos_json).length > 0 ? (
+            /* Entire left side = photo carousel only */
+            <div className="absolute inset-0 flex flex-col">
               <PropertyPhotoCarousel listing={listing} />
-            </div>
-          )}
-          {/* 2. Google Maps Street View — shown last */}
-          <div className="flex-1 min-h-[280px] relative">
-            {listing && <StreetViewPanorama listing={listing} containerRef={streetViewContainerRef} />}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5 pointer-events-none" />
-            <div className="absolute top-4 left-6">
-              <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
-                <span className="font-bold text-base tracking-tight">
-                  {streetAddress || "Address not available"}
-                </span>
-                <span className="text-white/70 text-xs font-light">
-                  {cityStateZip}
-                </span>
+              <div className="absolute top-4 left-6">
+                <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
+                  <span className="font-bold text-base tracking-tight">
+                    {streetAddress || "Address not available"}
+                  </span>
+                  <span className="text-white/70 text-xs font-light">
+                    {cityStateZip}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="absolute bottom-3 left-4 text-[11px] text-white/50 font-medium tracking-wide">
-              © {new Date().getFullYear()} Google
-            </div>
-          </div>
+          ) : (
+            /* No photos: entire left side = Google Maps Street View */
+            <>
+              <div className="absolute inset-0 min-h-[400px]">
+                {listing && <StreetViewPanorama listing={listing} containerRef={streetViewContainerRef} />}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5 pointer-events-none" />
+              <div className="absolute top-4 left-6">
+                <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
+                  <span className="font-bold text-base tracking-tight">
+                    {streetAddress || "Address not available"}
+                  </span>
+                  <span className="text-white/70 text-xs font-light">
+                    {cityStateZip}
+                  </span>
+                </div>
+              </div>
+              <div className="absolute bottom-3 left-4 text-[11px] text-white/50 font-medium tracking-wide">
+                © {new Date().getFullYear()} Google
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right Panel: Content (45%) - scaled to 90% with ratios preserved */}
