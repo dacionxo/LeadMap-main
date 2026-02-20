@@ -83,6 +83,9 @@ interface ProspectFilterSidebarProps {
   activeCategory?: string
 }
 
+// Only these 8 appear in the main section; all others are under "More Filters"
+const MAIN_FILTER_IDS = ['price_range', 'location', 'ai_score', 'status', 'beds', 'baths', 'sqft', 'year_built'] as const
+
 const FILTER_GROUPS: FilterGroup[] = [
   { id: 'price_range', title: 'Price Range', type: 'range', category: 'property', pinned: true },
   { id: 'location', title: 'Location', type: 'multi-select', category: 'property', options: [], pinned: true },
@@ -115,9 +118,9 @@ const FILTER_GROUPS: FilterGroup[] = [
   { id: 'price_drop', title: 'Price Reduction', type: 'checkbox', category: 'property' }
 ]
 
-const PINNED_IDS = new Set(['price_range', 'location', 'ai_score'])
-const INITIAL_VISIBLE = 8
-const HIDDEN_COUNT = FILTER_GROUPS.length - INITIAL_VISIBLE
+const PINNED_IDS = new Set<string>(MAIN_FILTER_IDS)
+const MAIN_FILTERS = FILTER_GROUPS.filter((fg) => MAIN_FILTER_IDS.includes(fg.id as any))
+const MORE_FILTERS = FILTER_GROUPS.filter((fg) => !MAIN_FILTER_IDS.includes(fg.id as any))
 
 export default function ProspectFilterSidebar({
   filters,
@@ -235,12 +238,16 @@ export default function ProspectFilterSidebar({
   }
 
   const visibleFilters = useMemo(() => {
-    const list = showMoreFilters ? FILTER_GROUPS : FILTER_GROUPS.slice(0, INITIAL_VISIBLE)
-    if (activeCategory === 'fsbo' && fsboFilterGroups.length > 0) {
-      return [...list, ...fsboFilterGroups]
+    const main = MAIN_FILTERS
+    const more = MORE_FILTERS
+    const fsbo = activeCategory === 'fsbo' && fsboFilterGroups.length > 0 ? fsboFilterGroups : []
+    if (showMoreFilters) {
+      return [...main, ...more, ...fsbo]
     }
-    return list
+    return main
   }, [showMoreFilters, activeCategory, fsboFilterGroups])
+
+  const moreFiltersCount = MORE_FILTERS.length + (activeCategory === 'fsbo' ? fsboFilterGroups.length : 0)
 
   if (isCollapsed) {
     return (
@@ -421,13 +428,13 @@ export default function ProspectFilterSidebar({
           )
         })}
 
-        {!showMoreFilters && HIDDEN_COUNT > 0 && (
+        {!showMoreFilters && moreFiltersCount > 0 && (
           <div className="p-6 mt-auto">
             <button
               onClick={() => setShowMoreFilters(true)}
               className="w-full py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-slate-200 transition-all shadow-sm"
             >
-              More Filters ({HIDDEN_COUNT})
+              More Filters ({moreFiltersCount})
             </button>
           </div>
         )}

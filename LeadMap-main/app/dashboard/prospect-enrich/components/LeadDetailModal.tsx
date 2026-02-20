@@ -1368,73 +1368,68 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     }
   }, [showMoreDetails, showMoreLandInfo, showMoreTaxInfo]);
 
-  // Calculate bathrooms display - format with proper decimals
-  const bathroomsDisplay =
-    listing?.full_baths !== null && listing?.full_baths !== undefined
-      ? formatBaths(listing.full_baths)
-      : "--";
-
-  // Property details: read from listing / listing.other using Supabase column names
+  // Property details: Supabase only — no placeholders; empty shows "--"
   const propertyDetails = [
     {
       label: "Living area",
-      value: (listingStr(listing, "living_area", "") || (listing?.sqft ? `${listing.sqft.toLocaleString()} sqft` : "") || "--"),
-      help: "Total square footage of living space in the property",
+      value: listingStr(listing, "living_area", "--"),
+      help: "Supabase: living_area",
     },
     {
       label: "Year built",
-      value: listingStr(listing, "year_built_pagination", listing?.year_built?.toString() ?? "--"),
-      help: "The year the property was originally constructed",
+      value: listingStr(listing, "year_built_pagination", "--"),
+      help: "Supabase: year_built_pagination",
     },
     {
       label: "Bedrooms",
-      value: listingStr(listing, "bedrooms", listing?.beds?.toString() ?? "--"),
-      help: "Number of bedrooms in the property",
+      value: listingStr(listing, "bedrooms", "--"),
+      help: "Supabase: bedrooms",
     },
     {
       label: "Bathrooms",
-      value: listingStr(listing, "bathrooms", bathroomsDisplay),
-      help: "Number of full and half bathrooms",
+      value: listingStr(listing, "bathrooms", "--"),
+      help: "Supabase: bathrooms",
     },
+    // 1:1 with Supabase columns: property_type, construction_type, building_style, effective_year_built, number_of_units, number_of_buildings, number_of_commercial_units, stories
     {
       label: "Property type",
-      value: listingStr(listing, "property_type", "Single Family"),
-      help: "The type of property (e.g., Single Family, Condo, Townhouse)",
+      value: listingStr(listing, "property_type", "--"),
+      help: "Supabase: property_type",
     },
     {
       label: "Construction type",
-      value: listingStr(listing, "construction_type", "Frame"),
-      help: "Primary construction material used for the property",
+      value: listingStr(listing, "construction_type", "--"),
+      help: "Supabase: construction_type",
     },
     {
       label: "Building style",
-      value: listingStr(listing, "building_style", "Conventional"),
-      help: "Architectural style of the building",
+      value: listingStr(listing, "building_style", "--"),
+      help: "Supabase: building_style",
     },
     {
       label: "Effective year built",
-      value: listingStr(listing, "effective_year_built", listing?.year_built?.toString() ?? "--"),
-      help: "Year of construction after accounting for major renovations",
+      value: listingStr(listing, "effective_year_built", "--"),
+      help: "Supabase: effective_year_built",
     },
     {
       label: "Number of units",
-      value: listingStr(listing, "number_of_units", listingStr(listing, "num_units", "--")),
-      help: "Total number of residential units in the property",
+      value: listingStr(listing, "number_of_units", "--"),
+      help: "Supabase: number_of_units",
     },
     {
       label: "Number of buildings",
-      value: listingStr(listing, "number_of_buildings", listingStr(listing, "num_buildings", "--")),
-      help: "Number of separate buildings on the property",
+      value: listingStr(listing, "number_of_buildings", "--"),
+      help: "Supabase: number_of_buildings",
     },
     {
       label: "Number of commercial units",
-      value: listingStr(listing, "number_of_commercial_units", listingStr(listing, "num_commercial_units", "--")),
-      help: "Number of commercial units if mixed-use property",
+      value: listingStr(listing, "number_of_commercial_units", "--"),
+      help: "Supabase: number_of_commercial_units",
     },
     {
       label: "Stories",
-      value: listingStr(listing, "stories", "2 Stories"),
-      help: "Number of stories or levels in the building",
+      value: listingStr(listing, "stories", "--"),
+      help: "Supabase: stories",
     },
     {
       label: "Garage area",
@@ -1443,18 +1438,18 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     },
     {
       label: "Heating type",
-      value: listingStr(listing, "heating_type", "Heat Pump"),
-      help: "Type of heating system installed",
+      value: listingStr(listing, "heating_type", "--"),
+      help: "Supabase: heating_type",
     },
     {
       label: "Heating fuel",
-      value: listingStr(listing, "heating_fuel", listingStr(listing, "heating_gas", "--")),
-      help: "Fuel source for the heating system",
+      value: listingStr(listing, "heating_fuel", "--"),
+      help: "Supabase: heating_fuel",
     },
     {
       label: "Air conditioning",
-      value: listingStr(listing, "air_conditioning", "Central"),
-      help: "Type of air conditioning system",
+      value: listingStr(listing, "air_conditioning", "--"),
+      help: "Supabase: air_conditioning",
     },
     {
       label: "Basement",
@@ -1463,33 +1458,33 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     },
     {
       label: "Deck",
-      value: listingStr(listing, "deck", "No"),
-      help: "Whether the property has a deck",
+      value: listingStr(listing, "deck", "--"),
+      help: "Supabase: deck",
     },
     {
       label: "Exterior walls",
-      value: listingStr(listing, "exterior_walls", "Siding (Alum/Vinyl)"),
-      help: "Material used for exterior walls",
+      value: listingStr(listing, "exterior_walls", "--"),
+      help: "Supabase: exterior_walls",
     },
     {
       label: "Interior Walls",
-      value: listingStr(listing, "interior_walls", "Gypsum Board/Drywall/Sheetrock/Wallboard"),
-      help: "Material used for interior walls",
+      value: listingStr(listing, "interior_walls", "--"),
+      help: "Supabase: interior_walls",
     },
     {
       label: "Number of fireplaces",
-      value: listingStr(listing, "number_of_fireplaces", listingStr(listing, "num_fireplaces", "1")),
-      help: "Total number of fireplaces in the property",
+      value: listingStr(listing, "number_of_fireplaces", "--"),
+      help: "Supabase: number_of_fireplaces",
     },
     {
       label: "Floor cover",
-      value: listingStr(listing, "floor_cover", listingStr(listing, "flooring_cover", "--")),
-      help: "Primary flooring material",
+      value: listingStr(listing, "floor_cover", "--"),
+      help: "Supabase: floor_cover",
     },
     {
       label: "Garage",
-      value: listingStr(listing, "garage", "Attached Garage"),
-      help: "Type and configuration of garage",
+      value: listingStr(listing, "garage", "--"),
+      help: "Supabase: garage",
     },
     {
       label: "Driveway",
@@ -1502,14 +1497,9 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       help: "Special features and amenities of the property",
     },
     {
-      label: "Other rooms",
-      value: listingStr(listing, "other_rooms", "--"),
-      help: "Additional rooms beyond standard bedrooms and bathrooms",
-    },
-    {
       label: "Pool",
-      value: listingStr(listing, "pool", "No"),
-      help: "Whether the property has a pool",
+      value: listingStr(listing, "pool", "--"),
+      help: "Supabase: pool",
     },
     {
       label: "Patio",
@@ -1523,13 +1513,13 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     },
     {
       label: "Roof cover",
-      value: listingStr(listing, "roof_cover", listingStr(listing, "roof", "Asphalt")),
-      help: "Material used for roof covering",
+      value: listingStr(listing, "roof_cover", "--"),
+      help: "Supabase: roof_cover",
     },
     {
       label: "Roof type",
-      value: listingStr(listing, "roof_type", "Gable"),
-      help: "Architectural style of the roof",
+      value: listingStr(listing, "roof_type", "--"),
+      help: "Supabase: roof_type",
     },
     {
       label: "Sewer",
@@ -1545,11 +1535,6 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       label: "Water",
       value: listingStr(listing, "water", "--"),
       help: "Water source and supply type",
-    },
-    {
-      label: "Geographic features",
-      value: listingStr(listing, "geographic_features", "--"),
-      help: "Notable geographic features near the property",
     },
   ];
 
@@ -1567,8 +1552,8 @@ function InfoTab({ listing }: { listing: Listing | null }) {
   const landDetails = [
     {
       label: "APN (Parcel ID)",
-      value: listingStr(listing, "apn", listingStr(listing, "parcel_id", "--")),
-      help: "Assessor Parcel Number - unique identifier for the property parcel",
+      value: listingStr(listing, "apn", "--"),
+      help: "Supabase: apn",
     },
     {
       label: "Lot size (Sqft)",
@@ -1582,53 +1567,23 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     },
     {
       label: "Subdivision name",
-      value: listingStr(listing, "legal_name", listingStr(listing, "subdivision_name", "--")),
-      help: "Name of the subdivision or development where the property is located",
+      value: listingStr(listing, "subdivision_name", "--"),
+      help: "Supabase: subdivision_name",
     },
     {
       label: "Property class",
-      value: listingStr(listing, "property_class", "Residential"),
-      help: "Classification of the property type (Residential, Commercial, etc.)",
-    },
-    {
-      label: "Standardized Land Use",
-      value: listingStr(listing, "standardized_land_use", "Single Family Residential"),
-      help: "Standardized classification of land use type",
-    },
-    {
-      label: "County land use code",
-      value: listingStr(listing, "county_land_use_code", "--"),
-      help: "County-specific code for land use classification",
+      value: listingStr(listing, "property_class", "--"),
+      help: "Supabase: property_class",
     },
     {
       label: "County name",
-      value: listingStr(listing, "county_name", listing?.city ? `${listing.city} City` : "--"),
-      help: "Name of the county where the property is located",
-    },
-    {
-      label: "Census tract",
-      value: listingStr(listing, "census_tract", "--"),
-      help: "Census tract number for demographic and statistical purposes",
-    },
-    {
-      label: "Lot Width (Ft)",
-      value: listingStr(listing, "lot_width", listingStr(listing, "lot_width_ft", "--")),
-      help: "Width of the lot in feet",
-    },
-    {
-      label: "Lot Depth (Ft)",
-      value: listingStr(listing, "lot_depth", listingStr(listing, "lot_depth_ft", "--")),
-      help: "Depth of the lot in feet",
-    },
-    {
-      label: "Lot number",
-      value: listingStr(listing, "lot_number", "--"),
-      help: "Lot number within the subdivision",
+      value: listingStr(listing, "county_name", "--"),
+      help: "Supabase: county_name",
     },
     {
       label: "Elementary school district",
-      value: listingStr(listing, "elementary_school_district", listingStr(listing, "school_district", "--")),
-      help: "Elementary school district serving the property",
+      value: listingStr(listing, "elementary_school_district", "--"),
+      help: "Supabase: elementary_school_district",
     },
     {
       label: "High school district",
@@ -1645,36 +1600,6 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       value: listingStr(listing, "flood_zone", "--"),
       help: "FEMA flood zone designation",
     },
-    {
-      label: "Tax year",
-      value: listingStr(listing, "tax_year", "--"),
-      help: "Year of the tax assessment",
-    },
-    {
-      label: "Tax amount",
-      value: listingStr(listing, "tax_amount", "--"),
-      help: "Property tax amount",
-    },
-    {
-      label: "Assessment year",
-      value: listingStr(listing, "assessment_year", "--"),
-      help: "Year of the property assessment",
-    },
-    {
-      label: "Total assessed value",
-      value: listingStr(listing, "total_assessed_value", "--"),
-      help: "Total assessed value of the property",
-    },
-    {
-      label: "Assessed improvement value",
-      value: listingStr(listing, "assessed_improvement_value", "--"),
-      help: "Assessed value of improvements",
-    },
-    {
-      label: "Total market value",
-      value: listingStr(listing, "total_market_value", "--"),
-      help: "Total market value of the property",
-    },
   ];
 
   // Tax information: Supabase columns (tax_year, tax_amount, assessment_year, total_assessed_value, etc.)
@@ -1687,19 +1612,9 @@ function InfoTab({ listing }: { listing: Listing | null }) {
 
   const taxDetails = [
     {
-      label: "Tax delinquent?",
-      value: listingStr(listing, "tax_delinquent", "No"),
-      help: "Whether the property has delinquent tax payments",
-    },
-    {
-      label: "Tax delinquent year",
-      value: listingStr(listing, "tax_delinquent_year", "--"),
-      help: "Year in which taxes became delinquent",
-    },
-    {
       label: "Tax year",
-      value: listingStr(listing, "tax_year", new Date().getFullYear().toString()),
-      help: "Tax year for which the tax information applies",
+      value: listingStr(listing, "tax_year", "--"),
+      help: "Supabase: tax_year",
     },
     {
       label: "Tax amount",
@@ -1708,18 +1623,13 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     },
     {
       label: "Assessment year",
-      value: listingStr(listing, "assessment_year", new Date().getFullYear().toString()),
-      help: "Year of the property assessment",
+      value: listingStr(listing, "assessment_year", "--"),
+      help: "Supabase: assessment_year",
     },
     {
       label: "Total assessed value",
       value: formatCurrency(listingVal(listing, "total_assessed_value")),
       help: "Total assessed value of the property for tax purposes",
-    },
-    {
-      label: "Assessed land value",
-      value: formatCurrency(listingVal(listing, "assessed_land_value")),
-      help: "Assessed value of the land portion",
     },
     {
       label: "Assessed improvement value",
@@ -1730,16 +1640,6 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       label: "Total market value",
       value: formatCurrency(listingVal(listing, "total_market_value")),
       help: "Total estimated market value of the property",
-    },
-    {
-      label: "Market land value",
-      value: formatCurrency(listingVal(listing, "market_land_value")),
-      help: "Estimated market value of the land",
-    },
-    {
-      label: "Market improvement value",
-      value: formatCurrency(listingVal(listing, "market_improvement_value")),
-      help: "Estimated market value of improvements",
     },
   ];
 
