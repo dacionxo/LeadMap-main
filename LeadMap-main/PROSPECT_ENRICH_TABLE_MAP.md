@@ -41,8 +41,8 @@ ProspectEnrichPage
 | 10 | Agent Email | 180px | 24px | 204px | `agent_email` | Agent email address |
 | 11 | Agent Phone | 130px | 24px | 154px | `agent_phone` | Primary phone number |
 | 12 | Agent Phone 2 | 130px | 24px | 154px | `agent_phone_2` | Secondary phone |
-| 13 | Listing Agent Phone 2 | 160px | 24px | 184px | `listing_agent_phone_2` | Alternative phone |
-| 14 | Listing Agent Phone 5 | 160px | 24px | 184px | `listing_agent_phone_5` | Additional phone |
+| 13 | Agent Phone 3 | 160px | 24px | 184px | `listing_agent_phone_2` | Alternative phone |
+| 14 | Agent Phone 4 | 160px | 24px | 184px | `listing_agent_phone_5` | Additional phone |
 | 15 | Year Built | 100px | 24px | 124px | `year_built` | Construction year |
 | 16 | Last Sale Price | 130px | 24px | 154px | `last_sale_price` | Previous sale amount |
 | 17 | Last Sale Date | 130px | 24px | 154px | `last_sale_date` | Previous sale date |

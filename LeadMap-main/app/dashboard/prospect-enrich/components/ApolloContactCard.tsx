@@ -555,7 +555,7 @@ export default function ApolloContactCard({
         </div>
       )}
 
-      {/* Listing Agent Phone 2 Column */}
+      {/* Agent Phone 3 Column (listing_agent_phone_2) */}
       {columns.includes('listing_agent_phone_2') && (
         <div style={{ 
           flex: '0 0 160px', 
@@ -572,7 +572,7 @@ export default function ApolloContactCard({
         </div>
       )}
 
-      {/* Listing Agent Phone Column */}
+      {/* Agent Phone 4 Column (listing_agent_phone_5) */}
       {columns.includes('listing_agent_phone_5') && (
         <div style={{ 
           flex: '0 0 160px', 

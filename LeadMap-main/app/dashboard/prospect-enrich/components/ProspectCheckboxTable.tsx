@@ -11,7 +11,7 @@
  * - Checkbox selection with select all functionality
  * - All columns preserved: Address, Price, Status, AI Score, Beds, Baths, Sqft, 
  *   Description, Agent Name, Agent Email, Agent Phone, Agent Phone 2, 
- *   Listing Agent Phone 2, Listing Agent Phone 5, Year Built, Last Sale Price, 
+ *   Agent Phone 3 (listing_agent_phone_2), Agent Phone 4 (listing_agent_phone_5), Year Built, Last Sale Price, 
  *   Last Sale Date, Actions
  * - Actions: Email, Call, Save, More
  * - Fully compatible with existing API routes and props
@@ -796,10 +796,10 @@ export default function ProspectCheckboxTable({
                   <TableHead className="text-base font-semibold py-3">Agent Phone 2</TableHead>
                 )}
                 {columns.includes('listing_agent_phone_2') && (
-                  <TableHead className="text-base font-semibold py-3">Listing Agent Phone 2</TableHead>
+                  <TableHead className="text-base font-semibold py-3">Agent Phone 3</TableHead>
                 )}
                 {columns.includes('listing_agent_phone_5') && (
-                  <TableHead className="text-base font-semibold py-3">Listing Agent Phone 5</TableHead>
+                  <TableHead className="text-base font-semibold py-3">Agent Phone 4</TableHead>
                 )}
                 {columns.includes('year_built') && (
                   <TableHead className="text-base font-semibold py-3">Year Built</TableHead>

@@ -292,9 +292,6 @@ export default function ProspectFilterSidebar({
                     {fg.title}
                   </span>
                 </div>
-                {isPinned && (
-                  <span className="material-symbols-outlined text-indigo-500 dark:text-indigo-400 text-[18px]" style={{ fontVariationSettings: '"FILL" 1' }}>push_pin</span>
-                )}
               </div>
 
               {isExpanded && (

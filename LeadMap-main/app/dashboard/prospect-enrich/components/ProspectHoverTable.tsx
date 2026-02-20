@@ -535,8 +535,8 @@ export default function ProspectHoverTable({
               {columns.includes('agent_email') && <th className="px-4 py-4">Agent Email</th>}
               {columns.includes('agent_phone') && <th className="px-4 py-4">Agent Phone</th>}
               {columns.includes('agent_phone_2') && <th className="px-4 py-4">Agent Phone 2</th>}
-              {columns.includes('listing_agent_phone_2') && <th className="px-4 py-4">Listing Agent Phone 2</th>}
-              {columns.includes('listing_agent_phone_5') && <th className="px-4 py-4">Listing Agent Phone 5</th>}
+              {columns.includes('listing_agent_phone_2') && <th className="px-4 py-4">Agent Phone 3</th>}
+              {columns.includes('listing_agent_phone_5') && <th className="px-4 py-4">Agent Phone 4</th>}
               {columns.includes('year_built') && <th className="px-4 py-4">Year Built</th>}
               {columns.includes('last_sale_price') && <th className="px-4 py-4">Last Sale Price</th>}
               {columns.includes('last_sale_date') && <th className="px-4 py-4">Last Sale Date</th>}
