@@ -147,6 +147,42 @@ interface Listing {
   assessed_improvement_value?: string | null;
   total_market_value?: string | null;
   amenities?: string | null;
+  // Supabase column names (snake_case) — may be on listing root or in other
+  number_of_buildings?: string | number | null;
+  number_of_commercial_units?: string | number | null;
+  heating_fuel?: string | null;
+  roof_type?: string | null;
+  roof_cover?: string | null;
+  other_rooms?: string | null;
+  standardized_land_use?: string | null;
+  county_land_use_code?: string | null;
+  census_tract?: string | null;
+  lot_width?: string | number | null;
+  lot_depth?: string | number | null;
+  lot_number?: string | null;
+  num_fireplaces?: string | number | null;
+  floor_cover?: string | null;
+  num_units?: string | number | null;
+  num_buildings?: string | number | null;
+  num_commercial_units?: string | number | null;
+  lot_size_sqft?: string | number | null;
+}
+
+// Read value from listing root or listing.other using Supabase column names (snake_case)
+function listingVal(listing: Listing | null, key: string): string | number | null | undefined {
+  if (!listing) return undefined;
+  const v = (listing as any)[key];
+  if (v != null && v !== "") return v;
+  const o = (listing.other as Record<string, unknown>) ?? {};
+  const w = o[key];
+  if (w != null && w !== "") return w as string | number;
+  return undefined;
+}
+
+function listingStr(listing: Listing | null, key: string, fallback: string): string {
+  const v = listingVal(listing, key);
+  if (v == null || v === "") return fallback;
+  return String(v).trim();
 }
 
 interface LeadDetailModalProps {
@@ -1338,376 +1374,371 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       ? formatBaths(listing.full_baths)
       : "--";
 
-  // Property details: prefer fsbo_leads root-level columns when present (from Supabase), else listing.other
+  // Property details: read from listing / listing.other using Supabase column names
   const propertyDetails = [
     {
       label: "Living area",
-      value: listing?.living_area ?? (listing?.sqft ? `${listing.sqft.toLocaleString()} sqft` : "--"),
+      value: (listingStr(listing, "living_area", "") || (listing?.sqft ? `${listing.sqft.toLocaleString()} sqft` : "") || "--"),
       help: "Total square footage of living space in the property",
     },
     {
       label: "Year built",
-      value: listing?.year_built_pagination ?? listing?.year_built?.toString() ?? "--",
+      value: listingStr(listing, "year_built_pagination", listing?.year_built?.toString() ?? "--"),
       help: "The year the property was originally constructed",
     },
     {
       label: "Bedrooms",
-      value: listing?.bedrooms ?? listing?.beds?.toString() ?? "--",
+      value: listingStr(listing, "bedrooms", listing?.beds?.toString() ?? "--"),
       help: "Number of bedrooms in the property",
     },
     {
       label: "Bathrooms",
-      value: listing?.bathrooms ?? bathroomsDisplay,
+      value: listingStr(listing, "bathrooms", bathroomsDisplay),
       help: "Number of full and half bathrooms",
     },
     {
       label: "Property type",
-      value: listing?.property_type ?? listing?.other?.property_type ?? "Single Family",
+      value: listingStr(listing, "property_type", "Single Family"),
       help: "The type of property (e.g., Single Family, Condo, Townhouse)",
     },
     {
       label: "Construction type",
-      value: listing?.construction_type ?? listing?.other?.construction_type ?? "Frame",
+      value: listingStr(listing, "construction_type", "Frame"),
       help: "Primary construction material used for the property",
     },
     {
       label: "Building style",
-      value: listing?.building_style ?? listing?.other?.building_style ?? "Conventional",
+      value: listingStr(listing, "building_style", "Conventional"),
       help: "Architectural style of the building",
     },
     {
       label: "Effective year built",
-      value: listing?.effective_year_built ?? listing?.other?.effective_year_built ?? listing?.year_built?.toString() ?? "--",
+      value: listingStr(listing, "effective_year_built", listing?.year_built?.toString() ?? "--"),
       help: "Year of construction after accounting for major renovations",
     },
     {
       label: "Number of units",
-      value: listing?.number_of_units ?? listing?.other?.num_units?.toString() ?? "--",
+      value: listingStr(listing, "number_of_units", listingStr(listing, "num_units", "--")),
       help: "Total number of residential units in the property",
     },
     {
       label: "Number of buildings",
-      value: listing?.other?.num_buildings?.toString() ?? "--",
+      value: listingStr(listing, "number_of_buildings", listingStr(listing, "num_buildings", "--")),
       help: "Number of separate buildings on the property",
     },
     {
       label: "Number of commercial units",
-      value: listing?.other?.num_commercial_units?.toString() ?? "--",
+      value: listingStr(listing, "number_of_commercial_units", listingStr(listing, "num_commercial_units", "--")),
       help: "Number of commercial units if mixed-use property",
     },
     {
       label: "Stories",
-      value: listing?.stories ?? listing?.other?.stories ?? "2 Stories",
+      value: listingStr(listing, "stories", "2 Stories"),
       help: "Number of stories or levels in the building",
     },
     {
       label: "Garage area",
-      value: listing?.garage ?? (listing?.other?.garage_area ? `${listing.other.garage_area} sqft` : "344 sqft"),
-      help: "Total square footage of garage space",
+      value: listingStr(listing, "garage", "--"),
+      help: "Garage (Supabase column: garage)",
     },
     {
       label: "Heating type",
-      value: listing?.heating_type ?? listing?.other?.heating_type ?? "Heat Pump",
+      value: listingStr(listing, "heating_type", "Heat Pump"),
       help: "Type of heating system installed",
     },
     {
       label: "Heating fuel",
-      value: listing?.heating_gas ?? listing?.other?.heating_fuel ?? "--",
+      value: listingStr(listing, "heating_fuel", listingStr(listing, "heating_gas", "--")),
       help: "Fuel source for the heating system",
     },
     {
       label: "Air conditioning",
-      value: listing?.air_conditioning ?? listing?.other?.air_conditioning ?? "Central",
+      value: listingStr(listing, "air_conditioning", "Central"),
       help: "Type of air conditioning system",
     },
     {
       label: "Basement",
-      value: listing?.basement ?? listing?.other?.basement ?? "--",
+      value: listingStr(listing, "basement", "--"),
       help: "Presence and type of basement",
     },
     {
       label: "Deck",
-      value: listing?.deck ?? listing?.other?.deck ?? "No",
+      value: listingStr(listing, "deck", "No"),
       help: "Whether the property has a deck",
     },
     {
       label: "Exterior walls",
-      value: listing?.exterior_walls ?? listing?.other?.exterior_walls ?? "Siding (Alum/Vinyl)",
+      value: listingStr(listing, "exterior_walls", "Siding (Alum/Vinyl)"),
       help: "Material used for exterior walls",
     },
     {
       label: "Interior Walls",
-      value: listing?.interior_walls ?? listing?.other?.interior_walls ?? "Gypsum Board/Drywall/Sheetrock/Wallboard",
+      value: listingStr(listing, "interior_walls", "Gypsum Board/Drywall/Sheetrock/Wallboard"),
       help: "Material used for interior walls",
     },
     {
       label: "Number of fireplaces",
-      value: listing?.fireplaces ?? listing?.other?.num_fireplaces?.toString() ?? "1",
+      value: listingStr(listing, "number_of_fireplaces", listingStr(listing, "num_fireplaces", "1")),
       help: "Total number of fireplaces in the property",
     },
     {
       label: "Floor cover",
-      value: listing?.flooring_cover ?? listing?.other?.floor_cover ?? "--",
+      value: listingStr(listing, "floor_cover", listingStr(listing, "flooring_cover", "--")),
       help: "Primary flooring material",
     },
     {
       label: "Garage",
-      value: listing?.garage ?? listing?.other?.garage ?? "Attached Garage",
+      value: listingStr(listing, "garage", "Attached Garage"),
       help: "Type and configuration of garage",
     },
     {
       label: "Driveway",
-      value: listing?.driveway ?? listing?.other?.driveway ?? "--",
+      value: listingStr(listing, "driveway", "--"),
       help: "Type of driveway surface",
     },
     {
       label: "Amenities",
-      value: listing?.amenities ?? listing?.other?.amenities ?? "--",
+      value: listingStr(listing, "amenities", "--"),
       help: "Special features and amenities of the property",
     },
     {
       label: "Other rooms",
-      value: listing?.other?.other_rooms ?? "--",
+      value: listingStr(listing, "other_rooms", "--"),
       help: "Additional rooms beyond standard bedrooms and bathrooms",
     },
     {
       label: "Pool",
-      value: listing?.pool ?? listing?.other?.pool ?? "No",
+      value: listingStr(listing, "pool", "No"),
       help: "Whether the property has a pool",
     },
     {
       label: "Patio",
-      value: listing?.patio ?? listing?.other?.patio ?? "--",
+      value: listingStr(listing, "patio", "--"),
       help: "Presence and type of patio",
     },
     {
       label: "Porch",
-      value: listing?.porch ?? listing?.other?.porch ?? "--",
+      value: listingStr(listing, "porch", "--"),
       help: "Presence and type of porch",
     },
     {
       label: "Roof cover",
-      value: listing?.roof ?? listing?.other?.roof_cover ?? "Asphalt",
+      value: listingStr(listing, "roof_cover", listingStr(listing, "roof", "Asphalt")),
       help: "Material used for roof covering",
     },
     {
       label: "Roof type",
-      value: listing?.other?.roof_type ?? "Gable",
+      value: listingStr(listing, "roof_type", "Gable"),
       help: "Architectural style of the roof",
     },
     {
       label: "Sewer",
-      value: listing?.sewer ?? listing?.other?.sewer ?? "--",
+      value: listingStr(listing, "sewer", "--"),
       help: "Type of sewer system (public, septic, etc.)",
     },
     {
       label: "Topography",
-      value: listing?.other?.topography ?? "--",
+      value: listingStr(listing, "topography", "--"),
       help: "Land topography and terrain features",
     },
     {
       label: "Water",
-      value: listing?.water ?? listing?.other?.water ?? "--",
+      value: listingStr(listing, "water", "--"),
       help: "Water source and supply type",
     },
     {
       label: "Geographic features",
-      value: listing?.other?.geographic_features ?? "--",
+      value: listingStr(listing, "geographic_features", "--"),
       help: "Notable geographic features near the property",
     },
   ];
 
-  // Land information: prefer fsbo_leads root-level columns when present
+  // Land information: Supabase columns (legal_description, lot_size, property_class, etc.)
+  const lotSizeRaw = listingVal(listing, "lot_size") ?? listingVal(listing, "lot_size_sqft");
+  const lotSizeDisplay = (() => {
+    if (lotSizeRaw == null || lotSizeRaw === "") return "--";
+    if (typeof lotSizeRaw === "number") return `${lotSizeRaw.toLocaleString()} sqft`;
+    const s = String(lotSizeRaw).trim();
+    if (s.toLowerCase().includes("sqft")) return s;
+    const num = parseFloat(s.replace(/[^0-9.]/g, "")) || 0;
+    return num ? `${num.toLocaleString()} sqft` : s || "--";
+  })();
+
   const landDetails = [
     {
       label: "APN (Parcel ID)",
-      value: listing?.apn ?? listing?.other?.apn ?? listing?.other?.parcel_id ?? "17819000",
+      value: listingStr(listing, "apn", listingStr(listing, "parcel_id", "--")),
       help: "Assessor Parcel Number - unique identifier for the property parcel",
     },
     {
       label: "Lot size (Sqft)",
-      value: listing?.lot_size ?? (listing?.other?.lot_size_sqft
-        ? `${parseInt(listing.other.lot_size_sqft).toLocaleString()} sqft`
-        : "6,416 sqft"),
-      help: "Total lot size in square feet",
+      value: lotSizeDisplay,
+      help: "Total lot size in square feet (Supabase: lot_size)",
     },
     {
       label: "Legal description",
-      value: listing?.legal_description ?? listing?.other?.legal_description ?? "60 GHENT COMMONS",
+      value: listingStr(listing, "legal_description", "--"),
       help: "Official legal description of the property as recorded in public records",
     },
     {
-      label: "Legal name",
-      value: listing?.legal_name ?? listing?.other?.subdivision_name ?? "Ghent Commons Sd",
+      label: "Subdivision name",
+      value: listingStr(listing, "legal_name", listingStr(listing, "subdivision_name", "--")),
       help: "Name of the subdivision or development where the property is located",
     },
     {
       label: "Property class",
-      value: listing?.property_class ?? listing?.other?.property_class ?? "Residential",
+      value: listingStr(listing, "property_class", "Residential"),
       help: "Classification of the property type (Residential, Commercial, etc.)",
     },
     {
       label: "Standardized Land Use",
-      value: listing?.other?.standardized_land_use ?? "Single Family Residential",
+      value: listingStr(listing, "standardized_land_use", "Single Family Residential"),
       help: "Standardized classification of land use type",
     },
     {
       label: "County land use code",
-      value: listing?.other?.county_land_use_code ?? "513",
+      value: listingStr(listing, "county_land_use_code", "--"),
       help: "County-specific code for land use classification",
     },
     {
       label: "County name",
-      value: listing?.county_name ?? listing?.other?.county_name ?? (listing?.city ? `${listing.city} City` : "Norfolk City"),
+      value: listingStr(listing, "county_name", listing?.city ? `${listing.city} City` : "--"),
       help: "Name of the county where the property is located",
     },
     {
       label: "Census tract",
-      value: listing?.other?.census_tract || "003600",
+      value: listingStr(listing, "census_tract", "--"),
       help: "Census tract number for demographic and statistical purposes",
     },
     {
       label: "Lot Width (Ft)",
-      value: listing?.other?.lot_width_ft || "--",
+      value: listingStr(listing, "lot_width", listingStr(listing, "lot_width_ft", "--")),
       help: "Width of the lot in feet",
     },
     {
       label: "Lot Depth (Ft)",
-      value: listing?.other?.lot_depth_ft || "--",
+      value: listingStr(listing, "lot_depth", listingStr(listing, "lot_depth_ft", "--")),
       help: "Depth of the lot in feet",
     },
     {
       label: "Lot number",
-      value: listing?.other?.lot_number || "--",
+      value: listingStr(listing, "lot_number", "--"),
       help: "Lot number within the subdivision",
     },
     {
       label: "Elementary school district",
-      value: listing?.elementary_school_district ?? listing?.other?.school_district ?? "Norfolk City Public Schools",
+      value: listingStr(listing, "elementary_school_district", listingStr(listing, "school_district", "--")),
       help: "Elementary school district serving the property",
     },
     {
       label: "High school district",
-      value: listing?.high_school_district ?? listing?.other?.high_school_district ?? "--",
+      value: listingStr(listing, "high_school_district", "--"),
       help: "High school district serving the property",
     },
     {
       label: "Zoning",
-      value: listing?.zoning ?? listing?.other?.zoning ?? "PDMU4",
+      value: listingStr(listing, "zoning", "--"),
       help: "Zoning classification that determines permitted uses and building requirements",
     },
     {
       label: "Flood zone",
-      value: listing?.flood_zone ?? listing?.other?.flood_zone ?? "--",
+      value: listingStr(listing, "flood_zone", "--"),
       help: "FEMA flood zone designation",
     },
     {
       label: "Tax year",
-      value: listing?.tax_year ?? listing?.other?.tax_year ?? "--",
+      value: listingStr(listing, "tax_year", "--"),
       help: "Year of the tax assessment",
     },
     {
       label: "Tax amount",
-      value: listing?.tax_amount ?? listing?.other?.tax_amount ?? "--",
+      value: listingStr(listing, "tax_amount", "--"),
       help: "Property tax amount",
     },
     {
       label: "Assessment year",
-      value: listing?.assessment_year ?? listing?.other?.assessment_year ?? "--",
+      value: listingStr(listing, "assessment_year", "--"),
       help: "Year of the property assessment",
     },
     {
       label: "Total assessed value",
-      value: listing?.total_assessed_value ?? listing?.other?.total_assessed_value ?? "--",
+      value: listingStr(listing, "total_assessed_value", "--"),
       help: "Total assessed value of the property",
     },
     {
       label: "Assessed improvement value",
-      value: listing?.assessed_improvement_value ?? listing?.other?.assessed_improvement_value ?? "--",
+      value: listingStr(listing, "assessed_improvement_value", "--"),
       help: "Assessed value of improvements",
     },
     {
       label: "Total market value",
-      value: listing?.total_market_value ?? listing?.other?.total_market_value ?? "--",
+      value: listingStr(listing, "total_market_value", "--"),
       help: "Total market value of the property",
-    },
-    {
-      label: "Flood zone",
-      value: listing?.other?.flood_zone || "X",
-      help: "FEMA flood zone designation indicating flood risk level",
     },
   ];
 
-  // Tax information data structure
+  // Tax information: Supabase columns (tax_year, tax_amount, assessment_year, total_assessed_value, etc.)
+  const formatCurrency = (v: string | number | null | undefined): string => {
+    if (v == null || v === "") return "--";
+    const n = typeof v === "string" ? parseFloat(String(v).replace(/[^0-9.-]/g, "")) : v;
+    if (isNaN(n)) return String(v);
+    return `$${Math.round(n).toLocaleString()}`;
+  };
+
   const taxDetails = [
     {
       label: "Tax delinquent?",
-      value: listing?.other?.tax_delinquent || "No",
+      value: listingStr(listing, "tax_delinquent", "No"),
       help: "Whether the property has delinquent tax payments",
     },
     {
       label: "Tax delinquent year",
-      value: listing?.other?.tax_delinquent_year || "--",
+      value: listingStr(listing, "tax_delinquent_year", "--"),
       help: "Year in which taxes became delinquent",
     },
     {
       label: "Tax year",
-      value: listing?.other?.tax_year || new Date().getFullYear().toString(),
+      value: listingStr(listing, "tax_year", new Date().getFullYear().toString()),
       help: "Tax year for which the tax information applies",
     },
     {
       label: "Tax amount",
-      value: listing?.other?.tax_amount
-        ? `$${parseInt(listing.other.tax_amount).toLocaleString()}`
-        : "$6,255",
+      value: formatCurrency(listingVal(listing, "tax_amount")),
       help: "Total annual property tax amount",
     },
     {
       label: "Assessment year",
-      value:
-        listing?.other?.assessment_year || new Date().getFullYear().toString(),
+      value: listingStr(listing, "assessment_year", new Date().getFullYear().toString()),
       help: "Year of the property assessment",
     },
     {
       label: "Total assessed value",
-      value: listing?.other?.total_assessed_value
-        ? `$${parseInt(listing.other.total_assessed_value).toLocaleString()}`
-        : "$500,400",
+      value: formatCurrency(listingVal(listing, "total_assessed_value")),
       help: "Total assessed value of the property for tax purposes",
     },
     {
       label: "Assessed land value",
-      value: listing?.other?.assessed_land_value
-        ? `$${parseInt(listing.other.assessed_land_value).toLocaleString()}`
-        : "$191,500",
+      value: formatCurrency(listingVal(listing, "assessed_land_value")),
       help: "Assessed value of the land portion",
     },
     {
       label: "Assessed improvement value",
-      value: listing?.other?.assessed_improvement_value
-        ? `$${parseInt(listing.other.assessed_improvement_value).toLocaleString()}`
-        : "$308,900",
+      value: formatCurrency(listingVal(listing, "assessed_improvement_value")),
       help: "Assessed value of improvements (buildings, structures)",
     },
     {
       label: "Total market value",
-      value: listing?.other?.total_market_value
-        ? `$${parseInt(listing.other.total_market_value).toLocaleString()}`
-        : "$500,400",
+      value: formatCurrency(listingVal(listing, "total_market_value")),
       help: "Total estimated market value of the property",
     },
     {
       label: "Market land value",
-      value: listing?.other?.market_land_value
-        ? `$${parseInt(listing.other.market_land_value).toLocaleString()}`
-        : "$191,500",
+      value: formatCurrency(listingVal(listing, "market_land_value")),
       help: "Estimated market value of the land",
     },
     {
       label: "Market improvement value",
-      value: listing?.other?.market_improvement_value
-        ? `$${parseInt(listing.other.market_improvement_value).toLocaleString()}`
-        : "$308,900",
+      value: formatCurrency(listingVal(listing, "market_improvement_value")),
       help: "Estimated market value of improvements",
     },
   ];
