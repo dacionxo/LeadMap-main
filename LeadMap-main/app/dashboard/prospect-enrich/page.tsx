@@ -168,6 +168,7 @@ function ProspectContentWithSidebar(props: any) {
             onToggleCollapse={() => props.setFiltersVisible(!props.filtersVisible)}
             listings={props.allListings || []}
                 isDark={props.isDark}
+                activeCategory={props.activeCategory}
               />
             )}
             {/* Main content: header + table/map */}
@@ -1365,6 +1366,28 @@ function ProspectEnrichInner() {
         if (!listing.list_price_min || !listing.list_price) return false
         const drop = ((listing.list_price_min - listing.list_price) / listing.list_price_min) * 100
         if (drop <= 0) return false
+      }
+
+      // FSBO property attributes (dynamic columns from fsbo_leads schema)
+      const fsboFilterKeys = [
+        'living_area', 'year_built_pagination', 'bedrooms', 'bathrooms',
+        'property_type', 'construction_type', 'building_style', 'effective_year_built',
+        'number_of_units', 'stories', 'garage', 'heating_type', 'heating_gas',
+        'air_conditioning', 'basement', 'deck', 'interior_walls', 'exterior_walls',
+        'fireplaces', 'flooring_cover', 'driveway', 'pool', 'patio', 'porch',
+        'roof', 'sewer', 'water', 'apn', 'lot_size', 'legal_name', 'legal_description',
+        'property_class', 'county_name', 'elementary_school_district', 'high_school_district',
+        'zoning', 'flood_zone', 'tax_year', 'tax_amount', 'assessment_year',
+        'total_assessed_value', 'assessed_improvement_value', 'total_market_value', 'amenities'
+      ]
+      for (const key of fsboFilterKeys) {
+        const selected = apolloFilters[key]
+        if (selected && Array.isArray(selected) && selected.length > 0) {
+          const raw = (listing as any)[key]
+          const val = raw != null ? String(raw).trim() : ''
+          const match = selected.some((s: string) => String(s).trim().toLowerCase() === val.toLowerCase())
+          if (!match) return false
+        }
       }
 
       return true

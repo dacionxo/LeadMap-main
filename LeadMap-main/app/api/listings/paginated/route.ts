@@ -3,6 +3,19 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+/** Whitelist of fsbo_leads columns allowed as filters (matches schema). */
+const FSBO_FILTER_COLUMNS = new Set([
+  'living_area', 'year_built_pagination', 'bedrooms', 'bathrooms',
+  'property_type', 'construction_type', 'building_style', 'effective_year_built',
+  'number_of_units', 'stories', 'garage', 'heating_type', 'heating_gas',
+  'air_conditioning', 'basement', 'deck', 'interior_walls', 'exterior_walls',
+  'fireplaces', 'flooring_cover', 'driveway', 'pool', 'patio', 'porch',
+  'roof', 'sewer', 'water', 'apn', 'lot_size', 'legal_name', 'legal_description',
+  'property_class', 'county_name', 'elementary_school_district', 'high_school_district',
+  'zoning', 'flood_zone', 'tax_year', 'tax_amount', 'assessment_year',
+  'total_assessed_value', 'assessed_improvement_value', 'total_market_value', 'amenities'
+])
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const page = parseInt(searchParams.get('page') || '1')
@@ -64,6 +77,18 @@ export async function GET(request: NextRequest) {
   // Note: Could add 'text' field to search if needed: text.ilike.%${search}%
   if (search) {
     query = query.or(`street.ilike.%${search}%,city.ilike.%${search}%,state.ilike.%${search}%,zip_code.ilike.%${search}%,listing_id.ilike.%${search}%,agent_name.ilike.%${search}%`)
+  }
+
+  // When table is fsbo_leads, apply dynamic column filters from query params
+  if (safeTable === 'fsbo_leads') {
+    for (const col of FSBO_FILTER_COLUMNS) {
+      const raw = searchParams.get(col)
+      if (!raw || typeof raw !== 'string') continue
+      const values = raw.split(',').map((v) => v.trim()).filter(Boolean)
+      if (values.length > 0) {
+        query = query.in(col, values)
+      }
+    }
   }
 
   // Apply sorting

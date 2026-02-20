@@ -19,6 +19,54 @@ interface FilterGroup {
   pinned?: boolean
 }
 
+/** FSBO property columns (fsbo_leads schema) and human-readable titles for dynamic filters. */
+const FSBO_FILTER_COLUMNS: { id: string; title: string }[] = [
+  { id: 'living_area', title: 'Living Area' },
+  { id: 'year_built_pagination', title: 'Year Built' },
+  { id: 'bedrooms', title: 'Bedrooms' },
+  { id: 'bathrooms', title: 'Bathrooms' },
+  { id: 'property_type', title: 'Property Type' },
+  { id: 'construction_type', title: 'Construction Type' },
+  { id: 'building_style', title: 'Building Style' },
+  { id: 'effective_year_built', title: 'Effective Year Built' },
+  { id: 'number_of_units', title: 'Number Of Units' },
+  { id: 'stories', title: 'Stories' },
+  { id: 'garage', title: 'Garage' },
+  { id: 'heating_type', title: 'Heating Type' },
+  { id: 'heating_gas', title: 'Heating Gas' },
+  { id: 'air_conditioning', title: 'Air Conditioning' },
+  { id: 'basement', title: 'Basement' },
+  { id: 'deck', title: 'Deck' },
+  { id: 'interior_walls', title: 'Interior Walls' },
+  { id: 'exterior_walls', title: 'Exterior Walls' },
+  { id: 'fireplaces', title: 'Fireplaces' },
+  { id: 'flooring_cover', title: 'Flooring Cover' },
+  { id: 'driveway', title: 'Driveway' },
+  { id: 'pool', title: 'Pool' },
+  { id: 'patio', title: 'Patio' },
+  { id: 'porch', title: 'Porch' },
+  { id: 'roof', title: 'Roof' },
+  { id: 'sewer', title: 'Sewer' },
+  { id: 'water', title: 'Water' },
+  { id: 'apn', title: 'APN (Parcel ID)' },
+  { id: 'lot_size', title: 'Lot Size' },
+  { id: 'legal_name', title: 'Legal Name' },
+  { id: 'legal_description', title: 'Legal Description' },
+  { id: 'property_class', title: 'Property Class' },
+  { id: 'county_name', title: 'County Name' },
+  { id: 'elementary_school_district', title: 'Elementary School District' },
+  { id: 'high_school_district', title: 'High School District' },
+  { id: 'zoning', title: 'Zoning' },
+  { id: 'flood_zone', title: 'Flood Zone' },
+  { id: 'tax_year', title: 'Tax Year' },
+  { id: 'tax_amount', title: 'Tax Amount' },
+  { id: 'assessment_year', title: 'Assessment Year' },
+  { id: 'total_assessed_value', title: 'Total Assessed Value' },
+  { id: 'assessed_improvement_value', title: 'Assessed Improvement Value' },
+  { id: 'total_market_value', title: 'Total Market Value' },
+  { id: 'amenities', title: 'Amenities' }
+]
+
 interface ProspectFilterSidebarProps {
   filters: Record<string, any>
   onFiltersChange: (filters: Record<string, any>) => void
@@ -31,6 +79,8 @@ interface ProspectFilterSidebarProps {
   isDark?: boolean
   viewType?: 'total' | 'net_new' | 'saved'
   onViewTypeChange?: (viewType: 'total' | 'net_new' | 'saved') => void
+  /** When 'fsbo', dynamic property filters from fsbo_leads schema are shown. */
+  activeCategory?: string
 }
 
 const FILTER_GROUPS: FilterGroup[] = [
@@ -80,13 +130,16 @@ export default function ProspectFilterSidebar({
   listings = [],
   isDark = false,
   viewType = 'total',
-  onViewTypeChange
+  onViewTypeChange,
+  activeCategory
 }: ProspectFilterSidebarProps) {
   // Start with all groups collapsed so pinned filters show as rows only (no auto dropdown)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [showMoreFilters, setShowMoreFilters] = useState(false)
   const [locationSearch, setLocationSearch] = useState<Record<'city' | 'state' | 'zip_code', string>>({ city: '', state: '', zip_code: '' })
   const [activeLocationTab, setActiveLocationTab] = useState<'city' | 'state' | 'zip_code'>('city')
+  const [fsboUniqueValues, setFsboUniqueValues] = useState<Record<string, string[]>>({})
+  const [fsboOptionsLoading, setFsboOptionsLoading] = useState(false)
 
   const cityOptions = useMemo(() => {
     const cities = new Map<string, number>()
@@ -114,6 +167,35 @@ export default function ProspectFilterSidebar({
     })
     return Array.from(zips.entries()).map(([label, count]) => ({ label, value: label, count })).slice(0, 50)
   }, [listings])
+
+  useEffect(() => {
+    if (activeCategory !== 'fsbo') {
+      setFsboUniqueValues({})
+      return
+    }
+    let cancelled = false
+    setFsboOptionsLoading(true)
+    const columns = FSBO_FILTER_COLUMNS.map((c) => c.id).join(',')
+    fetch(`/api/listings/unique-values?table=fsbo_leads&columns=${encodeURIComponent(columns)}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!cancelled && json?.data) setFsboUniqueValues(json.data)
+      })
+      .catch(() => { if (!cancelled) setFsboUniqueValues({}) })
+      .finally(() => { if (!cancelled) setFsboOptionsLoading(false) })
+    return () => { cancelled = true }
+  }, [activeCategory])
+
+  const fsboFilterGroups: FilterGroup[] = useMemo(() => {
+    if (activeCategory !== 'fsbo') return []
+    return FSBO_FILTER_COLUMNS.map(({ id, title }) => ({
+      id,
+      title,
+      type: 'multi-select' as const,
+      category: 'property' as const,
+      options: (fsboUniqueValues[id] || []).map((v) => ({ label: v, value: v }))
+    }))
+  }, [activeCategory, fsboUniqueValues])
 
   const toggleExpand = (id: string) => {
     setExpandedGroups(prev => {
@@ -154,8 +236,11 @@ export default function ProspectFilterSidebar({
 
   const visibleFilters = useMemo(() => {
     const list = showMoreFilters ? FILTER_GROUPS : FILTER_GROUPS.slice(0, INITIAL_VISIBLE)
+    if (activeCategory === 'fsbo' && fsboFilterGroups.length > 0) {
+      return [...list, ...fsboFilterGroups]
+    }
     return list
-  }, [showMoreFilters])
+  }, [showMoreFilters, activeCategory, fsboFilterGroups])
 
   if (isCollapsed) {
     return (
