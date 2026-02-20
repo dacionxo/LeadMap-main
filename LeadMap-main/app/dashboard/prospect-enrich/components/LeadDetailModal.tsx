@@ -29,6 +29,15 @@ import PipelineDropdown from "./PipelineDropdown";
 import { useApp } from "@/app/providers";
 import TagsInput from "./TagsInput";
 
+// Normalize photos_json to array of image URLs (supports string[] or { url: string }[])
+function getPhotoUrls(photosJson: any): string[] {
+  if (!photosJson) return [];
+  if (!Array.isArray(photosJson)) return [];
+  return photosJson
+    .map((item) => (typeof item === "string" ? item : item?.url))
+    .filter((url): url is string => typeof url === "string" && url.startsWith("http"));
+}
+
 // Helper function to format bathroom count with proper decimal display
 function formatBaths(baths: number | null | undefined): string {
   if (baths === null || baths === undefined) return "--";
@@ -100,6 +109,96 @@ interface LeadDetailModalProps {
   listingList: Listing[]; // Array of all listings for pagination
   onClose: () => void;
   onUpdate?: (updatedListing: Listing) => void;
+}
+
+// Scrollable photo carousel from photos_json — shown first in the left panel
+function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
+  const urls = useMemo(() => getPhotoUrls(listing?.photos_json), [listing?.photos_json]);
+  const [index, setIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [listing?.listing_id]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || urls.length <= 1) return;
+    const onScroll = () => {
+      const width = el.offsetWidth;
+      const i = Math.round(el.scrollLeft / width);
+      setIndex(Math.min(i, urls.length - 1));
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [urls.length]);
+
+  if (!urls.length) return null;
+
+  const go = (delta: number) => {
+    const next = (index + delta + urls.length) % urls.length;
+    setIndex(next);
+    scrollRef.current?.querySelector(`[data-photo-index="${next}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  };
+
+  return (
+    <div className="relative flex flex-col flex-shrink-0 w-full bg-gray-900">
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-0"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {urls.map((url, i) => (
+          <div
+            key={i}
+            data-photo-index={i}
+            className="flex-shrink-0 w-full snap-center aspect-[4/3] bg-gray-800"
+          >
+            <img
+              src={url}
+              alt={`Property photo ${i + 1}`}
+              className="w-full h-full object-cover"
+              loading={i === 0 ? "eager" : "lazy"}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none">
+        {urls.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            aria-label={`Go to photo ${i + 1}`}
+            onClick={() => {
+              setIndex(i);
+              scrollRef.current?.querySelector(`[data-photo-index="${i}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+            }}
+            className={`w-2 h-2 rounded-full pointer-events-auto transition-colors ${i === index ? "bg-white" : "bg-white/50 hover:bg-white/80"}`}
+          />
+        ))}
+      </div>
+      {urls.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+            aria-label="Previous photo"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+            aria-label="Next photo"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function LeadDetailModal({
@@ -475,24 +574,31 @@ export default function LeadDetailModal({
           <X size={20} />
         </button>
 
-        {/* Left Panel: Street View (55%) */}
-        <div ref={streetViewContainerRef} className="hidden lg:block w-[55%] h-full relative bg-gray-900 group">
-          <div className="absolute inset-0 min-h-[400px]">
-            {listing && <StreetViewPanorama listing={listing} containerRef={streetViewContainerRef} />}
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5 pointer-events-none" />
-          <div className="absolute top-8 left-8">
-            <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-5 py-3 rounded-lg flex flex-col shadow-lg">
-              <span className="font-bold text-lg tracking-tight">
-                {streetAddress || "Address not available"}
-              </span>
-              <span className="text-white/70 text-sm font-light">
-                {cityStateZip}
-              </span>
+        {/* Left Panel: Photos carousel first, then Google Maps / Street View (55%) */}
+        <div ref={streetViewContainerRef} className="hidden lg:flex lg:flex-col lg:w-[55%] h-full bg-gray-900 group overflow-hidden">
+          {/* 1. Scrollable photo carousel from photos_json — shown first */}
+          {listing && getPhotoUrls(listing.photos_json).length > 0 && (
+            <div className="flex-shrink-0 w-full" style={{ minHeight: "220px", maxHeight: "42%" }}>
+              <PropertyPhotoCarousel listing={listing} />
             </div>
-          </div>
-          <div className="absolute bottom-4 left-6 text-[11px] text-white/50 font-medium tracking-wide">
-            © {new Date().getFullYear()} Google
+          )}
+          {/* 2. Google Maps Street View — shown last */}
+          <div className="flex-1 min-h-[280px] relative">
+            {listing && <StreetViewPanorama listing={listing} containerRef={streetViewContainerRef} />}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5 pointer-events-none" />
+            <div className="absolute top-4 left-6">
+              <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
+                <span className="font-bold text-base tracking-tight">
+                  {streetAddress || "Address not available"}
+                </span>
+                <span className="text-white/70 text-xs font-light">
+                  {cityStateZip}
+                </span>
+              </div>
+            </div>
+            <div className="absolute bottom-3 left-4 text-[11px] text-white/50 font-medium tracking-wide">
+              © {new Date().getFullYear()} Google
+            </div>
           </div>
         </div>
 
