@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
   // When table is fsbo_leads, apply dynamic column filters from query params
   if (safeTable === 'fsbo_leads') {
-    for (const col of FSBO_FILTER_COLUMNS) {
+    for (const col of Array.from(FSBO_FILTER_COLUMNS)) {
       const raw = searchParams.get(col)
       if (!raw || typeof raw !== 'string') continue
       const values = raw.split(',').map((v) => v.trim()).filter(Boolean)
