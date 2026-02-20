@@ -184,9 +184,13 @@ function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
 
   const go = (delta: number) => {
     const next = (index + delta + urls.length) % urls.length;
-    setIndex(next);
     scrollRef.current?.querySelector(`[data-photo-index="${next}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    setIndex(next);
   };
+
+  // Same display rules for every carousel image: preserve aspect ratio, no upscaling, consistent quality
+  const carouselImgClassName = "w-full h-full object-contain bg-gray-900";
+  const carouselImgStyle = { imageRendering: "auto" as const };
 
   return (
     <div className="relative w-full h-full flex flex-col bg-gray-900">
@@ -199,13 +203,15 @@ function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
           <div
             key={i}
             data-photo-index={i}
-            className="flex-shrink-0 w-full h-full snap-center bg-gray-800 min-w-full"
+            className="flex-shrink-0 w-full h-full snap-center bg-gray-900 min-w-full"
           >
             <img
               src={url}
               alt={`Property photo ${i + 1}`}
-              className="w-full h-full object-cover"
+              className={carouselImgClassName}
+              style={carouselImgStyle}
               loading={i === 0 ? "eager" : "lazy"}
+              decoding="async"
             />
           </div>
         ))}
