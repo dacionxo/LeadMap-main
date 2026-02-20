@@ -42,6 +42,7 @@ interface Listing {
   owner_email?: string;
   enrichment_confidence?: number | null;
   primary_photo?: string;
+  photos_json?: unknown;
   url?: string;
   property_url?: string;
   text?: string;
@@ -50,6 +51,14 @@ interface Listing {
   agent_email?: string;
   time_listed?: string;
   created_at?: string;
+}
+
+/** Get first image URL from Supabase photos_json (array of URLs or array of { url }). */
+function getFirstPhotoUrl(photosJson: unknown): string | undefined {
+  if (!photosJson || !Array.isArray(photosJson) || photosJson.length === 0) return undefined;
+  const first = photosJson[0];
+  const url = typeof first === "string" ? first : (first as { url?: string })?.url;
+  return typeof url === "string" && url.startsWith("http") ? url : undefined;
 }
 
 export default function MapPage() {
@@ -315,7 +324,7 @@ export default function MapPage() {
         geo_source: listing.geo_source || listing.listing_source_name,
         owner_email: listing.owner_email,
         enrichment_confidence: listing.enrichment_confidence,
-        primary_photo: listing.primary_photo,
+        primary_photo: getFirstPhotoUrl(listing.photos_json) || listing.primary_photo,
       };
     });
   }, [listings]);
