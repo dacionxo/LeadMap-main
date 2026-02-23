@@ -1371,7 +1371,7 @@ function InfoTab({ listing }: { listing: Listing | null }) {
   // Property details: Supabase only — no placeholders; empty shows "--"
   const propertyDetails = [
     {
-      label: "Living area",
+      label: "Living Area Sqft",
       value: listingStr(listing, "living_area", "--"),
       help: "Supabase: living_area",
     },
@@ -1397,7 +1397,7 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       help: "Supabase: property_class",
     },
     {
-      label: "Construction type",
+      label: "Construction materials",
       value: listingStr(listing, "construction_type", "--"),
       help: "Supabase: construction_type",
     },
@@ -1415,11 +1415,6 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       label: "Garage area",
       value: listingStr(listing, "garage", "--"),
       help: "Garage (Supabase column: garage)",
-    },
-    {
-      label: "Heating type",
-      value: listingStr(listing, "heating_type", "--"),
-      help: "Supabase: heating_type",
     },
     {
       label: "Heating fuel",
@@ -1477,14 +1472,9 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       help: "Presence and type of porch",
     },
     {
-      label: "Roof cover",
+      label: "Roof",
       value: listingStr(listing, "roof_cover", "--"),
       help: "Supabase: roof_cover",
-    },
-    {
-      label: "Roof type",
-      value: listingStr(listing, "roof_type", "--"),
-      help: "Supabase: roof_type",
     },
     {
       label: "Sewer",
