@@ -1298,14 +1298,16 @@ function ProspectEnrichInner() {
         if (!bedsMatch) return false
       }
 
-      // Baths - exact match for 1-3, 4+ for 4 or more
+      // Baths - use Supabase bathrooms when available, else full_baths
       if (apolloFilters.baths && Array.isArray(apolloFilters.baths) && apolloFilters.baths.length > 0) {
-        const baths = listing.full_baths || 0
+        const bathsNum = listing.bathrooms != null && listing.bathrooms !== ''
+          ? parseFloat(String(listing.bathrooms)) || 0
+          : (listing.full_baths ?? 0)
         const bathsMatch = apolloFilters.baths.some((bath: string) => {
           if (bath === '4+') {
-            return baths >= 4
+            return bathsNum >= 4
           } else {
-            return baths === parseInt(bath)
+            return bathsNum === parseInt(bath)
           }
         })
         if (!bathsMatch) return false

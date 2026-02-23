@@ -36,6 +36,7 @@ interface Listing {
   list_price?: number | null
   beds?: number | null
   full_baths?: number | null
+  bathrooms?: string | null
   sqft?: number | null
   status?: string | null
   agent_name?: string | null
@@ -470,10 +471,15 @@ export default function ProspectHoverTable({
     }).format(price)
   }
 
-  const formatBaths = (baths: number | null | undefined) => {
-    if (!baths) return '-'
-    return baths.toString()
+  const formatBaths = (baths: number | string | null | undefined) => {
+    if (baths == null || baths === '') return '-'
+    return String(baths).trim()
   }
+
+  const getBathsValue = (listing: Listing) =>
+    listing.bathrooms != null && listing.bathrooms !== ''
+      ? listing.bathrooms
+      : listing.full_baths
 
   const getDescription = (listing: Listing) => {
     if (listing.text) return listing.text
@@ -630,7 +636,7 @@ export default function ProspectHoverTable({
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.beds ?? '-'}</td>
                     )}
                     {columns.includes('full_baths') && (
-                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{formatBaths(listing.full_baths)}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{formatBaths(getBathsValue(listing))}</td>
                     )}
                     {columns.includes('sqft') && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400">

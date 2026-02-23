@@ -609,7 +609,7 @@ export default function LeadDetailModal({
     return parts.join(", ");
   }, [listing]);
 
-  // Memoize property badges
+  // Memoize property badges (Off Market, High Equity, building_style from Supabase)
   const propertyBadges = useMemo(() => {
     const badges: string[] = [];
     if (listing?.status && listing.status.toLowerCase().includes("off"))
@@ -621,18 +621,16 @@ export default function LeadDetailModal({
     ) {
       badges.push("High Equity");
     }
-    if (!listing?.agent_email && !listing?.agent_phone)
-      badges.push("Free And Clear");
-    if (listing?.year_built && listing.year_built < 1970)
-      badges.push("Senior Property");
+    const buildingStyle = listing?.building_style;
+    if (buildingStyle != null && String(buildingStyle).trim() !== "") {
+      badges.push(String(buildingStyle).trim());
+    }
     return badges;
   }, [
     listing?.status,
     listing?.list_price,
     listing?.last_sale_price,
-    listing?.agent_email,
-    listing?.agent_phone,
-    listing?.year_built,
+    listing?.building_style,
   ]);
 
   const tabLabels: Record<TabType, string> = {
@@ -799,13 +797,9 @@ export default function LeadDetailModal({
                   <span className="text-sm font-medium text-slate-500 uppercase tracking-wide">
                     Est. Value
                   </span>
-                  {propertyBadges.length > 0 ? (
+                  {propertyBadges.length > 0 && (
                     <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded mt-0.5">
                       {propertyBadges[0]}
-                    </span>
-                  ) : (
-                    <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded mt-0.5">
-                      Free & Clear
                     </span>
                   )}
                 </div>
@@ -1563,17 +1557,26 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     },
   ];
 
-  // First 4 property facts for initial display (Living Area, Year Built, Bedrooms, Bathrooms)
-  const displayPropertyFacts = propertyDetails.slice(0, 4);
-  const morePropertyFacts = propertyDetails.slice(4);
-  const displayLandDetails = landDetails.slice(0, 3);
-  const moreLandDetailsDisplay = landDetails.slice(3);
+  // Only show Property Facts and Land Details rows when value is present in Supabase; Tax Status always shows all items
+  const hasValue = (v: string | null | undefined) => {
+    if (v == null || v === "") return false;
+    return String(v).trim() !== "--";
+  };
+  const propertyDetailsFiltered = propertyDetails.filter((d) => hasValue(d.value));
+  const landDetailsFiltered = landDetails.filter((d) => hasValue(d.value));
+
+  // First 4 property facts for initial display
+  const displayPropertyFacts = propertyDetailsFiltered.slice(0, 4);
+  const morePropertyFacts = propertyDetailsFiltered.slice(4);
+  const displayLandDetails = landDetailsFiltered.slice(0, 3);
+  const moreLandDetailsDisplay = landDetailsFiltered.slice(3);
   const displayTaxDetails = taxDetails.slice(0, 3);
   const moreTaxDetailsDisplay = taxDetails.slice(3);
 
   return (
     <div className="space-y-10">
-      {/* Property Facts */}
+      {/* Property Facts — only show rows with non-null values */}
+      {propertyDetailsFiltered.length > 0 && (
       <section>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
           Property Facts
@@ -1662,8 +1665,10 @@ function InfoTab({ listing }: { listing: Listing | null }) {
           </>
         )}
       </section>
+      )}
 
-      {/* Land Details */}
+      {/* Land Details — only show rows with non-null values */}
+      {landDetailsFiltered.length > 0 && (
       <section>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
           Land Details
@@ -1752,8 +1757,9 @@ function InfoTab({ listing }: { listing: Listing | null }) {
           </>
         )}
       </section>
+      )}
 
-      {/* Tax Status */}
+      {/* Tax Status — always show all items (including when null) */}
       <section className="pb-4">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
           Tax Status
