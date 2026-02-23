@@ -1418,8 +1418,8 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     },
     {
       label: "Heating fuel",
-      value: listingStr(listing, "heating_fuel", "--"),
-      help: "Supabase: heating_fuel",
+      value: listingStr(listing, "heating_gas", "--"),
+      help: "Supabase: heating_gas",
     },
     {
       label: "Air conditioning",
@@ -1438,23 +1438,13 @@ function InfoTab({ listing }: { listing: Listing | null }) {
     },
     {
       label: "Fireplace",
-      value: listingStr(listing, "number_of_fireplaces", "--"),
-      help: "Supabase: number_of_fireplaces",
+      value: listingStr(listing, "fireplaces", "--"),
+      help: "Supabase: fireplaces",
     },
     {
       label: "Garage",
       value: listingStr(listing, "garage", "--"),
       help: "Supabase: garage",
-    },
-    {
-      label: "Driveway",
-      value: listingStr(listing, "driveway", "--"),
-      help: "Type of driveway surface",
-    },
-    {
-      label: "Amenities",
-      value: listingStr(listing, "amenities", "--"),
-      help: "Special features and amenities of the property",
     },
     {
       label: "Pool",
@@ -1467,14 +1457,9 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       help: "Presence and type of patio",
     },
     {
-      label: "Porch",
-      value: listingStr(listing, "porch", "--"),
-      help: "Presence and type of porch",
-    },
-    {
       label: "Roof",
-      value: listingStr(listing, "roof_cover", "--"),
-      help: "Supabase: roof_cover",
+      value: listingStr(listing, "roof", "--"),
+      help: "Supabase: roof",
     },
     {
       label: "Sewer",
