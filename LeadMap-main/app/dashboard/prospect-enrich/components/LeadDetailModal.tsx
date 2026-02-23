@@ -1578,7 +1578,7 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       {/* Property Facts — only show rows with non-null values */}
       {propertyDetailsFiltered.length > 0 && (
       <section>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+        <h3 className="text-xs font-bold text-black uppercase tracking-widest mb-4">
           Property Facts
         </h3>
         <div className="divide-y divide-dashed divide-gray-200">
@@ -1670,7 +1670,7 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       {/* Land Details — only show rows with non-null values */}
       {landDetailsFiltered.length > 0 && (
       <section>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+        <h3 className="text-xs font-bold text-black uppercase tracking-widest mb-4">
           Land Details
         </h3>
         <div className="divide-y divide-dashed divide-gray-200">
@@ -1761,7 +1761,7 @@ function InfoTab({ listing }: { listing: Listing | null }) {
 
       {/* Tax Status — always show all items (including when null) */}
       <section className="pb-4">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+        <h3 className="text-xs font-bold text-black uppercase tracking-widest mb-4">
           Tax Status
         </h3>
         <div className="divide-y divide-dashed divide-gray-200">
