@@ -1390,11 +1390,11 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       value: listingStr(listing, "bathrooms", "--"),
       help: "Supabase: bathrooms",
     },
-    // 1:1 with Supabase columns: property_type, construction_type, building_style, effective_year_built, number_of_units, number_of_buildings, number_of_commercial_units, stories
+    // 1:1 with Supabase columns: property_class, construction_type, building_style, stories
     {
-      label: "Property type",
-      value: listingStr(listing, "property_type", "--"),
-      help: "Supabase: property_type",
+      label: "Property Class",
+      value: listingStr(listing, "property_class", "--"),
+      help: "Supabase: property_class",
     },
     {
       label: "Construction type",
@@ -1405,26 +1405,6 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       label: "Building style",
       value: listingStr(listing, "building_style", "--"),
       help: "Supabase: building_style",
-    },
-    {
-      label: "Effective year built",
-      value: listingStr(listing, "effective_year_built", "--"),
-      help: "Supabase: effective_year_built",
-    },
-    {
-      label: "Number of units",
-      value: listingStr(listing, "number_of_units", "--"),
-      help: "Supabase: number_of_units",
-    },
-    {
-      label: "Number of buildings",
-      value: listingStr(listing, "number_of_buildings", "--"),
-      help: "Supabase: number_of_buildings",
-    },
-    {
-      label: "Number of commercial units",
-      value: listingStr(listing, "number_of_commercial_units", "--"),
-      help: "Supabase: number_of_commercial_units",
     },
     {
       label: "Stories",
@@ -1462,24 +1442,9 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       help: "Supabase: deck",
     },
     {
-      label: "Exterior walls",
-      value: listingStr(listing, "exterior_walls", "--"),
-      help: "Supabase: exterior_walls",
-    },
-    {
-      label: "Interior Walls",
-      value: listingStr(listing, "interior_walls", "--"),
-      help: "Supabase: interior_walls",
-    },
-    {
-      label: "Number of fireplaces",
+      label: "Fireplace",
       value: listingStr(listing, "number_of_fireplaces", "--"),
       help: "Supabase: number_of_fireplaces",
-    },
-    {
-      label: "Floor cover",
-      value: listingStr(listing, "floor_cover", "--"),
-      help: "Supabase: floor_cover",
     },
     {
       label: "Garage",
@@ -1527,11 +1492,6 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       help: "Type of sewer system (public, septic, etc.)",
     },
     {
-      label: "Topography",
-      value: listingStr(listing, "topography", "--"),
-      help: "Land topography and terrain features",
-    },
-    {
       label: "Water",
       value: listingStr(listing, "water", "--"),
       help: "Water source and supply type",
@@ -1559,21 +1519,6 @@ function InfoTab({ listing }: { listing: Listing | null }) {
       label: "Lot size (Sqft)",
       value: lotSizeDisplay,
       help: "Total lot size in square feet (Supabase: lot_size)",
-    },
-    {
-      label: "Legal description",
-      value: listingStr(listing, "legal_description", "--"),
-      help: "Official legal description of the property as recorded in public records",
-    },
-    {
-      label: "Subdivision name",
-      value: listingStr(listing, "subdivision_name", "--"),
-      help: "Supabase: subdivision_name",
-    },
-    {
-      label: "Property class",
-      value: listingStr(listing, "property_class", "--"),
-      help: "Supabase: property_class",
     },
     {
       label: "County name",
