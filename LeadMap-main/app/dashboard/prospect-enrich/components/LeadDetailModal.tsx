@@ -262,11 +262,11 @@ function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
   };
 
   // Same display rules for every carousel image: preserve aspect ratio, no upscaling, consistent quality
-  const carouselImgClassName = "w-full h-full object-contain bg-gray-900";
+  const carouselImgClassName = "w-full h-full object-contain bg-black";
   const carouselImgStyle = { imageRendering: "auto" as const };
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-gray-900">
+    <div className="relative w-full h-full flex flex-col bg-black">
       <div
         ref={scrollRef}
         className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-0 flex-1 min-h-0"
@@ -276,7 +276,7 @@ function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
           <div
             key={i}
             data-photo-index={i}
-            className="flex-shrink-0 w-full h-full snap-center bg-gray-900 min-w-full"
+            className="flex-shrink-0 w-full h-full snap-center bg-black min-w-full"
           >
             <img
               src={url}
@@ -670,17 +670,6 @@ export default function LeadDetailModal({
     listing?.building_style,
   ]);
 
-  const firstCurrentResident = listing?.current_residents?.[0];
-  const residentNameClean = firstCurrentResident
-    ? cleanResidentField(firstCurrentResident.resident_name ?? null)
-    : null;
-  const residentTypeClean = firstCurrentResident
-    ? cleanResidentField(firstCurrentResident.resident_type ?? null)
-    : null;
-  const residentAgeClean = firstCurrentResident
-    ? cleanResidentField(firstCurrentResident.resident_age ?? null)
-    : null;
-
   const tabLabels: Record<TabType, string> = {
     info: "Details",
     comps: "Comps",
@@ -714,7 +703,7 @@ export default function LeadDetailModal({
         </button>
 
         {/* Left Panel: one view only — full-height carousel when photos exist, else full-height Street View (55%) */}
-        <div ref={streetViewContainerRef} className="hidden lg:block lg:w-[55%] h-full bg-gray-900 group overflow-hidden relative">
+        <div ref={streetViewContainerRef} className="hidden lg:block lg:w-[55%] h-full bg-black group overflow-hidden relative">
           {listing && getPhotoUrls(listing.photos_json).length > 0 ? (
             /* Entire left side = photo carousel only */
             <div className="absolute inset-0 flex flex-col">
@@ -850,43 +839,13 @@ export default function LeadDetailModal({
                       {propertyBadges[0]}
                     </span>
                   )}
-                  {listing &&
-                    (residentNameClean ||
-                      residentTypeClean ||
-                      residentAgeClean) && (
-                      <div className="mt-2 text-xs text-slate-600">
-                        <span className="font-semibold">Resident:</span>
-                        {residentNameClean && (
-                          <span className="ml-1 text-slate-800">
-                            {residentNameClean}
-                          </span>
-                        )}
-                        {!residentNameClean && residentTypeClean && (
-                          <span className="ml-1 text-slate-800">
-                            {residentTypeClean}
-                          </span>
-                        )}
-                        {(residentTypeClean || residentAgeClean) && (
-                          <span className="ml-1 text-slate-500">
-                            {[
-                              residentTypeClean || null,
-                              residentAgeClean
-                                ? `Age ${residentAgeClean}`
-                                : null,
-                            ]
-                              .filter(Boolean)
-                              .join(", ")}
-                          </span>
-                        )}
-                      </div>
-                    )}
                 </div>
               </div>
             </div>
 
             {/* Sticky Tabs */}
             <div className="flex items-center gap-8 border-b border-gray-100 mb-8 sticky top-0 bg-white z-10 pt-2">
-              {(["info", "comps", "mail", "activity"] as TabType[]).map(
+              {(["info", "mail", "comps", "activity"] as TabType[]).map(
                 (tab) => (
                   <button
                     key={tab}
@@ -2132,13 +2091,15 @@ function MailTab({ listing }: { listing: Listing | null }) {
             })
           )}
         </div>
-        <button
-          type="button"
-          className="mt-4 w-full py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 border border-dashed border-gray-200 hover:border-gray-300 rounded-lg transition-all flex items-center justify-center gap-2"
-        >
-          View all history
-          <ChevronDown className="w-4 h-4" />
-        </button>
+        {previousResidents.length > 2 && (
+          <button
+            type="button"
+            className="mt-4 w-full py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 border border-dashed border-gray-200 hover:border-gray-300 rounded-lg transition-all flex items-center justify-center gap-2"
+          >
+            View all history
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        )}
       </section>
     </div>
   );
