@@ -357,20 +357,22 @@ export function useProspectData(userId: string | undefined) {
 
       idsBySource.forEach((idsSet, src) => {
         const ids = Array.from(idsSet)
-        const p: Promise<any[]> = supabase
-          .from(SKIPTRACE_TABLE_NAME)
-          .select(
-            'source_table,listing_id,resident_type,resident_name,resident_age,resident_phone_numbers,resident_previous_address'
-          )
-          .eq('source_table', src)
-          .in('listing_id', ids)
-          .then(({ data: rows, error }) => {
-            if (error) {
-              console.warn('Error fetching property_skip_trace for', src, error)
-              return []
-            }
-            return (rows || []) as any[]
-          })
+        const p = (async (): Promise<any[]> => {
+          const { data: rows, error } = await supabase
+            .from(SKIPTRACE_TABLE_NAME)
+            .select(
+              'source_table,listing_id,resident_type,resident_name,resident_age,resident_phone_numbers,resident_previous_address'
+            )
+            .eq('source_table', src)
+            .in('listing_id', ids)
+
+          if (error) {
+            console.warn('Error fetching property_skip_trace for', src, error)
+            return []
+          }
+
+          return (rows || []) as any[]
+        })()
 
         skipTracePromises.push(p)
       })
