@@ -5,10 +5,12 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { add_to_list } from "../utils/listUtils";
 import {
   Activity,
+  Camera,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Globe,
   Heart,
   History,
   Home,
@@ -347,6 +349,7 @@ export default function LeadDetailModal({
   const [showOwnerSelector, setShowOwnerSelector] = useState(false);
   const [showListsManager, setShowListsManager] = useState(false);
   const [showTagsInput, setShowTagsInput] = useState(false);
+  const [leftPanelView, setLeftPanelView] = useState<"photos" | "google_earth">("photos");
   const autoAssignRef = useRef(false);
   const streetViewContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClientComponentClient();
@@ -367,6 +370,13 @@ export default function LeadDetailModal({
     if (!listing) return;
     setIsSaved(!!listing.in_crm);
   }, [listing]);
+
+  // When listing changes, default left panel to Photos when listing has photos
+  useEffect(() => {
+    if (listing && getPhotoUrls(listing.photos_json).length > 0) {
+      setLeftPanelView("photos");
+    }
+  }, [listing?.listing_id]);
 
   useEffect(() => {
     autoAssignRef.current = false;
@@ -702,45 +712,76 @@ export default function LeadDetailModal({
           <X size={20} />
         </button>
 
-        {/* Left Panel: one view only — full-height carousel when photos exist, else full-height Street View (55%) */}
+        {/* Left Panel: Photos carousel or Google Earth (Street View); toggle in top right when photos exist */}
         <div ref={streetViewContainerRef} className="hidden lg:block lg:w-[55%] h-full bg-black group overflow-hidden relative">
-          {listing && getPhotoUrls(listing.photos_json).length > 0 ? (
-            /* Entire left side = photo carousel only */
-            <div className="absolute inset-0 flex flex-col">
-              <PropertyPhotoCarousel listing={listing} />
-              <div className="absolute top-4 left-6">
-                <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
-                  <span className="font-bold text-base tracking-tight">
-                    {streetAddress || "Address not available"}
-                  </span>
-                  <span className="text-white/70 text-xs font-light">
-                    {cityStateZip}
-                  </span>
+          {(() => {
+            const hasPhotos = !!(listing && getPhotoUrls(listing.photos_json).length > 0);
+            const showPhotos = hasPhotos && leftPanelView === "photos";
+
+            return (
+              <>
+                {/* Address card — top left */}
+                <div className="absolute top-4 left-6 z-10">
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
+                    <span className="font-bold text-base tracking-tight">
+                      {streetAddress || "Address not available"}
+                    </span>
+                    <span className="text-white/70 text-xs font-light">
+                      {cityStateZip}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ) : (
-            /* No photos: entire left side = Google Maps Street View */
-            <>
-              <div className="absolute inset-0 min-h-[400px]">
-                {listing && <StreetViewPanorama listing={listing} containerRef={streetViewContainerRef} />}
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5 pointer-events-none" />
-              <div className="absolute top-4 left-6">
-                <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
-                  <span className="font-bold text-base tracking-tight">
-                    {streetAddress || "Address not available"}
-                  </span>
-                  <span className="text-white/70 text-xs font-light">
-                    {cityStateZip}
-                  </span>
-                </div>
-              </div>
-              <div className="absolute bottom-3 left-4 text-[11px] text-white/50 font-medium tracking-wide">
-                © {new Date().getFullYear()} Google
-              </div>
-            </>
-          )}
+
+                {/* Photos / Google Earth toggle — top right, 1:1 with design */}
+                {hasPhotos && (
+                  <div className="absolute top-4 right-6 z-20">
+                    <div className="bg-white rounded-full p-1 shadow-md border border-slate-200 flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => setLeftPanelView("photos")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                          leftPanelView === "photos"
+                            ? "bg-[#3b82f6] text-white shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <Camera className="w-4 h-4" />
+                        Photos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLeftPanelView("google_earth")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                          leftPanelView === "google_earth"
+                            ? "bg-[#3b82f6] text-white shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <Globe className="w-4 h-4" />
+                        Google Earth
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {showPhotos ? (
+                  <div className="absolute inset-0 flex flex-col">
+                    <PropertyPhotoCarousel listing={listing!} />
+                  </div>
+                ) : (
+                  <>
+                    <div className="absolute inset-0 min-h-[400px]">
+                      {listing && <StreetViewPanorama listing={listing} containerRef={streetViewContainerRef} />}
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5 pointer-events-none" />
+                    <div className="absolute bottom-3 left-4 text-[11px] text-white/50 font-medium tracking-wide">
+                      © {new Date().getFullYear()} Google
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {/* Right Panel: Content (45%) - scaled to 90% with ratios preserved */}
