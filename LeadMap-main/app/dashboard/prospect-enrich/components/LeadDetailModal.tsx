@@ -1987,179 +1987,168 @@ function CompsTab() {
   );
 }
 
-// Mail Tab (Owner) — Current Residents + Previous Residents from property_skip_trace_residents
+// Mail Tab (Owner) — Current Residents + Previous Residents (matches reference layout; data from property_skip_trace_residents)
 function MailTab({ listing }: { listing: Listing | null }) {
   const currentResidents = listing?.current_residents ?? [];
   const previousResidents = listing?.previous_residents ?? [];
-  const hasCurrent = currentResidents.length > 0;
-  const hasPrevious = previousResidents.length > 0;
-  const hasAnyResidents = hasCurrent || hasPrevious;
-
-  if (!hasAnyResidents) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-6">
-        <Mail className="w-12 h-12 text-slate-300 mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">Mail Campaigns</h3>
-        <p className="text-sm text-slate-500 text-center max-w-md leading-relaxed">
-          Send direct mail campaigns to this property owner to generate leads and build relationships.
-        </p>
-        <button
-          type="button"
-          className="mt-6 px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition-colors"
-        >
-          Start Mail Campaign
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-12">
-      {/* Current Residents */}
+      {/* Current Residents — same structure as reference; empty state when no data */}
       <section>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
           <Home className="w-3.5 h-3.5" />
           Current Residents
         </h3>
-        <div className="bg-slate-50/50 rounded-xl p-6 border border-slate-100">
+        <div className="bg-slate-50/50 rounded-xl p-6 border border-gray-50">
           <div className="flex flex-col gap-4">
-            {currentResidents.map((r, idx) => {
-              const name = cleanResidentField(r.resident_name ?? null);
-              const type = cleanResidentField(r.resident_type ?? null);
-              const age = cleanResidentField(r.resident_age ?? null);
-              const phones = parseResidentPhoneNumbers(r.resident_phone_numbers ?? null);
-              const prevAddr = cleanResidentField(r.resident_previous_address ?? null);
-              return (
-                <div key={idx} className="flex flex-col gap-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      {name && (
-                        <h4 className="text-lg font-bold text-slate-900">{name}</h4>
-                      )}
-                      <div className="flex items-center gap-3 mt-2 flex-wrap">
-                        {type && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                            {type}
-                          </span>
-                        )}
-                        {age && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                            Age: {age}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
-                      aria-label="More options"
-                    >
-                      <MoreHorizontal className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mt-2">
-                    {phones.length > 0 && (
+            {currentResidents.length === 0 ? (
+              <div className="flex justify-between items-start">
+                <p className="text-sm text-slate-500">No current residents on file for this property.</p>
+                <button
+                  type="button"
+                  className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
+                  aria-label="More options"
+                >
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              currentResidents.map((r, idx) => {
+                const name = cleanResidentField(r.resident_name ?? null);
+                const type = cleanResidentField(r.resident_type ?? null);
+                const age = cleanResidentField(r.resident_age ?? null);
+                const phones = parseResidentPhoneNumbers(r.resident_phone_numbers ?? null);
+                const prevAddr = cleanResidentField(r.resident_previous_address ?? null);
+                return (
+                  <div key={idx} className="flex flex-col gap-4">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1">
-                          Contact
-                        </span>
-                        <div className="flex flex-col gap-1">
-                          {phones.map((phone, i) => (
-                            <a
-                              key={i}
-                              href={`tel:${phone.replace(/\D/g, "")}`}
-                              className="text-sm font-medium text-slate-900 hover:text-blue-600 transition-colors flex items-center gap-2 group"
-                            >
-                              <Phone className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600" />
-                              {phone}
-                            </a>
-                          ))}
+                        {name && (
+                          <h4 className="text-lg font-bold text-slate-900">{name}</h4>
+                        )}
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                          {type && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                              {type}
+                            </span>
+                          )}
+                          {age && (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                              Age: {age}
+                            </span>
+                          )}
                         </div>
                       </div>
-                    )}
-                    {prevAddr && (
-                      <div>
-                        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1">
-                          Previous Address
-                        </span>
-                        <span className="text-sm text-slate-600 leading-snug block whitespace-pre-line">
-                          {prevAddr}
-                        </span>
-                      </div>
-                    )}
+                      <button
+                        type="button"
+                        className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
+                        aria-label="More options"
+                      >
+                        <MoreHorizontal className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mt-2">
+                      {phones.length > 0 && (
+                        <div>
+                          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1">
+                            Contact
+                          </span>
+                          <div className="flex flex-col gap-1">
+                            {phones.map((phone, i) => (
+                              <a
+                                key={i}
+                                href={`tel:${phone.replace(/\D/g, "")}`}
+                                className="text-sm font-medium text-slate-900 hover:text-blue-600 transition-colors flex items-center gap-2 group"
+                              >
+                                <Phone className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600" />
+                                {phone}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {prevAddr && (
+                        <div>
+                          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1">
+                            Previous Address
+                          </span>
+                          <span className="text-sm text-slate-500 leading-snug block whitespace-pre-line">
+                            {prevAddr}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </section>
 
-      {/* Previous Residents */}
+      {/* Previous Residents — same structure as reference; empty state when no data */}
       <section>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
           <History className="w-3.5 h-3.5" />
           Previous Residents
         </h3>
-        <div className="divide-y divide-dashed divide-slate-200">
-          {previousResidents.map((r, idx) => {
-            const name = cleanResidentField(r.resident_name ?? null);
-            const age = cleanResidentField(r.resident_age ?? null);
-            const yearFrom = r.year_from != null ? String(r.year_from) : null;
-            const yearTo = r.year_to != null ? String(r.year_to) : null;
-            const yearRange =
-              yearFrom && yearTo ? `${yearFrom} - ${yearTo}` : yearFrom || yearTo || null;
-            const currentAt = cleanResidentField(r.resident_previous_address ?? null);
-            return (
-              <div key={idx} className="py-4 first:pt-0 group">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {name && (
-                      <h4 className="text-base font-semibold text-slate-900 group-hover:text-slate-800 transition-colors">
-                        {name}
-                      </h4>
-                    )}
-                    {age && (
-                      <span className="text-xs text-slate-400 px-1.5 py-0.5 rounded bg-slate-50 border border-slate-100">
-                        Age: {age}
-                      </span>
+        <div className="divide-y divide-dashed divide-gray-200">
+          {previousResidents.length === 0 ? (
+            <div className="py-4">
+              <p className="text-sm text-slate-500">No previous residents on file.</p>
+            </div>
+          ) : (
+            previousResidents.map((r, idx) => {
+              const name = cleanResidentField(r.resident_name ?? null);
+              const age = cleanResidentField(r.resident_age ?? null);
+              const yearFrom = r.year_from != null ? String(r.year_from) : null;
+              const yearTo = r.year_to != null ? String(r.year_to) : null;
+              const yearRange =
+                yearFrom && yearTo ? `${yearFrom} - ${yearTo}` : yearFrom || yearTo || null;
+              const currentAt = cleanResidentField(r.resident_previous_address ?? null);
+              return (
+                <div key={idx} className="py-4 first:pt-0 group">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      {name && (
+                        <h4 className="text-base font-semibold text-slate-900 group-hover:text-slate-800 transition-colors">
+                          {name}
+                        </h4>
+                      )}
+                      {age && (
+                        <span className="text-xs text-slate-400 px-1.5 py-0.5 rounded bg-gray-50 border border-gray-100">
+                          Age: {age}
+                        </span>
+                      )}
+                    </div>
+                    {yearRange && (
+                      <span className="text-xs font-medium text-slate-400">{yearRange}</span>
                     )}
                   </div>
-                  {yearRange && (
-                    <span className="text-xs font-medium text-slate-400">{yearRange}</span>
+                  {currentAt && (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                      <span className="text-sm text-slate-500">
+                        Currently at:{" "}
+                        <span className="text-slate-900 font-medium">{currentAt}</span>
+                      </span>
+                    </div>
                   )}
                 </div>
-                {currentAt && (
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                    <span className="text-sm text-slate-500">
-                      Currently at:{" "}
-                      <span className="text-slate-900 font-medium">{currentAt}</span>
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
         <button
           type="button"
-          className="mt-4 w-full py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 border border-dashed border-slate-200 hover:border-slate-300 rounded-lg transition-all flex items-center justify-center gap-2"
+          className="mt-4 w-full py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 border border-dashed border-gray-200 hover:border-gray-300 rounded-lg transition-all flex items-center justify-center gap-2"
         >
           View all history
           <ChevronDown className="w-4 h-4" />
         </button>
       </section>
-
-      <div className="pt-4">
-        <button
-          type="button"
-          className="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition-colors"
-        >
-          Start Mail Campaign
-        </button>
-      </div>
     </div>
   );
 }
