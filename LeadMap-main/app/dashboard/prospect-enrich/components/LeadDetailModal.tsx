@@ -732,9 +732,15 @@ export default function LeadDetailModal({
                   </div>
                 )}
 
-                {/* Photos / Google Earth toggle — centered horizontally in left panel */}
+                {/* Photos / Google Earth toggle — right when Photos selected, center when Google Earth selected */}
                 {hasPhotos && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+                  <div
+                    className={`absolute top-4 z-20 ${
+                      leftPanelView === "photos"
+                        ? "right-6"
+                        : "left-1/2 -translate-x-1/2"
+                    }`}
+                  >
                     <div className="bg-white rounded-full p-1 shadow-md border border-slate-200 flex items-center">
                       <button
                         type="button"
