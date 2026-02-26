@@ -18,8 +18,6 @@ import {
   List,
   Mail,
   MapPin,
-  Maximize,
-  Minimize,
   MoreHorizontal,
   Phone,
   Tag,
@@ -720,17 +718,19 @@ export default function LeadDetailModal({
 
             return (
               <>
-                {/* Address card — top left */}
-                <div className="absolute top-4 left-6 z-10">
-                  <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
-                    <span className="font-bold text-base tracking-tight">
-                      {streetAddress || "Address not available"}
-                    </span>
-                    <span className="text-white/70 text-xs font-light">
-                      {cityStateZip}
-                    </span>
+                {/* Address card — top left, only when showing Photos carousel (hidden on Google Earth) */}
+                {showPhotos && (
+                  <div className="absolute top-4 left-6 z-10">
+                    <div className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2.5 rounded-lg flex flex-col shadow-lg">
+                      <span className="font-bold text-base tracking-tight">
+                        {streetAddress || "Address not available"}
+                      </span>
+                      <span className="text-white/70 text-xs font-light">
+                        {cityStateZip}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Photos / Google Earth toggle — top right, 1:1 with design */}
                 {hasPhotos && (
@@ -1052,7 +1052,6 @@ function StreetViewPanorama({
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [apiReadyAttempt, setApiReadyAttempt] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (!listing || !panoramaRef.current) return;
@@ -1201,54 +1200,6 @@ function StreetViewPanorama({
     apiReadyAttempt,
   ]);
 
-  // Fullscreen functionality
-  const toggleFullscreen = useCallback(() => {
-    if (!containerRef?.current) return;
-
-    const element = containerRef.current;
-
-    if (!document.fullscreenElement) {
-      // Enter fullscreen
-      if (element.requestFullscreen) {
-        element.requestFullscreen().catch((err) => {
-          console.error("Error attempting to enable fullscreen:", err);
-        });
-      } else if ((element as any).webkitRequestFullscreen) {
-        // Safari
-        (element as any).webkitRequestFullscreen();
-      } else if ((element as any).msRequestFullscreen) {
-        // IE/Edge
-        (element as any).msRequestFullscreen();
-      }
-    } else {
-      // Exit fullscreen
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if ((document as any).webkitExitFullscreen) {
-        (document as any).webkitExitFullscreen();
-      } else if ((document as any).msExitFullscreen) {
-        (document as any).msExitFullscreen();
-      }
-    }
-  }, [containerRef]);
-
-  // Listen for fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-    document.addEventListener("msfullscreenchange", handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("msfullscreenchange", handleFullscreenChange);
-    };
-  }, []);
-
   // Fallback to static image if Street View fails
   if (error && listing) {
     const lat = listing.lat ? Number(listing.lat) : null;
@@ -1369,23 +1320,6 @@ function StreetViewPanorama({
           minHeight: "400px",
         }}
       />
-
-      {/* Fullscreen button overlay */}
-      {containerRef && (
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className="absolute top-4 right-4 z-50 p-2.5 rounded-lg bg-black/60 hover:bg-black/80 text-white transition-all backdrop-blur-sm border border-white/20 shadow-lg"
-          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        >
-          {isFullscreen ? (
-            <Minimize size={18} />
-          ) : (
-            <Maximize size={18} />
-          )}
-        </button>
-      )}
     </div>
   );
 }
