@@ -99,6 +99,8 @@ interface Listing {
   pipeline_status?: string | null;
   lat?: number | null;
   lng?: number | null;
+  // Source table this listing came from (e.g. fsbo_leads, frbo_leads, foreclosure_listings)
+  source_table?: string | null;
   // Compatibility fields for probate_leads (which uses latitude/longitude)
   latitude?: number | null;
   longitude?: number | null;
@@ -147,6 +149,12 @@ interface Listing {
   assessed_improvement_value?: string | null;
   total_market_value?: string | null;
   amenities?: string | null;
+  // Skip-traced resident data from property_skip_trace
+  resident_type?: string | null;
+  resident_name?: string | null;
+  resident_age?: string | null;
+  resident_phone_numbers?: string | null;
+  resident_previous_address?: string | null;
   // Supabase column names (snake_case) — may be on listing root or in other
   number_of_buildings?: string | number | null;
   number_of_commercial_units?: string | number | null;
@@ -183,6 +191,26 @@ function listingStr(listing: Listing | null, key: string, fallback: string): str
   const v = listingVal(listing, key);
   if (v == null || v === "") return fallback;
   return String(v).trim();
+}
+
+// Normalizes resident fields coming from property_skip_trace (null/empty/"--" -> null)
+function cleanResidentField(value: string | null | undefined): string | null {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed || trimmed === "--") return null;
+  return trimmed;
+}
+
+// Parses the semicolon-separated resident_phone_numbers field into a clean list
+function parseResidentPhoneNumbers(
+  value: string | null | undefined
+): string[] {
+  const cleaned = cleanResidentField(value);
+  if (!cleaned) return [];
+  return cleaned
+    .split(";")
+    .map((phone) => phone.trim())
+    .filter((phone) => phone.length > 0);
 }
 
 interface LeadDetailModalProps {
@@ -633,6 +661,10 @@ export default function LeadDetailModal({
     listing?.building_style,
   ]);
 
+  const residentNameClean = cleanResidentField(listing?.resident_name ?? null);
+  const residentTypeClean = cleanResidentField(listing?.resident_type ?? null);
+  const residentAgeClean = cleanResidentField(listing?.resident_age ?? null);
+
   const tabLabels: Record<TabType, string> = {
     info: "Details",
     comps: "Comps",
@@ -802,6 +834,36 @@ export default function LeadDetailModal({
                       {propertyBadges[0]}
                     </span>
                   )}
+                  {listing &&
+                    (residentNameClean ||
+                      residentTypeClean ||
+                      residentAgeClean) && (
+                      <div className="mt-2 text-xs text-slate-600">
+                        <span className="font-semibold">Resident:</span>
+                        {residentNameClean && (
+                          <span className="ml-1 text-slate-800">
+                            {residentNameClean}
+                          </span>
+                        )}
+                        {!residentNameClean && residentTypeClean && (
+                          <span className="ml-1 text-slate-800">
+                            {residentTypeClean}
+                          </span>
+                        )}
+                        {(residentTypeClean || residentAgeClean) && (
+                          <span className="ml-1 text-slate-500">
+                            {[
+                              residentTypeClean || null,
+                              residentAgeClean
+                                ? `Age ${residentAgeClean}`
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </span>
+                        )}
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -826,7 +888,7 @@ export default function LeadDetailModal({
             <div className="space-y-10">
               {activeTab === "info" && <InfoTab listing={listing} />}
               {activeTab === "comps" && <CompsTab />}
-              {activeTab === "mail" && <MailTab />}
+              {activeTab === "mail" && <MailTab listing={listing} />}
               {activeTab === "activity" && <ActivityTab />}
             </div>
           </div>
@@ -1908,7 +1970,24 @@ function CompsTab() {
 }
 
 // Mail Tab Component
-function MailTab() {
+function MailTab({ listing }: { listing: Listing | null }) {
+  const residentName = cleanResidentField(listing?.resident_name ?? null);
+  const residentType = cleanResidentField(listing?.resident_type ?? null);
+  const residentAge = cleanResidentField(listing?.resident_age ?? null);
+  const residentPhones = parseResidentPhoneNumbers(
+    listing?.resident_phone_numbers ?? null
+  );
+  const residentPreviousAddress = cleanResidentField(
+    listing?.resident_previous_address ?? null
+  );
+
+  const hasResidentData =
+    !!residentName ||
+    !!residentType ||
+    !!residentAge ||
+    !!residentPreviousAddress ||
+    residentPhones.length > 0;
+
   return (
     <div
       style={{
@@ -1943,6 +2022,124 @@ function MailTab() {
         Send direct mail campaigns to this property owner to generate leads and
         build relationships.
       </p>
+      {hasResidentData && (
+        <div
+          style={{
+            marginTop: "24px",
+            padding: "16px",
+            background: "#f9fafb",
+            borderRadius: "8px",
+            width: "100%",
+            maxWidth: "480px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "11px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: "#6b7280",
+              marginBottom: "4px",
+            }}
+          >
+            Skip-traced resident
+          </div>
+          {residentName && (
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#111827",
+              }}
+            >
+              {residentName}
+            </div>
+          )}
+          {!residentName && (residentType || residentAge) && (
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#111827",
+              }}
+            >
+              {[residentType, residentAge ? `Age ${residentAge}` : null]
+                .filter(Boolean)
+                .join(", ")}
+            </div>
+          )}
+          {residentName && (residentType || residentAge) && (
+            <div
+              style={{
+                marginTop: "2px",
+                fontSize: "12px",
+                color: "#6b7280",
+              }}
+            >
+              {[residentType, residentAge ? `Age ${residentAge}` : null]
+                .filter(Boolean)
+                .join(", ")}
+            </div>
+          )}
+          {residentPhones.length > 0 && (
+            <div
+              style={{
+                marginTop: "12px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  color: "#6b7280",
+                  marginBottom: "4px",
+                }}
+              >
+                Phone numbers
+              </div>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  fontSize: "13px",
+                  color: "#111827",
+                }}
+              >
+                {residentPhones.map((phone, idx) => (
+                  <li key={idx} style={{ marginBottom: "2px" }}>
+                    {phone}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {residentPreviousAddress && (
+            <div
+              style={{
+                marginTop: "12px",
+                fontSize: "13px",
+                color: "#4b5563",
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>Previous address: </span>
+              <span>{residentPreviousAddress}</span>
+            </div>
+          )}
+          <div
+            style={{
+              marginTop: "10px",
+              fontSize: "11px",
+              color: "#9ca3af",
+            }}
+          >
+            Skip-traced resident data from property_skip_trace.
+          </div>
+        </div>
+      )}
       <button
         style={{
           marginTop: "24px",

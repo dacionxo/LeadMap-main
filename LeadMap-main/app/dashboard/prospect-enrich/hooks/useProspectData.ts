@@ -55,6 +55,8 @@ export interface Listing {
   pipeline_status?: string | null
   lat?: number | null
   lng?: number | null
+  // Source table this listing came from (e.g. fsbo_leads, frbo_leads, foreclosure_listings)
+  source_table?: string | null
   // Compatibility fields for probate_leads (which uses latitude/longitude)
   latitude?: number | null
   longitude?: number | null
@@ -103,6 +105,12 @@ export interface Listing {
   assessed_improvement_value?: string | null
   total_market_value?: string | null
   amenities?: string | null
+  // Skip-traced resident data from property_skip_trace
+  resident_type?: string | null
+  resident_name?: string | null
+  resident_age?: string | null
+  resident_phone_numbers?: string | null
+  resident_previous_address?: string | null
 }
 
 export type FilterType = 'all' | 'expired' | 'probate' | 'fsbo' | 'frbo' | 'imports' | 'trash' | 'foreclosure' | 'high_value' | 'price_drop' | 'new_listings'
@@ -131,6 +139,10 @@ const TABLE_MAPPING: Record<FilterType, string> = {
 
 const META_FILTERS = new Set<FilterType>(['all', 'high_value', 'price_drop', 'new_listings'])
 const EXCLUSIVE_CATEGORY_FILTERS = new Set<FilterType>(['all', 'expired', 'probate', 'fsbo', 'frbo', 'imports', 'trash', 'foreclosure'])
+
+// Tables that participate in property_skip_trace skip-trace data
+const SKIPTRACE_SOURCE_TABLES = new Set<string>(['fsbo_leads', 'frbo_leads', 'foreclosure_listings'])
+const SKIPTRACE_TABLE_NAME = 'property_skip_trace'
 
 // ============================================================================
 // Helpers
@@ -256,6 +268,144 @@ export function useProspectData(userId: string | undefined) {
   }, [supabase, userId, getTableName])
 
   /**
+   * Attach skip-traced resident data from property_skip_trace onto listings.
+   */
+  const attachResidentData = useCallback(
+    async (activeCategory: FilterType, data: Listing[]): Promise<Listing[]> => {
+      if (!data.length) return data
+
+      // Single-category: resolve table name from activeCategory
+      if (activeCategory !== 'all') {
+        const tableName = getTableName(activeCategory)
+
+        if (!SKIPTRACE_SOURCE_TABLES.has(tableName)) {
+          return data
+        }
+
+        const ids = Array.from(
+          new Set(
+            data
+              .map((item) => item.listing_id)
+              .filter((id): id is string => typeof id === 'string' && id.length > 0)
+          )
+        )
+
+        if (!ids.length) return data
+
+        const { data: skipRows, error } = await supabase
+          .from(SKIPTRACE_TABLE_NAME)
+          .select(
+            'listing_id,resident_type,resident_name,resident_age,resident_phone_numbers,resident_previous_address'
+          )
+          .eq('source_table', tableName)
+          .in('listing_id', ids)
+
+        if (error) {
+          console.warn('Error fetching property_skip_trace for', tableName, error)
+          return data
+        }
+
+        if (!skipRows || !skipRows.length) {
+          return data
+        }
+
+        const byId = new Map<string, any>()
+        for (const row of skipRows) {
+          if (row.listing_id) {
+            byId.set(row.listing_id as string, row)
+          }
+        }
+
+        return data.map((item) => {
+          const s = byId.get(item.listing_id)
+          if (!s) {
+            // Still ensure source_table is present for downstream logic
+            return {
+              ...item,
+              source_table: item.source_table || tableName,
+            }
+          }
+
+          return {
+            ...item,
+            source_table: item.source_table || tableName,
+            resident_type: s.resident_type ?? item.resident_type,
+            resident_name: s.resident_name ?? item.resident_name,
+            resident_age: s.resident_age ?? item.resident_age,
+            resident_phone_numbers: s.resident_phone_numbers ?? item.resident_phone_numbers,
+            resident_previous_address: s.resident_previous_address ?? item.resident_previous_address,
+          }
+        })
+      }
+
+      // Aggregated "all" category: use source_table on each item to group queries
+      const idsBySource = new Map<string, Set<string>>()
+
+      for (const item of data) {
+        const src = item.source_table
+        if (!src || !SKIPTRACE_SOURCE_TABLES.has(src)) continue
+        if (!item.listing_id) continue
+        if (!idsBySource.has(src)) {
+          idsBySource.set(src, new Set())
+        }
+        idsBySource.get(src)!.add(item.listing_id)
+      }
+
+      if (!idsBySource.size) return data
+
+      const skipTracePromises: Promise<any[]>[] = []
+
+      idsBySource.forEach((idsSet, src) => {
+        const ids = Array.from(idsSet)
+        const p: Promise<any[]> = supabase
+          .from(SKIPTRACE_TABLE_NAME)
+          .select(
+            'source_table,listing_id,resident_type,resident_name,resident_age,resident_phone_numbers,resident_previous_address'
+          )
+          .eq('source_table', src)
+          .in('listing_id', ids)
+          .then(({ data: rows, error }) => {
+            if (error) {
+              console.warn('Error fetching property_skip_trace for', src, error)
+              return []
+            }
+            return (rows || []) as any[]
+          })
+
+        skipTracePromises.push(p)
+      })
+
+      const skipResults = await Promise.all(skipTracePromises)
+      const allRows = skipResults.flat()
+
+      if (!allRows.length) return data
+
+      const byKey = new Map<string, any>()
+      for (const row of allRows) {
+        if (row.source_table && row.listing_id) {
+          byKey.set(`${row.source_table}:${row.listing_id}`, row)
+        }
+      }
+
+      return data.map((item) => {
+        const key = `${item.source_table || ''}:${item.listing_id}`
+        const s = byKey.get(key)
+        if (!s) return item
+
+        return {
+          ...item,
+          resident_type: s.resident_type ?? item.resident_type,
+          resident_name: s.resident_name ?? item.resident_name,
+          resident_age: s.resident_age ?? item.resident_age,
+          resident_phone_numbers: s.resident_phone_numbers ?? item.resident_phone_numbers,
+          resident_previous_address: s.resident_previous_address ?? item.resident_previous_address,
+        }
+      })
+    },
+    [supabase, getTableName]
+  )
+
+  /**
    * Main data fetching function.
    * Handles "All" aggregation and category-specific fetching.
    * Note: This fetches a limited set for client-side view. 
@@ -304,14 +454,22 @@ export function useProspectData(userId: string | undefined) {
         })
 
         const results = await Promise.allSettled(promises)
-        
-        // Aggregate all successful results, ignoring failures
-        data = results
-          .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-          .flatMap(r => {
-            const result = r.value
-            return result?.data || []
+
+        // Aggregate all successful results, ignoring failures, and annotate source_table
+        const combined: Listing[] = []
+        results.forEach((result, index) => {
+          if (result.status !== 'fulfilled') return
+          const table = tablesToFetch[index]
+          const rows = (result.value?.data || []) as Listing[]
+          rows.forEach((row) => {
+            combined.push({
+              ...row,
+              source_table: (row as any).source_table || table,
+            })
           })
+        })
+
+        data = combined
         
         // Log any failures for debugging
         const failures = results.filter(r => r.status === 'rejected')
@@ -331,7 +489,7 @@ export function useProspectData(userId: string | undefined) {
       } else {
         // Single category fetch
         const tableName = getTableName(activeCategory)
-        
+
         const query = supabase
           .from(tableName)
           .select('*')
@@ -341,7 +499,7 @@ export function useProspectData(userId: string | undefined) {
         // (Logic for high_value etc is handled by client-side filtering in page.tsx currently)
         
         const { data: result, error } = await query
-        
+
         if (error) {
           // Handle missing table gracefully
           if ((error as any)?.code === 'PGRST116' || error.message?.includes('does not exist')) {
@@ -351,9 +509,16 @@ export function useProspectData(userId: string | undefined) {
             throw error
           }
         } else {
-          data = result || []
+          const rows = (result || []) as Listing[]
+          data = rows.map((row) => ({
+            ...row,
+            source_table: (row as any).source_table || tableName,
+          }))
         }
       }
+
+      // Attach skip-traced resident data when available
+      data = await attachResidentData(activeCategory, data)
 
       // Calculate "in_crm" status
       // Note: This relies on crmContactIds being up to date. 
