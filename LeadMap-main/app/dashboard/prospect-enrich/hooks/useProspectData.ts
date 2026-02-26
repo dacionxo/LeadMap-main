@@ -110,15 +110,13 @@ export interface Listing {
   previous_residents?: ResidentRow[]
 }
 
-/** One row from property_skip_trace_residents (Supabase). */
+/** One row from property_skip_trace_residents (Supabase). Schema: id, property_skip_trace_id, resident_index (1-10), resident_type, resident_name, resident_age, resident_phone_numbers, resident_previous_address, source_table, listing_id, property_url, street. */
 export interface ResidentRow {
-  resident_name?: string | null
   resident_type?: string | null
+  resident_name?: string | null
   resident_age?: string | null
   resident_phone_numbers?: string | null
   resident_previous_address?: string | null
-  year_from?: string | number | null
-  year_to?: string | number | null
 }
 
 export type FilterType = 'all' | 'expired' | 'probate' | 'fsbo' | 'frbo' | 'imports' | 'trash' | 'foreclosure' | 'high_value' | 'price_drop' | 'new_listings'
@@ -295,9 +293,11 @@ export function useProspectData(userId: string | undefined) {
       const { data: rows, error } = await supabase
         .from(RESIDENTS_TABLE_NAME)
         .select(
-          'property_url,resident_type,resident_name,resident_age,resident_phone_numbers,resident_previous_address,year_from,year_to'
+          'property_url,resident_index,resident_type,resident_name,resident_age,resident_phone_numbers,resident_previous_address'
         )
         .in('property_url', propertyUrls)
+        .order('property_url', { ascending: true })
+        .order('resident_index', { ascending: true })
 
       if (error) {
         console.warn('Error fetching property_skip_trace_residents:', error)
@@ -314,13 +314,11 @@ export function useProspectData(userId: string | undefined) {
         if (!url || typeof url !== 'string') continue
 
         const resident: ResidentRow = {
-          resident_name: row.resident_name as string | null,
           resident_type: row.resident_type as string | null,
+          resident_name: row.resident_name as string | null,
           resident_age: row.resident_age as string | null,
           resident_phone_numbers: row.resident_phone_numbers as string | null,
           resident_previous_address: row.resident_previous_address as string | null,
-          year_from: row.year_from as string | number | null,
-          year_to: row.year_to as string | number | null,
         }
 
         const type = (resident.resident_type || '').trim()

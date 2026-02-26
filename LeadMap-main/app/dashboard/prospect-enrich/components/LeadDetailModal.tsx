@@ -176,15 +176,13 @@ interface Listing {
   lot_size_sqft?: string | number | null;
 }
 
-/** One resident row from property_skip_trace_residents (Supabase). */
+/** One resident row from property_skip_trace_residents (Supabase). Schema: resident_index (1-10), resident_type, resident_name, resident_age, resident_phone_numbers, resident_previous_address. */
 interface ResidentRow {
-  resident_name?: string | null;
   resident_type?: string | null;
+  resident_name?: string | null;
   resident_age?: string | null;
   resident_phone_numbers?: string | null;
   resident_previous_address?: string | null;
-  year_from?: string | number | null;
-  year_to?: string | number | null;
 }
 
 // Read value from listing root or listing.other using Supabase column names (snake_case)
@@ -2103,10 +2101,6 @@ function MailTab({ listing }: { listing: Listing | null }) {
             previousResidents.map((r, idx) => {
               const name = cleanResidentField(r.resident_name ?? null);
               const age = cleanResidentField(r.resident_age ?? null);
-              const yearFrom = r.year_from != null ? String(r.year_from) : null;
-              const yearTo = r.year_to != null ? String(r.year_to) : null;
-              const yearRange =
-                yearFrom && yearTo ? `${yearFrom} - ${yearTo}` : yearFrom || yearTo || null;
               const currentAt = cleanResidentField(r.resident_previous_address ?? null);
               return (
                 <div key={idx} className="py-4 first:pt-0 group">
@@ -2123,9 +2117,6 @@ function MailTab({ listing }: { listing: Listing | null }) {
                         </span>
                       )}
                     </div>
-                    {yearRange && (
-                      <span className="text-xs font-medium text-slate-400">{yearRange}</span>
-                    )}
                   </div>
                   {currentAt && (
                     <div className="flex items-start gap-2">
