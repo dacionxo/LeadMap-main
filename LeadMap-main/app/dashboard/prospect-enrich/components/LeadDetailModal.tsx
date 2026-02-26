@@ -732,9 +732,9 @@ export default function LeadDetailModal({
                   </div>
                 )}
 
-                {/* Photos / Google Earth toggle — top right, 1:1 with design */}
+                {/* Photos / Google Earth toggle — centered horizontally in left panel */}
                 {hasPhotos && (
-                  <div className="absolute top-4 right-6 z-20">
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
                     <div className="bg-white rounded-full p-1 shadow-md border border-slate-200 flex items-center">
                       <button
                         type="button"
