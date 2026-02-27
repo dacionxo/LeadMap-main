@@ -2,12 +2,12 @@
 
 /**
  * ProspectFilterSidebar — Elite Property Prospecting Dashboard design
- * 1:1 match to reference: glass-sidebar, Filters header, pinned/unpinned sections,
- * Material Symbols icons, More Filters button.
+ * Price Range and Location match reference: card layout, range bar, City/State/Zip tabs, search, checkbox list with counts.
  */
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { cn } from '@/app/lib/utils'
+import { Pin, Search, Check, SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-react'
 import { Checkbox } from '@/app/components/ui/checkbox'
 
 interface FilterGroup {
@@ -122,16 +122,77 @@ const PINNED_IDS = new Set<string>(MAIN_FILTER_IDS)
 const MAIN_FILTERS = FILTER_GROUPS.filter((fg) => MAIN_FILTER_IDS.includes(fg.id as any))
 const MORE_FILTERS = FILTER_GROUPS.filter((fg) => !MAIN_FILTER_IDS.includes(fg.id as any))
 
+const PRICE_SLIDER_MIN = 0
 const PRICE_SLIDER_MAX = 2_000_000
 
-function formatPrice(num: number | undefined): string {
-  if (num == null || Number.isNaN(num)) return ''
-  return Math.round(num).toLocaleString()
+function formatPriceInput(value: number | string | undefined): string {
+  if (value === undefined || value === null || value === '') return ''
+  const num = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value
+  if (isNaN(num)) return ''
+  return num.toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
-function parsePriceInput(val: string): number | undefined {
-  const n = parseFloat(val.replace(/,/g, ''))
-  return Number.isNaN(n) ? undefined : n
+function parsePriceInput(value: string): number | undefined {
+  const num = parseFloat(value.replace(/,/g, ''))
+  return isNaN(num) ? undefined : num
+}
+
+function formatPriceShort(value: number | undefined): string {
+  if (value === undefined || value === null) return 'Any'
+  if (value >= 1000) return `$${Math.round(value / 1000)}k`
+  return `$${value}`
+}
+
+function PriceRangeBar({
+  min,
+  max,
+  rangeMin,
+  rangeMax,
+  onMinChange,
+  onMaxChange
+}: {
+  min: number
+  max: number
+  rangeMin: number
+  rangeMax: number
+  onMinChange: (n: number) => void
+  onMaxChange: (n: number) => void
+}) {
+  const range = rangeMax - rangeMin || 1
+  const leftPct = Math.min(100, Math.max(0, ((min - rangeMin) / range) * 100))
+  const rightPct = Math.min(100, Math.max(0, ((max - rangeMin) / range) * 100))
+  const [dragging, setDragging] = useState<'min' | 'max' | null>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+  const valueFromX = useCallback((clientX: number) => {
+    const bar = barRef.current
+    if (!bar) return rangeMin
+    const rect = bar.getBoundingClientRect()
+    const pct = (clientX - rect.left) / rect.width
+    const raw = rangeMin + pct * range
+    return Math.round(Math.max(rangeMin, Math.min(rangeMax, raw)) / 1000) * 1000
+  }, [rangeMin, rangeMax, range])
+  useEffect(() => {
+    if (dragging === null) return
+    const onMove = (e: MouseEvent) => {
+      const v = valueFromX(e.clientX)
+      if (dragging === 'min') onMinChange(Math.min(v, max))
+      else onMaxChange(Math.max(v, min))
+    }
+    const onUp = () => setDragging(null)
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [dragging, min, max, valueFromX, onMinChange, onMaxChange])
+  return (
+    <div className="relative h-1.5 bg-slate-100 dark:bg-slate-600 rounded-full w-full" ref={barRef}>
+      <div className="absolute top-0 bottom-0 bg-indigo-500 rounded-full" style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }} />
+      <button type="button" aria-label="Min price" className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-indigo-600 rounded-full shadow-[0_2px_4px_rgba(79,70,229,0.3)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${leftPct}%` }} onMouseDown={() => setDragging('min')} />
+      <button type="button" aria-label="Max price" className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 bg-indigo-600 rounded-full shadow-[0_2px_4px_rgba(79,70,229,0.3)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${rightPct}%` }} onMouseDown={() => setDragging('max')} />
+    </div>
+  )
 }
 
 export default function ProspectFilterSidebar({
@@ -150,6 +211,8 @@ export default function ProspectFilterSidebar({
 }: ProspectFilterSidebarProps) {
   // Start with all groups collapsed so pinned filters show as rows only (no auto dropdown)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [pinnedPriceRange, setPinnedPriceRange] = useState(false)
+  const [pinnedLocation, setPinnedLocation] = useState(true)
   const [showMoreFilters, setShowMoreFilters] = useState(false)
   const [locationSearch, setLocationSearch] = useState<Record<'city' | 'state' | 'zip_code', string>>({ city: '', state: '', zip_code: '' })
   const [activeLocationTab, setActiveLocationTab] = useState<'city' | 'state' | 'zip_code'>('city')
@@ -270,7 +333,7 @@ export default function ProspectFilterSidebar({
           title="Show Filters"
           aria-label="Show Filters"
         >
-          <span className="material-symbols-outlined text-[20px] text-slate-600 dark:text-slate-400">tune</span>
+          <SlidersHorizontal className="w-5 h-5 text-slate-600 dark:text-slate-400" />
         </button>
       </div>
     )
@@ -290,11 +353,161 @@ export default function ProspectFilterSidebar({
       </div>
 
       <div className="flex-1 flex flex-col pt-2">
-        {visibleFilters.map((fg) => {
+        {/* Price Range card — reference design */}
+        <div className="px-4 pb-4">
+          <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">Price Range</span>
+              <button
+                type="button"
+                onClick={() => setPinnedPriceRange((p) => !p)}
+                className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                aria-label={pinnedPriceRange ? 'Unpin' : 'Pin'}
+              >
+                <Pin className={cn('w-[18px] h-[18px] transition-colors', pinnedPriceRange ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500')} />
+              </button>
+            </div>
+            <div className="flex gap-4 mb-8">
+              <div className="group relative w-full">
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 ml-1">Min</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm font-medium">$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={formatPriceInput((filters.price_range as { min?: number })?.min) ?? ''}
+                    onChange={(e) => {
+                      const n = parsePriceInput(e.target.value)
+                      updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), min: n })
+                    }}
+                    className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
+                  />
+                </div>
+              </div>
+              <div className="group relative w-full">
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 ml-1">Max</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm font-medium">$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Any"
+                    value={formatPriceInput((filters.price_range as { max?: number })?.max) ?? ''}
+                    onChange={(e) => {
+                      const n = parsePriceInput(e.target.value)
+                      updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), max: n })
+                    }}
+                    className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="px-2 pb-2 pt-1">
+              <PriceRangeBar
+                min={(filters.price_range as { min?: number })?.min ?? PRICE_SLIDER_MIN}
+                max={(filters.price_range as { max?: number })?.max ?? PRICE_SLIDER_MAX}
+                rangeMin={PRICE_SLIDER_MIN}
+                rangeMax={PRICE_SLIDER_MAX}
+                onMinChange={(n) => updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), min: n })}
+                onMaxChange={(n) => updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), max: n })}
+              />
+              <div className="flex justify-between mt-3 text-xs font-medium text-slate-400 dark:text-slate-500">
+                <span>{formatPriceShort((filters.price_range as { min?: number })?.min) === 'Any' ? '$0' : formatPriceShort((filters.price_range as { min?: number })?.min)}</span>
+                <span>{(filters.price_range as { max?: number })?.max != null ? formatPriceShort((filters.price_range as { max?: number })?.max) : 'Any'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Location card — reference design */}
+        <div className="px-4 pb-4">
+          <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">Location</span>
+              <button
+                type="button"
+                onClick={() => setPinnedLocation((p) => !p)}
+                className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                aria-label={pinnedLocation ? 'Unpin' : 'Pin'}
+              >
+                <Pin className={cn('w-[18px] h-[18px]', pinnedLocation ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500')} />
+              </button>
+            </div>
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-700/60 rounded-lg mb-5">
+              {(['city', 'state', 'zip_code'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveLocationTab(tab)}
+                  className={cn(
+                    'flex-1 py-1.5 text-xs font-medium rounded transition-colors',
+                    activeLocationTab === tab
+                      ? 'text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-700 shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-500/30 font-semibold'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-600/50'
+                  )}
+                >
+                  {tab === 'zip_code' ? 'Zip' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div className="relative mb-5 group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 pointer-events-none" />
+              <input
+                type="text"
+                value={locationSearch[activeLocationTab]}
+                onChange={(e) => setLocationSearch((s) => ({ ...s, [activeLocationTab]: e.target.value }))}
+                placeholder={activeLocationTab === 'city' ? 'Search city...' : activeLocationTab === 'state' ? 'Search state...' : 'Search zip...'}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg py-2.5 pl-10 pr-3 text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-sm text-slate-800 dark:text-slate-200"
+              />
+            </div>
+            <div className="space-y-1 max-h-[220px] overflow-y-auto">
+              {(() => {
+                const opts = activeLocationTab === 'city' ? cityOptions : activeLocationTab === 'state' ? stateOptions : zipCodeOptions
+                const search = locationSearch[activeLocationTab]?.toLowerCase().trim() || ''
+                const filtered = search ? opts.filter((o) => o.label.toLowerCase().includes(search)) : opts
+                const current = (filters[activeLocationTab] as string[] | undefined) || []
+                return filtered.length ? filtered.map((o) => {
+                  const sel = current.includes(o.value)
+                  return (
+                    <label
+                      key={o.value}
+                      className="flex items-center justify-between p-2.5 -mx-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer group transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={sel}
+                            onChange={() => {
+                              const arr = current.includes(o.value) ? current.filter((v) => v !== o.value) : [...current, o.value]
+                              updateFilter(activeLocationTab, arr.length ? arr : undefined)
+                            }}
+                            className="peer appearance-none w-4 h-4 border border-slate-300 dark:border-slate-500 rounded bg-white dark:bg-slate-800 checked:bg-indigo-600 checked:border-indigo-600 focus:ring-offset-0 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 transition-all cursor-pointer"
+                          />
+                          <Check className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" strokeWidth={3} />
+                        </div>
+                        <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">{o.label}</span>
+                      </div>
+                      {o.count != null && (
+                        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-600/50 px-2 py-0.5 rounded-md border border-transparent group-hover:border-slate-100 dark:group-hover:border-slate-600 transition-all">
+                          {o.count}
+                        </span>
+                      )}
+                    </label>
+                  )
+                }) : (
+                  <div className="px-2 py-2 text-sm text-slate-500 dark:text-slate-400">No options</div>
+                )
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {visibleFilters.filter((fg) => fg.id !== 'price_range' && fg.id !== 'location').map((fg) => {
           const isPinned = PINNED_IDS.has(fg.id)
           const isExpanded = expandedGroups.has(fg.id)
           const filterValue = filters[fg.id]
-          const icon = isExpanded ? 'expand_more' : 'chevron_right'
 
           return (
             <div key={fg.id} className="border-b border-slate-100 dark:border-slate-800">
@@ -303,7 +516,7 @@ export default function ProspectFilterSidebar({
                 onClick={() => toggleExpand(fg.id)}
               >
                 <div className="flex items-center gap-4">
-                  <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[20px] group-hover:text-slate-600 dark:group-hover:text-slate-300">{icon}</span>
+                  {isExpanded ? <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" /> : <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />}
                   <span className={cn(
                     "text-[15px]",
                     isPinned ? "font-semibold text-slate-700 dark:text-slate-300" : "font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200"
@@ -316,83 +529,47 @@ export default function ProspectFilterSidebar({
               {isExpanded && (
                 <div className="px-6 pb-4 pt-0 border-t border-slate-100 dark:border-slate-800">
                   {fg.type === 'multi-select' && fg.id === 'location' && (
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                      <div className="flex items-center justify-between mb-5">
-                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                          Location
-                        </span>
-                        <span className={cn(
-                          "material-symbols-outlined text-[18px] cursor-default transition-colors",
-                          isPinned ? "text-indigo-500 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
-                        )}>push_pin</span>
-                      </div>
-                      <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg mb-5">
+                    <>
+                      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-2">
                         {(['city', 'state', 'zip_code'] as const).map((tab) => (
                           <button
                             key={tab}
-                            type="button"
                             onClick={() => setActiveLocationTab(tab)}
                             className={cn(
-                              "flex-1 py-1.5 text-xs font-medium rounded transition-colors",
+                              "flex-1 px-2 py-1 text-xs font-medium border-b-2 transition-colors",
                               activeLocationTab === tab
-                                ? "text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-700 shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-600 font-semibold"
-                                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                                ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-indigo-600"
                             )}
                           >
-                            {tab === 'zip_code' ? 'Zip' : tab === 'city' ? 'City' : 'State'}
+                            {tab === 'zip_code' ? 'Zip Code' : tab.charAt(0).toUpperCase() + tab.slice(1)}
                           </button>
                         ))}
                       </div>
-                      <div className="relative mb-5 group">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 dark:group-focus-within:text-indigo-400 text-[20px] transition-colors pointer-events-none">search</span>
-                        <input
-                          type="text"
-                          value={locationSearch[activeLocationTab]}
-                          onChange={(e) => setLocationSearch(prev => ({ ...prev, [activeLocationTab]: e.target.value }))}
-                          placeholder={activeLocationTab === 'zip_code' ? 'Search zip...' : `Search ${activeLocationTab}...`}
-                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-10 pr-3 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-                        />
-                      </div>
-                      <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                      <div className="max-h-[180px] overflow-y-auto space-y-1">
                         {(() => {
                           const opts = activeLocationTab === 'city' ? cityOptions : activeLocationTab === 'state' ? stateOptions : zipCodeOptions
-                          const search = (locationSearch[activeLocationTab] || '').trim().toLowerCase()
-                          const filtered = search ? opts.filter(o => o.label.toLowerCase().includes(search)) : opts
                           const current = filters[activeLocationTab] || []
-                          return filtered.length ? filtered.map((o) => {
+                          return opts.length ? opts.map((o) => {
                             const sel = Array.isArray(current) && current.includes(o.value)
                             return (
-                              <label key={o.value} className="flex items-center justify-between p-2.5 -mx-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
-                                <div className="flex items-center gap-3">
-                                  <div className="relative flex items-center">
-                                    <input
-                                      type="checkbox"
-                                      checked={sel}
-                                      onChange={(e) => {
-                                        const arr = Array.isArray(current) ? [...current] : []
-                                        if (e.target.checked) arr.push(o.value)
-                                        else arr.splice(arr.indexOf(o.value), 1)
-                                        updateFilter(activeLocationTab, arr.length ? arr : undefined)
-                                      }}
-                                      className="peer appearance-none w-4 h-4 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 checked:bg-indigo-600 checked:border-indigo-600 focus:ring-offset-0 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 transition-all cursor-pointer"
-                                    />
-                                    <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-[10px] opacity-0 peer-checked:opacity-100 pointer-events-none font-bold">check</span>
-                                  </div>
-                                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">{o.label}</span>
-                                </div>
-                                {o.count != null && (
-                                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md group-hover:bg-white dark:group-hover:bg-slate-600 group-hover:shadow-sm transition-all border border-transparent group-hover:border-slate-100 dark:group-hover:border-slate-500">
-                                    {o.count}
-                                  </span>
-                                )}
+                              <label key={o.value} className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <Checkbox checked={sel} onCheckedChange={(c) => {
+                                  const arr = Array.isArray(current) ? [...current] : []
+                                  if (c) arr.push(o.value)
+                                  else arr.splice(arr.indexOf(o.value), 1)
+                                  updateFilter(activeLocationTab, arr.length ? arr : undefined)
+                                }} />
+                                <span className="text-sm text-slate-700 dark:text-slate-300">{o.label}</span>
+                                {o.count != null && <span className="text-xs text-slate-500">{o.count}</span>}
                               </label>
                             )
                           }) : (
-                            <div className="px-2 py-2 text-sm text-slate-500 dark:text-slate-400">No options</div>
+                            <div className="px-2 py-2 text-sm text-slate-500">No options</div>
                           )
                         })()}
                       </div>
-                    </div>
+                    </>
                   )}
 
                   {fg.type === 'multi-select' && fg.id !== 'location' && fg.options && (
@@ -414,85 +591,10 @@ export default function ProspectFilterSidebar({
                     </div>
                   )}
 
-                  {fg.type === 'range' && fg.id === 'price_range' && (
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                      <div className="flex items-center justify-between mb-6">
-                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                          Price Range
-                        </span>
-                        <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[18px] cursor-default">push_pin</span>
-                      </div>
-                      <div className="flex gap-4 mb-8">
-                        <div className="group relative w-full">
-                          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Min</label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
-                            <input
-                              type="text"
-                              placeholder="0"
-                              value={formatPrice((filterValue as { min?: number })?.min)}
-                              onChange={(e) => {
-                                const v = parsePriceInput(e.target.value)
-                                updateFilter('price_range', { ...(filterValue as object), min: v, max: (filterValue as { max?: number })?.max })
-                              }}
-                              className="w-full text-sm font-semibold text-slate-700 dark:text-slate-300 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
-                            />
-                          </div>
-                        </div>
-                        <div className="group relative w-full">
-                          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Max</label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
-                            <input
-                              type="text"
-                              placeholder="Any"
-                              value={formatPrice((filterValue as { max?: number })?.max)}
-                              onChange={(e) => {
-                                const v = parsePriceInput(e.target.value)
-                                updateFilter('price_range', { ...(filterValue as object), min: (filterValue as { min?: number })?.min, max: v })
-                              }}
-                              className="w-full text-sm font-semibold text-slate-700 dark:text-slate-300 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="px-2 pb-2 pt-1">
-                        <div className="relative h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full w-full">
-                          {(() => {
-                            const minVal = (filterValue as { min?: number })?.min ?? 0
-                            const maxVal = (filterValue as { max?: number })?.max ?? PRICE_SLIDER_MAX
-                            const leftPct = Math.min(100, (minVal / PRICE_SLIDER_MAX) * 100)
-                            const rightPct = Math.max(0, 100 - (maxVal / PRICE_SLIDER_MAX) * 100)
-                            return (
-                              <>
-                                <div
-                                  className="absolute top-0 bottom-0 bg-indigo-500 dark:bg-indigo-600 rounded-full"
-                                  style={{ left: `${leftPct}%`, right: `${rightPct}%` }}
-                                />
-                                <div
-                                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-indigo-600 dark:bg-indigo-500 rounded-full shadow-[0_2px_4px_rgba(79,70,229,0.3)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 ring-2 ring-white dark:ring-slate-900"
-                                  style={{ left: `${leftPct}%` }}
-                                />
-                                <div
-                                  className="absolute top-1/2 translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-indigo-600 dark:bg-indigo-500 rounded-full shadow-[0_2px_4px_rgba(79,70,229,0.3)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 ring-2 ring-white dark:ring-slate-900"
-                                  style={{ right: `${rightPct}%` }}
-                                />
-                              </>
-                            )
-                          })()}
-                        </div>
-                        <div className="flex justify-between mt-3 text-xs font-medium text-slate-400 dark:text-slate-500">
-                          <span>${formatPrice((filterValue as { min?: number })?.min) || '0'}</span>
-                          <span>${formatPrice((filterValue as { max?: number })?.max) || 'Any'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {fg.type === 'range' && fg.id !== 'price_range' && (
+                  {fg.type === 'range' && (
                     <div className="space-y-2">
                       <div>
-                        <label className="block text-xs text-slate-500 mb-0.5">Min{fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
+                        <label className="block text-xs text-slate-500 mb-0.5">Min{fg.id === 'price_range' ? ' ($)' : fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
                         <input
                           type="number"
                           value={filterValue?.min ?? ''}
@@ -500,12 +602,12 @@ export default function ProspectFilterSidebar({
                             const v = e.target.value
                             updateFilter(fg.id, { ...filterValue, min: v ? (fg.id === 'year_built' ? parseInt(v) : parseFloat(v)) : undefined })
                           }}
-                          placeholder={fg.id === 'year_built' ? 'e.g. 1950' : 'Min'}
+                          placeholder={fg.id === 'price_range' ? 'e.g. 100000' : fg.id === 'year_built' ? 'e.g. 1950' : 'Min'}
                           className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 mb-0.5">Max{fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
+                        <label className="block text-xs text-slate-500 mb-0.5">Max{fg.id === 'price_range' ? ' ($)' : fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
                         <input
                           type="number"
                           value={filterValue?.max ?? ''}
@@ -513,7 +615,7 @@ export default function ProspectFilterSidebar({
                             const v = e.target.value
                             updateFilter(fg.id, { ...filterValue, max: v ? (fg.id === 'year_built' ? parseInt(v) : parseFloat(v)) : undefined })
                           }}
-                          placeholder={fg.id === 'year_built' ? 'e.g. 2024' : 'Max'}
+                          placeholder={fg.id === 'price_range' ? 'e.g. 500000' : fg.id === 'year_built' ? 'e.g. 2024' : 'Max'}
                           className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                         />
                       </div>
