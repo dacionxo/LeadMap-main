@@ -9,7 +9,7 @@
  * Last Sale Price/Date, Actions.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/app/components/ui/dropdown-menu'
 import { Checkbox } from '@/app/components/ui/checkbox'
-import { MoreVertical, Mail, Phone, Bookmark, BookmarkCheck } from 'lucide-react'
+import { MoreVertical, Mail, Phone, Bookmark, BookmarkCheck, X, Pin } from 'lucide-react'
 import TailwindAdminPagination from './TailwindAdminPagination'
 import SaveButton from './AddToCrmButton'
 import { cn } from '@/app/lib/utils'
@@ -102,6 +102,10 @@ interface ProspectHoverTableProps {
   showSummary?: boolean
   showPagination?: boolean
   category?: string
+  /** Clear a single filter by key (e.g. 'city', 'minPrice'). Enables pinned filters bar. */
+  onClearFilter?: (key: keyof TableFilters) => void
+  /** Clear all filters. Shown as "Clear all" in pinned filters bar when provided. */
+  onClearAllFilters?: () => void
 }
 
 const VALID_TABLE_NAMES = [
@@ -239,7 +243,9 @@ export default function ProspectHoverTable({
   onStatsChange,
   showSummary = true,
   showPagination = true,
-  category
+  category,
+  onClearFilter,
+  onClearAllFilters
 }: ProspectHoverTableProps) {
   const columns = providedColumns || [...DEFAULT_COLUMNS]
   const headerTitle = category
@@ -498,8 +504,79 @@ export default function ProspectHoverTable({
 
   const colSpan = columns.length + (showSelectionColumn ? 1 : 0)
 
+  // Build pinned/active filter chips for the bar (only when clear callbacks provided)
+  const pinnedFilterChips = useMemo(() => {
+    if (!onClearFilter && !onClearAllFilters) return []
+    const entries: { label: string; value: string; clearKeys: (keyof TableFilters)[] }[] = []
+    if (filters.search?.trim()) {
+      entries.push({ label: 'Search', value: filters.search.trim(), clearKeys: ['search'] })
+    }
+    if (filters.city?.trim()) {
+      entries.push({ label: 'City', value: filters.city.trim(), clearKeys: ['city'] })
+    }
+    if (filters.state?.trim()) {
+      entries.push({ label: 'State', value: filters.state.trim(), clearKeys: ['state'] })
+    }
+    const hasMin = filters.minPrice != null && String(filters.minPrice).trim() !== ''
+    const hasMax = filters.maxPrice != null && String(filters.maxPrice).trim() !== ''
+    if (hasMin || hasMax) {
+      const minStr = hasMin ? `$${Number(filters.minPrice).toLocaleString()}` : 'Any'
+      const maxStr = hasMax ? `$${Number(filters.maxPrice).toLocaleString()}` : 'Any'
+      entries.push({
+        label: 'Price',
+        value: `${minStr} – ${maxStr}`,
+        clearKeys: hasMin && hasMax ? ['minPrice', 'maxPrice'] : hasMin ? ['minPrice'] : ['maxPrice']
+      })
+    }
+    if (filters.status?.trim()) {
+      entries.push({ label: 'Status', value: filters.status.trim(), clearKeys: ['status'] })
+    }
+    return entries
+  }, [filters, onClearFilter, onClearAllFilters])
+
+  const hasPinnedFilters = pinnedFilterChips.length > 0
+
   return (
     <div className="h-full flex flex-col bg-white/50 dark:bg-slate-900/50 overflow-hidden">
+      {hasPinnedFilters && (onClearFilter || onClearAllFilters) && (
+        <div className="flex-shrink-0 px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 flex items-center gap-2 flex-wrap">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mr-1">
+            <Pin className="w-3.5 h-3.5" />
+            Active filters
+          </span>
+          {pinnedFilterChips.map((chip) => (
+            <span
+              key={chip.label + chip.value}
+              className="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 pl-2.5 pr-1 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-sm"
+            >
+              <span className="text-slate-500 dark:text-slate-400">{chip.label}:</span>
+              <span>{chip.value}</span>
+              {onClearFilter && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    chip.clearKeys.forEach((k) => onClearFilter(k))
+                  }}
+                  className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  aria-label={`Clear ${chip.label} filter`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </span>
+          ))}
+          {onClearAllFilters && pinnedFilterChips.length > 0 && (
+            <button
+              type="button"
+              onClick={onClearAllFilters}
+              className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 ml-1"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex-1 min-h-0 overflow-auto px-6 pb-6">
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10">

@@ -123,7 +123,7 @@ const MAIN_FILTERS = FILTER_GROUPS.filter((fg) => MAIN_FILTER_IDS.includes(fg.id
 const MORE_FILTERS = FILTER_GROUPS.filter((fg) => !MAIN_FILTER_IDS.includes(fg.id as any))
 
 const PRICE_SLIDER_MIN = 0
-const PRICE_SLIDER_MAX = 2_000_000
+const PRICE_SLIDER_MAX = 10_000_000
 
 function formatPriceInput(value: number | string | undefined): string {
   if (value === undefined || value === null || value === '') return ''
@@ -139,6 +139,11 @@ function parsePriceInput(value: string): number | undefined {
 
 function formatPriceShort(value: number | undefined): string {
   if (value === undefined || value === null) return 'Any'
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000
+    const s = m % 1 === 0 ? `${m}` : m.toFixed(1)
+    return `$${s}M`
+  }
   if (value >= 1000) return `$${Math.round(value / 1000)}k`
   return `$${value}`
 }

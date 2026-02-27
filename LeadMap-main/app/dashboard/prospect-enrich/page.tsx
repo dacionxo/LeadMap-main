@@ -220,6 +220,21 @@ function ProspectContentWithSidebar(props: any) {
             maxPrice: props.apolloFilters.price_range?.max?.toString(),
             status: props.apolloFilters.status?.[0]
           }}
+          onClearFilter={(key) => {
+            if (key === 'search') {
+              props.setSearchTerm('')
+              return
+            }
+            if (key === 'minPrice' || key === 'maxPrice') {
+              props.setApolloFilters((prev: Record<string, any>) => ({ ...prev, price_range: undefined }))
+              return
+            }
+            props.setApolloFilters((prev: Record<string, any>) => ({ ...prev, [key]: undefined }))
+          }}
+          onClearAllFilters={() => {
+            props.setApolloFilters({})
+            props.setSearchTerm('')
+          }}
           sortBy={props.sortBy === 'price_high' ? 'list_price' : props.sortBy === 'price_low' ? 'list_price' : props.sortBy === 'date_new' ? 'created_at' : props.sortBy === 'date_old' ? 'created_at' : props.sortBy === 'score_high' ? 'ai_investment_score' : 'created_at'}
           sortOrder={props.sortBy === 'price_low' || props.sortBy === 'date_old' ? 'asc' : 'desc'}
           pagination={{
