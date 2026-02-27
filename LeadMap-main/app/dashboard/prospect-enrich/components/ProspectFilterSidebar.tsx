@@ -353,9 +353,9 @@ export default function ProspectFilterSidebar({
       </div>
 
       <div className="flex-1 flex flex-col pt-2">
-        {/* Price Range card — reference design */}
-        <div className="px-4 pb-4">
-          <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm">
+        {/* Price Range — same border/background as AI Score & Status */}
+        <div className="border-b border-slate-100 dark:border-slate-800">
+          <div className="px-6 pb-4 pt-4 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between mb-6">
               <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">Price Range</span>
               <button
@@ -420,9 +420,9 @@ export default function ProspectFilterSidebar({
           </div>
         </div>
 
-        {/* Location card — reference design */}
-        <div className="px-4 pb-4">
-          <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700 p-6 shadow-sm">
+        {/* Location — same border/background as AI Score & Status */}
+        <div className="border-b border-slate-100 dark:border-slate-800">
+          <div className="px-6 pb-4 pt-4 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between mb-5">
               <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">Location</span>
               <button
