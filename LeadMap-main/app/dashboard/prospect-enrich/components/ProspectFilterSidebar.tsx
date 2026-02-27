@@ -353,87 +353,102 @@ export default function ProspectFilterSidebar({
       </div>
 
       <div className="flex-1 flex flex-col pt-2">
-        {/* Price Range — same border/background as AI Score & Status */}
+        {/* Price Range — clickable row like AI Score & Status */}
         <div className="border-b border-slate-100 dark:border-slate-800">
-          <div className="px-6 pb-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">Price Range</span>
-              <button
-                type="button"
-                onClick={() => setPinnedPriceRange((p) => !p)}
-                className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                aria-label={pinnedPriceRange ? 'Unpin' : 'Pin'}
-              >
-                <Pin className={cn('w-[18px] h-[18px] transition-colors', pinnedPriceRange ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500')} />
-              </button>
+          <div
+            className="group flex items-center justify-between px-6 py-4 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+            onClick={() => toggleExpand('price_range')}
+          >
+            <div className="flex items-center gap-4">
+              {expandedGroups.has('price_range') ? <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" /> : <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />}
+              <span className="text-[15px] font-semibold text-slate-700 dark:text-slate-300">Price Range</span>
             </div>
-            <div className="flex gap-4 mb-8">
-              <div className="group relative w-full">
-                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 ml-1">Min</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm font-medium">$</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={formatPriceInput((filters.price_range as { min?: number })?.min) ?? ''}
-                    onChange={(e) => {
-                      const n = parsePriceInput(e.target.value)
-                      updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), min: n })
-                    }}
-                    className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
-                  />
-                </div>
-              </div>
-              <div className="group relative w-full">
-                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 ml-1">Max</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm font-medium">$</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Any"
-                    value={formatPriceInput((filters.price_range as { max?: number })?.max) ?? ''}
-                    onChange={(e) => {
-                      const n = parsePriceInput(e.target.value)
-                      updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), max: n })
-                    }}
-                    className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="px-2 pb-2 pt-1">
-              <PriceRangeBar
-                min={(filters.price_range as { min?: number })?.min ?? PRICE_SLIDER_MIN}
-                max={(filters.price_range as { max?: number })?.max ?? PRICE_SLIDER_MAX}
-                rangeMin={PRICE_SLIDER_MIN}
-                rangeMax={PRICE_SLIDER_MAX}
-                onMinChange={(n) => updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), min: n })}
-                onMaxChange={(n) => updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), max: n })}
-              />
-              <div className="flex justify-between mt-3 text-xs font-medium text-slate-400 dark:text-slate-500">
-                <span>{formatPriceShort((filters.price_range as { min?: number })?.min) === 'Any' ? '$0' : formatPriceShort((filters.price_range as { min?: number })?.min)}</span>
-                <span>{(filters.price_range as { max?: number })?.max != null ? formatPriceShort((filters.price_range as { max?: number })?.max) : 'Any'}</span>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setPinnedPriceRange((p) => !p); }}
+              className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              aria-label={pinnedPriceRange ? 'Unpin' : 'Pin'}
+            >
+              <Pin className={cn('w-[18px] h-[18px] transition-colors', pinnedPriceRange ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500')} />
+            </button>
           </div>
+          {expandedGroups.has('price_range') && (
+            <div className="px-6 pb-4 pt-0 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex gap-4 mb-8">
+                <div className="group relative w-full">
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 ml-1">Min</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm font-medium">$</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={formatPriceInput((filters.price_range as { min?: number })?.min) ?? ''}
+                      onChange={(e) => {
+                        const n = parsePriceInput(e.target.value)
+                        updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), min: n })
+                      }}
+                      className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
+                    />
+                  </div>
+                </div>
+                <div className="group relative w-full">
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 ml-1">Max</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm font-medium">$</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Any"
+                      value={formatPriceInput((filters.price_range as { max?: number })?.max) ?? ''}
+                      onChange={(e) => {
+                        const n = parsePriceInput(e.target.value)
+                        updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), max: n })
+                      }}
+                      className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="px-2 pb-2 pt-1">
+                <PriceRangeBar
+                  min={(filters.price_range as { min?: number })?.min ?? PRICE_SLIDER_MIN}
+                  max={(filters.price_range as { max?: number })?.max ?? PRICE_SLIDER_MAX}
+                  rangeMin={PRICE_SLIDER_MIN}
+                  rangeMax={PRICE_SLIDER_MAX}
+                  onMinChange={(n) => updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), min: n })}
+                  onMaxChange={(n) => updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), max: n })}
+                />
+                <div className="flex justify-between mt-3 text-xs font-medium text-slate-400 dark:text-slate-500">
+                  <span>{formatPriceShort((filters.price_range as { min?: number })?.min) === 'Any' ? '$0' : formatPriceShort((filters.price_range as { min?: number })?.min)}</span>
+                  <span>{(filters.price_range as { max?: number })?.max != null ? formatPriceShort((filters.price_range as { max?: number })?.max) : 'Any'}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Location — same border/background as AI Score & Status */}
+        {/* Location — clickable row like AI Score & Status */}
         <div className="border-b border-slate-100 dark:border-slate-800">
-          <div className="px-6 pb-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between mb-5">
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">Location</span>
-              <button
-                type="button"
-                onClick={() => setPinnedLocation((p) => !p)}
-                className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                aria-label={pinnedLocation ? 'Unpin' : 'Pin'}
-              >
-                <Pin className={cn('w-[18px] h-[18px]', pinnedLocation ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500')} />
-              </button>
+          <div
+            className="group flex items-center justify-between px-6 py-4 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+            onClick={() => toggleExpand('location')}
+          >
+            <div className="flex items-center gap-4">
+              {expandedGroups.has('location') ? <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" /> : <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />}
+              <span className="text-[15px] font-semibold text-slate-700 dark:text-slate-300">Location</span>
             </div>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setPinnedLocation((p) => !p); }}
+              className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              aria-label={pinnedLocation ? 'Unpin' : 'Pin'}
+            >
+              <Pin className={cn('w-[18px] h-[18px]', pinnedLocation ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500')} />
+            </button>
+          </div>
+          {expandedGroups.has('location') && (
+            <div className="px-6 pb-4 pt-0 border-t border-slate-100 dark:border-slate-800">
             <div className="flex p-1 bg-slate-100 dark:bg-slate-700/60 rounded-lg mb-5">
               {(['city', 'state', 'zip_code'] as const).map((tab) => (
                 <button
@@ -501,7 +516,8 @@ export default function ProspectFilterSidebar({
                 )
               })()}
             </div>
-          </div>
+            </div>
+          )}
         </div>
 
         {visibleFilters.filter((fg) => fg.id !== 'price_range' && fg.id !== 'location').map((fg) => {
