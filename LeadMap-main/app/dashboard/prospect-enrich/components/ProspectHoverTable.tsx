@@ -20,6 +20,7 @@ import { Checkbox } from '@/app/components/ui/checkbox'
 import { MoreVertical, Mail, Phone, Bookmark, BookmarkCheck, X, Pin } from 'lucide-react'
 import TailwindAdminPagination from './TailwindAdminPagination'
 import SaveButton from './AddToCrmButton'
+import { logToServer } from '@/lib/client-log'
 import { cn } from '@/app/lib/utils'
 
 // ============================================================================
@@ -142,6 +143,28 @@ const DEFAULT_COLUMNS = [
 
 function isValidTableName(tableName: string): boolean {
   return VALID_TABLE_NAMES.includes(tableName as any)
+}
+
+/** Log ProspectHoverTable load failures; sends to Vercel logs via /api/internal/log */
+function logProspectHoverTableFailure(
+  source: string,
+  operation: 'fetch' | 'config',
+  details: { tableName?: string; category?: string; page?: number; error?: unknown }
+) {
+  const msg = details.error instanceof Error ? details.error.message : String(details.error ?? 'Unknown')
+  logToServer({
+    source,
+    level: 'warn',
+    message: `Load fail: ${operation}`,
+    data: {
+      operation,
+      tableName: details.tableName ?? null,
+      category: details.category ?? null,
+      page: details.page ?? null,
+      error: msg,
+      timestamp: new Date().toISOString(),
+    },
+  })
 }
 
 function getStatusLabel(listing: Listing, tableName?: string, category?: string): string {
@@ -375,6 +398,11 @@ export default function ProspectHoverTable({
     }
     
     if (!tableName || !isValidTableName(tableName)) {
+      logProspectHoverTableFailure('ProspectHoverTable', 'config', {
+        tableName: tableName ?? undefined,
+        category,
+        error: !tableName ? 'No tableName provided' : `Invalid tableName: ${tableName}`,
+      })
       setLoading(false)
       setListings([])
       setTotalCount(0)
@@ -403,14 +431,28 @@ export default function ProspectHoverTable({
       const response = await fetch(`/api/listings/paginated?${params.toString()}`)
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch listings: ${response.statusText}`)
+        const err = new Error(`Failed to fetch listings: ${response.statusText}`)
+        logProspectHoverTableFailure('ProspectHoverTable', 'fetch', {
+          tableName,
+          category,
+          page,
+          error: err,
+        })
+        throw err
       }
       
       const result = await response.json()
       const { data, count, error } = result
       
       if (error) {
-        throw new Error(error)
+        const err = new Error(typeof error === 'string' ? error : String(error))
+        logProspectHoverTableFailure('ProspectHoverTable', 'fetch', {
+          tableName,
+          category,
+          page,
+          error: err,
+        })
+        throw err
       }
       
       const listingsWithOther = (data || []).map((listing: any) => {
@@ -443,6 +485,12 @@ export default function ProspectHoverTable({
       }
       
     } catch (error: any) {
+      logProspectHoverTableFailure('ProspectHoverTable', 'fetch', {
+        tableName: tableName ?? undefined,
+        category,
+        page,
+        error,
+      })
       console.error('Error fetching listings:', error)
       setListings([])
       setTotalCount(0)

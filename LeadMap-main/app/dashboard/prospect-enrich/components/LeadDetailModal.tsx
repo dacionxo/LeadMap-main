@@ -30,6 +30,7 @@ import ListsManager from "./ListsManager";
 import OwnerSelector from "./OwnerSelector";
 import PipelineDropdown from "./PipelineDropdown";
 import { useApp } from "@/app/providers";
+import { logToServer } from "@/lib/client-log";
 import TagsInput from "./TagsInput";
 
 // Normalize photos_json to array of image URLs (supports string[] or { url: string }[])
@@ -329,6 +330,27 @@ function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
 
 const VALID_LISTING_TABLES = ['listings', 'expired_listings', 'fsbo_leads', 'frbo_leads', 'imports', 'foreclosure_listings', 'probate_leads', 'trash'];
 
+/** Log category failures for LeadDetailModal; sends to Vercel logs via /api/internal/log */
+function logLeadDetailCategoryFailure(
+  category: string,
+  operation: 'load' | 'fetch' | 'update' | 'save',
+  details: { listingId?: string; error?: unknown }
+) {
+  const msg = details.error instanceof Error ? details.error.message : String(details.error ?? 'Unknown');
+  logToServer({
+    source: 'LeadDetailModal',
+    level: 'warn',
+    message: `Category fail: ${category} ${operation}`,
+    data: {
+      category,
+      operation,
+      listingId: details.listingId ?? null,
+      error: msg,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
 export default function LeadDetailModal({
   listingId,
   listingList,
@@ -361,8 +383,14 @@ export default function LeadDetailModal({
       setCurrentIndex(index);
       // Use the listing from the list directly - no need to fetch
       setListing(listingList[index]);
+    } else {
+      logLeadDetailCategoryFailure(tableName, 'load', {
+        listingId,
+        error: 'Listing not found in list',
+      });
+      setListing(null);
     }
-  }, [listingId, listingList]);
+  }, [listingId, listingList, tableName]);
 
   useEffect(() => {
     if (!listing) return;
@@ -393,6 +421,7 @@ export default function LeadDetailModal({
           .single();
 
         if (error) {
+          logLeadDetailCategoryFailure(tableName, 'fetch', { listingId: id, error });
           console.error("Error fetching listing:", error);
           // Fallback to listing from list if fetch fails
           const fallbackListing = listingList.find((l) => l.listing_id === id);
@@ -401,6 +430,7 @@ export default function LeadDetailModal({
           setListing(data);
         }
       } catch (err) {
+        logLeadDetailCategoryFailure(tableName, 'fetch', { listingId: id, error: err });
         console.error("Error:", err);
         // Fallback to listing from list if fetch fails
         const fallbackListing = listingList.find((l) => l.listing_id === id);
@@ -425,6 +455,7 @@ export default function LeadDetailModal({
           .single();
 
         if (error) {
+          logLeadDetailCategoryFailure(tableName, 'update', { listingId: listing.listing_id, error });
           console.error("Failed to update listing:", error);
           return;
         }
@@ -432,6 +463,7 @@ export default function LeadDetailModal({
         setListing(data);
         onUpdate?.(data);
       } catch (err) {
+        logLeadDetailCategoryFailure(tableName, 'update', { listingId: listing.listing_id, error: err });
         console.error("Error updating listing:", err);
       }
     },
@@ -459,11 +491,12 @@ export default function LeadDetailModal({
       setIsSaved(true);
       setListing((prev) => (prev ? { ...prev, in_crm: true } : prev));
     } catch (error) {
+      logLeadDetailCategoryFailure(tableName, 'save', { listingId: sourceId, error });
       console.error("Error saving listing:", error);
     } finally {
       setIsSaving(false);
     }
-  }, [listing, profile?.id, isSaved, isSaving, supabase]);
+  }, [listing, profile?.id, isSaved, isSaving, supabase, tableName]);
 
   const goToPrevious = () => {
     if (currentIndex > 0) {
