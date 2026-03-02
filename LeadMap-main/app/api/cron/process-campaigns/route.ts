@@ -69,7 +69,7 @@ interface Campaign {
   warmup_enabled: boolean
   warmup_schedule?: WarmupSchedule | null
   current_warmup_day: number
-  created_at: string
+  created_at?: string | null
   updated_at?: string | null
   completed_at?: string | null
 }
@@ -88,7 +88,7 @@ interface CampaignStep {
   stop_on_reply: boolean
   send_window_start?: string | null
   send_window_end?: string | null
-  created_at: string
+  created_at?: string | null
 }
 
 /**
@@ -112,7 +112,7 @@ interface CampaignRecipient {
   unsubscribed: boolean
   error_count: number
   last_error?: string | null
-  created_at: string
+  created_at?: string | null
   updated_at?: string | null
 }
 
@@ -974,7 +974,9 @@ async function processCampaign(
       // Calculate and update warmup day if needed
       const campaignStart = campaign.start_at
         ? new Date(campaign.start_at)
-        : new Date(campaign.created_at)
+        : campaign.created_at
+          ? new Date(campaign.created_at)
+          : new Date(now)
       const nextWarmupDay = calculateNextWarmupDay(campaignStart, campaign.current_warmup_day)
 
       await updateCampaignWarmupDay(supabase, campaign, nextWarmupDay)
