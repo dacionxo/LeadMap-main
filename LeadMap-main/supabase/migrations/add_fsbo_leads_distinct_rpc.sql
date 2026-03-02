@@ -29,7 +29,7 @@ BEGIN
   EXECUTE format(
     'SELECT COALESCE(array_agg(v ORDER BY v), ARRAY[]::text[]) FROM (
       SELECT DISTINCT trim(%I::text) AS v FROM public.fsbo_leads
-      WHERE %I IS NOT NULL AND trim(%I::text) <> ''
+      WHERE %I IS NOT NULL AND trim(%I::text) <> ''''
       LIMIT 5000
     ) sub',
     p_column_name, p_column_name, p_column_name

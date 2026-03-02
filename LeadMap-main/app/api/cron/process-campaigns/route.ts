@@ -20,6 +20,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { verifyCronRequestOrError } from '@/lib/cron/auth'
 import { handleCronError, DatabaseError, ValidationError } from '@/lib/cron/errors'
+import { dbDatetimeNullable, dbDatetimeRequired } from '@/lib/cron/zod'
 import { createSuccessResponse, createNoDataResponse, createBatchResponse } from '@/lib/cron/responses'
 import {
   getCronSupabaseClient,
@@ -139,8 +140,8 @@ const campaignSchema = z.object({
   description: z.string().nullable().optional(),
   status: z.enum(['draft', 'scheduled', 'running', 'paused', 'completed', 'cancelled']),
   send_strategy: z.enum(['single', 'sequence']),
-  start_at: z.string().datetime().nullable().optional(),
-  end_at: z.string().datetime().nullable().optional(),
+  start_at: dbDatetimeNullable,
+  end_at: dbDatetimeNullable,
   timezone: z.string().nullable().optional(),
   send_window_start: z.string().nullable().optional(),
   send_window_end: z.string().nullable().optional(),
@@ -151,9 +152,9 @@ const campaignSchema = z.object({
   warmup_enabled: z.boolean(),
   warmup_schedule: z.record(z.string(), z.number()).nullable().optional(),
   current_warmup_day: z.number().int().nonnegative(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime().nullable().optional(),
-  completed_at: z.string().datetime().nullable().optional(),
+  created_at: dbDatetimeNullable,
+  updated_at: dbDatetimeNullable,
+  completed_at: dbDatetimeNullable,
 })
 
 /**
@@ -170,7 +171,7 @@ const campaignStepSchema = z.object({
   stop_on_reply: z.boolean(),
   send_window_start: z.string().nullable().optional(),
   send_window_end: z.string().nullable().optional(),
-  created_at: z.string().datetime(),
+  created_at: dbDatetimeNullable,
 })
 
 /**
@@ -196,15 +197,15 @@ const campaignRecipientSchema = z.object({
   ]),
   current_step_number: z.number().int().nonnegative(),
   last_step_sent: z.number().int().positive().nullable().optional(),
-  last_sent_at: z.string().datetime().nullable().optional(),
-  next_send_at: z.string().datetime().nullable().optional(),
+  last_sent_at: dbDatetimeNullable,
+  next_send_at: dbDatetimeNullable,
   replied: z.boolean(),
   bounced: z.boolean(),
   unsubscribed: z.boolean(),
   error_count: z.number().int().nonnegative(),
   last_error: z.string().nullable().optional(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime().nullable().optional(),
+  created_at: dbDatetimeNullable,
+  updated_at: dbDatetimeNullable,
 })
 
 /**

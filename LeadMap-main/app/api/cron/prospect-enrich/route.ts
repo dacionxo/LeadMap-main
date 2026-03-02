@@ -25,6 +25,7 @@ import { verifyCronRequestOrError } from '@/lib/cron/auth'
 import { handleCronError, DatabaseError, ValidationError } from '@/lib/cron/errors'
 import { createSuccessResponse, createNoDataResponse } from '@/lib/cron/responses'
 import { getCronSupabaseClient, executeSelectOperation, executeUpdateOperation } from '@/lib/cron/database'
+import { dbDatetimeNullable } from '@/lib/cron/zod'
 import type { CronJobResult, BatchProcessingStats } from '@/lib/types/cron'
 
 export const runtime = 'nodejs'
@@ -85,9 +86,9 @@ const prospectListingSchema = z.object({
   listing_id: z.string().min(1),
   status: z.string().nullable().optional(),
   list_price: z.number().nullable().optional(),
-  updated_at: z.string().datetime().nullable().optional(),
+  updated_at: dbDatetimeNullable,
   expired: z.boolean().nullable().optional(),
-  last_scraped_at: z.string().datetime().nullable().optional(),
+  last_scraped_at: dbDatetimeNullable,
   active: z.boolean().nullable().optional(),
 })
 
@@ -147,9 +148,11 @@ async function fetchProspectsNeedingEnrichment(
     table,
     'listing_id, status, list_price, updated_at, expired, last_scraped_at, active',
     (query) => {
+      // Select listings that have never been updated OR were updated more than 24h ago.
+      // Some tables may not have an "active" column in all environments, so we avoid
+      // filtering on that column here for robustness.
       return (query as any)
         .or(`updated_at.is.null,updated_at.lt.${yesterday.toISOString()}`)
-        .eq('active', true)
         .limit(BATCH_SIZE)
     },
     {
