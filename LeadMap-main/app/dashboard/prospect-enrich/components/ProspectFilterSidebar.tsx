@@ -172,9 +172,9 @@ function PriceRangeBar({
     const bar = barRef.current
     if (!bar) return rangeMin
     const rect = bar.getBoundingClientRect()
-    const pct = (clientX - rect.left) / rect.width
+    const pct = rect.width > 0 ? (clientX - rect.left) / rect.width : 0
     const raw = rangeMin + pct * range
-    return Math.round(Math.max(rangeMin, Math.min(rangeMax, raw)) / 1000) * 1000
+    return Math.round((Math.max(rangeMin, Math.min(rangeMax, raw)) / 1000)) * 1000
   }, [rangeMin, rangeMax, range])
   useEffect(() => {
     if (dragging === null) return

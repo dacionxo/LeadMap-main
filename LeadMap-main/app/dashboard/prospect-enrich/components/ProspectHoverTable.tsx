@@ -553,34 +553,35 @@ export default function ProspectHoverTable({
   const colSpan = columns.length + (showSelectionColumn ? 1 : 0)
 
   // Build pinned/active filter chips for the bar (only when clear callbacks provided)
-  const pinnedFilterChips = useMemo(() => {
+  const pinnedFilterChips: { label: string; value: string; clearKeys: (keyof TableFilters)[] }[] = (() => {
     if (!onClearFilter && !onClearAllFilters) return []
+    const f = filters ?? {}
     const entries: { label: string; value: string; clearKeys: (keyof TableFilters)[] }[] = []
-    if (filters.search?.trim()) {
-      entries.push({ label: 'Search', value: filters.search.trim(), clearKeys: ['search'] })
+    if (f.search && f.search.trim()) {
+      entries.push({ label: 'Search', value: f.search.trim(), clearKeys: ['search'] })
     }
-    if (filters.city?.trim()) {
-      entries.push({ label: 'City', value: filters.city.trim(), clearKeys: ['city'] })
+    if (f.city && f.city.trim()) {
+      entries.push({ label: 'City', value: f.city.trim(), clearKeys: ['city'] })
     }
-    if (filters.state?.trim()) {
-      entries.push({ label: 'State', value: filters.state.trim(), clearKeys: ['state'] })
+    if (f.state && f.state.trim()) {
+      entries.push({ label: 'State', value: f.state.trim(), clearKeys: ['state'] })
     }
-    const hasMin = filters.minPrice != null && String(filters.minPrice).trim() !== ''
-    const hasMax = filters.maxPrice != null && String(filters.maxPrice).trim() !== ''
+    const hasMin = f.minPrice != null && String(f.minPrice).trim() !== ''
+    const hasMax = f.maxPrice != null && String(f.maxPrice).trim() !== ''
     if (hasMin || hasMax) {
-      const minStr = hasMin ? `$${Number(filters.minPrice).toLocaleString()}` : 'Any'
-      const maxStr = hasMax ? `$${Number(filters.maxPrice).toLocaleString()}` : 'Any'
+      const minStr = hasMin ? `$${Number(f.minPrice).toLocaleString()}` : 'Any'
+      const maxStr = hasMax ? `$${Number(f.maxPrice).toLocaleString()}` : 'Any'
       entries.push({
         label: 'Price',
         value: `${minStr} – ${maxStr}`,
-        clearKeys: hasMin && hasMax ? ['minPrice', 'maxPrice'] : hasMin ? ['minPrice'] : ['maxPrice']
+        clearKeys: hasMin && hasMax ? ['minPrice', 'maxPrice'] : hasMin ? ['minPrice'] : ['maxPrice'],
       })
     }
-    if (filters.status?.trim()) {
-      entries.push({ label: 'Status', value: filters.status.trim(), clearKeys: ['status'] })
+    if (f.status && f.status.trim()) {
+      entries.push({ label: 'Status', value: f.status.trim(), clearKeys: ['status'] })
     }
     return entries
-  }, [filters, onClearFilter, onClearAllFilters])
+  })()
 
   const hasPinnedFilters = pinnedFilterChips.length > 0
 
@@ -631,23 +632,30 @@ export default function ProspectHoverTable({
             <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               {showSelectionColumn && (
                 <th className="px-4 py-4 w-10">
-                    <button
-                      type="button"
-                      onClick={handleSelectAll}
-                      aria-label={
-                        somePageSelected
-                          ? 'Some listings selected. Toggle to select or clear all listings on this page'
-                          : allPageSelected
-                          ? 'Deselect all listings on this page'
-                          : 'Select all listings on this page'
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleSelectAll}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSelectAll()
                       }
-                      className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                    >
-                      <Checkbox
-                        checked={allPageSelected}
-                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                      />
-                    </button>
+                    }}
+                    aria-label={
+                      somePageSelected
+                        ? 'Some listings selected. Toggle to select or clear all listings on this page'
+                        : allPageSelected
+                        ? 'Deselect all listings on this page'
+                        : 'Select all listings on this page'
+                    }
+                    className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={allPageSelected}
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                    />
+                  </div>
                 </th>
               )}
               {columns.includes('address') && (
@@ -699,12 +707,20 @@ export default function ProspectHoverTable({
                   >
                     {showSelectionColumn && (
                       <td className="px-4 py-4 w-10">
-                        <button
-                          type="button"
-                          className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-slate-300 focus:outline-none"
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-slate-300 focus:outline-none cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleRowSelectionChange(listing)
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleRowSelectionChange(listing)
+                            }
                           }}
                           aria-label={`Select listing ${listing.street || listing.listing_id}`}
                         >
@@ -712,7 +728,7 @@ export default function ProspectHoverTable({
                             checked={isRowSelected(listing)}
                             className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                           />
-                        </button>
+                        </div>
                       </td>
                     )}
                     {columns.includes('address') && (

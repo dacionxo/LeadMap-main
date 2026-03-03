@@ -13,15 +13,24 @@ export interface ServerLogPayload {
 /**
  * Sends a log payload to /api/internal/log. Fire-and-forget (does not block).
  * Logs will appear in Vercel function logs.
+ * Never throws — failures are ignored to avoid breaking the app.
  */
 export function logToServer(payload: ServerLogPayload): void {
-  if (typeof fetch === 'undefined') return
-  fetch('/api/internal/log', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    keepalive: true,
-  }).catch(() => {
-    // Silently ignore network failures - avoid recursive logging
-  })
+  try {
+    if (typeof fetch === 'undefined') return
+    const body = JSON.stringify({
+      source: payload.source,
+      level: payload.level ?? 'warn',
+      message: payload.message,
+      data: payload.data ?? {},
+    })
+    fetch('/api/internal/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+    }).catch(() => { /* ignore */ })
+  } catch {
+    // Never throw — avoid breaking the app
+  }
 }

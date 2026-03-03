@@ -1,8 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Import Tailwindadmin CSS structure */
+/* Import Tailwindadmin CSS structure - @import must precede all other rules */
 @import "./css/layouts/container.css";
 @import "./css/layouts/sidebar.css";
 @import "./css/layouts/horizontal.css";
@@ -17,6 +13,10 @@
 @import "./css/override/reboot.css";
 @import "./css/layouts/rtl.css";
 @import "./css/theme/default-theme.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   /* Tailwindadmin CSS Variables - Adapted from @theme inline for Tailwind v3 */
