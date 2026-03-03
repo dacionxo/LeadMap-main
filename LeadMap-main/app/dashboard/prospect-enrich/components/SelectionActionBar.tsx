@@ -7,7 +7,7 @@
  * prospects are selected. Features glassmorphism design, rounded-pill shape,
  * blue gradient badge, and horizontal scrollable action buttons.
  *
- * Actions: Add to Campaigns, Add to Deals, Add to List, Save Listing, Export.
+ * Actions: Save Listing, Add to Campaigns, Add to Deals, Add to List, Export.
  */
 
 import React from 'react'
@@ -120,6 +120,13 @@ export default function SelectionActionBar({
         {/* Action buttons: horizontal scrollable */}
         <div className="flex-1 flex items-center gap-0.5 overflow-x-auto no-scrollbar px-2">
           <ActionButton
+            icon="save"
+            label="Save Listing"
+            onClick={onAddToCrm}
+            isDark={isDark}
+            minWidth="min-w-[88px]"
+          />
+          <ActionButton
             icon="campaign"
             label="Add to Campaigns"
             onClick={onAddToCampaigns}
@@ -138,13 +145,6 @@ export default function SelectionActionBar({
             label="Add to List"
             onClick={onAddToList}
             isDark={isDark}
-          />
-          <ActionButton
-            icon="save"
-            label="Save Listing"
-            onClick={onAddToCrm}
-            isDark={isDark}
-            minWidth="min-w-[88px]"
           />
           <ActionButton
             icon="file_download"
