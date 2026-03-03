@@ -295,14 +295,7 @@ function ProspectContentWithSidebar(props: any) {
             <SelectionActionBar
             selectedCount={props.selectedIds.size}
             onClose={() => props.setSelectedIds(new Set())}
-            onMassEmail={() => {
-              const list = props.filteredListings || props.listings || []
-              const first = list.find((l: any) =>
-                props.selectedIds.has(l.listing_id || '') ||
-                (l.property_url && props.selectedIds.has(l.property_url))
-              )
-              if (first) props.handleGenerateEmail(first)
-            }}
+            onAddToCampaigns={() => props.setShowAddToCampaignModal(true)}
             onAddToSequence={() => props.setShowAddToCampaignModal(true)}
             onAddToList={() => props.setShowAddToListModal(true)}
             onAddToCrm={props.handleBulkSave}

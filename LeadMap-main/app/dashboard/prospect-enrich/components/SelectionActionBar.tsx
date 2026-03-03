@@ -18,6 +18,7 @@ export interface SelectionActionBarProps {
   selectedCount: number
   onClose: () => void
   onMassEmail?: () => void
+  onAddToCampaigns?: () => void
   onAddToSequence?: () => void
   onAddToList?: () => void
   onAddToCrm?: () => void
@@ -83,6 +84,7 @@ export default function SelectionActionBar({
   selectedCount,
   onClose,
   onMassEmail,
+  onAddToCampaigns,
   onAddToSequence,
   onAddToList,
   onAddToCrm,
@@ -131,10 +133,11 @@ export default function SelectionActionBar({
         {/* Action buttons: horizontal scrollable */}
         <div className="flex-1 flex items-center gap-0.5 overflow-x-auto no-scrollbar px-2">
           <ActionButton
-            icon="email"
-            label="Mass email"
-            onClick={onMassEmail}
+            icon="campaign"
+            label="Add to Campaigns"
+            onClick={onAddToCampaigns}
             isDark={isDark}
+            minWidth="min-w-[100px]"
           />
           <ActionButton
             icon="playlist_add"
