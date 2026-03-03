@@ -250,7 +250,7 @@ function ProspectContentWithSidebar(props: any) {
           }}
           selectedIds={props.selectedIds}
           onSelect={(listingId, selected) => {
-            props.setSelectedIds((prev) => {
+            props.setSelectedIds((prev: Set<string>) => {
               const next = new Set(prev)
               if (selected) next.add(listingId)
               else next.delete(listingId)
