@@ -10,16 +10,33 @@ function escapeCsvCell(val: unknown): string {
   return `"${s}"`
 }
 
-/** Serialize residents to a readable string for CSV */
-function serializeResidents(residents: { resident_type?: string | null; resident_name?: string | null; resident_age?: string | null; resident_phone_numbers?: string | null; resident_previous_address?: string | null }[] | undefined): string {
-  if (!residents || residents.length === 0) return ''
-  return residents
-    .map((r) =>
-      [r.resident_type, r.resident_name, r.resident_age, r.resident_phone_numbers, r.resident_previous_address]
-        .filter(Boolean)
-        .join(' | ')
-    )
-    .join('; ')
+type ResidentRow = {
+  resident_type?: string | null
+  resident_name?: string | null
+  resident_age?: string | null
+  resident_phone_numbers?: string | null
+  resident_previous_address?: string | null
+}
+
+/** Format resident info (excluding phone) for display */
+function formatResidentInfo(r: ResidentRow): string {
+  return [r.resident_type, r.resident_name, r.resident_age, r.resident_previous_address]
+    .filter(Boolean)
+    .map(String)
+    .join(' | ')
+}
+
+/** Get up to 10 resident pairs: [info, phoneNumbers][] - padded to 10 slots */
+function getResidentColumns(residents: ResidentRow[] | undefined, maxSlots = 10): [string, string][] {
+  const list = residents ?? []
+  const pairs: [string, string][] = list.slice(0, maxSlots).map((r) => [
+    formatResidentInfo(r),
+    (r.resident_phone_numbers ?? '').toString().trim(),
+  ])
+  while (pairs.length < maxSlots) {
+    pairs.push(['', ''])
+  }
+  return pairs
 }
 
 /** Get baths value for display */
@@ -43,7 +60,6 @@ export function exportListingsToCsv(listings: Listing[], filenamePrefix = 'prosp
   const headers = [
     // Prospect hover table
     'Listing ID',
-    'Property URL',
     'Address',
     'Street',
     'Unit',
@@ -94,9 +110,16 @@ export function exportListingsToCsv(listings: Listing[], filenamePrefix = 'prosp
     'Flood Zone',
     'Tax Year',
     'Tax Amount',
-    // Ownership
-    'Current Residents',
-    'Previous Residents',
+    // Ownership: 10 current resident slots (info + phone per resident, interleaved)
+    ...Array.from({ length: 10 }, (_, i) => [
+      `Current Resident ${i + 1}`,
+      `Current Resident ${i + 1} Phone Numbers`,
+    ]).flat(),
+    // Ownership: 10 previous resident slots
+    ...Array.from({ length: 10 }, (_, i) => [
+      `Previous Resident ${i + 1}`,
+      `Previous Resident ${i + 1} Phone Numbers`,
+    ]).flat(),
   ]
 
   const rows = listings.map((l) => {
@@ -104,7 +127,6 @@ export function exportListingsToCsv(listings: Listing[], filenamePrefix = 'prosp
     const address = addressParts.join(', ')
     return [
       l.listing_id ?? '',
-      l.property_url ?? '',
       address,
       l.street ?? '',
       (l as { unit?: string }).unit ?? '',
@@ -155,9 +177,10 @@ export function exportListingsToCsv(listings: Listing[], filenamePrefix = 'prosp
       (l as { flood_zone?: string }).flood_zone ?? '',
       (l as { tax_year?: string }).tax_year ?? '',
       (l as { tax_amount?: string }).tax_amount ?? '',
-      // Ownership
-      serializeResidents(l.current_residents),
-      serializeResidents(l.previous_residents),
+      // Ownership: current residents 1-10 (each: info, then phone numbers)
+      ...getResidentColumns(l.current_residents).flat(),
+      // Ownership: previous residents 1-10
+      ...getResidentColumns(l.previous_residents).flat(),
     ]
   })
 
@@ -166,7 +189,8 @@ export function exportListingsToCsv(listings: Listing[], filenamePrefix = 'prosp
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `${filenamePrefix}-${new Date().toISOString().split('T')[0]}.csv`
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '-').slice(0, 19)
+  a.download = `${filenamePrefix}-${ts}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
