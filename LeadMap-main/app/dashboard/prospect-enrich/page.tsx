@@ -250,13 +250,12 @@ function ProspectContentWithSidebar(props: any) {
           }}
           selectedIds={props.selectedIds}
           onSelect={(listingId, selected) => {
-            const newSelected = new Set(props.selectedIds)
-            if (selected) {
-              newSelected.add(listingId)
-            } else {
-              newSelected.delete(listingId)
-            }
-            props.setSelectedIds(newSelected)
+            props.setSelectedIds((prev) => {
+              const next = new Set(prev)
+              if (selected) next.add(listingId)
+              else next.delete(listingId)
+              return next
+            })
           }}
           crmContactIds={props.crmContactIds}
           onSave={props.handleSaveProspect}
