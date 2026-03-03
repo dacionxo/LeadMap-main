@@ -19,7 +19,6 @@ import {
 import { Checkbox } from '@/app/components/ui/checkbox'
 import { MoreVertical, Mail, Phone, Bookmark, BookmarkCheck, X, Pin } from 'lucide-react'
 import TailwindAdminPagination from './TailwindAdminPagination'
-import SaveButton from './AddToCrmButton'
 import { logToServer } from '@/lib/client-log'
 import { cn } from '@/app/lib/utils'
 
@@ -806,17 +805,17 @@ export default function ProspectHoverTable({
                     )}
                     {columns.includes('agent_phone_2') && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.agent_phone_2 || '-'}
+                        {listing.agent_phone_2 || 'n/a'}
                       </td>
                     )}
                     {columns.includes('listing_agent_phone_2') && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.listing_agent_phone_2 || '-'}
+                        {listing.listing_agent_phone_2 || 'n/a'}
                       </td>
                     )}
                     {columns.includes('listing_agent_phone_5') && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.listing_agent_phone_5 || '-'}
+                        {listing.listing_agent_phone_5 || 'n/a'}
                       </td>
                     )}
                     {columns.includes('year_built') && (
@@ -868,20 +867,6 @@ export default function ProspectHoverTable({
                               {isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
                             </button>
                           )}
-                          <SaveButton
-                            listing={listing}
-                            saved={listing.in_crm || isSaved}
-                            onSaved={() => {
-                              onSave?.(listing, true)
-                              onAction?.('save', listing)
-                            }}
-                            onUnsaved={() => {
-                              onSave?.(listing, false)
-                              onAction?.('unsave', listing)
-                            }}
-                            variant="icon"
-                            category={category}
-                          />
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -896,11 +881,6 @@ export default function ProspectHoverTable({
                               <DropdownMenuItem onClick={() => onListingClick?.(listing)}>
                                 View Details
                               </DropdownMenuItem>
-                              {listing.property_url && (
-                                <DropdownMenuItem onClick={() => window.open(listing.property_url || '', '_blank')}>
-                                  Open Property URL
-                                </DropdownMenuItem>
-                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
