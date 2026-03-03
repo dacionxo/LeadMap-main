@@ -24,6 +24,7 @@ import SelectionActionBar from './components/SelectionActionBar'
 import MapView from '@/components/MapView'
 import { FilterType, getPrimaryCategory, Listing, useProspectData } from './hooks/useProspectData'
 import { add_to_list } from './utils/listUtils'
+import { exportListingsToCsv } from './utils/exportListings'
 
 type ViewType = 'table' | 'map' | 'analytics' | 'insights'
 type SortField = 'price' | 'date' | 'score' | 'location' | 'status'
@@ -183,9 +184,6 @@ function ProspectContentWithSidebar(props: any) {
             onResearchWithAI={() => {
               console.log('Research with AI clicked')
             }}
-            onSearchSettings={() => {
-              console.log('Search settings clicked')
-            }}
             isDark={props.isDark}
             displayView={props.displayView}
             onDisplayViewChange={props.setDisplayView}
@@ -299,7 +297,7 @@ function ProspectContentWithSidebar(props: any) {
             onAddToDeals={props.handleAddToDeals}
             onAddToList={() => props.setShowAddToListModal(true)}
             onAddToCrm={props.handleBulkSave}
-            onExport={() => {}}
+            onExport={props.handleExport}
             isDark={props.isDark}
           />
         </div>
@@ -819,6 +817,20 @@ function ProspectEnrichInner() {
       console.error('Error adding to deals:', error)
       alert('Failed to add listings to deals')
     }
+  }
+
+  const handleExport = () => {
+    const list = filteredListings || listings || []
+    const toExport = selectedIds.size > 0
+      ? list.filter((l: Listing) =>
+          selectedIds.has(l.listing_id || '') || (l.property_url && selectedIds.has(l.property_url))
+        )
+      : list
+    if (toExport.length === 0) {
+      alert('No listings to export')
+      return
+    }
+    exportListingsToCsv(toExport, 'prospects-export')
   }
 
   // No scroll sync needed - header is inside scroll container and scrolls naturally with data
@@ -1761,6 +1773,7 @@ function ProspectEnrichInner() {
         handleBulkAddToList={handleBulkAddToList}
         handleBulkSave={handleBulkSave}
         handleAddToDeals={handleAddToDeals}
+        handleExport={handleExport}
         profile={profile}
         showAddToCampaignModal={showAddToCampaignModal}
         setShowAddToCampaignModal={setShowAddToCampaignModal}

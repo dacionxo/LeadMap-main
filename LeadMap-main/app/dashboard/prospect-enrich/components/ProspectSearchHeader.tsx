@@ -29,6 +29,7 @@ interface ProspectSearchHeaderProps {
   onCreateWorkflow?: () => void
   onSaveSearch?: () => void
   onAutoScore?: () => void
+  /** @deprecated Search Settings button removed; was after Default View dropdown. Re-add if needed. */
   onSearchSettings?: () => void
   isDark?: boolean
   displayView?: DisplayView
@@ -58,7 +59,6 @@ export default function ProspectSearchHeader({
   onImport,
   showImportButton = true,
   onResearchWithAI,
-  onSearchSettings,
   isDark = false,
   displayView = 'default',
   onDisplayViewChange,
@@ -107,7 +107,7 @@ export default function ProspectSearchHeader({
         </div>
       </div>
 
-      {/* Controls row: Search, Default View, Hide Filters, Search Settings */}
+      {/* Controls row: Search, Default View, Hide Filters. (Former placement: Search Settings button was after Default View dropdown, before Tabs.) */}
       <div className="flex items-center gap-3 mb-6">
         <div className="relative flex-1">
           <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">search</span>
@@ -139,13 +139,7 @@ export default function ProspectSearchHeader({
             <DropdownMenuItem onClick={() => { onDisplayViewChange?.('map'); setViewOpen(false); }}>Map View</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <button
-          onClick={onSearchSettings}
-          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm transition-all"
-        >
-          <span className="material-symbols-outlined text-[18px]">settings</span>
-          Search Settings
-        </button>
+        {/* Search Settings button removed; was here (after Default View dropdown). Re-add with onSearchSettings callback if needed. */}
       </div>
 
       {/* Tabs: Total, Net New, Saved */}
