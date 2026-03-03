@@ -4,9 +4,9 @@
  * ProspectHoverTable Component
  *
  * Elite Property Prospecting Dashboard — 1:1 design match to reference HTML.
- * Preserves all API routes and columns: Address, Price, Status, AI Score, Beds,
- * Baths, Sqft, Description, Agent Name, Agent Email, Agent Phone(s), Year Built,
- * Last Sale Price/Date, Actions.
+ * Columns: Address, Price, Status, AI Score, Beds, Baths, Sqft, Description,
+ * Agent Name, Agent Email, Agent Phone(s), Year Built, Last Sale Price/Date,
+ * Actions.
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
