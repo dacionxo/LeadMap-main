@@ -20,18 +20,14 @@ import {
   MapPin,
   MoreHorizontal,
   Phone,
-  Tag,
-  User,
   X,
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ListsManager from "./ListsManager";
-import OwnerSelector from "./OwnerSelector";
 import PipelineDropdown from "./PipelineDropdown";
 import { useApp } from "@/app/providers";
 import { logToServer } from "@/lib/client-log";
-import TagsInput from "./TagsInput";
 
 // Normalize photos_json to array of image URLs (supports string[] or { url: string }[])
 function getPhotoUrls(photosJson: any): string[] {
@@ -366,9 +362,7 @@ export default function LeadDetailModal({
   const [activeTab, setActiveTab] = useState<TabType>("info");
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [showOwnerSelector, setShowOwnerSelector] = useState(false);
   const [showListsManager, setShowListsManager] = useState(false);
-  const [showTagsInput, setShowTagsInput] = useState(false);
   const [leftPanelView, setLeftPanelView] = useState<"photos" | "google_earth">("photos");
   const autoAssignRef = useRef(false);
   const streetViewContainerRef = useRef<HTMLDivElement>(null);
@@ -854,20 +848,6 @@ export default function LeadDetailModal({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowOwnerSelector(!showOwnerSelector)}
-                    className="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:text-zinc-900 hover:bg-gray-50 rounded-full transition-colors"
-                    aria-label="Assign owner"
-                    title="Assign owner"
-                  >
-                    <User size={20} />
-                    {listing?.owner_id && (
-                      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-900 text-white text-[10px] font-semibold flex items-center justify-center border-2 border-white">
-                        1
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => setShowListsManager(!showListsManager)}
                     className="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:text-zinc-900 hover:bg-gray-50 rounded-full transition-colors"
                     aria-label="Add to lists"
@@ -877,20 +857,6 @@ export default function LeadDetailModal({
                     {(listing?.lists?.length ?? 0) > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-900 text-white text-[10px] font-semibold flex items-center justify-center border-2 border-white">
                         {listing!.lists!.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowTagsInput(!showTagsInput)}
-                    className="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:text-zinc-900 hover:bg-gray-50 rounded-full transition-colors"
-                    aria-label="Manage Tags"
-                    title="Manage Tags"
-                  >
-                    <Tag size={20} />
-                    {(listing?.tags?.length ?? 0) > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-900 text-white text-[10px] font-semibold flex items-center justify-center border-2 border-white">
-                        {listing!.tags!.length}
                       </span>
                     )}
                   </button>
@@ -949,32 +915,6 @@ export default function LeadDetailModal({
           </div>
 
           {/* Conditional Popups - absolute within right panel */}
-          {showOwnerSelector && (
-            <div className="absolute top-20 right-10 z-[60] bg-white border border-gray-200 rounded-xl shadow-lg p-4 min-w-[280px]">
-              <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-semibold text-slate-900">
-                  Assign Owner
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowOwnerSelector(false)}
-                  className="p-1 text-slate-500 hover:text-slate-900"
-                  title="Close"
-                  aria-label="Close"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <OwnerSelector
-                supabase={supabase}
-                value={listing?.owner_id || null}
-                onChange={(owner_id) => {
-                  handleUpdate({ owner_id });
-                  setShowOwnerSelector(false);
-                }}
-              />
-            </div>
-          )}
           {showListsManager && (
             <div className="absolute top-20 right-10 z-[60] bg-white border border-gray-200 rounded-xl shadow-lg p-4 min-w-[280px]">
               <div className="flex justify-between items-center mb-3">
@@ -998,30 +938,6 @@ export default function LeadDetailModal({
               />
             </div>
           )}
-          {showTagsInput && (
-            <div className="absolute top-20 right-10 z-[60] bg-white border border-gray-200 rounded-xl shadow-lg p-4 min-w-[280px]">
-              <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-semibold text-slate-900">
-                  Manage Tags
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowTagsInput(false)}
-                  className="p-1 text-slate-500 hover:text-slate-900"
-                  title="Close"
-                  aria-label="Close"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <TagsInput
-                supabase={supabase}
-                initialTags={listing?.tags || []}
-                onChange={(tags) => handleUpdate({ tags })}
-              />
-            </div>
-          )}
-
           {/* Footer: Pagination + View Full Listing */}
           <div className="px-10 py-6 border-t border-gray-100 bg-white/80 backdrop-blur-sm flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-6">
