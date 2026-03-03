@@ -315,6 +315,11 @@ function ProspectContentWithSidebar(props: any) {
           props.updateListing(updatedListing)
         }}
         sourceTable={props.resolvedTableName}
+        onAddToCampaign={(listing) => {
+          props.setAddToCampaignListingsOverride([listing])
+          props.setShowAddToCampaignModal(true)
+        }}
+        inCampaignsRefreshTrigger={props.inCampaignsRefreshTrigger}
       />
     )}
 
@@ -384,12 +389,17 @@ function ProspectContentWithSidebar(props: any) {
       <AddToCampaignModal
         supabase={props.supabase}
         profileId={props.profile.id}
-        selectedListings={props.listings.filter((l: any) => props.selectedIds.has(l.listing_id || ''))}
+        selectedListings={props.addToCampaignListingsOverride ?? props.listings.filter((l: any) => props.selectedIds.has(l.listing_id || ''))}
         onClose={() => {
           props.setShowAddToCampaignModal(false)
+          props.setAddToCampaignListingsOverride(null)
           props.setSelectedIds(new Set())
         }}
         onSuccess={() => {
+          if (props.addToCampaignListingsOverride) {
+            props.setInCampaignsRefreshTrigger((t: number) => t + 1)
+            props.setAddToCampaignListingsOverride(null)
+          }
           props.fetchCrmContacts(props.selectedFilters)
         }}
         isDark={props.isDark}
@@ -440,6 +450,8 @@ function ProspectEnrichInner() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [showAddToListModal, setShowAddToListModal] = useState(false)
   const [showAddToCampaignModal, setShowAddToCampaignModal] = useState(false)
+  const [addToCampaignListingsOverride, setAddToCampaignListingsOverride] = useState<any[] | null>(null)
+  const [inCampaignsRefreshTrigger, setInCampaignsRefreshTrigger] = useState(0)
   const [showFindDealsModal, setShowFindDealsModal] = useState(false)
   // Removed useVirtualizedTable - only using ProspectHoverTable now
   const [remoteListingsCount, setRemoteListingsCount] = useState(0)
@@ -1776,6 +1788,10 @@ function ProspectEnrichInner() {
         profile={profile}
         showAddToCampaignModal={showAddToCampaignModal}
         setShowAddToCampaignModal={setShowAddToCampaignModal}
+        addToCampaignListingsOverride={addToCampaignListingsOverride}
+        setAddToCampaignListingsOverride={setAddToCampaignListingsOverride}
+        inCampaignsRefreshTrigger={inCampaignsRefreshTrigger}
+        setInCampaignsRefreshTrigger={setInCampaignsRefreshTrigger}
         listings={listings}
         fetchCrmContacts={fetchCrmContacts}
         supabase={supabase}

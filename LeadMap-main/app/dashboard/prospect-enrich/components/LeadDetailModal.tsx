@@ -18,6 +18,7 @@ import {
   List,
   Mail,
   MapPin,
+  Megaphone,
   MoreHorizontal,
   Phone,
   X,
@@ -226,6 +227,10 @@ interface LeadDetailModalProps {
   onUpdate?: (updatedListing: Listing) => void;
   /** Supabase table name for this category (e.g. fsbo_leads). Used for fetch/update when not "listings". */
   sourceTable?: string | null;
+  /** Called when user clicks Add to Campaigns (single listing). */
+  onAddToCampaign?: (listing: Listing) => void;
+  /** Increment to trigger refetch of inCampaigns (e.g. after adding to campaign). */
+  inCampaignsRefreshTrigger?: number;
 }
 
 // Scrollable photo carousel from photos_json — shown first in the left panel
@@ -353,6 +358,8 @@ export default function LeadDetailModal({
   onClose,
   onUpdate,
   sourceTable,
+  onAddToCampaign,
+  inCampaignsRefreshTrigger,
 }: LeadDetailModalProps) {
   const tableName = sourceTable && VALID_LISTING_TABLES.includes(sourceTable) ? sourceTable : 'listings';
   const { profile } = useApp();
@@ -363,6 +370,7 @@ export default function LeadDetailModal({
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showListsManager, setShowListsManager] = useState(false);
+  const [inCampaigns, setInCampaigns] = useState(false);
   const [leftPanelView, setLeftPanelView] = useState<"photos" | "google_earth">("photos");
   const autoAssignRef = useRef(false);
   const streetViewContainerRef = useRef<HTMLDivElement>(null);
@@ -471,6 +479,27 @@ export default function LeadDetailModal({
       handleUpdate({ owner_id: profile.id });
     }
   }, [listing, profile?.id, handleUpdate]);
+
+  // Check if this listing is in any campaign (campaign_listings)
+  useEffect(() => {
+    const lid = listing?.listing_id || listing?.property_url;
+    if (!lid || !profile?.id) {
+      setInCampaigns(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { count, error } = await supabase
+        .from("campaign_listings")
+        .select("*", { count: "exact", head: true })
+        .eq("listing_id", String(lid))
+        .eq("user_id", profile.id);
+      if (!cancelled) {
+        setInCampaigns(!error && (count ?? 0) > 0);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [listing?.listing_id, listing?.property_url, profile?.id, inCampaignsRefreshTrigger, supabase]);
 
   const handleSaveListing = useCallback(async () => {
     if (!listing || !profile?.id) return;
@@ -860,14 +889,26 @@ export default function LeadDetailModal({
                       </span>
                     )}
                   </button>
-                  <div className="relative" title="Add to pipeline" aria-label="Add to pipeline">
-                    <PipelineDropdown
-                      value={listing?.pipeline_status || "new"}
-                      onChange={(pipeline_status) =>
-                        handleUpdate({ pipeline_status })
-                      }
-                    />
-                  </div>
+                  {inCampaigns ? (
+                    <div className="relative" title="Pipeline status" aria-label="Pipeline status">
+                      <PipelineDropdown
+                        value={listing?.pipeline_status || "new"}
+                        onChange={(pipeline_status) =>
+                          handleUpdate({ pipeline_status })
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => listing && onAddToCampaign?.(listing)}
+                      className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-zinc-900 hover:bg-gray-50 rounded-full transition-colors"
+                      aria-label="Add to campaigns"
+                      title="Add to campaigns"
+                    >
+                      <Megaphone size={20} />
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex items-baseline gap-4">
