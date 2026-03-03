@@ -296,17 +296,10 @@ function ProspectContentWithSidebar(props: any) {
             selectedCount={props.selectedIds.size}
             onClose={() => props.setSelectedIds(new Set())}
             onAddToCampaigns={() => props.setShowAddToCampaignModal(true)}
-            onAddToSequence={() => props.setShowAddToCampaignModal(true)}
+            onAddToDeals={() => props.router.push('/dashboard/crm/deals')}
             onAddToList={() => props.setShowAddToListModal(true)}
             onAddToCrm={props.handleBulkSave}
-            onDuplicate={() => {}}
             onExport={() => {}}
-            onArchive={() => {}}
-            onDelete={() => {}}
-            onConvert={() => {}}
-            onMoveTo={() => {}}
-            onSidekick={() => {}}
-            onApps={() => {}}
             isDark={props.isDark}
           />
         </div>

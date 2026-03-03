@@ -7,8 +7,7 @@
  * prospects are selected. Features glassmorphism design, rounded-pill shape,
  * blue gradient badge, and horizontal scrollable action buttons.
  *
- * Actions: Mass email, Add to sequence, Add to List, Add to CRM, Duplicate,
- * Export, Archive, Delete, Convert, Move to, Sidekick, Apps.
+ * Actions: Add to Campaigns, Add to Deals, Add to List, Save Listing, Export.
  */
 
 import React from 'react'
@@ -20,16 +19,10 @@ export interface SelectionActionBarProps {
   onMassEmail?: () => void
   onAddToCampaigns?: () => void
   onAddToSequence?: () => void
+  onAddToDeals?: () => void
   onAddToList?: () => void
   onAddToCrm?: () => void
-  onDuplicate?: () => void
   onExport?: () => void
-  onArchive?: () => void
-  onDelete?: () => void
-  onConvert?: () => void
-  onMoveTo?: () => void
-  onSidekick?: () => void
-  onApps?: () => void
   isDark?: boolean
 }
 
@@ -86,16 +79,10 @@ export default function SelectionActionBar({
   onMassEmail,
   onAddToCampaigns,
   onAddToSequence,
+  onAddToDeals,
   onAddToList,
   onAddToCrm,
-  onDuplicate,
   onExport,
-  onArchive,
-  onDelete,
-  onConvert,
-  onMoveTo,
-  onSidekick,
-  onApps,
   isDark = false,
 }: SelectionActionBarProps) {
   if (selectedCount <= 0) return null
@@ -140,11 +127,11 @@ export default function SelectionActionBar({
             minWidth="min-w-[100px]"
           />
           <ActionButton
-            icon="playlist_add"
-            label="Add to sequence"
-            onClick={onAddToSequence}
+            icon="handshake"
+            label="Add to Deals"
+            onClick={onAddToDeals ?? onAddToSequence}
             isDark={isDark}
-            minWidth="min-w-[84px]"
+            minWidth="min-w-[88px]"
           />
           <ActionButton
             icon="list"
@@ -153,59 +140,16 @@ export default function SelectionActionBar({
             isDark={isDark}
           />
           <ActionButton
-            icon="bookmark_border"
-            label="Add to CRM"
+            icon="save"
+            label="Save Listing"
             onClick={onAddToCrm}
             isDark={isDark}
-          />
-          <ActionButton
-            icon="content_copy"
-            label="Duplicate"
-            onClick={onDuplicate}
-            isDark={isDark}
+            minWidth="min-w-[88px]"
           />
           <ActionButton
             icon="file_download"
             label="Export"
             onClick={onExport}
-            isDark={isDark}
-          />
-          <ActionButton
-            icon="inventory_2"
-            label="Archive"
-            onClick={onArchive}
-            isDark={isDark}
-          />
-          <ActionButton
-            icon="delete"
-            label="Delete"
-            onClick={onDelete}
-            isDark={isDark}
-            isDelete={true}
-          />
-          <div className="w-px h-8 bg-gray-200/60 dark:bg-gray-700/60 mx-1" aria-hidden />
-          <ActionButton
-            icon="cached"
-            label="Convert"
-            onClick={onConvert}
-            isDark={isDark}
-          />
-          <ActionButton
-            icon="arrow_forward"
-            label="Move to"
-            onClick={onMoveTo}
-            isDark={isDark}
-          />
-          <ActionButton
-            icon="auto_awesome"
-            label="Sidekick"
-            onClick={onSidekick}
-            isDark={isDark}
-          />
-          <ActionButton
-            icon="extension"
-            label="Apps"
-            onClick={onApps}
             isDark={isDark}
           />
         </div>
