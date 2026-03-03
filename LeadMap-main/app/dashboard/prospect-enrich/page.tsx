@@ -296,7 +296,7 @@ function ProspectContentWithSidebar(props: any) {
             selectedCount={props.selectedIds.size}
             onClose={() => props.setSelectedIds(new Set())}
             onAddToCampaigns={() => props.setShowAddToCampaignModal(true)}
-            onAddToDeals={() => props.router.push('/dashboard/crm/deals')}
+            onAddToDeals={props.handleAddToDeals}
             onAddToList={() => props.setShowAddToListModal(true)}
             onAddToCrm={props.handleBulkSave}
             onExport={() => {}}
@@ -774,6 +774,52 @@ function ProspectEnrichInner() {
     }
   }
 
+  const handleAddToDeals = async () => {
+    if (selectedIds.size === 0) return
+    if (!profile?.id) {
+      alert('Please log in to add listings to deals')
+      return
+    }
+    try {
+      const list = filteredListings || listings || []
+      const selectedListings = list.filter((l: Listing) =>
+        selectedIds.has(l.listing_id || '') || (l.property_url && selectedIds.has(l.property_url))
+      )
+      if (selectedListings.length === 0) {
+        alert('No listings selected')
+        return
+      }
+      let successCount = 0
+      for (const listing of selectedListings) {
+        const listingId = listing.listing_id || listing.property_url
+        if (!listingId) continue
+        const addressParts = [listing.street, listing.city, listing.state, listing.zip_code]
+          .filter(Boolean)
+          .map(String)
+          .join(', ')
+        const title = addressParts.trim() || listingId
+        const res = await fetch('/api/crm/deals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            title,
+            listing_id: listingId,
+            value: listing.list_price ?? null,
+            stage: 'Lead',
+            source: 'listing',
+            source_id: listingId,
+          }),
+        })
+        if (res.ok) successCount++
+      }
+      setSelectedIds(new Set())
+      alert(`Added ${successCount} listing${successCount !== 1 ? 's' : ''} to Deals`)
+    } catch (error) {
+      console.error('Error adding to deals:', error)
+      alert('Failed to add listings to deals')
+    }
+  }
 
   // No scroll sync needed - header is inside scroll container and scrolls naturally with data
 
@@ -1714,6 +1760,7 @@ function ProspectEnrichInner() {
         setShowAddToListModal={setShowAddToListModal}
         handleBulkAddToList={handleBulkAddToList}
         handleBulkSave={handleBulkSave}
+        handleAddToDeals={handleAddToDeals}
         profile={profile}
         showAddToCampaignModal={showAddToCampaignModal}
         setShowAddToCampaignModal={setShowAddToCampaignModal}
