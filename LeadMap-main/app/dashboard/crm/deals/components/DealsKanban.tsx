@@ -392,6 +392,12 @@ export default function DealsKanban({
     const el = kanbanScrollRef.current;
     if (!el) return;
     const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest(".custom-scrollbar")) {
+        // When hovering over a column's scroll area (and its cards),
+        // allow normal vertical scrolling instead of forcing horizontal.
+        return;
+      }
       const canScrollHorizontal = el.scrollWidth > el.clientWidth;
       if (canScrollHorizontal) {
         e.preventDefault();
@@ -710,6 +716,7 @@ export default function DealsKanban({
               ((d.value ?? d.forecast_value ?? (d as any).property_value) || 0),
             0
           );
+          const avgValue = list.length > 0 ? totalValue / list.length : 0;
 
           return (
             <div
@@ -737,7 +744,7 @@ export default function DealsKanban({
                       className={`text-[10px] font-semibold ${cfg.headerCount}`}
                     >
                       {list.length} deal{list.length !== 1 ? "s" : ""} •{" "}
-                      {fmtCurrency(totalValue)}
+                      {list.length > 0 ? `${fmtCurrency(avgValue)} avg` : "—"}
                     </p>
                   </div>
                 </div>
