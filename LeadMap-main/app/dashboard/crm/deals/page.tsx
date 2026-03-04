@@ -181,16 +181,6 @@ function DealsPageContent() {
                     All Pipelines
                     <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
                   </button>
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    aria-haspopup="listbox"
-                    aria-expanded="false"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">grid_view</span>
-                    All Deals
-                    <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
-                  </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
