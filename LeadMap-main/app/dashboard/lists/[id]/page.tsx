@@ -54,19 +54,19 @@ interface ListPaginatedResponse {
   list: { id: string; name: string; type: string }
 }
 
-/* ─── AI Score badge (reference: rounded-md, blue or emerald bg) ─── */
+/* ─── AI Score badge (rounded-full: green for high 90+, blue otherwise) ─── */
 function AIScoreCell({ score }: { score?: number | null }) {
   if (score == null || score === 0) {
-    return <span className="text-slate-300 text-lg">-</span>
+    return <span className="text-slate-400 text-lg">-</span>
   }
   const rounded = Math.round(score)
-  const isHigh = rounded >= 80
+  const isHigh = rounded >= 90
   return (
     <span
-      className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-[11px] font-bold leading-none border ${
+      className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold ${
         isHigh
-          ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-          : 'bg-blue-50 text-blue-600 border-blue-100'
+          ? 'bg-green-100 text-green-700'
+          : 'bg-blue-100 text-blue-700'
       }`}
     >
       {rounded}
@@ -74,17 +74,17 @@ function AIScoreCell({ score }: { score?: number | null }) {
   )
 }
 
-/* ─── Status badge (reference: non-rounded, 10px bold, border) ─── */
+/* ─── Status badge (fsbo=emerald, pending=amber) ─── */
 function StatusBadge({ status }: { status?: string | null }) {
   if (!status) return null
   const s = String(status).toLowerCase()
   const isPending = s.includes('pending')
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide leading-relaxed border ${
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
         isPending
-          ? 'bg-amber-50 text-amber-600 border-amber-100'
-          : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+          ? 'bg-amber-100 text-amber-700'
+          : 'bg-emerald-100 text-emerald-700'
       }`}
     >
       {status}
@@ -313,118 +313,126 @@ function ListDetailContent() {
               aria-hidden
             />
 
-            {/* ─── HEADER (matches /dashboard/lists style) ─── */}
-            <header className="shrink-0 z-20 px-8 py-6">
-              <div className="flex items-end justify-between mb-8">
-                <div>
-                  {/* Breadcrumb */}
-                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-                    <Link href="/dashboard/lists" className="hover:text-blue-600 transition-colors">
-                      Lists
-                    </Link>
-                    <span className="material-symbols-outlined text-[12px] text-slate-400">chevron_right</span>
-                    <span className="text-slate-700 dark:text-slate-300">{list?.name ?? '…'}</span>
-                  </div>
-                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {list?.name ?? '…'} <span className="text-blue-500">List</span>
-                  </h1>
-                  <p className="text-slate-500 dark:text-slate-400 mt-2 text-base">
-                    Manage and track your {list?.type === 'people' ? 'contacts' : 'property records'} in this list efficiently.
-                  </p>
+            {/* ─── HEADER ─── */}
+            <header className="shrink-0 z-20 px-8 pt-8 pb-4">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <Link href="/dashboard/lists" className="hover:text-blue-600 transition-colors">
+                    Lists
+                  </Link>
+                  <span className="material-symbols-outlined text-[12px] text-slate-400">chevron_right</span>
+                  <span className="text-slate-800 dark:text-slate-300">{list?.name ?? '…'}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {}}
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    aria-label="Import"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">upload_file</span>
-                    Import
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {}}
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
-                    aria-label="Add records"
-                  >
-                    Add records
-                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {}}
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    aria-label="Research with AI"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">auto_awesome</span>
-                    Research with AI
-                  </button>
-                  <button
-                    type="button"
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    aria-label="More options"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">more_vert</span>
-                  </button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
+                      {list?.name ?? '…'}
+                    </h1>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-600 uppercase tracking-wide">
+                      {totalCount.toLocaleString()} records
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {}}
+                      className="px-3.5 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5 backdrop-blur-sm"
+                      aria-label="Import"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                      Import
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportCSV}
+                      className="px-3.5 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5 backdrop-blur-sm"
+                      aria-label="Export"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">download</span>
+                      Export
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5"
+                      aria-label="Add records"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">add</span>
+                      Add records
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-violet-500/20 transition-all flex items-center gap-1.5"
+                      aria-label="Research with AI"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                      Research with AI
+                    </button>
+                    <button
+                      type="button"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                      aria-label="More options"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </header>
 
             {/* ─── MAIN CONTENT (matches /dashboard/lists padding) ─── */}
             <main className="flex-1 overflow-auto custom-scrollbar px-8 pb-8 flex flex-col min-h-0">
-              {/* ─── TOOLBAR (matches /dashboard/lists: search + View/Sort/Filter) ─── */}
-              <div className="flex items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="flex-1 flex items-center relative group max-w-md">
-                    <span
-                      className="absolute left-3 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[18px]"
-                      aria-hidden
-                    >
-                      search
-                    </span>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={list?.type === 'properties' ? 'Search properties...' : 'Search contacts...'}
-                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      aria-label="Search"
-                    />
-                  </div>
+              {/* ─── TOOLBAR (search + Status/Price/More Filters) ─── */}
+              <div className="flex items-center justify-between gap-4 mb-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-xl border border-white/50 dark:border-slate-600/50 shadow-sm">
+                <div className="flex-1 flex items-center relative group max-w-md">
+                  <span
+                    className="absolute left-3 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[18px]"
+                    aria-hidden
+                  >
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={list?.type === 'properties' ? 'Search properties...' : 'Search contacts...'}
+                    className="w-full pl-10 pr-4 py-1.5 bg-transparent dark:bg-transparent border-0 text-sm font-medium text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-0"
+                    aria-label="Search"
+                  />
+                </div>
+                <div className="h-6 w-px bg-slate-200 dark:bg-slate-600 mx-2 shrink-0" />
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    aria-label="View options"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                    aria-label="Status filter"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">grid_view</span>
-                    View
-                    <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
+                    Status: Any
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    aria-label="Sort options"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                    aria-label="Price range filter"
                   >
-                    Sort: Modified
-                    <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
+                    Price Range
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    aria-label="Filter options"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                    aria-label="More filters"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">filter_list</span>
-                    Filter
+                    <span className="material-symbols-outlined text-[16px] text-slate-500">filter_list</span>
+                    More Filters
                   </button>
                 </div>
               </div>
 
               {/* ─── TABLE + DETAIL PANEL LAYOUT ─── */}
-              <div className="flex gap-4 h-full overflow-hidden">
-                {/* ─── TABLE CARD (matches lists index table styling) ─── */}
-                <div className="bg-white dark:bg-slate-800/50 border border-gray-200/80 dark:border-slate-600 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
-                  <div className="overflow-auto custom-scrollbar flex-1 pb-10">
+                <div className="flex gap-4 h-full overflow-hidden">
+                {/* ─── TABLE CARD (glass panel with backdrop blur) ─── */}
+                <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-white dark:border-slate-600/50 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
+                  <div className="overflow-auto custom-scrollbar flex-1 pb-16">
                     {loading ? (
                       <div className="flex items-center justify-center py-20">
                         <Loader2 className="h-8 w-8 animate-spin text-blue-600" aria-hidden />
@@ -455,30 +463,30 @@ function ListDetailContent() {
                         )}
                       </div>
                     ) : list?.type === 'properties' ? (
-                      /* ─── PROPERTIES TABLE (1:1 reference classes) ─── */
+                      /* ─── PROPERTIES TABLE ─── */
                       <table className="w-full text-left text-sm text-slate-600" role="grid">
-                        <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+                        <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/60 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-md z-10">
                           <tr>
-                            <th className="pl-6 pr-4 py-3 w-12 font-semibold align-middle" scope="col">
+                            <th className="px-5 py-3 w-10 font-semibold align-middle" scope="col">
                               <input
                                 type="checkbox"
                                 checked={listings.length > 0 && selectedIds.size === listings.length}
                                 onChange={handleSelectAll}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
+                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3.5 h-3.5 cursor-pointer transition-colors"
                                 aria-label="Select all"
                               />
                             </th>
-                            <th className="px-4 py-3 font-semibold align-middle w-[30%]" scope="col">Address</th>
+                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Address</th>
                             <th className="px-4 py-3 font-semibold w-32 align-middle" scope="col">Price</th>
                             <th className="px-4 py-3 font-semibold w-24 align-middle" scope="col">Status</th>
                             <th className="px-4 py-3 font-semibold w-24 text-center align-middle" scope="col">AI Score</th>
-                            <th className="px-4 py-3 font-semibold w-16 text-center align-middle" scope="col">Beds</th>
-                            <th className="px-4 py-3 font-semibold w-16 text-center align-middle" scope="col">Baths</th>
+                            <th className="px-4 py-3 font-semibold w-20 text-center align-middle" scope="col">Beds</th>
+                            <th className="px-4 py-3 font-semibold w-20 text-center align-middle" scope="col">Baths</th>
                             <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Sqft</th>
                             <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-600/50">
+                        <tbody className="divide-y divide-slate-100/80 dark:divide-slate-600/50">
                           {listings.map((listing) => {
                             const id = getListingId(listing)
                             const address = listing.street || '—'
@@ -488,81 +496,90 @@ function ListDetailContent() {
                             const isDeleting = deletingId === id
                             const isSelected = selectedListing != null && getListingId(selectedListing) === id
 
+                            const propUrl = listing.property_url || (listing.listing_id && String(listing.listing_id).startsWith('http') ? listing.listing_id : null)
                             return (
                               <tr
                                 key={id}
                                 onClick={() => handleRowClick(listing)}
                                 className={`transition-colors duration-150 group cursor-pointer ${
                                   isSelected
-                                    ? 'bg-blue-50/60 hover:bg-blue-50 border-l-4 border-l-blue-500'
-                                    : 'bg-white hover:bg-slate-50/80'
+                                    ? 'bg-blue-50/60 hover:bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500'
+                                    : 'bg-white/40 dark:bg-slate-800/40 hover:bg-blue-50/40 dark:hover:bg-slate-700/40'
                                 }`}
                               >
-                                <td className={`${isSelected ? 'pl-5' : 'pl-6'} pr-4 py-2.5 align-middle`}>
+                                <td className="px-5 py-3 align-middle">
                                   <input
                                     type="checkbox"
                                     checked={selectedIds.has(id)}
                                     onChange={(e) => handleSelect(id, e.target.checked)}
-                                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
+                                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3.5 h-3.5 cursor-pointer transition-colors"
                                     onClick={(e) => e.stopPropagation()}
                                     aria-label={`Select property ${address}`}
                                   />
                                 </td>
-                                <td className="px-4 py-2.5 align-middle">
-                                  <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                      isSelected ? 'bg-blue-100 text-blue-600' : 'bg-blue-50 text-blue-500'
-                                    }`}>
-                                      <span className="material-symbols-outlined text-[18px]">
-                                        {isSelected ? 'home' : 'location_on'}
-                                      </span>
+                                <td className="px-4 py-3 align-middle">
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                      <span className="material-symbols-outlined text-slate-400 text-[16px]">location_on</span>
+                                      <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{address}</span>
                                     </div>
-                                    <div className="flex flex-col justify-center">
-                                      <span className={`font-semibold text-sm ${isSelected ? 'text-slate-900' : 'text-slate-800'}`}>
-                                        {address}
-                                      </span>
-                                      <span className={`text-[11px] ${isSelected ? 'text-slate-600' : 'text-slate-500'}`}>
-                                        {cityStateZip || '—'}
-                                      </span>
-                                    </div>
+                                    <div className="text-[11px] text-slate-500 dark:text-slate-400 ml-5">{cityStateZip || '—'}</div>
+                                    {propUrl && (
+                                      <a
+                                        href={propUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[10px] font-semibold text-blue-600 hover:underline ml-5 mt-1 inline-flex items-center gap-0.5"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        View Property
+                                        <span className="material-symbols-outlined text-[10px]">open_in_new</span>
+                                      </a>
+                                    )}
                                   </div>
                                 </td>
-                                <td className={`px-4 py-2.5 align-middle text-sm font-bold font-mono ${isSelected ? 'text-slate-800' : 'text-slate-700'}`}>
+                                <td className="px-4 py-3 align-middle font-medium text-slate-700 dark:text-slate-300">
                                   {listing.list_price != null
                                     ? `$${Number(listing.list_price).toLocaleString()}`
                                     : '—'}
                                 </td>
-                                <td className="px-4 py-2.5 align-middle">
+                                <td className="px-4 py-3 align-middle">
                                   <StatusBadge status={listing.status} />
                                 </td>
-                                <td className="px-4 py-2.5 text-center align-middle">
+                                <td className="px-4 py-3 text-center align-middle">
                                   <AIScoreCell score={listing.ai_investment_score} />
                                 </td>
-                                <td className={`px-4 py-2.5 text-center align-middle text-sm font-medium ${isSelected ? 'text-slate-800' : 'text-slate-600'}`}>
+                                <td className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300">
                                   {listing.beds ?? '—'}
                                 </td>
-                                <td className={`px-4 py-2.5 text-center align-middle text-sm font-medium ${isSelected ? 'text-slate-800' : 'text-slate-600'}`}>
+                                <td className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300">
                                   {listing.full_baths ?? '—'}
                                 </td>
-                                <td className={`px-4 py-2.5 text-right align-middle text-sm font-medium tabular-nums ${isSelected ? 'text-slate-800' : 'text-slate-600'}`}>
+                                <td className="px-4 py-3 text-right align-middle font-medium text-slate-700 dark:text-slate-300 tabular-nums">
                                   {listing.sqft != null ? Number(listing.sqft).toLocaleString() : '—'}
                                 </td>
-                                <td className="px-4 py-2.5 text-right align-middle">
+                                <td className="px-4 py-3 text-right align-middle">
                                   <div className={`flex items-center justify-end gap-1 transition-opacity duration-200 ${
                                     isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                   }`}>
                                     <button
                                       type="button"
-                                      className={`w-7 h-7 flex items-center justify-center rounded transition-colors ${
-                                        isSelected
-                                          ? 'text-blue-600 bg-blue-50'
-                                          : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
-                                      }`}
+                                      className="w-7 h-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50/80 dark:hover:bg-blue-900/30 transition-colors"
                                       title="Edit"
                                       aria-label="Edit"
                                       onClick={(e) => e.stopPropagation()}
                                     >
-                                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="w-7 h-7 flex items-center justify-center rounded-md hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                                      title="Delete"
+                                      aria-label="Delete"
+                                      disabled={isDeleting}
+                                      onClick={(e) => { e.stopPropagation(); handleRemoveFromList(listing, e) }}
+                                    >
+                                      <span className="material-symbols-outlined text-[18px]">delete</span>
                                     </button>
                                   </div>
                                 </td>
@@ -655,8 +672,8 @@ function ListDetailContent() {
                     )}
                   </div>
 
-                  {/* ─── PAGINATION FOOTER (matches lists index) ─── */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-600 px-4 py-2 flex items-center justify-between z-20">
+                  {/* ─── PAGINATION FOOTER ─── */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-600 p-3 flex items-center justify-between z-20">
                     <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                       Showing{' '}
                       <span className="font-bold text-slate-800 dark:text-slate-200">{startRecord}</span> -{' '}
