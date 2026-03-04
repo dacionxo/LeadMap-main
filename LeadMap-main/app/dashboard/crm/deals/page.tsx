@@ -9,6 +9,12 @@ import EditDealModal from './components/EditDealModal'
 import DealsSelectionActionBar from './components/DealsSelectionActionBar'
 import DealsKanban from './components/DealsKanban'
 import LeadDetailModal from '../../prospect-enrich/components/LeadDetailModal'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu'
 
 type DealRow = {
   id: string
@@ -40,10 +46,20 @@ function DealsPageContent() {
   const [propertyModalListingId, setPropertyModalListingId] = useState<string | null>(null)
   const [propertyModalListingList, setPropertyModalListingList] = useState<any[]>([])
   const [propertyModalLoading, setPropertyModalLoading] = useState(false)
+  const [sortBy, setSortBy] = useState<string>('created_at')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const refreshDeals = async () => {
+  const SORT_OPTIONS = [
+    { id: 'expected_close_date', label: 'Close date (soonest first)', sortBy: 'expected_close_date' as const, sortOrder: 'asc' as const },
+    { id: 'probability', label: 'Probability (highest first)', sortBy: 'probability' as const, sortOrder: 'desc' as const },
+    { id: 'value', label: 'Value (highest first)', sortBy: 'value' as const, sortOrder: 'desc' as const },
+    { id: 'created_at', label: 'Date created (newest first)', sortBy: 'created_at' as const, sortOrder: 'desc' as const },
+  ]
+  const currentSortLabel = SORT_OPTIONS.find(o => o.sortBy === sortBy && o.sortOrder === sortOrder)?.label ?? 'Sort'
+
+  const refreshDeals = useCallback(async () => {
     try {
-      const res = await fetch('/api/crm/deals?page=1&pageSize=50&sortBy=created_at&sortOrder=desc', { credentials: 'include' })
+      const res = await fetch(`/api/crm/deals?page=1&pageSize=50&sortBy=${encodeURIComponent(sortBy)}&sortOrder=${sortOrder}`, { credentials: 'include' })
       const json = await res.json()
       if (res.ok) {
         setTotalDeals(json.pagination?.total ?? 0)
@@ -56,11 +72,11 @@ function DealsPageContent() {
       setTotalDeals(0)
       setDeals([])
     }
-  }
+  }, [sortBy, sortOrder])
 
   useEffect(() => {
     refreshDeals()
-  }, [])
+  }, [refreshDeals])
 
   useEffect(() => {
     let cancelled = false
@@ -174,15 +190,38 @@ function DealsPageContent() {
                     All Deals
                     <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
                   </button>
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    aria-haspopup="listbox"
-                    aria-expanded="false"
-                  >
-                    Sort: Date Created
-                    <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                      >
+                        <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">sort</span>
+                        {currentSortLabel}
+                        <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-[220px]">
+                      {SORT_OPTIONS.map((opt) => (
+                        <DropdownMenuItem
+                          key={opt.id}
+                          onClick={() => {
+                            setSortBy(opt.sortBy)
+                            setSortOrder(opt.sortOrder)
+                          }}
+                        >
+                          {currentSortLabel === opt.label ? (
+                            <span className="material-symbols-outlined text-[16px] text-blue-500 mr-2">check</span>
+                          ) : (
+                            <span className="w-[24px] mr-2" />
+                          )}
+                          {opt.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-slate-500 dark:text-slate-400 font-medium bg-gray-50/50 dark:bg-slate-800/50 px-3 py-1 rounded-full border border-gray-100 dark:border-slate-700">
