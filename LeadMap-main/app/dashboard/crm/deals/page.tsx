@@ -59,7 +59,8 @@ function DealsPageContent() {
 
   const refreshDeals = useCallback(async () => {
     try {
-      const res = await fetch(`/api/crm/deals?page=1&pageSize=50&sortBy=${encodeURIComponent(sortBy)}&sortOrder=${sortOrder}`, { credentials: 'include' })
+      // Always fetch with same order so the set of deals doesn't change; Kanban sorts within each column
+      const res = await fetch('/api/crm/deals?page=1&pageSize=50&sortBy=created_at&sortOrder=desc', { credentials: 'include' })
       const json = await res.json()
       if (res.ok) {
         setTotalDeals(json.pagination?.total ?? 0)
@@ -72,7 +73,7 @@ function DealsPageContent() {
       setTotalDeals(0)
       setDeals([])
     }
-  }, [sortBy, sortOrder])
+  }, [])
 
   useEffect(() => {
     refreshDeals()
@@ -241,6 +242,8 @@ function DealsPageContent() {
             <DealsKanban
               deals={deals as any}
               stages={['Lead', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
               onDealClick={(d) => {
                 setEditingDeal(d)
                 setIsEditModalOpen(true)

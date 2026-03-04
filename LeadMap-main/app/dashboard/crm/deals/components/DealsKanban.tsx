@@ -60,6 +60,9 @@ interface DealsKanbanProps {
   onDealDelete: (dealId: string) => Promise<void>;
   pipelines?: Array<{ id: string; name: string; stages: string[] }>;
   onAddDeal?: (stage?: string) => void;
+  /** Sort within each column only (does not move deals between columns). */
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 const PLACEHOLDER_IMAGE =
@@ -376,6 +379,20 @@ function getLabelForDeal(deal: Deal): string {
   return "Meh";
 }
 
+function getDealSortValue(deal: Deal, sortBy: string): number | string {
+  switch (sortBy) {
+    case "expected_close_date":
+      return deal.expected_close_date || "";
+    case "probability":
+      return deal.probability ?? -1;
+    case "value":
+      return deal.value ?? (deal as any).property_value ?? (deal as any).forecast_value ?? -1;
+    case "created_at":
+    default:
+      return deal.created_at || "";
+  }
+}
+
 export default function DealsKanban({
   deals,
   onDealClick,
@@ -384,6 +401,8 @@ export default function DealsKanban({
   onDealUpdate,
   onDealDelete,
   onAddDeal,
+  sortBy = "created_at",
+  sortOrder = "desc",
 }: DealsKanbanProps) {
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null);
   const kanbanScrollRef = useRef<HTMLElement | null>(null);
@@ -413,6 +432,21 @@ export default function DealsKanban({
     const col = columnForStage(d.stage);
     buckets[col].push(d);
   }
+  // Sort within each column only so items never leave their column
+  const asc = sortOrder === "asc";
+  buckets.forEach((list) => {
+    list.sort((a, b) => {
+      const va = getDealSortValue(a, sortBy);
+      const vb = getDealSortValue(b, sortBy);
+      const aNum = typeof va === "number" ? va : new Date(va || 0).getTime();
+      const bNum = typeof vb === "number" ? vb : new Date(vb || 0).getTime();
+      if (typeof va === "number" && typeof vb === "number") {
+        return asc ? aNum - bNum : bNum - aNum;
+      }
+      const cmp = String(va).localeCompare(String(vb));
+      return asc ? cmp : -cmp;
+    });
+  });
 
   const handleDragStart = (e: React.DragEvent, deal: Deal) => {
     setDraggedDeal(deal);
