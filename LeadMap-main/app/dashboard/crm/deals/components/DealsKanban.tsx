@@ -441,7 +441,9 @@ export default function DealsKanban({
           </div>
         </div>
         <div className="px-1">
-          <h4 className="font-bold text-gray-900 mb-0.5 text-[15px]">{deal.title || 'Untitled deal'}</h4>
+          {deal.title && deal.title.trim() && deal.title.trim() !== (deal.property_address || '').trim() && (
+            <h4 className="font-bold text-gray-900 mb-0.5 text-[15px]">{deal.title}</h4>
+          )}
           <p
             className="text-xs text-slate-500 mb-3 line-clamp-1 font-medium flex items-center gap-1 cursor-pointer hover:text-blue-600 hover:underline"
             onClick={(e) => {
@@ -460,10 +462,6 @@ export default function DealsKanban({
             <div className="flex justify-between text-[11px]">
               <span className="text-gray-500 font-medium">Est. Value</span>
               <span className="font-bold text-gray-700">{fmtCurrency(estValue)}</span>
-            </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-gray-500 font-medium">Listed</span>
-              <span className="font-bold text-gray-700">{fmtCurrency(listedPrice)}</span>
             </div>
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-gray-50">
@@ -539,7 +537,9 @@ export default function DealsKanban({
             </DropdownMenu>
           </button>
         </div>
-        <h4 className="font-bold text-gray-900 mb-1 text-[15px]">{deal.title || 'Untitled deal'}</h4>
+        {deal.title && deal.title.trim() && deal.title.trim() !== (deal.property_address || '').trim() && (
+          <h4 className="font-bold text-gray-900 mb-1 text-[15px]">{deal.title}</h4>
+        )}
         <p
           className="text-xs text-slate-500 mb-4 line-clamp-1 font-medium cursor-pointer hover:text-blue-600 hover:underline"
           onClick={(e) => {
