@@ -210,48 +210,68 @@ export async function GET(
     }
 
     const safeTotalCount = totalCount || 0
-    const totalPages = safeTotalCount > 0 ? Math.ceil(safeTotalCount / pageSize) : 0
-    
-    // Clamp page to valid range
-    const safePage = totalPages > 0 ? Math.min(page, totalPages) : 1
-    const safeOffset = (safePage - 1) * pageSize
+    const hasSearch = search && search.trim().length > 0
 
-    // Build data query with pagination
-    let listItemsQuery = supabase
-      .from('list_memberships')
-      .select('id, item_type, item_id, created_at')
-      .eq('list_id', listId)
-
-    // Filter by item_type if specified (using effectiveItemType from above)
-    if (effectiveItemType) {
-      listItemsQuery = listItemsQuery.eq('item_type', effectiveItemType)
-    }
-
-    // Apply sorting
+    // When search is applied: fetch ALL memberships (no DB pagination), filter in memory, then paginate.
+    // This fixes the bug where paginating first then filtering could return 0 items per page.
+    const maxFetchWhenSearching = 5000
     const ascending = sortOrder === 'asc'
-    listItemsQuery = listItemsQuery.order(sortBy === 'created_at' ? 'created_at' : 'item_id', { ascending })
 
-    // Apply pagination
-    const { data: listItems, error: itemsError } = await listItemsQuery
-      .range(safeOffset, safeOffset + pageSize - 1)
+    let listItems: { id: string; item_type: string; item_id: string; created_at: string }[]
 
-    if (itemsError) {
-      console.error('Error fetching list items:', itemsError)
-      return NextResponse.json(
-        { error: 'Failed to fetch list items' },
-        { status: 500 }
-      )
+    if (hasSearch) {
+      let allItemsQuery = supabase
+        .from('list_memberships')
+        .select('id, item_type, item_id, created_at')
+        .eq('list_id', listId)
+      if (effectiveItemType) allItemsQuery = allItemsQuery.eq('item_type', effectiveItemType)
+      allItemsQuery = allItemsQuery.order(sortBy === 'created_at' ? 'created_at' : 'item_id', { ascending }).limit(maxFetchWhenSearching)
+
+      const { data: allItems, error: itemsError } = await allItemsQuery
+
+      if (itemsError) {
+        console.error('Error fetching list items:', itemsError)
+        return NextResponse.json(
+          { error: 'Failed to fetch list items', details: itemsError.message },
+          { status: 500 }
+        )
+      }
+      listItems = allItems || []
+    } else {
+      const totalPages = safeTotalCount > 0 ? Math.ceil(safeTotalCount / pageSize) : 0
+      const safePage = totalPages > 0 ? Math.min(page, totalPages) : 1
+      const safeOffset = (safePage - 1) * pageSize
+
+      let paginatedQuery = supabase
+        .from('list_memberships')
+        .select('id, item_type, item_id, created_at')
+        .eq('list_id', listId)
+      if (effectiveItemType) paginatedQuery = paginatedQuery.eq('item_type', effectiveItemType)
+      paginatedQuery = paginatedQuery.order(sortBy === 'created_at' ? 'created_at' : 'item_id', { ascending }).range(safeOffset, safeOffset + pageSize - 1)
+
+      const { data: paginatedItems, error: itemsError } = await paginatedQuery
+
+      if (itemsError) {
+        console.error('Error fetching list items:', itemsError)
+        return NextResponse.json(
+          { error: 'Failed to fetch list items', details: itemsError.message },
+          { status: 500 }
+        )
+      }
+      listItems = paginatedItems || []
     }
 
     if (!listItems || listItems.length === 0) {
+      const emptyTotalPages = hasSearch ? 0 : (safeTotalCount > 0 ? Math.ceil(safeTotalCount / pageSize) : 0)
+      const emptyPage = 1
       return NextResponse.json({
         data: [],
-        count: safeTotalCount,
-        page: safePage,
+        count: hasSearch ? 0 : safeTotalCount,
+        page: emptyPage,
         pageSize,
-        totalPages,
-        hasNextPage: safePage < totalPages,
-        hasPreviousPage: safePage > 1,
+        totalPages: emptyTotalPages,
+        hasNextPage: false,
+        hasPreviousPage: false,
         list: {
           id: listExists.id,
           name: listExists.name,
@@ -652,7 +672,7 @@ export async function GET(
     
     let filteredItems = fetchedItems
     if (search) {
-      const searchLower = search.toLowerCase()
+      const searchLower = search.toLowerCase().trim()
       filteredItems = fetchedItems.filter(item => {
         return (
           item.street?.toLowerCase().includes(searchLower) ||
@@ -660,6 +680,7 @@ export async function GET(
           item.state?.toLowerCase().includes(searchLower) ||
           item.zip_code?.toLowerCase().includes(searchLower) ||
           item.listing_id?.toLowerCase().includes(searchLower) ||
+          item.property_url?.toLowerCase().includes(searchLower) ||
           item.agent_name?.toLowerCase().includes(searchLower) ||
           item.agent_email?.toLowerCase().includes(searchLower) ||
           item.first_name?.toLowerCase().includes(searchLower) ||
@@ -691,16 +712,36 @@ export async function GET(
 
     // ============================================================================
     // STEP 5: Return paginated response
+    // When search was applied: filteredItems contains all matches; paginate by slicing.
+    // When no search: filteredItems is already the current page (we paginated at DB).
     // ============================================================================
     
+    let finalData: any[]
+    let finalCount: number
+    let finalPage: number
+    let finalTotalPages: number
+
+    if (hasSearch) {
+      finalCount = filteredItems.length
+      finalTotalPages = finalCount > 0 ? Math.ceil(finalCount / pageSize) : 0
+      finalPage = finalTotalPages > 0 ? Math.min(page, finalTotalPages) : 1
+      const sliceStart = (finalPage - 1) * pageSize
+      finalData = filteredItems.slice(sliceStart, sliceStart + pageSize)
+    } else {
+      finalCount = safeTotalCount
+      finalTotalPages = finalCount > 0 ? Math.ceil(finalCount / pageSize) : 0
+      finalPage = finalTotalPages > 0 ? Math.min(page, finalTotalPages) : 1
+      finalData = filteredItems
+    }
+
     return NextResponse.json({
-      data: filteredItems,
-      count: safeTotalCount,
-      page: safePage,
+      data: finalData,
+      count: finalCount,
+      page: finalPage,
       pageSize,
-      totalPages,
-      hasNextPage: safePage < totalPages,
-      hasPreviousPage: safePage > 1,
+      totalPages: finalTotalPages,
+      hasNextPage: finalPage < finalTotalPages,
+      hasPreviousPage: finalPage > 1,
       list: {
         id: listExists.id,
         name: listExists.name,
