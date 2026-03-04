@@ -330,22 +330,23 @@ export async function GET(
         })
 
         // Define source tables to search (if table param provided, use only that)
-        // Include ALL category tables where listings/leads might be stored
-        // This ensures we find listings from all sources, not just the main listings table
-        const sourceTables = sourceTable 
+        // Primary: use listings_unified view first - it unions ALL listing tables so we find
+        // items regardless of source. Fallback: per-table queries for edge cases.
+        const sourceTables = sourceTable
           ? [sourceTable]
           : [
-              'listings',              // Main listings table
-              'expired_listings',       // Expired property listings
-              'fsbo_leads',            // For Sale By Owner leads
-              'frbo_leads',            // For Rent By Owner leads
-              'imports',               // Imported listings
-              'foreclosure_listings',  // Foreclosure properties
-              'probate_leads'          // Probate property leads
+              'listings_unified',      // Primary: unified view across all listing sources
+              'listings',
+              'expired_listings',
+              'fsbo_leads',
+              'frbo_leads',
+              'imports',
+              'foreclosure_listings',
+              'probate_leads'
             ]
 
-        // Validate source tables
         const validTables = [
+          'listings_unified',
           'listings',
           'expired_listings',
           'fsbo_leads',
@@ -357,7 +358,7 @@ export async function GET(
         ]
         const safeSourceTables = sourceTables.filter(t => validTables.includes(t))
 
-        // Fetch from each source table in parallel with flexible matching
+        // Fetch from each source in parallel with flexible matching
         const listingPromises = safeSourceTables.map(async (table) => {
           try {
             const allListings: any[] = []
