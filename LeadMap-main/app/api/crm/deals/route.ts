@@ -69,6 +69,13 @@ function normalizeStage(stage: string | null | undefined): string {
   return 'new'
 }
 
+function getFirstPhotoUrl(photosJson: any): string | null {
+  if (!photosJson || !Array.isArray(photosJson) || photosJson.length === 0) return null
+  const first = photosJson[0]
+  const url = typeof first === 'string' ? first : first?.url
+  return typeof url === 'string' && url.startsWith('http') ? url : null
+}
+
 /**
  * GET /api/crm/deals
  * Fetch deals with filtering, sorting, and pagination
@@ -236,9 +243,10 @@ export async function GET(request: NextRequest) {
     const dealsWithListingIds = (deals || []).filter((deal: any) => deal.listing_id)
     const uniqueListingIds = Array.from(new Set(dealsWithListingIds.map((deal: any) => deal.listing_id)))
     
-    // Build maps: listing_id -> property_address, listing_id -> list_price (property value)
+    // Build maps: listing_id -> property_address, list_price, photos_json, primary_photo
     const propertyAddressMap = new Map<string, string | null>()
     const propertyValueMap = new Map<string, number | null>()
+    const propertyPhotosMap = new Map<string, { photos_json: any; primary_photo: string | null }>()
     
     if (uniqueListingIds.length > 0) {
       const tableNames = ['listings', 'expired_listings', 'fsbo_leads', 'frbo_leads', 'imports', 'foreclosure_listings']
@@ -260,20 +268,29 @@ export async function GET(request: NextRequest) {
       for (const tableName of tableNames) {
         try {
           const colsWithPrice = 'listing_id, street, city, state, zip_code, property_url, list_price'
+          const colsWithPhotos = 'listing_id, street, city, state, zip_code, property_url, list_price, photos_json'
           let listings: any[] = []
           const { data: byId, error: errId } = await supabase
             .from(tableName)
-            .select(colsWithPrice)
+            .select(colsWithPhotos)
             .in('listing_id', uniqueListingIds)
             .limit(1000)
           if (!errId && byId) listings = byId
-          if (errId && (errId.code === '42703' || /list_price|column.*exist/i.test(errId.message || ''))) {
+          if (errId && (errId.code === '42703' || /photos_json|list_price|column.*exist/i.test(errId.message || ''))) {
             const { data: byIdFallback } = await supabase
+              .from(tableName)
+              .select(colsWithPrice)
+              .in('listing_id', uniqueListingIds)
+              .limit(1000)
+            if (byIdFallback) listings = byIdFallback
+          }
+          if (errId && listings.length === 0) {
+            const { data: byIdMinimal } = await supabase
               .from(tableName)
               .select('listing_id, street, city, state, zip_code, property_url')
               .in('listing_id', uniqueListingIds)
               .limit(1000)
-            if (byIdFallback) listings = byIdFallback
+            if (byIdMinimal) listings = byIdMinimal
           }
 
           if (listings.length > 0) {
@@ -283,6 +300,10 @@ export async function GET(request: NextRequest) {
               if (!propertyAddressMap.has(id)) propertyAddressMap.set(id, buildAddress(listing))
               const pv = listing.list_price != null ? Number(listing.list_price) : null
               if (pv != null && !isNaN(pv) && !propertyValueMap.has(id)) propertyValueMap.set(id, pv)
+              if (listing.photos_json != null && !propertyPhotosMap.has(id)) {
+                const primary = getFirstPhotoUrl(listing.photos_json)
+                propertyPhotosMap.set(id, { photos_json: listing.photos_json, primary_photo: primary })
+              }
             })
           }
 
@@ -290,17 +311,25 @@ export async function GET(request: NextRequest) {
           if (urlListingIds.length > 0) {
             const { data: listingsByUrl, error: errUrl } = await supabase
               .from(tableName)
-              .select('listing_id, property_url, street, city, state, zip_code, list_price')
+              .select('listing_id, property_url, street, city, state, zip_code, list_price, photos_json')
               .in('property_url', urlListingIds)
               .limit(1000)
             let byUrl: any[] = listingsByUrl || []
-            if (errUrl && (errUrl.code === '42703' || /list_price|column.*exist/i.test(errUrl.message || ''))) {
+            if (errUrl && (errUrl.code === '42703' || /photos_json|list_price|column.*exist/i.test(errUrl.message || ''))) {
               const { data: fallback } = await supabase
+                .from(tableName)
+                .select('listing_id, property_url, street, city, state, zip_code, list_price')
+                .in('property_url', urlListingIds)
+                .limit(1000)
+              byUrl = fallback || []
+            }
+            if (errUrl && byUrl.length === 0) {
+              const { data: fallback2 } = await supabase
                 .from(tableName)
                 .select('listing_id, property_url, street, city, state, zip_code')
                 .in('property_url', urlListingIds)
                 .limit(1000)
-              byUrl = fallback || []
+              if (fallback2) byUrl = fallback2
             }
             if (byUrl.length > 0) {
               byUrl.forEach((listing: any) => {
@@ -309,6 +338,10 @@ export async function GET(request: NextRequest) {
                 if (!propertyAddressMap.has(url)) propertyAddressMap.set(url, buildAddress(listing))
                 const pv = listing.list_price != null ? Number(listing.list_price) : null
                 if (pv != null && !isNaN(pv) && !propertyValueMap.has(url)) propertyValueMap.set(url, pv)
+                if (listing.photos_json != null && !propertyPhotosMap.has(url)) {
+                  const primary = getFirstPhotoUrl(listing.photos_json)
+                  propertyPhotosMap.set(url, { photos_json: listing.photos_json, primary_photo: primary })
+                }
               })
             }
           }
@@ -349,9 +382,19 @@ export async function GET(request: NextRequest) {
       if (deal.listing_id) {
         result.property_address = propertyAddressMap.get(deal.listing_id) || null
         result.property_value = propertyValueMap.get(deal.listing_id) ?? null
+        const photosData = propertyPhotosMap.get(deal.listing_id)
+        if (photosData) {
+          result.photos_json = photosData.photos_json
+          result.primary_photo = photosData.primary_photo
+        } else {
+          result.photos_json = null
+          result.primary_photo = null
+        }
       } else {
         result.property_address = null
         result.property_value = null
+        result.photos_json = null
+        result.primary_photo = null
       }
       
       if (deal.owner_id) {

@@ -29,6 +29,15 @@ interface Deal {
   last_interaction?: string | null
   updated_at?: string | null
   primary_photo?: string | null
+  photos_json?: unknown
+}
+
+// Normalize photos_json to array of image URLs (supports string[] or { url: string }[])
+function getPhotoUrls(photosJson: unknown): string[] {
+  if (!photosJson || !Array.isArray(photosJson)) return []
+  return (photosJson as any[])
+    .map((item) => (typeof item === 'string' ? item : item?.url))
+    .filter((url): url is string => typeof url === 'string' && url.startsWith('http'))
 }
 
 interface DealsKanbanProps {
@@ -44,6 +53,93 @@ interface DealsKanbanProps {
 }
 
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=256&fit=crop'
+const CAROUSEL_INTERVAL_MS = 4000
+
+function PropertyPhotoCarousel({
+  deal,
+  className,
+  onClickCapture,
+}: {
+  deal: Deal
+  className?: string
+  onClickCapture?: (e: React.MouseEvent) => void
+}) {
+  const urls = getPhotoUrls((deal as any).photos_json)
+  const primary = (deal as any).primary_photo
+  const images = urls.length > 0 ? urls : (primary ? [primary] : [PLACEHOLDER_IMAGE])
+  const [index, setIndex] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (images.length <= 1) return
+    intervalRef.current = setInterval(() => {
+      setIndex((i) => (i + 1) % images.length)
+    }, CAROUSEL_INTERVAL_MS)
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [images.length])
+
+  const goTo = (i: number) => {
+    setIndex(i)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = setInterval(() => {
+        setIndex((prev) => (prev + 1) % images.length)
+      }, CAROUSEL_INTERVAL_MS)
+    }
+  }
+
+  if (images.length === 0) return null
+
+  return (
+    <div className={className} onClickCapture={onClickCapture}>
+      <div className="relative w-full h-full overflow-hidden">
+        <div className="absolute inset-0 w-full h-full transform transition-transform duration-500 group-hover:scale-105">
+          {images.map((src, i) => (
+            <img
+              key={i}
+              alt={`Property ${i + 1}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${i === index ? 'opacity-100 z-[1]' : 'opacity-0 z-0'}`}
+              src={src}
+            />
+          ))}
+        </div>
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-600 hover:bg-white hover:text-blue-600 transition-colors"
+              onClick={(e) => { e.stopPropagation(); goTo((index - 1 + images.length) % images.length) }}
+              aria-label="Previous photo"
+            >
+              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+            </button>
+            <button
+              type="button"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-600 hover:bg-white hover:text-blue-600 transition-colors"
+              onClick={(e) => { e.stopPropagation(); goTo((index + 1) % images.length) }}
+              aria-label="Next photo"
+            >
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+            </button>
+            <div className="absolute bottom-2 left-0 right-0 z-10 flex justify-center gap-1">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-white shadow-md' : 'bg-white/50'}`}
+                  onClick={(e) => { e.stopPropagation(); goTo(i) }}
+                  aria-label={`Go to photo ${i + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function fmtCurrency(v: number | null | undefined): string {
   if (v == null || isNaN(v)) return '—'
@@ -292,7 +388,6 @@ export default function DealsKanban({
     'hover:shadow-[0_24px_56px_-12px_rgba(93,135,255,0.18)] dark:hover:shadow-[0_24px_56px_-12px_rgba(0,0,0,0.4)] hover:border-blue-200 dark:hover:border-blue-800'
 
   function LeadCard({ deal }: { deal: Deal }) {
-    const imgUrl = (deal as any).primary_photo || PLACEHOLDER_IMAGE
     const estValue = deal.forecast_value ?? deal.value ?? (deal as any).property_value
     const listedPrice = (deal as any).property_value ?? deal.value
 
@@ -306,10 +401,9 @@ export default function DealsKanban({
       >
         <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="relative w-full h-32 rounded-xl overflow-hidden mb-3">
-          <img
-            alt="Property"
-            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-            src={imgUrl}
+          <PropertyPhotoCarousel
+            deal={deal}
+            className="w-full h-full"
           />
           <div className="absolute top-2 right-2">
             <div
