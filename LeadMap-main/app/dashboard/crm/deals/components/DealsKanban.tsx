@@ -507,15 +507,8 @@ export default function DealsKanban({
           </div>
         </div>
         <div className="px-1">
-          {deal.title &&
-            deal.title.trim() &&
-            deal.title.trim() !== (deal.property_address || "").trim() && (
-              <h4 className="font-bold text-gray-900 mb-0.5 text-[15px]">
-                {deal.title}
-              </h4>
-            )}
-          <p
-            className="text-xs text-slate-500 mb-3 line-clamp-1 font-medium flex items-center gap-1 cursor-pointer hover:text-blue-600 hover:underline"
+          <h4
+            className="font-bold text-gray-900 mb-0.5 text-[15px] cursor-pointer hover:text-blue-600"
             onClick={(e) => {
               e.stopPropagation();
               if (onAddressClick) {
@@ -525,11 +518,8 @@ export default function DealsKanban({
               }
             }}
           >
-            <span className="material-symbols-outlined text-[14px] text-gray-400">
-              location_on
-            </span>
-            {deal.property_address || "Address not available"}
-          </p>
+            {deal.property_address || deal.title || "Address not available"}
+          </h4>
           <div className="space-y-1.5 mb-4 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100/50">
             <div className="flex justify-between text-[11px]">
               <span className="text-gray-500 font-medium">Est. Value</span>
@@ -639,15 +629,8 @@ export default function DealsKanban({
             </DropdownMenu>
           </button>
         </div>
-        {deal.title &&
-          deal.title.trim() &&
-          deal.title.trim() !== (deal.property_address || "").trim() && (
-            <h4 className="font-bold text-gray-900 mb-1 text-[15px]">
-              {deal.title}
-            </h4>
-          )}
-        <p
-          className="text-xs text-slate-500 mb-4 line-clamp-1 font-medium cursor-pointer hover:text-blue-600 hover:underline"
+        <h4
+          className="font-bold text-gray-900 mb-1 text-[15px] cursor-pointer hover:text-blue-600"
           onClick={(e) => {
             e.stopPropagation();
             if (onAddressClick) {
@@ -657,8 +640,8 @@ export default function DealsKanban({
             }
           }}
         >
-          {deal.property_address || "Address not available"}
-        </p>
+          {deal.property_address || deal.title || "Address not available"}
+        </h4>
         <div className="space-y-1.5 mb-5 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100/50">
           <div className="flex justify-between text-[11px]">
             <span className="text-gray-500 font-medium">Est. Value</span>
