@@ -207,9 +207,9 @@ function ProspectContentWithSidebar(props: any) {
                 />
               </div>
             ) : (
-              <ProspectHoverTable
+            <ProspectHoverTable
           tableName={props.activeCategory === 'all' ? undefined : props.resolvedTableName}
-          listings={props.activeCategory === 'all' ? props.filteredListings : undefined}
+          listings={props.filteredListings}
           filters={{
             search: props.searchTerm,
             city: props.apolloFilters.city?.[0],
