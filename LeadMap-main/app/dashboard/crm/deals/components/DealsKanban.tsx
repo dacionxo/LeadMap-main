@@ -1,96 +1,108 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/app/components/ui/dropdown-menu'
+} from "@/app/components/ui/dropdown-menu";
+import { useEffect, useRef, useState } from "react";
 
 interface Deal {
-  id: string
-  title: string
-  value?: number | null
-  stage: string
-  probability?: number
-  expected_close_date?: string | null
-  created_at?: string
-  description?: string | null
-  notes?: string | null
-  contact?: { id?: string; first_name?: string; last_name?: string; email?: string; phone?: string; company?: string } | null
-  owner?: { id?: string; email?: string; name?: string } | null
-  owner_id?: string | null
-  pipeline_id?: string | null
-  listing_id?: string | null
-  property_address?: string | null
-  property_value?: number | null
-  forecast_value?: number | null
-  last_interaction?: string | null
-  updated_at?: string | null
-  primary_photo?: string | null
-  photos_json?: unknown
+  id: string;
+  title: string;
+  value?: number | null;
+  stage: string;
+  probability?: number;
+  expected_close_date?: string | null;
+  created_at?: string;
+  description?: string | null;
+  notes?: string | null;
+  contact?: {
+    id?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+    company?: string;
+  } | null;
+  owner?: { id?: string; email?: string; name?: string } | null;
+  owner_id?: string | null;
+  pipeline_id?: string | null;
+  listing_id?: string | null;
+  property_address?: string | null;
+  property_value?: number | null;
+  forecast_value?: number | null;
+  last_interaction?: string | null;
+  updated_at?: string | null;
+  primary_photo?: string | null;
+  photos_json?: unknown;
+  property_class?: string | null;
 }
 
 // Normalize photos_json to array of image URLs (supports string[] or { url: string }[])
 function getPhotoUrls(photosJson: unknown): string[] {
-  if (!photosJson || !Array.isArray(photosJson)) return []
+  if (!photosJson || !Array.isArray(photosJson)) return [];
   return (photosJson as any[])
-    .map((item) => (typeof item === 'string' ? item : item?.url))
-    .filter((url): url is string => typeof url === 'string' && url.startsWith('http'))
+    .map((item) => (typeof item === "string" ? item : item?.url))
+    .filter(
+      (url): url is string => typeof url === "string" && url.startsWith("http")
+    );
 }
 
 interface DealsKanbanProps {
-  deals: Deal[]
-  stages: string[]
-  onDealClick: (deal: Deal) => void
-  onDealDetailView?: (deal: Deal) => void
-  onAddressClick?: (deal: Deal) => void
-  onDealUpdate: (dealId: string, updates: Partial<Deal>) => Promise<void>
-  onDealDelete: (dealId: string) => Promise<void>
-  pipelines?: Array<{ id: string; name: string; stages: string[] }>
-  onAddDeal?: (stage?: string) => void
+  deals: Deal[];
+  stages: string[];
+  onDealClick: (deal: Deal) => void;
+  onDealDetailView?: (deal: Deal) => void;
+  onAddressClick?: (deal: Deal) => void;
+  onDealUpdate: (dealId: string, updates: Partial<Deal>) => Promise<void>;
+  onDealDelete: (dealId: string) => Promise<void>;
+  pipelines?: Array<{ id: string; name: string; stages: string[] }>;
+  onAddDeal?: (stage?: string) => void;
 }
 
-const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=256&fit=crop'
-const CAROUSEL_INTERVAL_MS = 4000
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=256&fit=crop";
+const CAROUSEL_INTERVAL_MS = 4000;
 
 function PropertyPhotoCarousel({
   deal,
   className,
   onClickCapture,
 }: {
-  deal: Deal
-  className?: string
-  onClickCapture?: (e: React.MouseEvent) => void
+  deal: Deal;
+  className?: string;
+  onClickCapture?: (e: React.MouseEvent) => void;
 }) {
-  const urls = getPhotoUrls((deal as any).photos_json)
-  const primary = (deal as any).primary_photo
-  const images = urls.length > 0 ? urls : (primary ? [primary] : [PLACEHOLDER_IMAGE])
-  const [index, setIndex] = useState(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const urls = getPhotoUrls((deal as any).photos_json);
+  const primary = (deal as any).primary_photo;
+  const images =
+    urls.length > 0 ? urls : primary ? [primary] : [PLACEHOLDER_IMAGE];
+  const [index, setIndex] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (images.length <= 1) return
+    if (images.length <= 1) return;
     intervalRef.current = setInterval(() => {
-      setIndex((i) => (i + 1) % images.length)
-    }, CAROUSEL_INTERVAL_MS)
+      setIndex((i) => (i + 1) % images.length);
+    }, CAROUSEL_INTERVAL_MS);
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [images.length])
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [images.length]);
 
   const goTo = (i: number) => {
-    setIndex(i)
+    setIndex(i);
     if (intervalRef.current) {
-      clearInterval(intervalRef.current)
+      clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => {
-        setIndex((prev) => (prev + 1) % images.length)
-      }, CAROUSEL_INTERVAL_MS)
+        setIndex((prev) => (prev + 1) % images.length);
+      }, CAROUSEL_INTERVAL_MS);
     }
-  }
+  };
 
-  if (images.length === 0) return null
+  if (images.length === 0) return null;
 
   return (
     <div className={className} onClickCapture={onClickCapture}>
@@ -100,7 +112,7 @@ function PropertyPhotoCarousel({
             <img
               key={i}
               alt={`Property ${i + 1}`}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${i === index ? 'opacity-100 z-[1]' : 'opacity-0 z-0'}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${i === index ? "opacity-100 z-[1]" : "opacity-0 z-0"}`}
               src={src}
             />
           ))}
@@ -110,26 +122,39 @@ function PropertyPhotoCarousel({
             <button
               type="button"
               className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-600 hover:bg-white hover:text-blue-600 transition-colors"
-              onClick={(e) => { e.stopPropagation(); goTo((index - 1 + images.length) % images.length) }}
+              onClick={(e) => {
+                e.stopPropagation();
+                goTo((index - 1 + images.length) % images.length);
+              }}
               aria-label="Previous photo"
             >
-              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+              <span className="material-symbols-outlined text-[16px]">
+                chevron_left
+              </span>
             </button>
             <button
               type="button"
               className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-600 hover:bg-white hover:text-blue-600 transition-colors"
-              onClick={(e) => { e.stopPropagation(); goTo((index + 1) % images.length) }}
+              onClick={(e) => {
+                e.stopPropagation();
+                goTo((index + 1) % images.length);
+              }}
               aria-label="Next photo"
             >
-              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              <span className="material-symbols-outlined text-[16px]">
+                chevron_right
+              </span>
             </button>
             <div className="absolute bottom-2 left-0 right-0 z-10 flex justify-center gap-1">
               {images.map((_, i) => (
                 <button
                   key={i}
                   type="button"
-                  className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-white shadow-md' : 'bg-white/50'}`}
-                  onClick={(e) => { e.stopPropagation(); goTo(i) }}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? "bg-white shadow-md" : "bg-white/50"}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goTo(i);
+                  }}
                   aria-label={`Go to photo ${i + 1}`}
                 />
               ))}
@@ -138,191 +163,217 @@ function PropertyPhotoCarousel({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function fmtCurrency(v: number | null | undefined): string {
-  if (v == null || isNaN(v)) return '—'
-  if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`
-  if (v >= 1000) return `$${(v / 1000).toFixed(0)}K`
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  if (v == null || isNaN(v)) return "—";
+  if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
+  if (v >= 1000) return `$${(v / 1000).toFixed(0)}K`;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(v)
+  }).format(v);
 }
 
 function fmtDate(s: string | null | undefined): string {
-  if (!s) return '—'
-  const d = new Date(s)
-  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  if (!s) return "—";
+  const d = new Date(s);
+  return isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
 }
 
 function fmtShortDate(s: string | null | undefined): string {
-  if (!s) return '—'
-  const d = new Date(s)
-  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  if (!s) return "—";
+  const d = new Date(s);
+  return isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function daysSince(s: string | null | undefined): number {
-  if (!s) return 0
-  const d = new Date(s)
-  if (isNaN(d.getTime())) return 0
-  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24))
+  if (!s) return 0;
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return 0;
+  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-const STAGE_KEYS = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] as const
+const STAGE_KEYS = [
+  "new",
+  "contacted",
+  "qualified",
+  "proposal",
+  "negotiation",
+  "closed_won",
+  "closed_lost",
+] as const;
 
-const STAGE_CONFIG: Record<string, {
-  label: string
-  icon: string
-  headerBg: string
-  headerBorder: string
-  headerIcon: string
-  headerCount: string
-  addBtn: string
-  addBtnHover: string
-  dropZone: string
-  dropZoneHover: string
-}> = {
+const STAGE_CONFIG: Record<
+  string,
+  {
+    label: string;
+    icon: string;
+    headerBg: string;
+    headerBorder: string;
+    headerIcon: string;
+    headerCount: string;
+    addBtn: string;
+    addBtnHover: string;
+    dropZone: string;
+    dropZoneHover: string;
+  }
+> = {
   new: {
-    label: 'Lead',
-    icon: 'adjust',
-    headerBg: 'bg-blue-50/80',
-    headerBorder: 'border-blue-100/50',
-    headerIcon: 'bg-blue-100 text-blue-600',
-    headerCount: 'text-blue-500',
-    addBtn: 'hover:text-blue-600 hover:bg-blue-100',
-    dropZone: 'hover:border-blue-300 hover:bg-blue-50/30',
-    addBtnHover: 'group-hover:text-blue-400',
-    dropZoneHover: 'group-hover:text-blue-500',
+    label: "Lead",
+    icon: "adjust",
+    headerBg: "bg-blue-50/80",
+    headerBorder: "border-blue-100/50",
+    headerIcon: "bg-blue-100 text-blue-600",
+    headerCount: "text-blue-500",
+    addBtn: "hover:text-blue-600 hover:bg-blue-100",
+    dropZone: "hover:border-blue-300 hover:bg-blue-50/30",
+    addBtnHover: "group-hover:text-blue-400",
+    dropZoneHover: "group-hover:text-blue-500",
   },
   contacted: {
-    label: 'Contacted',
-    icon: 'chat',
-    headerBg: 'bg-violet-50/80',
-    headerBorder: 'border-violet-100/50',
-    headerIcon: 'bg-violet-100 text-violet-600',
-    headerCount: 'text-violet-500',
-    addBtn: 'hover:text-violet-600 hover:bg-violet-100',
-    dropZone: 'hover:border-violet-300 hover:bg-violet-50/30',
-    addBtnHover: 'group-hover:text-violet-400',
-    dropZoneHover: 'group-hover:text-violet-500',
+    label: "Contacted",
+    icon: "chat",
+    headerBg: "bg-violet-50/80",
+    headerBorder: "border-violet-100/50",
+    headerIcon: "bg-violet-100 text-violet-600",
+    headerCount: "text-violet-500",
+    addBtn: "hover:text-violet-600 hover:bg-violet-100",
+    dropZone: "hover:border-violet-300 hover:bg-violet-50/30",
+    addBtnHover: "group-hover:text-violet-400",
+    dropZoneHover: "group-hover:text-violet-500",
   },
   qualified: {
-    label: 'Qualified',
-    icon: 'check_circle',
-    headerBg: 'bg-indigo-50/80',
-    headerBorder: 'border-indigo-100/50',
-    headerIcon: 'bg-indigo-100 text-indigo-600',
-    headerCount: 'text-indigo-500',
-    addBtn: 'hover:text-indigo-600 hover:bg-indigo-100',
-    dropZone: 'hover:border-indigo-300 hover:bg-indigo-50/30',
-    addBtnHover: 'group-hover:text-indigo-400',
-    dropZoneHover: 'group-hover:text-indigo-500',
+    label: "Qualified",
+    icon: "check_circle",
+    headerBg: "bg-indigo-50/80",
+    headerBorder: "border-indigo-100/50",
+    headerIcon: "bg-indigo-100 text-indigo-600",
+    headerCount: "text-indigo-500",
+    addBtn: "hover:text-indigo-600 hover:bg-indigo-100",
+    dropZone: "hover:border-indigo-300 hover:bg-indigo-50/30",
+    addBtnHover: "group-hover:text-indigo-400",
+    dropZoneHover: "group-hover:text-indigo-500",
   },
   proposal: {
-    label: 'Proposal',
-    icon: 'description',
-    headerBg: 'bg-rose-50/80',
-    headerBorder: 'border-rose-100/50',
-    headerIcon: 'bg-rose-100 text-rose-600',
-    headerCount: 'text-rose-500',
-    addBtn: 'hover:text-rose-600 hover:bg-rose-100',
-    dropZone: 'hover:border-rose-300 hover:bg-rose-50/30',
-    addBtnHover: 'group-hover:text-rose-400',
-    dropZoneHover: 'group-hover:text-rose-500',
+    label: "Proposal",
+    icon: "description",
+    headerBg: "bg-rose-50/80",
+    headerBorder: "border-rose-100/50",
+    headerIcon: "bg-rose-100 text-rose-600",
+    headerCount: "text-rose-500",
+    addBtn: "hover:text-rose-600 hover:bg-rose-100",
+    dropZone: "hover:border-rose-300 hover:bg-rose-50/30",
+    addBtnHover: "group-hover:text-rose-400",
+    dropZoneHover: "group-hover:text-rose-500",
   },
   negotiation: {
-    label: 'Negotiation',
-    icon: 'handshake',
-    headerBg: 'bg-amber-50/80',
-    headerBorder: 'border-amber-100/50',
-    headerIcon: 'bg-amber-100 text-amber-600',
-    headerCount: 'text-amber-500',
-    addBtn: 'hover:text-amber-600 hover:bg-amber-100',
-    dropZone: 'hover:border-amber-300 hover:bg-amber-50/30',
-    addBtnHover: 'group-hover:text-amber-400',
-    dropZoneHover: 'group-hover:text-amber-500',
+    label: "Negotiation",
+    icon: "handshake",
+    headerBg: "bg-amber-50/80",
+    headerBorder: "border-amber-100/50",
+    headerIcon: "bg-amber-100 text-amber-600",
+    headerCount: "text-amber-500",
+    addBtn: "hover:text-amber-600 hover:bg-amber-100",
+    dropZone: "hover:border-amber-300 hover:bg-amber-50/30",
+    addBtnHover: "group-hover:text-amber-400",
+    dropZoneHover: "group-hover:text-amber-500",
   },
   closed_won: {
-    label: 'Closed Won',
-    icon: 'verified',
-    headerBg: 'bg-emerald-50/80',
-    headerBorder: 'border-emerald-100/50',
-    headerIcon: 'bg-emerald-100 text-emerald-600',
-    headerCount: 'text-emerald-500',
-    addBtn: 'hover:text-emerald-600 hover:bg-emerald-100',
-    dropZone: 'hover:border-emerald-300 hover:bg-emerald-50/30',
-    addBtnHover: 'group-hover:text-emerald-400',
-    dropZoneHover: 'group-hover:text-emerald-500',
+    label: "Closed Won",
+    icon: "verified",
+    headerBg: "bg-emerald-50/80",
+    headerBorder: "border-emerald-100/50",
+    headerIcon: "bg-emerald-100 text-emerald-600",
+    headerCount: "text-emerald-500",
+    addBtn: "hover:text-emerald-600 hover:bg-emerald-100",
+    dropZone: "hover:border-emerald-300 hover:bg-emerald-50/30",
+    addBtnHover: "group-hover:text-emerald-400",
+    dropZoneHover: "group-hover:text-emerald-500",
   },
   closed_lost: {
-    label: 'Closed Lost',
-    icon: 'cancel',
-    headerBg: 'bg-slate-50/80',
-    headerBorder: 'border-slate-100/50',
-    headerIcon: 'bg-slate-100 text-slate-600',
-    headerCount: 'text-slate-500',
-    addBtn: 'hover:text-slate-600 hover:bg-slate-100',
-    dropZone: 'hover:border-slate-300 hover:bg-slate-50/30',
-    addBtnHover: 'group-hover:text-slate-400',
-    dropZoneHover: 'group-hover:text-slate-500',
+    label: "Closed Lost",
+    icon: "cancel",
+    headerBg: "bg-slate-50/80",
+    headerBorder: "border-slate-100/50",
+    headerIcon: "bg-slate-100 text-slate-600",
+    headerCount: "text-slate-500",
+    addBtn: "hover:text-slate-600 hover:bg-slate-100",
+    dropZone: "hover:border-slate-300 hover:bg-slate-50/30",
+    addBtnHover: "group-hover:text-slate-400",
+    dropZoneHover: "group-hover:text-slate-500",
   },
-}
+};
 
 function normalizeStage(s: string): string {
-  const t = s.toLowerCase().trim()
+  const t = s.toLowerCase().trim();
   const m: Record<string, string> = {
-    lead: 'new', 'new lead': 'new', new: 'new',
-    'sales qualified': 'contacted', contacted: 'contacted',
-    'meeting booked': 'qualified', qualified: 'qualified',
-    'contract sent': 'proposal', proposal: 'proposal',
-    negotiation: 'negotiation',
-    'closed won': 'closed_won', closed_won: 'closed_won',
-    'closed lost': 'closed_lost', closed_lost: 'closed_lost',
-  }
-  return m[t] ?? t.replace(/\s+/g, '_')
+    lead: "new",
+    "new lead": "new",
+    new: "new",
+    "sales qualified": "contacted",
+    contacted: "contacted",
+    "meeting booked": "qualified",
+    qualified: "qualified",
+    "contract sent": "proposal",
+    proposal: "proposal",
+    negotiation: "negotiation",
+    "closed won": "closed_won",
+    closed_won: "closed_won",
+    "closed lost": "closed_lost",
+    closed_lost: "closed_lost",
+  };
+  return m[t] ?? t.replace(/\s+/g, "_");
 }
 
 function columnForStage(stage: string): number {
-  const n = normalizeStage(stage)
-  const i = (STAGE_KEYS as readonly string[]).indexOf(n)
-  return i >= 0 ? i : 0
+  const n = normalizeStage(stage);
+  const i = (STAGE_KEYS as readonly string[]).indexOf(n);
+  return i >= 0 ? i : 0;
 }
 
 function stageForColumn(col: number): string {
-  return STAGE_KEYS[col]
+  return STAGE_KEYS[col];
 }
 
 function ownerInitials(deal: Deal): string {
-  const o = deal.owner
+  const o = deal.owner;
   if (o?.name) {
-    const parts = o.name.trim().split(/\s+/)
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-    return (parts[0].slice(0, 2) || '??').toUpperCase()
+    const parts = o.name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return (parts[0].slice(0, 2) || "??").toUpperCase();
   }
   if (o?.email) {
-    const pre = o.email.split('@')[0]
-    const parts = pre.split(/[._-]/)
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-    return (pre.slice(0, 2) || '??').toUpperCase()
+    const pre = o.email.split("@")[0];
+    const parts = pre.split(/[._-]/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return (pre.slice(0, 2) || "??").toUpperCase();
   }
-  return '??'
+  return "??";
 }
 
 function getLabelForDeal(deal: Deal): string {
-  const n = normalizeStage(deal.stage)
-  const prob = deal.probability ?? 0
-  if (n === 'closed_won') return 'High Priority'
-  if (n === 'closed_lost') return 'Not that important'
-  if (prob >= 80) return 'High Priority'
-  if (prob >= 60) return 'Important'
-  if (prob >= 40) return 'OK'
-  if (prob >= 20) return 'Maybe important'
-  if (prob >= 10) return 'Low Priority'
-  return 'Meh'
+  const n = normalizeStage(deal.stage);
+  const prob = deal.probability ?? 0;
+  if (n === "closed_won") return "High Priority";
+  if (n === "closed_lost") return "Not that important";
+  if (prob >= 80) return "High Priority";
+  if (prob >= 60) return "Important";
+  if (prob >= 40) return "OK";
+  if (prob >= 20) return "Maybe important";
+  if (prob >= 10) return "Low Priority";
+  return "Meh";
 }
 
 export default function DealsKanban({
@@ -334,62 +385,64 @@ export default function DealsKanban({
   onDealDelete,
   onAddDeal,
 }: DealsKanbanProps) {
-  const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null)
-  const kanbanScrollRef = useRef<HTMLElement | null>(null)
+  const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null);
+  const kanbanScrollRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const el = kanbanScrollRef.current
-    if (!el) return
+    const el = kanbanScrollRef.current;
+    if (!el) return;
     const handleWheel = (e: WheelEvent) => {
-      const canScrollHorizontal = el.scrollWidth > el.clientWidth
+      const canScrollHorizontal = el.scrollWidth > el.clientWidth;
       if (canScrollHorizontal) {
-        e.preventDefault()
-        el.scrollLeft += e.deltaY
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
       }
-    }
-    el.addEventListener('wheel', handleWheel, { passive: false })
-    return () => el.removeEventListener('wheel', handleWheel)
-  }, [])
+    };
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, []);
 
-  const buckets: Deal[][] = STAGE_KEYS.map(() => [])
+  const buckets: Deal[][] = STAGE_KEYS.map(() => []);
   for (const d of deals) {
-    const col = columnForStage(d.stage)
-    buckets[col].push(d)
+    const col = columnForStage(d.stage);
+    buckets[col].push(d);
   }
 
   const handleDragStart = (e: React.DragEvent, deal: Deal) => {
-    setDraggedDeal(deal)
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', deal.id)
-    e.dataTransfer.setData('application/x-deal-id', deal.id)
-    const img = new Image()
-    img.src = 'data:image/gif;base64,R0lGOODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-    if (e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(img, 0, 0)
-  }
+    setDraggedDeal(deal);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", deal.id);
+    e.dataTransfer.setData("application/x-deal-id", deal.id);
+    const img = new Image();
+    img.src =
+      "data:image/gif;base64,R0lGOODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    if (e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(img, 0, 0);
+  };
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-  }
-  const handleDragEnd = () => setDraggedDeal(null)
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+  const handleDragEnd = () => setDraggedDeal(null);
 
   const handleDrop = async (col: number) => {
-    if (!draggedDeal) return
-    const target = stageForColumn(col)
-    const current = normalizeStage(draggedDeal.stage)
+    if (!draggedDeal) return;
+    const target = stageForColumn(col);
+    const current = normalizeStage(draggedDeal.stage);
     if (columnForStage(current) !== col) {
-      await onDealUpdate(draggedDeal.id, { stage: target })
+      await onDealUpdate(draggedDeal.id, { stage: target });
     }
-    setDraggedDeal(null)
-  }
+    setDraggedDeal(null);
+  };
 
   const dashboardCardClass =
-    'border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)]'
+    "border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)]";
   const dashboardCardHoverClass =
-    'hover:shadow-[0_24px_56px_-12px_rgba(93,135,255,0.18)] dark:hover:shadow-[0_24px_56px_-12px_rgba(0,0,0,0.4)] hover:border-blue-200 dark:hover:border-blue-800'
+    "hover:shadow-[0_24px_56px_-12px_rgba(93,135,255,0.18)] dark:hover:shadow-[0_24px_56px_-12px_rgba(0,0,0,0.4)] hover:border-blue-200 dark:hover:border-blue-800";
 
   function LeadCard({ deal }: { deal: Deal }) {
-    const estValue = deal.forecast_value ?? deal.value ?? (deal as any).property_value
-    const listedPrice = (deal as any).property_value ?? deal.value
+    const estValue =
+      deal.forecast_value ?? deal.value ?? (deal as any).property_value;
+    const listedPrice = (deal as any).property_value ?? deal.value;
 
     return (
       <div
@@ -401,10 +454,7 @@ export default function DealsKanban({
       >
         <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="relative w-full h-32 rounded-xl overflow-hidden mb-3">
-          <PropertyPhotoCarousel
-            deal={deal}
-            className="w-full h-full"
-          />
+          <PropertyPhotoCarousel deal={deal} className="w-full h-full" />
           <div className="absolute top-2 right-2">
             <div
               className="w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-gray-500 hover:text-blue-600 transition-colors shadow-sm"
@@ -412,20 +462,36 @@ export default function DealsKanban({
             >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="w-full h-full flex items-center justify-center" aria-label="Deal actions">
-                    <span className="material-symbols-outlined text-[14px]">more_horiz</span>
+                  <button
+                    type="button"
+                    className="w-full h-full flex items-center justify-center"
+                    aria-label="Deal actions"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">
+                      more_horiz
+                    </span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDealClick(deal) }}>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDealClick(deal);
+                    }}
+                  >
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-red-600"
                     onClick={async (e) => {
-                      e.stopPropagation()
-                      if (!window.confirm(`Delete "${deal.title || 'Untitled deal'}"?`)) return
-                      await onDealDelete(deal.id)
+                      e.stopPropagation();
+                      if (
+                        !window.confirm(
+                          `Delete "${deal.title || "Untitled deal"}"?`
+                        )
+                      )
+                        return;
+                      await onDealDelete(deal.id);
                     }}
                   >
                     Delete
@@ -441,27 +507,41 @@ export default function DealsKanban({
           </div>
         </div>
         <div className="px-1">
-          {deal.title && deal.title.trim() && deal.title.trim() !== (deal.property_address || '').trim() && (
-            <h4 className="font-bold text-gray-900 mb-0.5 text-[15px]">{deal.title}</h4>
-          )}
+          {deal.title &&
+            deal.title.trim() &&
+            deal.title.trim() !== (deal.property_address || "").trim() && (
+              <h4 className="font-bold text-gray-900 mb-0.5 text-[15px]">
+                {deal.title}
+              </h4>
+            )}
           <p
             className="text-xs text-slate-500 mb-3 line-clamp-1 font-medium flex items-center gap-1 cursor-pointer hover:text-blue-600 hover:underline"
             onClick={(e) => {
-              e.stopPropagation()
+              e.stopPropagation();
               if (onAddressClick) {
-                onAddressClick(deal)
+                onAddressClick(deal);
               } else {
-                onDealDetailView ? onDealDetailView(deal) : onDealClick(deal)
+                onDealDetailView ? onDealDetailView(deal) : onDealClick(deal);
               }
             }}
           >
-            <span className="material-symbols-outlined text-[14px] text-gray-400">location_on</span>
-            {deal.property_address || 'Address not available'}
+            <span className="material-symbols-outlined text-[14px] text-gray-400">
+              location_on
+            </span>
+            {deal.property_address || "Address not available"}
           </p>
           <div className="space-y-1.5 mb-4 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100/50">
             <div className="flex justify-between text-[11px]">
               <span className="text-gray-500 font-medium">Est. Value</span>
-              <span className="font-bold text-gray-700">{fmtCurrency(estValue)}</span>
+              <span className="font-bold text-gray-700">
+                {fmtCurrency(estValue)}
+              </span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-gray-500 font-medium">Property Class</span>
+              <span className="font-bold text-gray-700">
+                {deal.property_class || "—"}
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-gray-50">
@@ -470,27 +550,35 @@ export default function DealsKanban({
             </div>
             <div className="flex gap-2 text-gray-400 items-center">
               <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-full shadow-sm border border-gray-100">
-                <span className="material-symbols-outlined text-[12px]">timer</span>
-                <span className="text-[10px] font-bold text-gray-600">{daysSince(deal.created_at)}d</span>
+                <span className="material-symbols-outlined text-[12px]">
+                  timer
+                </span>
+                <span className="text-[10px] font-bold text-gray-600">
+                  {daysSince(deal.created_at)}d
+                </span>
               </div>
               <span
                 className="text-[10px] font-semibold text-blue-500 hover:text-blue-700 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform"
                 onClick={(e) => {
-                  e.stopPropagation()
-                  onDealDetailView ? onDealDetailView(deal) : onDealClick(deal)
+                  e.stopPropagation();
+                  onDealDetailView ? onDealDetailView(deal) : onDealClick(deal);
                 }}
               >
-                Details <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+                Details{" "}
+                <span className="material-symbols-outlined text-[10px]">
+                  arrow_forward
+                </span>
               </span>
             </div>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   function ClosedWonCard({ deal }: { deal: Deal }) {
-    const estValue = deal.forecast_value ?? deal.value ?? (deal as any).property_value
+    const estValue =
+      deal.forecast_value ?? deal.value ?? (deal as any).property_value;
 
     return (
       <div
@@ -504,7 +592,9 @@ export default function DealsKanban({
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
-              <span className="material-symbols-outlined text-[16px]">business</span>
+              <span className="material-symbols-outlined text-[16px]">
+                business
+              </span>
             </div>
             <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wide rounded-full">
               {getLabelForDeal(deal)}
@@ -517,18 +607,30 @@ export default function DealsKanban({
           >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <span className="material-symbols-outlined text-[18px] cursor-pointer">more_horiz</span>
+                <span className="material-symbols-outlined text-[18px] cursor-pointer">
+                  more_horiz
+                </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDealClick(deal) }}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDealClick(deal);
+                  }}
+                >
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-red-600"
                   onClick={async (e) => {
-                    e.stopPropagation()
-                    if (!window.confirm(`Delete "${deal.title || 'Untitled deal'}"?`)) return
-                    await onDealDelete(deal.id)
+                    e.stopPropagation();
+                    if (
+                      !window.confirm(
+                        `Delete "${deal.title || "Untitled deal"}"?`
+                      )
+                    )
+                      return;
+                    await onDealDelete(deal.id);
                   }}
                 >
                   Delete
@@ -537,30 +639,38 @@ export default function DealsKanban({
             </DropdownMenu>
           </button>
         </div>
-        {deal.title && deal.title.trim() && deal.title.trim() !== (deal.property_address || '').trim() && (
-          <h4 className="font-bold text-gray-900 mb-1 text-[15px]">{deal.title}</h4>
-        )}
+        {deal.title &&
+          deal.title.trim() &&
+          deal.title.trim() !== (deal.property_address || "").trim() && (
+            <h4 className="font-bold text-gray-900 mb-1 text-[15px]">
+              {deal.title}
+            </h4>
+          )}
         <p
           className="text-xs text-slate-500 mb-4 line-clamp-1 font-medium cursor-pointer hover:text-blue-600 hover:underline"
           onClick={(e) => {
-            e.stopPropagation()
+            e.stopPropagation();
             if (onAddressClick) {
-              onAddressClick(deal)
+              onAddressClick(deal);
             } else {
-              onDealDetailView ? onDealDetailView(deal) : onDealClick(deal)
+              onDealDetailView ? onDealDetailView(deal) : onDealClick(deal);
             }
           }}
         >
-          {deal.property_address || 'Address not available'}
+          {deal.property_address || "Address not available"}
         </p>
         <div className="space-y-1.5 mb-5 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100/50">
           <div className="flex justify-between text-[11px]">
             <span className="text-gray-500 font-medium">Est. Value</span>
-            <span className="font-bold text-gray-700">{fmtCurrency(estValue)}</span>
+            <span className="font-bold text-gray-700">
+              {fmtCurrency(estValue)}
+            </span>
           </div>
           <div className="flex justify-between text-[11px]">
             <span className="text-gray-500 font-medium">Close Date</span>
-            <span className="font-bold text-gray-700">{fmtShortDate(deal.expected_close_date)}</span>
+            <span className="font-bold text-gray-700">
+              {fmtShortDate(deal.expected_close_date)}
+            </span>
           </div>
         </div>
         <div className="flex items-center justify-between pt-2">
@@ -569,8 +679,12 @@ export default function DealsKanban({
           </div>
           <div className="flex gap-3 text-gray-400">
             <div className="flex items-center gap-1 hover:text-emerald-500 transition-colors bg-white px-2 py-0.5 rounded-full shadow-sm border border-gray-100">
-              <span className="material-symbols-outlined text-[14px]">timer</span>
-              <span className="text-[10px] font-bold text-gray-600">{daysSince(deal.updated_at || deal.created_at)}d</span>
+              <span className="material-symbols-outlined text-[14px]">
+                timer
+              </span>
+              <span className="text-[10px] font-bold text-gray-600">
+                {daysSince(deal.updated_at || deal.created_at)}d
+              </span>
             </div>
           </div>
         </div>
@@ -578,21 +692,24 @@ export default function DealsKanban({
           <span
             className="text-[11px] font-semibold text-emerald-500 hover:text-emerald-700 flex items-center justify-end gap-1 group-hover:translate-x-1 transition-transform cursor-pointer"
             onClick={(e) => {
-              e.stopPropagation()
-              onDealDetailView ? onDealDetailView(deal) : onDealClick(deal)
+              e.stopPropagation();
+              onDealDetailView ? onDealDetailView(deal) : onDealClick(deal);
             }}
           >
-            View Details <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+            View Details{" "}
+            <span className="material-symbols-outlined text-[12px]">
+              arrow_forward
+            </span>
           </span>
         </div>
       </div>
-    )
+    );
   }
 
   function DealCard({ deal, stageKey }: { deal: Deal; stageKey: string }) {
-    if (stageKey === 'new') return <LeadCard deal={deal} />
-    if (stageKey === 'closed_won') return <ClosedWonCard deal={deal} />
-    return <LeadCard deal={deal} />
+    if (stageKey === "new") return <LeadCard deal={deal} />;
+    if (stageKey === "closed_won") return <ClosedWonCard deal={deal} />;
+    return <LeadCard deal={deal} />;
   }
 
   return (
@@ -602,9 +719,14 @@ export default function DealsKanban({
     >
       <div className="flex gap-6 min-w-max pb-4 h-full min-h-0">
         {STAGE_KEYS.map((stageKey, i) => {
-          const list = buckets[i]
-          const cfg = STAGE_CONFIG[stageKey]
-          const totalValue = list.reduce((sum, d) => sum + ((d.value ?? d.forecast_value ?? (d as any).property_value) || 0), 0)
+          const list = buckets[i];
+          const cfg = STAGE_CONFIG[stageKey];
+          const totalValue = list.reduce(
+            (sum, d) =>
+              sum +
+              ((d.value ?? d.forecast_value ?? (d as any).property_value) || 0),
+            0
+          );
 
           return (
             <div
@@ -617,26 +739,37 @@ export default function DealsKanban({
                 className={`${cfg.headerBg} rounded-[1.25rem] p-3 flex items-center justify-between mb-4 border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] backdrop-blur-sm shrink-0`}
               >
                 <div className="flex items-center gap-3 w-full">
-                  <div className={`w-8 h-8 rounded-full ${cfg.headerIcon} flex items-center justify-center`}>
-                    <span className="material-symbols-outlined text-[18px]">{cfg.icon}</span>
+                  <div
+                    className={`w-8 h-8 rounded-full ${cfg.headerIcon} flex items-center justify-center`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      {cfg.icon}
+                    </span>
                   </div>
                   <div>
-                    <h3 className="text-gray-800 font-bold text-sm leading-tight">{cfg.label}</h3>
-                    <p className={`text-[10px] font-semibold ${cfg.headerCount}`}>
-                      {list.length} deal{list.length !== 1 ? 's' : ''} • {fmtCurrency(totalValue)}
+                    <h3 className="text-gray-800 font-bold text-sm leading-tight">
+                      {cfg.label}
+                    </h3>
+                    <p
+                      className={`text-[10px] font-semibold ${cfg.headerCount}`}
+                    >
+                      {list.length} deal{list.length !== 1 ? "s" : ""} •{" "}
+                      {fmtCurrency(totalValue)}
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onAddDeal?.(stageKey)
+                    e.stopPropagation();
+                    onAddDeal?.(stageKey);
                   }}
                   className={`text-gray-400 rounded-full w-7 h-7 flex items-center justify-center transition-colors ${cfg.addBtn}`}
                   aria-label={`Add deal to ${cfg.label}`}
                 >
-                  <span className="material-symbols-outlined text-sm font-bold">add</span>
+                  <span className="material-symbols-outlined text-sm font-bold">
+                    add
+                  </span>
                 </button>
               </div>
 
@@ -654,15 +787,23 @@ export default function DealsKanban({
                   onDrop={() => handleDrop(i)}
                 >
                   <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <span className={`material-symbols-outlined text-gray-300 text-2xl ${cfg.addBtnHover}`}>add</span>
+                    <span
+                      className={`material-symbols-outlined text-gray-300 text-2xl ${cfg.addBtnHover}`}
+                    >
+                      add
+                    </span>
                   </div>
-                  <p className={`text-xs text-gray-400 font-medium ${cfg.dropZoneHover}`}>Drop leads here</p>
+                  <p
+                    className={`text-xs text-gray-400 font-medium ${cfg.dropZoneHover}`}
+                  >
+                    Drop leads here
+                  </p>
                 </div>
               )}
             </div>
-          )
+          );
         })}
       </div>
     </main>
-  )
+  );
 }
