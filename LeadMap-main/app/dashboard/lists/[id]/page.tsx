@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AppNavSidebar from "../../components/AppNavSidebar";
 import DashboardLayout from "../../components/DashboardLayout";
 import DealsNavbar from "../../crm/deals/components/DealsNavbar";
+import LeadDetailModal from "../../prospect-enrich/components/LeadDetailModal";
 import { Manrope } from "next/font/google";
 
 interface List {
@@ -239,6 +240,7 @@ function ListDetailContent() {
   const [totalPages, setTotalPages] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [modalListingId, setModalListingId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -439,15 +441,10 @@ function ListDetailContent() {
   };
 
   const handleRowClick = (listing: Listing) => {
-    const id = listing.listing_id || listing.property_url || "";
-    if (
-      selectedListing &&
-      (selectedListing.listing_id || selectedListing.property_url) === id
-    ) {
-      setSelectedListing(null);
-    } else {
-      setSelectedListing(listing);
-    }
+    const id = listing.listing_id || (listing as any).property_url || "";
+    if (!id) return;
+    setModalListingId(id);
+    setSelectedListing(null);
   };
 
   const startRecord = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -760,8 +757,9 @@ function ListDetailContent() {
                                 .join(", ");
                               const isDeleting = deletingId === id;
                               const isSelected =
-                                selectedListing != null &&
-                                getListingId(selectedListing) === id;
+                                (selectedListing != null &&
+                                  getListingId(selectedListing) === id) ||
+                                (modalListingId != null && id === modalListingId);
 
                               // Prefer internal property identifier (listing_id), fall back to property_url
                               const prospectIdentifier =
@@ -804,18 +802,19 @@ function ListDetailContent() {
                                         {cityStateZip || "—"}
                                       </div>
                                       {prospectIdentifier && (
-                                        <Link
-                                          href={`/dashboard/prospect-enrich?search=${encodeURIComponent(
-                                            String(prospectIdentifier)
-                                          )}`}
+                                        <button
+                                          type="button"
                                           className="text-[10px] font-semibold text-blue-600 hover:underline ml-5 mt-1 inline-flex items-center gap-0.5"
-                                          onClick={(e) => e.stopPropagation()}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setModalListingId(String(prospectIdentifier));
+                                          }}
                                         >
                                           View Property
                                           <span className="material-symbols-outlined text-[10px]">
                                             arrow_forward
                                           </span>
-                                        </Link>
+                                        </button>
                                       )}
                                     </div>
                                   </td>
@@ -1341,31 +1340,21 @@ function ListDetailContent() {
                               type="button"
                               className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                               onClick={() => {
-                                const addressParts = [
-                                  selectedListing.street,
-                                  selectedListing.city,
-                                  selectedListing.state,
-                                  selectedListing.zip_code,
-                                ]
-                                  .filter(Boolean)
-                                  .join(" ");
-                                const mapsQuery =
-                                  addressParts || selectedListing.property_url;
-                                if (!mapsQuery) return;
-                                const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                  String(mapsQuery)
-                                )}`;
-                                window.open(
-                                  url,
-                                  "_blank",
-                                  "noopener,noreferrer"
+                                const identifier =
+                                  selectedListing.listing_id ||
+                                  (selectedListing as any).property_url;
+                                if (!identifier) return;
+                                router.push(
+                                  `/dashboard/map?listingId=${encodeURIComponent(
+                                    String(identifier)
+                                  )}`
                                 );
                               }}
                             >
                               <span className="material-symbols-outlined text-[18px]">
                                 map
                               </span>
-                              Street View
+                              View on Map
                             </button>
                           </div>
                           </div>
@@ -1379,6 +1368,16 @@ function ListDetailContent() {
           </div>
         </div>
       </div>
+
+      {/* Property details modal (same as prospect-enrich) */}
+      {modalListingId && list?.type === "properties" && (
+        <LeadDetailModal
+          listingId={modalListingId}
+          listingList={listings}
+          onClose={() => setModalListingId(null)}
+          sourceTable={(listings[0] as any)?.source_category ?? null}
+        />
+      )}
     </div>
   );
 }
