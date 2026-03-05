@@ -879,140 +879,230 @@ function ListDetailContent() {
                   </div>
                 </div>
 
-                {/* ─── PROPERTY DETAIL SIDE PANEL (matches lists index styling) ─── */}
+                {/* ─── PROPERTY DETAIL SIDE PANEL (rebuilt with spotlight card design) ─── */}
                 {selectedListing && list?.type === 'properties' && (
-                <div className="w-[30%] min-w-[320px] bg-white dark:bg-slate-800/80 backdrop-blur-2xl border border-gray-200/80 dark:border-slate-600 shadow-float rounded-xl flex flex-col h-full overflow-hidden transition-all">
-                    {/* Image header with photos_json carousel (mirrors Deals Kanban styling) */}
-                    <div className="relative h-48 shrink-0 group">
-                      <PropertyPhotoCarousel listing={selectedListing} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <div className="absolute top-3 right-3">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedListing(null)}
-                          className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white flex items-center justify-center transition-all"
-                          aria-label="Close panel"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">close</span>
-                        </button>
+                  <div className="w-[30%] min-w-[320px] bg-transparent flex flex-col h-full overflow-hidden transition-all">
+                    <div className="group bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-slate-800 transition-all duration-500 w-full h-full flex flex-col">
+                      {/* Hero / photo header with carousel */}
+                      <div className="relative h-64 md:h-72 w-full overflow-hidden">
+                        <PropertyPhotoCarousel listing={selectedListing} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        <div className="absolute top-4 left-4">
+                          <span className="px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-primary text-[10px] font-extrabold uppercase tracking-[0.18em] rounded-xl shadow-lg">
+                            Property Spotlight
+                          </span>
+                        </div>
+                        <div className="absolute top-4 right-4 flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="size-9 rounded-full bg-white/20 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white/40 transition-all hover:scale-110 shadow-xl"
+                            aria-label="Favorite property"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                            }}
+                          >
+                            <span className="material-symbols-outlined fill-1 text-[20px]">
+                              favorite
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedListing(null)}
+                            className="size-9 rounded-full bg-black/30 backdrop-blur-xl text-white flex items-center justify-center hover:bg-black/50 transition-all hover:scale-110 shadow-xl"
+                            aria-label="Close panel"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">
+                              close
+                            </span>
+                          </button>
+                        </div>
+                        <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
+                          <span className="px-3 py-1 bg-primary text-white text-[10px] font-bold uppercase tracking-[0.18em] w-fit rounded-md">
+                            {(selectedListing.status || 'Available Now').toUpperCase()}
+                          </span>
+                          <h2 className="text-white text-2xl md:text-3xl font-extrabold tracking-tight">
+                            {selectedListing.list_price != null
+                              ? `$${Number(selectedListing.list_price).toLocaleString()}`
+                              : 'Price not available'}
+                          </h2>
+                        </div>
                       </div>
-                      <div className="absolute bottom-4 left-4 right-4 text-white">
-                        <h2 className="text-xl font-bold leading-tight mb-0.5">
-                          {selectedListing.street || 'Address N/A'}
-                        </h2>
-                        <p className="text-white/80 text-xs font-medium">
-                          {[selectedListing.city, selectedListing.state, selectedListing.zip_code].filter(Boolean).join(', ')}
-                        </p>
-                      </div>
-                    </div>
-                    {/* Content */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-5 flex flex-col gap-5">
-                      {/* Price + status */}
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">List Price</span>
-                            <span className="text-2xl font-bold text-slate-900 tracking-tight">
+
+                      {/* Content */}
+                      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
+                        {/* Listing Price + simple metric */}
+                        <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                              Listing Price
+                            </p>
+                            <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">
                               {selectedListing.list_price != null
                                 ? `$${Number(selectedListing.list_price).toLocaleString()}`
-                                : '—'}
-                            </span>
+                                : 'Price not available'}
+                            </h3>
                           </div>
-                          <StatusBadge status={selectedListing.status || 'Active'} />
+                          {selectedListing.ai_investment_score != null &&
+                          selectedListing.ai_investment_score > 0 ? (
+                            <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
+                              <span className="material-symbols-outlined text-[18px]">
+                                trending_up
+                              </span>
+                              AI Score {Math.round(selectedListing.ai_investment_score)}
+                              <span className="text-[11px] font-medium opacity-70 ml-1">
+                                Investment Signal
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
+                              <span className="material-symbols-outlined text-[18px]">
+                                trending_up
+                              </span>
+                              Stable
+                              <span className="text-[11px] font-medium opacity-70 ml-1">
+                                Market Trend
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        {/* Stats grid */}
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100 text-center hover:bg-blue-50 hover:border-blue-100 transition-colors group">
-                            <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-500 mb-1 text-[20px]">bed</span>
-                            <span className="text-sm font-bold text-slate-800">{selectedListing.beds ?? '—'}</span>
-                            <span className="text-[10px] text-slate-500 font-medium">Beds</span>
+
+                        {/* Address / Listing Agent section (using address + agent) */}
+                        <div className="space-y-3">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                            Listing Agent
+                          </p>
+                          <div className="flex items-start gap-3">
+                            <div className="bg-primary/10 p-3 rounded-2xl">
+                              <span className="material-symbols-outlined text-primary text-3xl">
+                                person
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                                {selectedListing.street || 'Address not available'}
+                              </h4>
+                              <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {[selectedListing.city, selectedListing.state, selectedListing.zip_code]
+                                  .filter(Boolean)
+                                  .join(', ') || 'City / State not available'}
+                              </p>
+                              {selectedListing.agent_name && (
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                  Agent:{' '}
+                                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                    {selectedListing.agent_name}
+                                  </span>
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100 text-center hover:bg-blue-50 hover:border-blue-100 transition-colors group">
-                            <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-500 mb-1 text-[20px]">bathtub</span>
-                            <span className="text-sm font-bold text-slate-800">{selectedListing.full_baths ?? '—'}</span>
-                            <span className="text-[10px] text-slate-500 font-medium">Baths</span>
+                        </div>
+
+                        {/* Property details grid */}
+                        <div className="space-y-4">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                            Property Details
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
+                              <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                                <span className="material-symbols-outlined text-primary text-2xl">
+                                  bed
+                                </span>
+                              </div>
+                              <div>
+                                <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                  {selectedListing.beds ?? '—'}
+                                </span>
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                  Bedrooms
+                                </span>
+                              </div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
+                              <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                                <span className="material-symbols-outlined text-primary text-2xl">
+                                  bathtub
+                                </span>
+                              </div>
+                              <div>
+                                <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                  {selectedListing.full_baths ?? '—'}
+                                </span>
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                  Bathrooms
+                                </span>
+                              </div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
+                              <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                                <span className="material-symbols-outlined text-primary text-2xl">
+                                  square_foot
+                                </span>
+                              </div>
+                              <div>
+                                <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                  {selectedListing.sqft != null
+                                    ? Number(selectedListing.sqft).toLocaleString()
+                                    : '—'}
+                                </span>
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                  Total Sqft
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100 text-center hover:bg-blue-50 hover:border-blue-100 transition-colors group">
-                            <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-500 mb-1 text-[20px]">square_foot</span>
-                            <span className="text-sm font-bold text-slate-800">
-                              {selectedListing.sqft != null ? Number(selectedListing.sqft).toLocaleString() : '—'}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                          <button
+                            type="button"
+                            className="flex-[3] flex items-center justify-center gap-3 bg-primary text-white text-sm font-bold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
+                            onClick={() => {
+                              const identifier =
+                                selectedListing.listing_id ||
+                                (selectedListing as any).property_url
+                              if (!identifier) return
+                              router.push(
+                                `/dashboard/prospect-enrich?search=${encodeURIComponent(
+                                  String(identifier)
+                                )}`
+                              )
+                            }}
+                          >
+                            Check Availability
+                            <span className="material-symbols-outlined text-[18px]">
+                              arrow_forward
                             </span>
-                            <span className="text-[10px] text-slate-500 font-medium">Sqft</span>
-                          </div>
+                          </button>
+                          <button
+                            type="button"
+                            className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            onClick={() => {
+                              const addressParts = [
+                                selectedListing.street,
+                                selectedListing.city,
+                                selectedListing.state,
+                                selectedListing.zip_code,
+                              ]
+                                .filter(Boolean)
+                                .join(' ')
+                              const mapsQuery = addressParts || selectedListing.property_url
+                              if (!mapsQuery) return
+                              const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                String(mapsQuery)
+                              )}`
+                              window.open(url, '_blank', 'noopener,noreferrer')
+                            }}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">
+                              map
+                            </span>
+                            Street View
+                          </button>
                         </div>
                       </div>
-                      <div className="h-px bg-slate-100" />
-                      {/* AI Insights */}
-                      {selectedListing.ai_investment_score != null && selectedListing.ai_investment_score > 0 && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="material-symbols-outlined text-violet-600 text-[18px]">auto_awesome</span>
-                            <h3 className="text-sm font-bold text-slate-800">Property Insights</h3>
-                          </div>
-                          <div className="bg-gradient-to-br from-violet-50 to-indigo-50/50 rounded-xl p-3 border border-violet-100/60 relative overflow-hidden">
-                            <p className="text-xs text-slate-600 leading-relaxed relative z-10">
-                              <span className="font-semibold text-slate-800">AI Score: {Math.round(selectedListing.ai_investment_score)}</span> — This property shows strong investment potential based on market analysis and comparable sales.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {/* Details */}
-                      <div className="space-y-3">
-                        <h3 className="text-sm font-bold text-slate-800">Details</h3>
-                        {selectedListing.year_built && (
-                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
-                            <span className="text-xs text-slate-500">Year Built</span>
-                            <span className="text-xs font-medium text-slate-700">{selectedListing.year_built}</span>
-                          </div>
-                        )}
-                        {selectedListing.property_type && (
-                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
-                            <span className="text-xs text-slate-500">Type</span>
-                            <span className="text-xs font-medium text-slate-700">{selectedListing.property_type}</span>
-                          </div>
-                        )}
-                        {selectedListing.lot_size && (
-                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
-                            <span className="text-xs text-slate-500">Lot Size</span>
-                            <span className="text-xs font-medium text-slate-700">{selectedListing.lot_size}</span>
-                          </div>
-                        )}
-                        {selectedListing.agent_name && (
-                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
-                            <span className="text-xs text-slate-500">Agent</span>
-                            <span className="text-xs font-medium text-slate-700">{selectedListing.agent_name}</span>
-                          </div>
-                        )}
-                        {(selectedListing.agent_email || selectedListing.email) && (
-                          <div className="flex items-center justify-between py-2 border-b border-slate-50">
-                            <span className="text-xs text-slate-500">Contact</span>
-                            <span className="text-xs font-medium text-slate-700">{selectedListing.agent_email || selectedListing.email}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {/* Footer CTA */}
-                    <div className="p-4 bg-white/50 backdrop-blur border-t border-slate-100">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const identifier =
-                            selectedListing.listing_id ||
-                            (selectedListing as any).property_url
-                          if (!identifier) return
-                          router.push(
-                            `/dashboard/prospect-enrich?search=${encodeURIComponent(
-                              String(identifier)
-                            )}`
-                          )
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 rounded-lg text-xs font-bold shadow-[0_2px_5px_rgba(59,130,246,0.3)] hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-2"
-                      >
-                        View Full Profile
-                        <span className="material-symbols-outlined text-[16px]">
-                          arrow_forward
-                        </span>
-                      </button>
                     </div>
                   </div>
                 )}
