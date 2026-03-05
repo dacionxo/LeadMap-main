@@ -1,111 +1,112 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
-import AppNavSidebar from '../../components/AppNavSidebar'
-import DashboardLayout from '../../components/DashboardLayout'
-import DealsNavbar from '../../crm/deals/components/DealsNavbar'
-import Link from 'next/link'
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import AppNavSidebar from "../../components/AppNavSidebar";
+import DashboardLayout from "../../components/DashboardLayout";
+import DealsNavbar from "../../crm/deals/components/DealsNavbar";
+import { Manrope } from "next/font/google";
 
 interface List {
-  id: string
-  name: string
-  type: 'people' | 'properties'
+  id: string;
+  name: string;
+  type: "people" | "properties";
 }
 
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
 interface Listing {
-  listing_id: string
-  street?: string | null
-  city?: string | null
-  state?: string | null
-  zip_code?: string | null
-  list_price?: number | null
-  beds?: number | null
-  full_baths?: number | null
-  sqft?: number | null
-  status?: string | null
-  ai_investment_score?: number | null
-  property_url?: string | null
-  agent_name?: string | null
-  agent_email?: string | null
-  agent_phone?: string | null
-  first_name?: string | null
-  last_name?: string | null
-  email?: string | null
-  phone?: string | null
-  company?: string | null
-  job_title?: string | null
-  primary_photo?: string | null
-  year_built?: number | null
-  property_type?: string | null
-  lot_size?: string | null
-  [key: string]: unknown
+  listing_id: string;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+  list_price?: number | null;
+  beds?: number | null;
+  full_baths?: number | null;
+  sqft?: number | null;
+  status?: string | null;
+  ai_investment_score?: number | null;
+  property_url?: string | null;
+  agent_name?: string | null;
+  agent_email?: string | null;
+  agent_phone?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  job_title?: string | null;
+  primary_photo?: string | null;
+  year_built?: number | null;
+  property_type?: string | null;
+  lot_size?: string | null;
+  [key: string]: unknown;
 }
 
 interface ListPaginatedResponse {
-  data: Listing[]
-  count: number
-  page: number
-  pageSize: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPreviousPage: boolean
-  list: { id: string; name: string; type: string }
+  data: Listing[];
+  count: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  list: { id: string; name: string; type: string };
 }
 
 // Normalize photos_json to array of image URLs (supports string[] or { url: string }[])
 function getPhotoUrls(photosJson: unknown): string[] {
-  if (!photosJson || !Array.isArray(photosJson)) return []
+  if (!photosJson || !Array.isArray(photosJson)) return [];
   return (photosJson as any[])
-    .map((item) => (typeof item === 'string' ? item : item?.url))
+    .map((item) => (typeof item === "string" ? item : item?.url))
     .filter(
-      (url): url is string =>
-        typeof url === 'string' && url.startsWith('http')
-    )
+      (url): url is string => typeof url === "string" && url.startsWith("http")
+    );
 }
 
 const PLACEHOLDER_IMAGE =
-  'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=480&fit=crop'
-const CAROUSEL_INTERVAL_MS = 4000
+  "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=480&fit=crop";
+const CAROUSEL_INTERVAL_MS = 4000;
 
-function PropertyPhotoCarousel({
-  listing,
-}: {
-  listing: Listing | null
-}) {
-  const urls = getPhotoUrls((listing as any)?.photos_json)
-  const primary = (listing as any)?.primary_photo as string | null | undefined
+function PropertyPhotoCarousel({ listing }: { listing: Listing | null }) {
+  const urls = getPhotoUrls((listing as any)?.photos_json);
+  const primary = (listing as any)?.primary_photo as string | null | undefined;
   const images =
-    urls.length > 0 ? urls : primary ? [primary] : [PLACEHOLDER_IMAGE]
-  const [index, setIndex] = useState(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    urls.length > 0 ? urls : primary ? [primary] : [PLACEHOLDER_IMAGE];
+  const [index, setIndex] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    setIndex(0)
-  }, [listing?.listing_id])
+    setIndex(0);
+  }, [listing?.listing_id]);
 
   useEffect(() => {
-    if (images.length <= 1) return
+    if (images.length <= 1) return;
     intervalRef.current = setInterval(() => {
-      setIndex((i) => (i + 1) % images.length)
-    }, CAROUSEL_INTERVAL_MS)
+      setIndex((i) => (i + 1) % images.length);
+    }, CAROUSEL_INTERVAL_MS);
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [images.length])
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [images.length]);
 
   const goTo = (i: number) => {
-    setIndex(i)
+    setIndex(i);
     if (intervalRef.current) {
-      clearInterval(intervalRef.current)
+      clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => {
-        setIndex((prev) => (prev + 1) % images.length)
-      }, CAROUSEL_INTERVAL_MS)
+        setIndex((prev) => (prev + 1) % images.length);
+      }, CAROUSEL_INTERVAL_MS);
     }
-  }
+  };
 
-  if (images.length === 0) return null
+  if (images.length === 0) return null;
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden">
@@ -115,7 +116,7 @@ function PropertyPhotoCarousel({
             key={i}
             alt={`Property ${i + 1}`}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${
-              i === index ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
+              i === index ? "opacity-100 z-[1]" : "opacity-0 z-0"
             }`}
             src={src}
           />
@@ -127,8 +128,8 @@ function PropertyPhotoCarousel({
             type="button"
             className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-600 hover:bg-white hover:text-blue-600 transition-colors"
             onClick={(e) => {
-              e.stopPropagation()
-              goTo((index - 1 + images.length) % images.length)
+              e.stopPropagation();
+              goTo((index - 1 + images.length) % images.length);
             }}
             aria-label="Previous photo"
           >
@@ -140,8 +141,8 @@ function PropertyPhotoCarousel({
             type="button"
             className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-600 hover:bg-white hover:text-blue-600 transition-colors"
             onClick={(e) => {
-              e.stopPropagation()
-              goTo((index + 1) % images.length)
+              e.stopPropagation();
+              goTo((index + 1) % images.length);
             }}
             aria-label="Next photo"
           >
@@ -155,11 +156,11 @@ function PropertyPhotoCarousel({
                 key={i}
                 type="button"
                 className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  i === index ? 'bg-white shadow-md' : 'bg-white/50'
+                  i === index ? "bg-white shadow-md" : "bg-white/50"
                 }`}
                 onClick={(e) => {
-                  e.stopPropagation()
-                  goTo(i)
+                  e.stopPropagation();
+                  goTo(i);
                 }}
                 aria-label={`Go to photo ${i + 1}`}
               />
@@ -168,240 +169,285 @@ function PropertyPhotoCarousel({
         </>
       )}
     </div>
-  )
+  );
 }
 
 /* ─── AI Score badge (rounded-full: green for high 90+, blue otherwise) ─── */
 function AIScoreCell({ score }: { score?: number | null }) {
   if (score == null || score === 0) {
-    return <span className="text-slate-400 text-lg">-</span>
+    return <span className="text-slate-400 text-lg">-</span>;
   }
-  const rounded = Math.round(score)
-  const isHigh = rounded >= 90
+  const rounded = Math.round(score);
+  const isHigh = rounded >= 90;
   return (
     <span
       className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold ${
-        isHigh
-          ? 'bg-green-100 text-green-700'
-          : 'bg-blue-100 text-blue-700'
+        isHigh ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
       }`}
     >
       {rounded}
     </span>
-  )
+  );
 }
 
 /* ─── Status badge (fsbo=emerald, pending=amber) ─── */
 function StatusBadge({ status }: { status?: string | null }) {
-  if (!status) return null
-  const s = String(status).toLowerCase()
-  const isPending = s.includes('pending')
+  if (!status) return null;
+  const s = String(status).toLowerCase();
+  const isPending = s.includes("pending");
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
         isPending
-          ? 'bg-amber-100 text-amber-700'
-          : 'bg-emerald-100 text-emerald-700'
+          ? "bg-amber-100 text-amber-700"
+          : "bg-emerald-100 text-emerald-700"
       }`}
     >
       {status}
     </span>
-  )
+  );
 }
 
 /** Must be inside DashboardLayout. */
 function ListDetailContent() {
-  const params = useParams()
-  const router = useRouter()
-  const listId = params.id as string
+  const params = useParams();
+  const router = useRouter();
+  const listId = params.id as string;
 
-  const [list, setList] = useState<List | null>(null)
-  const [listings, setListings] = useState<Listing[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [sortBy, setSortBy] = useState('created_at')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize] = useState(10)
-  const [totalCount, setTotalCount] = useState(0)
-  const [totalPages, setTotalPages] = useState(0)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  const [list, setList] = useState<List | null>(null);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery)
-      setCurrentPage(1)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchListData = useCallback(async () => {
-    if (!listId) return
+    if (!listId) return;
 
     try {
-      setLoading(true)
+      setLoading(true);
       const searchParams = new URLSearchParams({
         page: currentPage.toString(),
         pageSize: pageSize.toString(),
         sortBy,
         sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
-      })
+      });
 
-      const response = await fetch(`/api/lists/${listId}/paginated?${searchParams}`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      })
+      const response = await fetch(
+        `/api/lists/${listId}/paginated?${searchParams}`,
+        {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
+        const errorData = await response.json().catch(() => ({}));
         if (response.status === 401) {
-          router.push('/login?redirect=' + encodeURIComponent(window.location.pathname))
-          return
+          router.push(
+            "/login?redirect=" + encodeURIComponent(window.location.pathname)
+          );
+          return;
         }
         if (response.status === 404) {
-          router.push('/dashboard/lists')
-          return
+          router.push("/dashboard/lists");
+          return;
         }
-        setListings([])
-        setTotalCount(0)
-        setTotalPages(0)
-        return
+        setListings([]);
+        setTotalCount(0);
+        setTotalPages(0);
+        return;
       }
 
-      const data: ListPaginatedResponse = await response.json()
+      const data: ListPaginatedResponse = await response.json();
       setList({
         id: data.list.id,
         name: data.list.name,
-        type: data.list.type as 'people' | 'properties',
-      })
-      setTotalCount(data.count)
-      setTotalPages(data.totalPages)
-      setListings(data.data || [])
+        type: data.list.type as "people" | "properties",
+      });
+      setTotalCount(data.count);
+      setTotalPages(data.totalPages);
+      setListings(data.data || []);
     } catch {
-      setListings([])
+      setListings([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [listId, currentPage, pageSize, sortBy, sortOrder, debouncedSearch, router])
+  }, [
+    listId,
+    currentPage,
+    pageSize,
+    sortBy,
+    sortOrder,
+    debouncedSearch,
+    router,
+  ]);
 
   useEffect(() => {
-    fetchListData()
-  }, [fetchListData])
+    fetchListData();
+  }, [fetchListData]);
 
   const handleRemoveFromList = useCallback(
     async (listing: Listing, e: React.MouseEvent) => {
-      e.stopPropagation()
-      const isPeople = list?.type === 'people'
+      e.stopPropagation();
+      const isPeople = list?.type === "people";
       const itemId = isPeople
-        ? ((listing as any).contact_id || listing.listing_id)
-        : (listing.listing_id || listing.property_url)
-      if (!itemId || !listId) return
-      if (!confirm('Remove this item from the list?')) return
+        ? (listing as any).contact_id || listing.listing_id
+        : listing.listing_id || listing.property_url;
+      if (!itemId || !listId) return;
+      if (!confirm("Remove this item from the list?")) return;
 
       try {
-        setDeletingId(String(itemId))
+        setDeletingId(String(itemId));
         const response = await fetch(`/api/lists/${listId}/remove`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             itemId: String(itemId),
-            itemType: isPeople ? 'contact' : 'listing',
+            itemType: isPeople ? "contact" : "listing",
           }),
-        })
+        });
 
         if (response.ok) {
-          await fetchListData()
+          await fetchListData();
         } else {
-          const err = await response.json().catch(() => ({}))
-          alert(err.error || 'Failed to remove item')
+          const err = await response.json().catch(() => ({}));
+          alert(err.error || "Failed to remove item");
         }
       } catch {
-        alert('Failed to remove item')
+        alert("Failed to remove item");
       } finally {
-        setDeletingId(null)
+        setDeletingId(null);
       }
     },
     [listId, list?.type, fetchListData]
-  )
+  );
 
   const handleExportCSV = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/lists/${listId}/paginated?page=1&pageSize=1000${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ''}`,
-        { credentials: 'include', headers: { 'Content-Type': 'application/json' } }
-      )
-      if (!response.ok) return
-      const { data: items } = await response.json()
-      const rows = items || []
+        `/api/lists/${listId}/paginated?page=1&pageSize=1000${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""}`,
+        {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      if (!response.ok) return;
+      const { data: items } = await response.json();
+      const rows = items || [];
 
       const headers = [
-        'Listing ID', 'Address', 'City', 'State', 'Zip Code',
-        'Price', 'Beds', 'Baths', 'Sqft', 'Status',
-        'Agent Name', 'Agent Email', 'Agent Phone',
-      ]
+        "Listing ID",
+        "Address",
+        "City",
+        "State",
+        "Zip Code",
+        "Price",
+        "Beds",
+        "Baths",
+        "Sqft",
+        "Status",
+        "Agent Name",
+        "Agent Email",
+        "Agent Phone",
+      ];
       const csvRows = rows.map((r: Listing) => [
-        r.listing_id || '', r.street || '', r.city || '', r.state || '',
-        r.zip_code || '', r.list_price?.toString() || '', r.beds?.toString() || '',
-        r.full_baths?.toString() || '', r.sqft?.toString() || '', r.status || '',
-        r.agent_name || '', r.agent_email || '', r.agent_phone || '',
-      ])
+        r.listing_id || "",
+        r.street || "",
+        r.city || "",
+        r.state || "",
+        r.zip_code || "",
+        r.list_price?.toString() || "",
+        r.beds?.toString() || "",
+        r.full_baths?.toString() || "",
+        r.sqft?.toString() || "",
+        r.status || "",
+        r.agent_name || "",
+        r.agent_email || "",
+        r.agent_phone || "",
+      ]);
       const csv =
-        headers.join(',') +
-        '\n' +
+        headers.join(",") +
+        "\n" +
         csvRows
-          .map((row: (string | number)[]) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
-          .join('\n')
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${(list?.name || 'list').replace(/[^a-z0-9]/gi, '_')}.csv`
-      a.click()
-      URL.revokeObjectURL(url)
+          .map((row: (string | number)[]) =>
+            row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
+          )
+          .join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(list?.name || "list").replace(/[^a-z0-9]/gi, "_")}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch {
-      alert('Failed to export')
+      alert("Failed to export");
     }
-  }, [listId, list?.name, debouncedSearch])
+  }, [listId, list?.name, debouncedSearch]);
 
   const handleSelect = (id: string, checked: boolean) => {
     setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (checked) next.add(id)
-      else next.delete(id)
-      return next
-    })
-  }
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
 
   const handleSelectAll = () => {
     if (selectedIds.size === listings.length) {
-      setSelectedIds(new Set())
+      setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(listings.map((l) => l.listing_id || (l as any).contact_id || '').filter(Boolean)))
+      setSelectedIds(
+        new Set(
+          listings
+            .map((l) => l.listing_id || (l as any).contact_id || "")
+            .filter(Boolean)
+        )
+      );
     }
-  }
+  };
 
   const handleRowClick = (listing: Listing) => {
-    const id = listing.listing_id || listing.property_url || ''
-    if (selectedListing && (selectedListing.listing_id || selectedListing.property_url) === id) {
-      setSelectedListing(null)
+    const id = listing.listing_id || listing.property_url || "";
+    if (
+      selectedListing &&
+      (selectedListing.listing_id || selectedListing.property_url) === id
+    ) {
+      setSelectedListing(null);
     } else {
-      setSelectedListing(listing)
+      setSelectedListing(listing);
     }
-  }
+  };
 
-  const startRecord = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
-  const endRecord = totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount)
+  const startRecord = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endRecord =
+    totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount);
 
   const getListingId = (listing: Listing) =>
-    listing.listing_id || listing.property_url || ''
+    listing.listing_id || listing.property_url || "";
 
   if (!listId) {
-    return null
+    return null;
   }
 
   if (loading && !list) {
@@ -410,710 +456,918 @@ function ListDetailContent() {
         <DealsNavbar />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" aria-hidden />
-          <span className="ml-3 text-slate-500 font-medium">Loading list...</span>
+          <span className="ml-3 text-slate-500 font-medium">
+            Loading list...
+          </span>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="-mt-[30px]">
-        <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
-          <DealsNavbar />
-          <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
-            <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
-              <AppNavSidebar />
-              <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-100 selection:text-blue-700">
-            {/* Decorative blue glow - matches deals page */}
-            <div
-              className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
-              aria-hidden
-            />
+      <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
+        <DealsNavbar />
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+          <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+            <AppNavSidebar />
+            <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-100 selection:text-blue-700">
+              {/* Decorative blue glow - matches deals page */}
+              <div
+                className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+                aria-hidden
+              />
 
-            {/* ─── HEADER ─── */}
-            <header className="shrink-0 z-20 px-8 pt-8 pb-4">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  <Link href="/dashboard/lists" className="hover:text-blue-600 transition-colors">
-                    Lists
-                  </Link>
-                  <span className="material-symbols-outlined text-[12px] text-slate-400">chevron_right</span>
-                  <span className="text-slate-800 dark:text-slate-300">{list?.name ?? '…'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
-                      {list?.name ?? '…'}
-                    </h1>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-600 uppercase tracking-wide">
-                      {totalCount.toLocaleString()} records
+              {/* ─── HEADER ─── */}
+              <header className="shrink-0 z-20 px-8 pt-8 pb-4">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <Link
+                      href="/dashboard/lists"
+                      className="hover:text-blue-600 transition-colors"
+                    >
+                      Lists
+                    </Link>
+                    <span className="material-symbols-outlined text-[12px] text-slate-400">
+                      chevron_right
+                    </span>
+                    <span className="text-slate-800 dark:text-slate-300">
+                      {list?.name ?? "…"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
+                        {list?.name ?? "…"}
+                      </h1>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-600 uppercase tracking-wide">
+                        {totalCount.toLocaleString()} records
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {}}
+                        className="px-3.5 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5 backdrop-blur-sm"
+                        aria-label="Import"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          upload_file
+                        </span>
+                        Import
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleExportCSV}
+                        className="px-3.5 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5 backdrop-blur-sm"
+                        aria-label="Export"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          download
+                        </span>
+                        Export
+                      </button>
+                      <button
+                        type="button"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5"
+                        aria-label="Add records"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          add
+                        </span>
+                        Add records
+                      </button>
+                      <button
+                        type="button"
+                        className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-violet-500/20 transition-all flex items-center gap-1.5"
+                        aria-label="Research with AI"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          auto_awesome
+                        </span>
+                        Research with AI
+                      </button>
+                      <button
+                        type="button"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                        aria-label="More options"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          more_vert
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              {/* ─── MAIN CONTENT (matches /dashboard/lists padding) ─── */}
+              <main className="flex-1 overflow-auto custom-scrollbar px-8 pb-8 flex flex-col min-h-0">
+                {/* ─── TOOLBAR (search + Status/Price/More Filters) ─── */}
+                <div className="flex items-center justify-between gap-4 mb-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-xl border border-white/50 dark:border-slate-600/50 shadow-sm">
+                  <div className="flex-1 flex items-center relative group max-w-md">
+                    <span
+                      className="absolute left-3 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[18px]"
+                      aria-hidden
+                    >
+                      search
+                    </span>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={
+                        list?.type === "properties"
+                          ? "Search properties..."
+                          : "Search contacts..."
+                      }
+                      className="w-full pl-10 pr-4 py-1.5 bg-transparent dark:bg-transparent border-0 text-sm font-medium text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-0"
+                      aria-label="Search"
+                    />
+                  </div>
+                  <div className="h-6 w-px bg-slate-200 dark:bg-slate-600 mx-2 shrink-0" />
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={() => {}}
-                      className="px-3.5 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5 backdrop-blur-sm"
-                      aria-label="Import"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                      aria-label="Status filter"
                     >
-                      <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                      Import
+                      Status: Any
+                      <span className="material-symbols-outlined text-[16px] text-slate-400">
+                        expand_more
+                      </span>
                     </button>
                     <button
                       type="button"
-                      onClick={handleExportCSV}
-                      className="px-3.5 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5 backdrop-blur-sm"
-                      aria-label="Export"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                      aria-label="Price range filter"
                     >
-                      <span className="material-symbols-outlined text-[18px]">download</span>
-                      Export
+                      Price Range
+                      <span className="material-symbols-outlined text-[16px] text-slate-400">
+                        expand_more
+                      </span>
                     </button>
                     <button
                       type="button"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5"
-                      aria-label="Add records"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                      aria-label="More filters"
                     >
-                      <span className="material-symbols-outlined text-[18px]">add</span>
-                      Add records
-                    </button>
-                    <button
-                      type="button"
-                      className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-violet-500/20 transition-all flex items-center gap-1.5"
-                      aria-label="Research with AI"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-                      Research with AI
-                    </button>
-                    <button
-                      type="button"
-                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all"
-                      aria-label="More options"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                      <span className="material-symbols-outlined text-[16px] text-slate-500">
+                        filter_list
+                      </span>
+                      More Filters
                     </button>
                   </div>
                 </div>
-              </div>
-            </header>
 
-            {/* ─── MAIN CONTENT (matches /dashboard/lists padding) ─── */}
-            <main className="flex-1 overflow-auto custom-scrollbar px-8 pb-8 flex flex-col min-h-0">
-              {/* ─── TOOLBAR (search + Status/Price/More Filters) ─── */}
-              <div className="flex items-center justify-between gap-4 mb-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-xl border border-white/50 dark:border-slate-600/50 shadow-sm">
-                <div className="flex-1 flex items-center relative group max-w-md">
-                  <span
-                    className="absolute left-3 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[18px]"
-                    aria-hidden
-                  >
-                    search
-                  </span>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={list?.type === 'properties' ? 'Search properties...' : 'Search contacts...'}
-                    className="w-full pl-10 pr-4 py-1.5 bg-transparent dark:bg-transparent border-0 text-sm font-medium text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-0"
-                    aria-label="Search"
-                  />
-                </div>
-                <div className="h-6 w-px bg-slate-200 dark:bg-slate-600 mx-2 shrink-0" />
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
-                    aria-label="Status filter"
-                  >
-                    Status: Any
-                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
-                    aria-label="Price range filter"
-                  >
-                    Price Range
-                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
-                    aria-label="More filters"
-                  >
-                    <span className="material-symbols-outlined text-[16px] text-slate-500">filter_list</span>
-                    More Filters
-                  </button>
-                </div>
-              </div>
-
-              {/* ─── TABLE + DETAIL PANEL LAYOUT ─── */}
+                {/* ─── TABLE + DETAIL PANEL LAYOUT ─── */}
                 <div className="flex gap-4 h-full overflow-hidden">
-                {/* ─── TABLE CARD (glass panel with backdrop blur) ─── */}
-                <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-white dark:border-slate-600/50 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
-                  <div className="overflow-auto custom-scrollbar flex-1 pb-16">
-                    {loading ? (
-                      <div className="flex items-center justify-center py-20">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" aria-hidden />
-                        <span className="ml-3 text-slate-500 font-medium">Loading...</span>
-                      </div>
-                    ) : listings.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="w-32 h-32 mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-5xl">
-                          {list?.type === 'properties' ? '🏠' : '👥'}
-                        </div>
-                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
-                          {searchQuery ? 'No matches found' : 'This list is empty'}
-                        </h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md">
-                          {searchQuery
-                            ? 'Try adjusting your search to find what you\'re looking for.'
-                            : `Add ${list?.type === 'properties' ? 'properties' : 'contacts'} to this list to get started.`}
-                        </p>
-                        {!searchQuery && (
-                          <button
-                            type="button"
-                            onClick={() => {}}
-                            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
-                          >
-                            Add records
-                            <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                          </button>
-                        )}
-                      </div>
-                    ) : list?.type === 'properties' ? (
-                      /* ─── PROPERTIES TABLE ─── */
-                      <table className="w-full text-left text-sm text-slate-600" role="grid">
-                        <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/60 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-md z-10">
-                          <tr>
-                            <th className="px-5 py-3 w-10 font-semibold align-middle" scope="col">
-                              <input
-                                type="checkbox"
-                                checked={listings.length > 0 && selectedIds.size === listings.length}
-                                onChange={handleSelectAll}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3.5 h-3.5 cursor-pointer transition-colors"
-                                aria-label="Select all"
-                              />
-                            </th>
-                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Address</th>
-                            <th className="px-4 py-3 font-semibold w-32 align-middle" scope="col">Price</th>
-                            <th className="px-4 py-3 font-semibold w-24 align-middle" scope="col">Status</th>
-                            <th className="px-4 py-3 font-semibold w-24 text-center align-middle" scope="col">AI Score</th>
-                            <th className="px-4 py-3 font-semibold w-20 text-center align-middle" scope="col">Beds</th>
-                            <th className="px-4 py-3 font-semibold w-20 text-center align-middle" scope="col">Baths</th>
-                            <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Sqft</th>
-                            <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100/80 dark:divide-slate-600/50">
-                          {listings.map((listing) => {
-                            const id = getListingId(listing)
-                            const address = listing.street || '—'
-                            const cityStateZip = [listing.city, listing.state, listing.zip_code]
-                              .filter(Boolean)
-                              .join(', ')
-                            const isDeleting = deletingId === id
-                            const isSelected = selectedListing != null && getListingId(selectedListing) === id
-
-                            // Prefer internal property identifier (listing_id), fall back to property_url
-                            const prospectIdentifier =
-                              listing.listing_id || listing.property_url || null
-                            return (
-                              <tr
-                                key={id}
-                                onClick={() => handleRowClick(listing)}
-                                className={`transition-colors duration-150 group cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-blue-50/60 hover:bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500'
-                                    : 'bg-white/40 dark:bg-slate-800/40 hover:bg-blue-50/40 dark:hover:bg-slate-700/40'
-                                }`}
-                              >
-                                <td className="px-5 py-3 align-middle">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedIds.has(id)}
-                                    onChange={(e) => handleSelect(id, e.target.checked)}
-                                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3.5 h-3.5 cursor-pointer transition-colors"
-                                    onClick={(e) => e.stopPropagation()}
-                                    aria-label={`Select property ${address}`}
-                                  />
-                                </td>
-                                <td className="px-4 py-3 align-middle">
-                                  <div className="flex flex-col">
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                      <span className="material-symbols-outlined text-slate-400 text-[16px]">location_on</span>
-                                      <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{address}</span>
-                                    </div>
-                                    <div className="text-[11px] text-slate-500 dark:text-slate-400 ml-5">{cityStateZip || '—'}</div>
-                                    {prospectIdentifier && (
-                                      <Link
-                                        href={`/dashboard/prospect-enrich?search=${encodeURIComponent(
-                                          String(prospectIdentifier)
-                                        )}`}
-                                        className="text-[10px] font-semibold text-blue-600 hover:underline ml-5 mt-1 inline-flex items-center gap-0.5"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        View Property
-                                        <span className="material-symbols-outlined text-[10px]">
-                                          arrow_forward
-                                        </span>
-                                      </Link>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 align-middle font-medium text-slate-700 dark:text-slate-300">
-                                  {listing.list_price != null
-                                    ? `$${Number(listing.list_price).toLocaleString()}`
-                                    : '—'}
-                                </td>
-                                <td className="px-4 py-3 align-middle">
-                                  <StatusBadge status={listing.status} />
-                                </td>
-                                <td className="px-4 py-3 text-center align-middle">
-                                  <AIScoreCell score={listing.ai_investment_score} />
-                                </td>
-                                <td className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300">
-                                  {listing.beds ?? '—'}
-                                </td>
-                                <td className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300">
-                                  {listing.full_baths ?? '—'}
-                                </td>
-                                <td className="px-4 py-3 text-right align-middle font-medium text-slate-700 dark:text-slate-300 tabular-nums">
-                                  {listing.sqft != null ? Number(listing.sqft).toLocaleString() : '—'}
-                                </td>
-                                <td className="px-4 py-3 text-right align-middle">
-                                  <div className={`flex items-center justify-end gap-1 transition-opacity duration-200 ${
-                                    isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                  }`}>
-                                    <button
-                                      type="button"
-                                      className="w-7 h-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50/80 dark:hover:bg-blue-900/30 transition-colors"
-                                      title="Edit"
-                                      aria-label="Edit"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <span className="material-symbols-outlined text-[18px]">edit</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="w-7 h-7 flex items-center justify-center rounded-md hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-                                      title="Delete"
-                                      aria-label="Delete"
-                                      disabled={isDeleting}
-                                      onClick={(e) => { e.stopPropagation(); handleRemoveFromList(listing, e) }}
-                                    >
-                                      <span className="material-symbols-outlined text-[18px]">delete</span>
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    ) : (
-                      /* ─── PEOPLE TABLE ─── */
-                      <table className="w-full text-left text-sm text-slate-600" role="grid">
-                        <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-sm z-10">
-                          <tr>
-                            <th className="pl-6 pr-4 py-3 w-12 font-semibold align-middle" scope="col">
-                              <input
-                                type="checkbox"
-                                checked={listings.length > 0 && selectedIds.size === listings.length}
-                                onChange={handleSelectAll}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
-                                aria-label="Select all"
-                              />
-                            </th>
-                            <th className="px-4 py-3 font-semibold align-middle w-[30%]" scope="col">Name</th>
-                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Job Title</th>
-                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Company</th>
-                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Email</th>
-                            <th className="px-4 py-3 font-semibold align-middle" scope="col">Phone</th>
-                            <th className="px-4 py-3 font-semibold w-24 text-right align-middle" scope="col">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-600/50">
-                          {listings.map((item, idx) => {
-                            const id =
-                              (item as any).contact_id || item.listing_id || item.agent_email || `row-${idx}`
-                            const name =
-                              item.agent_name ||
-                              [item.first_name, item.last_name].filter(Boolean).join(' ').trim() ||
-                              '—'
-                            const isDeleting = deletingId === id
-
-                            return (
-                              <tr
-                                key={id}
-                                className="bg-white hover:bg-slate-50/80 transition-colors duration-150 group"
-                              >
-                                <td className="pl-6 pr-4 py-2.5 align-middle">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedIds.has(id)}
-                                    onChange={(e) => handleSelect(id, e.target.checked)}
-                                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
-                                    onClick={(e) => e.stopPropagation()}
-                                    aria-label={`Select contact ${name}`}
-                                  />
-                                </td>
-                                <td className="px-4 py-2.5 align-middle">
-                                  <span className="font-semibold text-slate-800 text-sm">{name}</span>
-                                </td>
-                                <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
-                                  {item.job_title || '—'}
-                                </td>
-                                <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
-                                  {item.company || '—'}
-                                </td>
-                                <td className="px-4 py-2.5 align-middle text-sm text-slate-600 truncate max-w-[200px]">
-                                  {item.agent_email || item.email || '—'}
-                                </td>
-                                <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
-                                  {item.agent_phone || item.phone || '—'}
-                                </td>
-                                <td className="px-4 py-2.5 text-right align-middle">
-                                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    <button
-                                      type="button"
-                                      className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-                                      onClick={(e) => { e.stopPropagation(); handleRemoveFromList(item, e) }}
-                                      disabled={isDeleting}
-                                      aria-label="Delete"
-                                      title="Delete"
-                                    >
-                                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-
-                  {/* ─── PAGINATION FOOTER ─── */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-600 p-3 flex items-center justify-between z-20">
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      Showing{' '}
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{startRecord}</span> -{' '}
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{endRecord}</span> of{' '}
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{totalCount.toLocaleString()}</span> records
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage <= 1}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-50"
-                        aria-label="Previous page"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
-                      </button>
-                      {totalPages >= 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setCurrentPage(1)}
-                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                            currentPage === 1
-                              ? 'bg-blue-600 text-white shadow-sm'
-                              : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
-                          }`}
-                        >
-                          1
-                        </button>
-                      )}
-                      {totalPages >= 2 && (
-                        <button
-                          type="button"
-                          onClick={() => setCurrentPage(2)}
-                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                            currentPage === 2
-                              ? 'bg-blue-600 text-white shadow-sm'
-                              : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
-                          }`}
-                        >
-                          2
-                        </button>
-                      )}
-                      {totalPages >= 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setCurrentPage(3)}
-                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                            currentPage === 3
-                              ? 'bg-blue-600 text-white shadow-sm'
-                              : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
-                          }`}
-                        >
-                          3
-                        </button>
-                      )}
-                      {totalPages > 4 && (
-                        <span className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs">...</span>
-                      )}
-                      {totalPages > 4 && (
-                        <button
-                          type="button"
-                          onClick={() => setCurrentPage(totalPages)}
-                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                            currentPage === totalPages
-                              ? 'bg-blue-600 text-white shadow-sm'
-                              : 'border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
-                          }`}
-                        >
-                          {totalPages}
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage >= totalPages}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200 transition-colors shadow-sm disabled:opacity-50"
-                        aria-label="Next page"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ─── PROPERTY DETAIL SIDE PANEL (rebuilt with spotlight card design) ─── */}
-                {selectedListing && list?.type === 'properties' && (
-                  <div className="w-[30%] min-w-[320px] bg-transparent flex flex-col h-full overflow-hidden transition-all">
-                    <div className="group bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-slate-800 transition-all duration-500 w-full h-full flex flex-col">
-                      {/* Hero / photo header with carousel */}
-                      <div className="relative h-64 md:h-72 w-full overflow-hidden">
-                        <PropertyPhotoCarousel listing={selectedListing} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        <div className="absolute top-4 left-4">
-                          <span className="px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-primary text-[10px] font-extrabold uppercase tracking-[0.18em] rounded-xl shadow-lg">
-                            Property Spotlight
+                  {/* ─── TABLE CARD (glass panel with backdrop blur) ─── */}
+                  <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-white dark:border-slate-600/50 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
+                    <div className="overflow-auto custom-scrollbar flex-1 pb-16">
+                      {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                          <Loader2
+                            className="h-8 w-8 animate-spin text-blue-600"
+                            aria-hidden
+                          />
+                          <span className="ml-3 text-slate-500 font-medium">
+                            Loading...
                           </span>
                         </div>
-                        <div className="absolute top-4 right-4 flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="size-9 rounded-full bg-white/20 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white/40 transition-all hover:scale-110 shadow-xl"
-                            aria-label="Favorite property"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                            }}
-                          >
-                            <span className="material-symbols-outlined fill-1 text-[20px]">
-                              favorite
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedListing(null)}
-                            className="size-9 rounded-full bg-black/30 backdrop-blur-xl text-white flex items-center justify-center hover:bg-black/50 transition-all hover:scale-110 shadow-xl"
-                            aria-label="Close panel"
-                          >
-                            <span className="material-symbols-outlined text-[20px]">
-                              close
-                            </span>
-                          </button>
-                        </div>
-                        <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
-                          <span className="px-3 py-1 bg-primary text-white text-[10px] font-bold uppercase tracking-[0.18em] w-fit rounded-md">
-                            {(selectedListing.status || 'Available Now').toUpperCase()}
-                          </span>
-                          <h2 className="text-white text-2xl md:text-3xl font-extrabold tracking-tight">
-                            {selectedListing.list_price != null
-                              ? `$${Number(selectedListing.list_price).toLocaleString()}`
-                              : 'Price not available'}
-                          </h2>
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
-                        {/* Listing Price + simple metric */}
-                        <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
-                              Listing Price
-                            </p>
-                            <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-                              {selectedListing.list_price != null
-                                ? `$${Number(selectedListing.list_price).toLocaleString()}`
-                                : 'Price not available'}
-                            </h3>
+                      ) : listings.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                          <div className="w-32 h-32 mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-5xl">
+                            {list?.type === "properties" ? "🏠" : "👥"}
                           </div>
-                          {selectedListing.ai_investment_score != null &&
-                          selectedListing.ai_investment_score > 0 ? (
-                            <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
-                              <span className="material-symbols-outlined text-[18px]">
-                                trending_up
+                          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+                            {searchQuery
+                              ? "No matches found"
+                              : "This list is empty"}
+                          </h2>
+                          <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md">
+                            {searchQuery
+                              ? "Try adjusting your search to find what you're looking for."
+                              : `Add ${list?.type === "properties" ? "properties" : "contacts"} to this list to get started.`}
+                          </p>
+                          {!searchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => {}}
+                              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                            >
+                              Add records
+                              <span className="material-symbols-outlined text-sm">
+                                arrow_forward
                               </span>
-                              AI Score {Math.round(selectedListing.ai_investment_score)}
-                              <span className="text-[11px] font-medium opacity-70 ml-1">
-                                Investment Signal
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
-                              <span className="material-symbols-outlined text-[18px]">
-                                trending_up
-                              </span>
-                              Stable
-                              <span className="text-[11px] font-medium opacity-70 ml-1">
-                                Market Trend
-                              </span>
-                            </div>
+                            </button>
                           )}
                         </div>
-
-                        {/* Address / Listing Agent section (using address + agent) */}
-                        <div className="space-y-3">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
-                            Listing Agent
-                          </p>
-                          <div className="flex items-start gap-3">
-                            <div className="bg-primary/10 p-3 rounded-2xl">
-                              <span className="material-symbols-outlined text-primary text-3xl">
-                                person
-                              </span>
-                            </div>
-                            <div>
-                              <h4 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                                {selectedListing.street || 'Address not available'}
-                              </h4>
-                              <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {[selectedListing.city, selectedListing.state, selectedListing.zip_code]
-                                  .filter(Boolean)
-                                  .join(', ') || 'City / State not available'}
-                              </p>
-                              {selectedListing.agent_name && (
-                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                  Agent:{' '}
-                                  <span className="font-semibold text-slate-700 dark:text-slate-200">
-                                    {selectedListing.agent_name}
-                                  </span>
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Property details grid */}
-                        <div className="space-y-4">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
-                            Property Details
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
-                              <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
-                                <span className="material-symbols-outlined text-primary text-2xl">
-                                  bed
-                                </span>
-                              </div>
-                              <div>
-                                <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
-                                  {selectedListing.beds ?? '—'}
-                                </span>
-                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
-                                  Bedrooms
-                                </span>
-                              </div>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
-                              <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
-                                <span className="material-symbols-outlined text-primary text-2xl">
-                                  bathtub
-                                </span>
-                              </div>
-                              <div>
-                                <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
-                                  {selectedListing.full_baths ?? '—'}
-                                </span>
-                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
-                                  Bathrooms
-                                </span>
-                              </div>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
-                              <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
-                                <span className="material-symbols-outlined text-primary text-2xl">
-                                  square_foot
-                                </span>
-                              </div>
-                              <div>
-                                <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
-                                  {selectedListing.sqft != null
-                                    ? Number(selectedListing.sqft).toLocaleString()
-                                    : '—'}
-                                </span>
-                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
-                                  Total Sqft
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                          <button
-                            type="button"
-                            className="flex-[3] flex items-center justify-center gap-3 bg-primary text-white text-sm font-bold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
-                            onClick={() => {
-                              const identifier =
-                                selectedListing.listing_id ||
-                                (selectedListing as any).property_url
-                              if (!identifier) return
-                              router.push(
-                                `/dashboard/prospect-enrich?search=${encodeURIComponent(
-                                  String(identifier)
-                                )}`
-                              )
-                            }}
-                          >
-                            Check Availability
-                            <span className="material-symbols-outlined text-[18px]">
-                              arrow_forward
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            onClick={() => {
-                              const addressParts = [
-                                selectedListing.street,
-                                selectedListing.city,
-                                selectedListing.state,
-                                selectedListing.zip_code,
+                      ) : list?.type === "properties" ? (
+                        /* ─── PROPERTIES TABLE ─── */
+                        <table
+                          className="w-full text-left text-sm text-slate-600"
+                          role="grid"
+                        >
+                          <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/60 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-md z-10">
+                            <tr>
+                              <th
+                                className="px-5 py-3 w-10 font-semibold align-middle"
+                                scope="col"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    listings.length > 0 &&
+                                    selectedIds.size === listings.length
+                                  }
+                                  onChange={handleSelectAll}
+                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3.5 h-3.5 cursor-pointer transition-colors"
+                                  aria-label="Select all"
+                                />
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold align-middle"
+                                scope="col"
+                              >
+                                Address
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold w-32 align-middle"
+                                scope="col"
+                              >
+                                Price
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold w-24 align-middle"
+                                scope="col"
+                              >
+                                Status
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold w-24 text-center align-middle"
+                                scope="col"
+                              >
+                                AI Score
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold w-20 text-center align-middle"
+                                scope="col"
+                              >
+                                Beds
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold w-20 text-center align-middle"
+                                scope="col"
+                              >
+                                Baths
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold w-24 text-right align-middle"
+                                scope="col"
+                              >
+                                Sqft
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold w-24 text-right align-middle"
+                                scope="col"
+                              >
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100/80 dark:divide-slate-600/50">
+                            {listings.map((listing) => {
+                              const id = getListingId(listing);
+                              const address = listing.street || "—";
+                              const cityStateZip = [
+                                listing.city,
+                                listing.state,
+                                listing.zip_code,
                               ]
                                 .filter(Boolean)
-                                .join(' ')
-                              const mapsQuery = addressParts || selectedListing.property_url
-                              if (!mapsQuery) return
-                              const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                String(mapsQuery)
-                              )}`
-                              window.open(url, '_blank', 'noopener,noreferrer')
-                            }}
+                                .join(", ");
+                              const isDeleting = deletingId === id;
+                              const isSelected =
+                                selectedListing != null &&
+                                getListingId(selectedListing) === id;
+
+                              // Prefer internal property identifier (listing_id), fall back to property_url
+                              const prospectIdentifier =
+                                listing.listing_id ||
+                                listing.property_url ||
+                                null;
+                              return (
+                                <tr
+                                  key={id}
+                                  onClick={() => handleRowClick(listing)}
+                                  className={`transition-colors duration-150 group cursor-pointer ${
+                                    isSelected
+                                      ? "bg-blue-50/60 hover:bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500"
+                                      : "bg-white/40 dark:bg-slate-800/40 hover:bg-blue-50/40 dark:hover:bg-slate-700/40"
+                                  }`}
+                                >
+                                  <td className="px-5 py-3 align-middle">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedIds.has(id)}
+                                      onChange={(e) =>
+                                        handleSelect(id, e.target.checked)
+                                      }
+                                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-3.5 h-3.5 cursor-pointer transition-colors"
+                                      onClick={(e) => e.stopPropagation()}
+                                      aria-label={`Select property ${address}`}
+                                    />
+                                  </td>
+                                  <td className="px-4 py-3 align-middle">
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-1.5 mb-0.5">
+                                        <span className="material-symbols-outlined text-slate-400 text-[16px]">
+                                          location_on
+                                        </span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                                          {address}
+                                        </span>
+                                      </div>
+                                      <div className="text-[11px] text-slate-500 dark:text-slate-400 ml-5">
+                                        {cityStateZip || "—"}
+                                      </div>
+                                      {prospectIdentifier && (
+                                        <Link
+                                          href={`/dashboard/prospect-enrich?search=${encodeURIComponent(
+                                            String(prospectIdentifier)
+                                          )}`}
+                                          className="text-[10px] font-semibold text-blue-600 hover:underline ml-5 mt-1 inline-flex items-center gap-0.5"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          View Property
+                                          <span className="material-symbols-outlined text-[10px]">
+                                            arrow_forward
+                                          </span>
+                                        </Link>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 align-middle font-medium text-slate-700 dark:text-slate-300">
+                                    {listing.list_price != null
+                                      ? `$${Number(listing.list_price).toLocaleString()}`
+                                      : "—"}
+                                  </td>
+                                  <td className="px-4 py-3 align-middle">
+                                    <StatusBadge status={listing.status} />
+                                  </td>
+                                  <td className="px-4 py-3 text-center align-middle">
+                                    <AIScoreCell
+                                      score={listing.ai_investment_score}
+                                    />
+                                  </td>
+                                  <td className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300">
+                                    {listing.beds ?? "—"}
+                                  </td>
+                                  <td className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300">
+                                    {listing.full_baths ?? "—"}
+                                  </td>
+                                  <td className="px-4 py-3 text-right align-middle font-medium text-slate-700 dark:text-slate-300 tabular-nums">
+                                    {listing.sqft != null
+                                      ? Number(listing.sqft).toLocaleString()
+                                      : "—"}
+                                  </td>
+                                  <td className="px-4 py-3 text-right align-middle">
+                                    <div
+                                      className={`flex items-center justify-end gap-1 transition-opacity duration-200 ${
+                                        isSelected
+                                          ? "opacity-100"
+                                          : "opacity-0 group-hover:opacity-100"
+                                      }`}
+                                    >
+                                      <button
+                                        type="button"
+                                        className="w-7 h-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50/80 dark:hover:bg-blue-900/30 transition-colors"
+                                        title="Edit"
+                                        aria-label="Edit"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <span className="material-symbols-outlined text-[18px]">
+                                          edit
+                                        </span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="w-7 h-7 flex items-center justify-center rounded-md hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                                        title="Delete"
+                                        aria-label="Delete"
+                                        disabled={isDeleting}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRemoveFromList(listing, e);
+                                        }}
+                                      >
+                                        <span className="material-symbols-outlined text-[18px]">
+                                          delete
+                                        </span>
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      ) : (
+                        /* ─── PEOPLE TABLE ─── */
+                        <table
+                          className="w-full text-left text-sm text-slate-600"
+                          role="grid"
+                        >
+                          <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+                            <tr>
+                              <th
+                                className="pl-6 pr-4 py-3 w-12 font-semibold align-middle"
+                                scope="col"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    listings.length > 0 &&
+                                    selectedIds.size === listings.length
+                                  }
+                                  onChange={handleSelectAll}
+                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
+                                  aria-label="Select all"
+                                />
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold align-middle w-[30%]"
+                                scope="col"
+                              >
+                                Name
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold align-middle"
+                                scope="col"
+                              >
+                                Job Title
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold align-middle"
+                                scope="col"
+                              >
+                                Company
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold align-middle"
+                                scope="col"
+                              >
+                                Email
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold align-middle"
+                                scope="col"
+                              >
+                                Phone
+                              </th>
+                              <th
+                                className="px-4 py-3 font-semibold w-24 text-right align-middle"
+                                scope="col"
+                              >
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-50 dark:divide-slate-600/50">
+                            {listings.map((item, idx) => {
+                              const id =
+                                (item as any).contact_id ||
+                                item.listing_id ||
+                                item.agent_email ||
+                                `row-${idx}`;
+                              const name =
+                                item.agent_name ||
+                                [item.first_name, item.last_name]
+                                  .filter(Boolean)
+                                  .join(" ")
+                                  .trim() ||
+                                "—";
+                              const isDeleting = deletingId === id;
+
+                              return (
+                                <tr
+                                  key={id}
+                                  className="bg-white hover:bg-slate-50/80 transition-colors duration-150 group"
+                                >
+                                  <td className="pl-6 pr-4 py-2.5 align-middle">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedIds.has(id)}
+                                      onChange={(e) =>
+                                        handleSelect(id, e.target.checked)
+                                      }
+                                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 w-4 h-4 cursor-pointer transition-colors"
+                                      onClick={(e) => e.stopPropagation()}
+                                      aria-label={`Select contact ${name}`}
+                                    />
+                                  </td>
+                                  <td className="px-4 py-2.5 align-middle">
+                                    <span className="font-semibold text-slate-800 text-sm">
+                                      {name}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
+                                    {item.job_title || "—"}
+                                  </td>
+                                  <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
+                                    {item.company || "—"}
+                                  </td>
+                                  <td className="px-4 py-2.5 align-middle text-sm text-slate-600 truncate max-w-[200px]">
+                                    {item.agent_email || item.email || "—"}
+                                  </td>
+                                  <td className="px-4 py-2.5 align-middle text-sm text-slate-600">
+                                    {item.agent_phone || item.phone || "—"}
+                                  </td>
+                                  <td className="px-4 py-2.5 text-right align-middle">
+                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                      <button
+                                        type="button"
+                                        className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRemoveFromList(item, e);
+                                        }}
+                                        disabled={isDeleting}
+                                        aria-label="Delete"
+                                        title="Delete"
+                                      >
+                                        <span className="material-symbols-outlined text-[16px]">
+                                          delete
+                                        </span>
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+
+                    {/* ─── PAGINATION FOOTER ─── */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-600 p-3 flex items-center justify-between z-20">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        Showing{" "}
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          {startRecord}
+                        </span>{" "}
+                        -{" "}
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          {endRecord}
+                        </span>{" "}
+                        of{" "}
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          {totalCount.toLocaleString()}
+                        </span>{" "}
+                        records
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCurrentPage((p) => Math.max(1, p - 1))
+                          }
+                          disabled={currentPage <= 1}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-50"
+                          aria-label="Previous page"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            chevron_left
+                          </span>
+                        </button>
+                        {totalPages >= 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(1)}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                              currentPage === 1
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                            }`}
                           >
-                            <span className="material-symbols-outlined text-[18px]">
-                              map
-                            </span>
-                            Street View
+                            1
                           </button>
-                        </div>
+                        )}
+                        {totalPages >= 2 && (
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(2)}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                              currentPage === 2
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                            }`}
+                          >
+                            2
+                          </button>
+                        )}
+                        {totalPages >= 3 && (
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(3)}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                              currentPage === 3
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                            }`}
+                          >
+                            3
+                          </button>
+                        )}
+                        {totalPages > 4 && (
+                          <span className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs">
+                            ...
+                          </span>
+                        )}
+                        {totalPages > 4 && (
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(totalPages)}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
+                              currentPage === totalPages
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                            }`}
+                          >
+                            {totalPages}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCurrentPage((p) => Math.min(totalPages, p + 1))
+                          }
+                          disabled={currentPage >= totalPages}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200 transition-colors shadow-sm disabled:opacity-50"
+                          aria-label="Next page"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            chevron_right
+                          </span>
+                        </button>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </main>
-              </div>
+
+                  {/* ─── PROPERTY DETAIL SIDE PANEL (rebuilt with spotlight card design) ─── */}
+                  {selectedListing && list?.type === "properties" && (
+                    <div className="w-[30%] min-w-[320px] bg-transparent flex flex-col h-full overflow-hidden transition-all">
+                      <div className="group bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-slate-800 transition-all duration-500 w-full h-full flex flex-col">
+                        {/* Hero / photo header with carousel */}
+                        <div className="relative h-64 md:h-72 w-full overflow-hidden">
+                          <PropertyPhotoCarousel listing={selectedListing} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          <div className="absolute top-4 left-4">
+                            <span className="px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-primary text-[10px] font-extrabold uppercase tracking-[0.18em] rounded-xl shadow-lg">
+                              Property Spotlight
+                            </span>
+                          </div>
+                          <div className="absolute top-4 right-4 flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="size-9 rounded-full bg-white/20 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white/40 transition-all hover:scale-110 shadow-xl"
+                              aria-label="Favorite property"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <span className="material-symbols-outlined fill-1 text-[20px]">
+                                favorite
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedListing(null)}
+                              className="size-9 rounded-full bg-black/30 backdrop-blur-xl text-white flex items-center justify-center hover:bg-black/50 transition-all hover:scale-110 shadow-xl"
+                              aria-label="Close panel"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">
+                                close
+                              </span>
+                            </button>
+                          </div>
+                          <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
+                            <span className="px-3 py-1 bg-primary text-white text-[10px] font-bold uppercase tracking-[0.18em] w-fit rounded-md">
+                              {(
+                                selectedListing.status || "Available Now"
+                              ).toUpperCase()}
+                            </span>
+                            <h2 className="text-white text-2xl md:text-3xl font-extrabold tracking-tight">
+                              {selectedListing.list_price != null
+                                ? `$${Number(selectedListing.list_price).toLocaleString()}`
+                                : "Price not available"}
+                            </h2>
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
+                          {/* Listing Price + simple metric */}
+                          <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                                Listing Price
+                              </p>
+                              <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+                                {selectedListing.list_price != null
+                                  ? `$${Number(selectedListing.list_price).toLocaleString()}`
+                                  : "Price not available"}
+                              </h3>
+                            </div>
+                            {selectedListing.ai_investment_score != null &&
+                            selectedListing.ai_investment_score > 0 ? (
+                              <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
+                                <span className="material-symbols-outlined text-[18px]">
+                                  trending_up
+                                </span>
+                                AI Score{" "}
+                                {Math.round(
+                                  selectedListing.ai_investment_score
+                                )}
+                                <span className="text-[11px] font-medium opacity-70 ml-1">
+                                  Investment Signal
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
+                                <span className="material-symbols-outlined text-[18px]">
+                                  trending_up
+                                </span>
+                                Stable
+                                <span className="text-[11px] font-medium opacity-70 ml-1">
+                                  Market Trend
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Address / Listing Agent section (using address + agent) */}
+                          <div className="space-y-3">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                              Listing Agent
+                            </p>
+                            <div className="flex items-start gap-3">
+                              <div className="bg-primary/10 p-3 rounded-2xl">
+                                <span className="material-symbols-outlined text-primary text-3xl">
+                                  person
+                                </span>
+                              </div>
+                              <div>
+                                <h4 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                                  {selectedListing.street ||
+                                    "Address not available"}
+                                </h4>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                  {[
+                                    selectedListing.city,
+                                    selectedListing.state,
+                                    selectedListing.zip_code,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ") || "City / State not available"}
+                                </p>
+                                {selectedListing.agent_name && (
+                                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                    Agent:{" "}
+                                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                      {selectedListing.agent_name}
+                                    </span>
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Property details grid */}
+                          <div className="space-y-4">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                              Property Details
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                                  <span className="material-symbols-outlined text-primary text-2xl">
+                                    bed
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                    {selectedListing.beds ?? "—"}
+                                  </span>
+                                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                    Bedrooms
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                                  <span className="material-symbols-outlined text-primary text-2xl">
+                                    bathtub
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                    {selectedListing.full_baths ?? "—"}
+                                  </span>
+                                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                    Bathrooms
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                                  <span className="material-symbols-outlined text-primary text-2xl">
+                                    square_foot
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                    {selectedListing.sqft != null
+                                      ? Number(
+                                          selectedListing.sqft
+                                        ).toLocaleString()
+                                      : "—"}
+                                  </span>
+                                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                    Total Sqft
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                            <button
+                              type="button"
+                              className="flex-[3] flex items-center justify-center gap-3 bg-primary text-white text-sm font-bold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
+                              onClick={() => {
+                                const identifier =
+                                  selectedListing.listing_id ||
+                                  (selectedListing as any).property_url;
+                                if (!identifier) return;
+                                router.push(
+                                  `/dashboard/prospect-enrich?search=${encodeURIComponent(
+                                    String(identifier)
+                                  )}`
+                                );
+                              }}
+                            >
+                              Check Availability
+                              <span className="material-symbols-outlined text-[18px]">
+                                arrow_forward
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                              onClick={() => {
+                                const addressParts = [
+                                  selectedListing.street,
+                                  selectedListing.city,
+                                  selectedListing.state,
+                                  selectedListing.zip_code,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ");
+                                const mapsQuery =
+                                  addressParts || selectedListing.property_url;
+                                if (!mapsQuery) return;
+                                const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                  String(mapsQuery)
+                                )}`;
+                                window.open(
+                                  url,
+                                  "_blank",
+                                  "noopener,noreferrer"
+                                );
+                              }}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                map
+                              </span>
+                              Street View
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </main>
             </div>
           </div>
         </div>
       </div>
-  )
+    </div>
+  );
 }
 
 export default function ListDetailPage() {
@@ -1121,5 +1375,5 @@ export default function ListDetailPage() {
     <DashboardLayout fullBleed hideHeader>
       <ListDetailContent />
     </DashboardLayout>
-  )
+  );
 }

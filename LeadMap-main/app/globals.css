@@ -220,10 +220,10 @@
     --surface-border: rgba(16, 24, 40, 0.08);
     --radius-surface: 14px;
     --radius-control: 10px;
-    --shadow-surface: 0 1px 2px rgba(16, 24, 40, 0.06),
-                      0 12px 24px rgba(16, 24, 40, 0.06);
-    --shadow-overlay: 0 6px 16px rgba(16, 24, 40, 0.12),
-                      0 24px 48px rgba(16, 24, 40, 0.10);
+    --shadow-surface:
+      0 1px 2px rgba(16, 24, 40, 0.06), 0 12px 24px rgba(16, 24, 40, 0.06);
+    --shadow-overlay:
+      0 6px 16px rgba(16, 24, 40, 0.12), 0 24px 48px rgba(16, 24, 40, 0.1);
     --shell-gap: 12px;
     --shell-pad: 12px;
   }
@@ -916,7 +916,11 @@
 
 /* Material Symbols in map property popups */
 .material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 20;
   font-size: 18px;
   font-family: "Material Symbols Outlined", system-ui, sans-serif;
 }
@@ -1009,26 +1013,11 @@
 /* Deals Pipeline - Dashboard-aligned CRM design */
 .bg-mesh {
   background-color: #f8fafc;
-  background-image: radial-gradient(
-      at 80% 0%,
-      hsla(220, 100%, 96%, 1) 0px,
-      transparent 50%
-    ),
-    radial-gradient(
-      at 0% 50%,
-      hsla(210, 100%, 97%, 1) 0px,
-      transparent 50%
-    ),
-    radial-gradient(
-      at 80% 50%,
-      hsla(230, 100%, 98%, 1) 0px,
-      transparent 50%
-    ),
-    radial-gradient(
-      at 0% 100%,
-      hsla(220, 100%, 98%, 1) 0px,
-      transparent 50%
-    );
+  background-image:
+    radial-gradient(at 80% 0%, hsla(220, 100%, 96%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(210, 100%, 97%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsla(230, 100%, 98%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(220, 100%, 98%, 1) 0px, transparent 50%);
 }
 
 /* Calendar Week View - Elite CRM grid (1:1 with design reference) */
@@ -1059,7 +1048,7 @@
   position: relative;
 }
 .grid-line:after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -1096,7 +1085,7 @@
   position: relative;
 }
 .day-grid-container .grid-line:after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -1240,9 +1229,17 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 @keyframes unibox-glowing {
-  0% { box-shadow: 0 0 5px #2b6cee; }
-  50% { box-shadow: 0 0 20px #2b6cee, 0 0 10px #5a8dee; }
-  100% { box-shadow: 0 0 5px #2b6cee; }
+  0% {
+    box-shadow: 0 0 5px #2b6cee;
+  }
+  50% {
+    box-shadow:
+      0 0 20px #2b6cee,
+      0 0 10px #5a8dee;
+  }
+  100% {
+    box-shadow: 0 0 5px #2b6cee;
+  }
 }
 .unibox-ai-glow {
   animation: unibox-glowing 3s infinite;
@@ -1282,7 +1279,13 @@
   right: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(to bottom, transparent, #E8EAF3 15%, #E8EAF3 85%, transparent);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    #e8eaf3 15%,
+    #e8eaf3 85%,
+    transparent
+  );
   pointer-events: none;
 }
 /* Dashboard main sidebar (1:1 reference) */
@@ -1296,7 +1299,13 @@
   right: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(to bottom, transparent, #E8EAF3 15%, #E8EAF3 85%, transparent);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    #e8eaf3 15%,
+    #e8eaf3 85%,
+    transparent
+  );
   pointer-events: none;
 }
 .no-scrollbar::-webkit-scrollbar {
@@ -1343,7 +1352,11 @@
 
 /* Font display utility */
 .font-display {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 .material-symbols-outlined.fill-1 {
   font-variation-settings: "FILL" 1;
@@ -1372,11 +1385,39 @@
 .compose-modal-mesh {
   background-color: #f3f4f6;
   background-image:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0) 0, hsla(253, 16%, 7%, 0) 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0) 0, hsla(225, 39%, 30%, 0) 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0) 0, hsla(339, 49%, 30%, 0) 50%),
-    radial-gradient(at 0% 50%, hsla(220, 100%, 96%, 1) 0, hsla(220, 100%, 96%, 0) 50%),
-    radial-gradient(at 100% 50%, hsla(210, 100%, 93%, 1) 0, hsla(210, 100%, 93%, 0) 50%),
-    radial-gradient(at 0% 100%, hsla(220, 100%, 96%, 1) 0, hsla(220, 100%, 96%, 0) 50%),
-    radial-gradient(at 50% 100%, hsla(222, 100%, 96%, 1) 0, hsla(222, 100%, 96%, 0) 50%);
+    radial-gradient(
+      at 0% 0%,
+      hsla(253, 16%, 7%, 0) 0,
+      hsla(253, 16%, 7%, 0) 50%
+    ),
+    radial-gradient(
+      at 50% 0%,
+      hsla(225, 39%, 30%, 0) 0,
+      hsla(225, 39%, 30%, 0) 50%
+    ),
+    radial-gradient(
+      at 100% 0%,
+      hsla(339, 49%, 30%, 0) 0,
+      hsla(339, 49%, 30%, 0) 50%
+    ),
+    radial-gradient(
+      at 0% 50%,
+      hsla(220, 100%, 96%, 1) 0,
+      hsla(220, 100%, 96%, 0) 50%
+    ),
+    radial-gradient(
+      at 100% 50%,
+      hsla(210, 100%, 93%, 1) 0,
+      hsla(210, 100%, 93%, 0) 50%
+    ),
+    radial-gradient(
+      at 0% 100%,
+      hsla(220, 100%, 96%, 1) 0,
+      hsla(220, 100%, 96%, 0) 50%
+    ),
+    radial-gradient(
+      at 50% 100%,
+      hsla(222, 100%, 96%, 1) 0,
+      hsla(222, 100%, 96%, 0) 50%
+    );
 }
