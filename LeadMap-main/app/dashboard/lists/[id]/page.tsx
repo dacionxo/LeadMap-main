@@ -1278,7 +1278,64 @@ function ListDetailContent() {
                           <div className="scale-90 origin-top w-full p-6 md:p-8 space-y-8">
                           {/* Listing Agent: name, email, phone */}
                           <div className="space-y-3">
-                            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.18em]">
+                            <p className="text-[12px] font-medium text-slate-400 uppercase tracking-[0.18em]">
+                              Agent Information
+                            </p>
+                            <div className="flex items-start gap-3">
+                              <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
+                                <span className="material-symbols-outlined text-primary text-3xl">
+                                  person
+                                </span>
+                              </div>
+                              <div className="min-w-0 space-y-1.5">
+                                <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                                  {selectedListing.agent_name || "—"}
+                                </p>
+                                {selectedListing.agent_email ? (
+                                  <a
+                                    href={`mailto:${selectedListing.agent_email}`}
+                                    className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary truncate"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      mail
+                                    </span>
+                                    <span className="truncate">
+                                      {selectedListing.agent_email}
+                                    </span>
+                                  </a>
+                                ) : (
+                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      mail
+                                    </span>
+                                    —
+                                  </p>
+                                )}
+                                {selectedListing.agent_phone ? (
+                                  <a
+                                    href={`tel:${selectedListing.agent_phone}`}
+                                    className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      call
+                                    </span>
+                                    {selectedListing.agent_phone}
+                                  </a>
+                                ) : (
+                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      call
+                                    </span>
+                                    —
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Agent Information (duplicate) — same content, vertically below */}
+                          <div className="space-y-3">
+                            <p className="text-[12px] font-medium text-slate-400 uppercase tracking-[0.18em]">
                               Agent Information
                             </p>
                             <div className="flex items-start gap-3">
@@ -1335,7 +1392,7 @@ function ListDetailContent() {
 
                           {/* Property details grid */}
                           <div className="space-y-4">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                            <p className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.18em]">
                               Property Details
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
