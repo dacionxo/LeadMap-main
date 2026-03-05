@@ -49,6 +49,17 @@ interface Listing {
   [key: string]: unknown;
 }
 
+/** Map listing source_category or status to sidebar category label (For Sale, For Rent, Foreclosures, Imports). */
+function getCategoryLabel(listing: Listing): string {
+  const source = (listing as any).source_category ?? listing.status ?? "";
+  const s = String(source).toLowerCase();
+  if (s === "fsbo_leads" || s === "fsbo") return "For Sale";
+  if (s === "frbo_leads" || s === "frbo") return "For Rent";
+  if (s === "foreclosure_listings" || s === "foreclosure" || s === "foreclosures") return "Foreclosures";
+  if (s === "imports" || s === "import" || s === "csv_import") return "Imports";
+  return "Imports";
+}
+
 interface ListPaginatedResponse {
   data: Listing[];
   count: number;
@@ -1127,7 +1138,7 @@ function ListDetailContent() {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           <div className="absolute top-4 left-4">
                             <span className="px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-primary text-[10px] font-semibold uppercase tracking-[0.18em] rounded-xl shadow-lg">
-                              Property Spotlight
+                              {getCategoryLabel(selectedListing)}
                             </span>
                           </div>
                           <div className="absolute top-4 right-4 flex items-center gap-2">
