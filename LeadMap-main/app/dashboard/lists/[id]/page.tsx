@@ -508,7 +508,7 @@ function ListDetailContent() {
                       <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
                         {list?.name ?? "…"}
                       </h1>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-600 uppercase tracking-wide">
+                      <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700/80 text-gray-600 dark:text-gray-400 text-[10px] font-bold border border-gray-200 dark:border-gray-600 uppercase tracking-wide shadow-sm">
                         {totalCount.toLocaleString()} records
                       </span>
                     </div>
@@ -516,7 +516,7 @@ function ListDetailContent() {
                       <button
                         type="button"
                         onClick={() => {}}
-                        className="px-3.5 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5 backdrop-blur-sm"
+                        className="px-3.5 py-2 rounded-full bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-gray-600 shadow-sm text-gray-600 dark:text-slate-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5"
                         aria-label="Import"
                       >
                         <span className="material-symbols-outlined text-[18px]">
@@ -527,7 +527,7 @@ function ListDetailContent() {
                       <button
                         type="button"
                         onClick={handleExportCSV}
-                        className="px-3.5 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5 backdrop-blur-sm"
+                        className="px-3.5 py-2 rounded-full bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-gray-600 shadow-sm text-gray-600 dark:text-slate-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5"
                         aria-label="Export"
                       >
                         <span className="material-symbols-outlined text-[18px]">
@@ -537,7 +537,7 @@ function ListDetailContent() {
                       </button>
                       <button
                         type="button"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-1.5"
                         aria-label="Add records"
                       >
                         <span className="material-symbols-outlined text-[18px]">
@@ -547,7 +547,7 @@ function ListDetailContent() {
                       </button>
                       <button
                         type="button"
-                        className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-violet-500/20 transition-all flex items-center gap-1.5"
+                        className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-violet-500/20 transition-all flex items-center gap-1.5"
                         aria-label="Research with AI"
                       >
                         <span className="material-symbols-outlined text-[18px]">
@@ -557,7 +557,7 @@ function ListDetailContent() {
                       </button>
                       <button
                         type="button"
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/60 dark:bg-slate-800/60 border border-white dark:border-slate-600 shadow-sm text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-gray-600 shadow-sm text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all"
                         aria-label="More options"
                       >
                         <span className="material-symbols-outlined text-[18px]">
@@ -572,7 +572,7 @@ function ListDetailContent() {
               {/* ─── MAIN CONTENT (matches /dashboard/lists padding) ─── */}
               <main className="flex-1 overflow-auto custom-scrollbar px-8 pb-8 flex flex-col min-h-0">
                 {/* ─── TOOLBAR (search + Status/Price/More Filters) ─── */}
-                <div className="flex items-center justify-between gap-4 mb-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-xl border border-white/50 dark:border-slate-600/50 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-4 bg-white dark:bg-slate-800/80 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(19,91,236,0.08)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]">
                   <div className="flex-1 flex items-center relative group max-w-md">
                     <span
                       className="absolute left-3 material-symbols-outlined text-slate-400 group-focus-within:text-blue-600 transition-colors z-10 text-[18px]"
@@ -593,11 +593,11 @@ function ListDetailContent() {
                       aria-label="Search"
                     />
                   </div>
-                  <div className="h-6 w-px bg-slate-200 dark:bg-slate-600 mx-2 shrink-0" />
+                  <div className="h-6 w-px bg-gray-200 dark:bg-gray-600 mx-2 shrink-0" />
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                       aria-label="Status filter"
                     >
                       Status: Any
@@ -607,7 +607,7 @@ function ListDetailContent() {
                     </button>
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                       aria-label="Price range filter"
                     >
                       Price Range
@@ -617,7 +617,7 @@ function ListDetailContent() {
                     </button>
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 shadow-sm rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                       aria-label="More filters"
                     >
                       <span className="material-symbols-outlined text-[16px] text-slate-500">
@@ -630,8 +630,8 @@ function ListDetailContent() {
 
                 {/* ─── TABLE + DETAIL PANEL LAYOUT ─── */}
                 <div className="flex gap-4 h-full overflow-hidden">
-                  {/* ─── TABLE CARD (glass panel with backdrop blur) ─── */}
-                  <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
+                  {/* ─── TABLE CARD (deals kanban design: border, shadow, rounded-2xl) ─── */}
+                  <div className="bg-white dark:bg-slate-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-[0_20px_50px_-12px_rgba(19,91,236,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
                     <div className="overflow-auto custom-scrollbar flex-1 pb-16">
                       {loading ? (
                         <div className="flex items-center justify-center py-20">
@@ -677,7 +677,7 @@ function ListDetailContent() {
                           className="w-full text-left text-sm text-slate-600"
                           role="grid"
                         >
-                          <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 tracking-wider sticky top-0 backdrop-blur-md z-10">
+                          <thead className="text-[11px] font-semibold text-gray-500 uppercase bg-gray-50/90 dark:bg-slate-800/90 border-b border-gray-200 dark:border-gray-700 tracking-wider sticky top-0 backdrop-blur-sm z-10">
                             <tr>
                               <th
                                 className="px-5 py-3 w-10 font-semibold align-middle"
@@ -744,7 +744,7 @@ function ListDetailContent() {
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100/80 dark:divide-slate-600/50">
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                             {listings.map((listing) => {
                               const id = getListingId(listing);
                               const address = listing.street || "—";
@@ -818,26 +818,122 @@ function ListDetailContent() {
                                       )}
                                     </div>
                                   </td>
-                                  <td className="px-4 py-3 align-middle font-medium text-slate-700 dark:text-slate-300">
+                                  <td
+                                    className="px-4 py-3 align-middle font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedListing(listing);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setSelectedListing(listing);
+                                      }
+                                    }}
+                                    aria-label="View property details"
+                                  >
                                     {listing.list_price != null
                                       ? `$${Number(listing.list_price).toLocaleString()}`
                                       : "—"}
                                   </td>
-                                  <td className="px-4 py-3 align-middle">
+                                  <td
+                                    className="px-4 py-3 align-middle cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedListing(listing);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setSelectedListing(listing);
+                                      }
+                                    }}
+                                    aria-label="View property details"
+                                  >
                                     <StatusBadge status={listing.status} />
                                   </td>
-                                  <td className="px-4 py-3 text-center align-middle">
+                                  <td
+                                    className="px-4 py-3 text-center align-middle cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedListing(listing);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setSelectedListing(listing);
+                                      }
+                                    }}
+                                    aria-label="View property details"
+                                  >
                                     <AIScoreCell
                                       score={listing.ai_investment_score}
                                     />
                                   </td>
-                                  <td className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300">
+                                  <td
+                                    className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedListing(listing);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setSelectedListing(listing);
+                                      }
+                                    }}
+                                    aria-label="View property details"
+                                  >
                                     {listing.beds ?? "—"}
                                   </td>
-                                  <td className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300">
+                                  <td
+                                    className="px-4 py-3 text-center align-middle font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedListing(listing);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setSelectedListing(listing);
+                                      }
+                                    }}
+                                    aria-label="View property details"
+                                  >
                                     {listing.full_baths ?? "—"}
                                   </td>
-                                  <td className="px-4 py-3 text-right align-middle font-medium text-slate-700 dark:text-slate-300 tabular-nums">
+                                  <td
+                                    className="px-4 py-3 text-right align-middle font-medium text-slate-700 dark:text-slate-300 tabular-nums cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedListing(listing);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setSelectedListing(listing);
+                                      }
+                                    }}
+                                    aria-label="View property details"
+                                  >
                                     {listing.sqft != null
                                       ? Number(listing.sqft).toLocaleString()
                                       : "—"}
@@ -889,7 +985,7 @@ function ListDetailContent() {
                           className="w-full text-left text-sm text-slate-600"
                           role="grid"
                         >
-                          <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+                          <thead className="text-[11px] font-semibold text-gray-500 uppercase bg-gray-50/90 dark:bg-slate-800/90 border-b border-gray-200 dark:border-gray-700 tracking-wider sticky top-0 backdrop-blur-sm z-10">
                             <tr>
                               <th
                                 className="pl-6 pr-4 py-3 w-12 font-semibold align-middle"
@@ -944,7 +1040,7 @@ function ListDetailContent() {
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-50 dark:divide-slate-600/50">
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                             {listings.map((item, idx) => {
                               const id =
                                 (item as any).contact_id ||
@@ -1022,7 +1118,7 @@ function ListDetailContent() {
                     </div>
 
                     {/* ─── PAGINATION FOOTER ─── */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-700 p-3 flex items-center justify-between z-20">
+                    <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-800/95 border-t border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between z-20 rounded-b-2xl">
                       <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                         Showing{" "}
                         <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -1045,7 +1141,7 @@ function ListDetailContent() {
                             setCurrentPage((p) => Math.max(1, p - 1))
                           }
                           disabled={currentPage <= 1}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-50"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-200 transition-colors disabled:opacity-50 shadow-sm"
                           aria-label="Previous page"
                         >
                           <span className="material-symbols-outlined text-[16px]">
@@ -1059,7 +1155,7 @@ function ListDetailContent() {
                             className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                               currentPage === 1
                                 ? "bg-blue-600 text-white shadow-sm"
-                                : "border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                                : "border border-transparent text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-200"
                             }`}
                           >
                             1
@@ -1072,7 +1168,7 @@ function ListDetailContent() {
                             className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                               currentPage === 2
                                 ? "bg-blue-600 text-white shadow-sm"
-                                : "border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                                : "border border-transparent text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-200"
                             }`}
                           >
                             2
@@ -1085,7 +1181,7 @@ function ListDetailContent() {
                             className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                               currentPage === 3
                                 ? "bg-blue-600 text-white shadow-sm"
-                                : "border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                                : "border border-transparent text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-200"
                             }`}
                           >
                             3
@@ -1103,7 +1199,7 @@ function ListDetailContent() {
                             className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
                               currentPage === totalPages
                                 ? "bg-blue-600 text-white shadow-sm"
-                                : "border border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                                : "border border-transparent text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-200"
                             }`}
                           >
                             {totalPages}
@@ -1115,7 +1211,7 @@ function ListDetailContent() {
                             setCurrentPage((p) => Math.min(totalPages, p + 1))
                           }
                           disabled={currentPage >= totalPages}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200 transition-colors shadow-sm disabled:opacity-50"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-200 transition-colors shadow-sm disabled:opacity-50"
                           aria-label="Next page"
                         >
                           <span className="material-symbols-outlined text-[16px]">
@@ -1129,7 +1225,7 @@ function ListDetailContent() {
                   {/* ─── PROPERTY DETAIL SIDE PANEL (rebuilt with spotlight card design) ─── */}
                   {selectedListing && list?.type === "properties" && (
                     <div className="w-[30%] min-w-[320px] bg-transparent flex flex-col h-full overflow-hidden transition-all">
-                      <div className="group bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 transition-all duration-500 w-full h-full flex flex-col">
+                      <div className="group bg-white dark:bg-slate-800/80 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(19,91,236,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_24px_56px_-12px_rgba(19,91,236,0.18)] dark:hover:shadow-[0_24px_56px_-12px_rgba(0,0,0,0.4)] hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300 w-full h-full flex flex-col">
                         {/* Hero / photo header with carousel — 90% size, same ratios */}
                         <div className="relative h-[14.4rem] md:h-[16.2rem] w-full overflow-hidden">
                           <div className="absolute inset-0 w-[111.11%] h-[111.11%] scale-90 origin-top-left">
@@ -1181,7 +1277,7 @@ function ListDetailContent() {
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                           <div className="scale-90 origin-top w-full p-6 md:p-8 space-y-8">
                           {/* Listing Price + simple metric */}
-                          <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-700">
+                          <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                             <div className="space-y-1">
                               <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.18em]">
                                 Listing Price
@@ -1262,8 +1358,8 @@ function ListDetailContent() {
                               Property Details
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-200 dark:border-slate-700">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
+                              <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
                                   <span className="material-symbols-outlined text-primary text-2xl">
                                     bed
                                   </span>
@@ -1277,8 +1373,8 @@ function ListDetailContent() {
                                   </span>
                                 </div>
                               </div>
-                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-200 dark:border-slate-700">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
+                              <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
                                   <span className="material-symbols-outlined text-primary text-2xl">
                                     bathtub
                                   </span>
@@ -1292,8 +1388,8 @@ function ListDetailContent() {
                                   </span>
                                 </div>
                               </div>
-                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-200 dark:border-slate-700">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
+                              <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
                                   <span className="material-symbols-outlined text-primary text-2xl">
                                     square_foot
                                   </span>
