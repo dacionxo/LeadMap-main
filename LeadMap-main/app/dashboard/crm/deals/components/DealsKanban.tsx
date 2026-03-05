@@ -369,14 +369,14 @@ function ownerInitials(deal: Deal): string {
 function getLabelForDeal(deal: Deal): string {
   const n = normalizeStage(deal.stage);
   const prob = deal.probability ?? 0;
-  if (n === "closed_won") return "High Priority";
-  if (n === "closed_lost") return "Not that important";
-  if (prob >= 80) return "High Priority";
-  if (prob >= 60) return "Important";
-  if (prob >= 40) return "OK";
-  if (prob >= 20) return "Maybe important";
-  if (prob >= 10) return "Low Priority";
-  return "Meh";
+  if (n === "closed_won") return "Closed";
+  if (n === "closed_lost") return "Deal Lost";
+  if (prob >= 80) return "Closing Soon";
+  if (prob >= 60) return "Strong Buyer";
+  if (prob >= 40) return "Serious Interest";
+  if (prob >= 20) return "Early Opportunity";
+  if (prob >= 10) return "Initial Inquiry";
+  return "Cold Lead";
 }
 
 function getDealSortValue(deal: Deal, sortBy: string): number | string {

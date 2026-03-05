@@ -59,13 +59,13 @@ Two card types are used:
 
 1. **LeadCard** — For stages `new` through `negotiation`  
    - Photo carousel (or primary photo / placeholder)  
-   - Priority label (High Priority, Important, etc.)  
+   - Probability label (Closing Soon, Strong Buyer, etc.)  
    - Property address (clickable)  
    - Est. Value and Property Class  
    - Owner initials, days since creation, Details link  
 
 2. **ClosedWonCard** — For `closed_won`  
-   - Business icon and High Priority badge  
+   - Business icon and Closed badge  
    - Property address  
    - Est. Value and Close Date  
    - Simplified layout without photo carousel  
