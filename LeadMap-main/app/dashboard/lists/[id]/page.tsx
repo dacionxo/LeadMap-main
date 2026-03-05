@@ -1120,8 +1120,9 @@ function ListDetailContent() {
                   {selectedListing && list?.type === "properties" && (
                     <div className="w-[30%] min-w-[320px] bg-transparent flex flex-col h-full overflow-hidden transition-all">
                       <div className="group bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-slate-800 transition-all duration-500 w-full h-full flex flex-col">
-                        {/* Hero / photo header with carousel */}
-                        <div className="relative h-64 md:h-72 w-full overflow-hidden">
+                        {/* Hero / photo header with carousel — 90% size, same ratios */}
+                        <div className="relative h-[14.4rem] md:h-[16.2rem] w-full overflow-hidden">
+                          <div className="absolute inset-0 w-[111.11%] h-[111.11%] scale-90 origin-top-left">
                           <PropertyPhotoCarousel listing={selectedListing} />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           <div className="absolute top-4 left-4">
@@ -1164,6 +1165,7 @@ function ListDetailContent() {
                                 ? `$${Number(selectedListing.list_price).toLocaleString()}`
                                 : "Price not available"}
                             </h2>
+                          </div>
                           </div>
                         </div>
 
