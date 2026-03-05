@@ -1333,50 +1333,42 @@ function ListDetailContent() {
                             </div>
                           </div>
 
-                          {/* Agent Information (duplicate) — same content, vertically below */}
+                          {/* Owner Information — Current Residents (resident name, phone, previous addresses) */}
                           <div className="space-y-3">
                             <p className="text-[12px] font-medium text-slate-400 uppercase tracking-[0.18em]">
-                              Agent Information
+                              Owner Information
+                            </p>
+                            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                              Current Residents
                             </p>
                             <div className="flex items-start gap-3">
                               <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
                                 <span className="material-symbols-outlined text-primary text-3xl">
-                                  person
+                                  home_person
                                 </span>
                               </div>
                               <div className="min-w-0 space-y-1.5">
                                 <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                                  {selectedListing.agent_name || "—"}
+                                  {((selectedListing as any).resident_name ??
+                                    [
+                                      selectedListing.first_name,
+                                      selectedListing.last_name,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" ")
+                                      .trim()) || "—"}
                                 </p>
-                                {selectedListing.agent_email ? (
+                                {((selectedListing as any).resident_phone ??
+                                  selectedListing.phone) ? (
                                   <a
-                                    href={`mailto:${selectedListing.agent_email}`}
-                                    className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary truncate"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      mail
-                                    </span>
-                                    <span className="truncate">
-                                      {selectedListing.agent_email}
-                                    </span>
-                                  </a>
-                                ) : (
-                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      mail
-                                    </span>
-                                    —
-                                  </p>
-                                )}
-                                {selectedListing.agent_phone ? (
-                                  <a
-                                    href={`tel:${selectedListing.agent_phone}`}
+                                    href={`tel:${(selectedListing as any).resident_phone ?? selectedListing.phone ?? ""}`}
                                     className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary"
                                   >
                                     <span className="material-symbols-outlined text-[16px] shrink-0">
                                       call
                                     </span>
-                                    {selectedListing.agent_phone}
+                                    {(selectedListing as any).resident_phone ??
+                                      selectedListing.phone}
                                   </a>
                                 ) : (
                                   <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
@@ -1386,6 +1378,33 @@ function ListDetailContent() {
                                     —
                                   </p>
                                 )}
+                                {(() => {
+                                  const prev =
+                                    (selectedListing as any).previous_addresses;
+                                  const hasPrev =
+                                    prev != null &&
+                                    prev !== "" &&
+                                    (Array.isArray(prev) ? prev.length > 0 : true);
+                                  return hasPrev ? (
+                                    <div className="flex items-start gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+                                      <span className="material-symbols-outlined text-[16px] shrink-0 mt-0.5">
+                                        history_edu
+                                      </span>
+                                      <span className="text-slate-600 dark:text-slate-300">
+                                        {Array.isArray(prev)
+                                          ? (prev as string[]).join("; ")
+                                          : String(prev)}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      history_edu
+                                    </span>
+                                    —
+                                  </p>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>
