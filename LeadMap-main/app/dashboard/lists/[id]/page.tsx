@@ -1276,45 +1276,6 @@ function ListDetailContent() {
                         {/* Content — scaled to 90% so section is 10% smaller with same ratios */}
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                           <div className="scale-90 origin-top w-full p-6 md:p-8 space-y-8">
-                          {/* Listing Price + simple metric */}
-                          <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-                            <div className="space-y-1">
-                              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.18em]">
-                                Listing Price
-                              </p>
-                              <h3 className="text-3xl font-semibold text-slate-900 dark:text-white">
-                                {selectedListing.list_price != null
-                                  ? `$${Number(selectedListing.list_price).toLocaleString()}`
-                                  : "Price not available"}
-                              </h3>
-                            </div>
-                            {selectedListing.ai_investment_score != null &&
-                            selectedListing.ai_investment_score > 0 ? (
-                              <div className="flex items-center gap-2 text-green-500 font-semibold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
-                                <span className="material-symbols-outlined text-[18px]">
-                                  trending_up
-                                </span>
-                                AI Score{" "}
-                                {Math.round(
-                                  selectedListing.ai_investment_score
-                                )}
-                                <span className="text-[11px] font-medium opacity-70 ml-1">
-                                  Investment Signal
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2 text-green-500 font-semibold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
-                                <span className="material-symbols-outlined text-[18px]">
-                                  trending_up
-                                </span>
-                                Stable
-                                <span className="text-[11px] font-medium opacity-70 ml-1">
-                                  Market Trend
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
                           {/* Address / Listing Agent section (using address + agent) */}
                           <div className="space-y-3">
                             <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.18em]">
