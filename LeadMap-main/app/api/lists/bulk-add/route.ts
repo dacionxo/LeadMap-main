@@ -79,12 +79,48 @@ export async function POST(request: NextRequest) {
     }
 
     // Build bulk insert array and check for duplicates first
-    const memberships = []
+    const memberships: any[] = []
     const duplicateInfo: Array<{ listId: string; itemId: string; listName: string }> = []
     
     // Get list names for better error messages
     const listNamesMap = new Map(lists.map(l => [l.id, l.name || 'Unknown']))
     
+    // Helper to capture listing snapshot once per unique listing id/property_url
+    const listingSnapshotCache = new Map<string, any>()
+    const getListingSnapshot = async (itemId: string) => {
+      if (!itemId) return null
+      const cached = listingSnapshotCache.get(itemId)
+      if (cached !== undefined) return cached
+
+      let snapshot: any = null
+      try {
+        const { data: byId, error: byIdError } = await supabase
+          .from('listings_unified')
+          .select('*')
+          .eq('listing_id', itemId)
+          .maybeSingle()
+
+        if (!byIdError && byId) {
+          snapshot = byId
+        } else {
+          const { data: byUrl, error: byUrlError } = await supabase
+            .from('listings_unified')
+            .select('*')
+            .eq('property_url', itemId)
+            .maybeSingle()
+
+          if (!byUrlError && byUrl) {
+            snapshot = byUrl
+          }
+        }
+      } catch (error) {
+        console.warn('Error fetching listing snapshot in bulk-add:', error)
+      }
+
+      listingSnapshotCache.set(itemId, snapshot)
+      return snapshot
+    }
+
     for (const listId of listIds) {
       for (const item of items) {
         if (!item.itemId || !item.itemType) continue
@@ -108,11 +144,19 @@ export async function POST(request: NextRequest) {
           })
         } else {
           // Only add if it doesn't exist
-        memberships.push({
-          list_id: listId,
-          item_type: item.itemType,
-          item_id: item.itemId,
-        })
+          let listingSnapshot: any = null
+          if (item.itemType === 'listing') {
+            listingSnapshot = await getListingSnapshot(item.itemId)
+          }
+
+          memberships.push({
+            list_id: listId,
+            item_type: item.itemType,
+            item_id: item.itemId,
+            ...(item.itemType === 'listing' && listingSnapshot
+              ? { listing_snapshot: listingSnapshot }
+              : {}),
+          })
         }
       }
     }

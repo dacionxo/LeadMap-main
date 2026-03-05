@@ -109,14 +109,50 @@ export async function POST(
       }, { status: 409 }) // 409 Conflict status code
     }
 
-    // Insert new membership
+    // For listings, capture a snapshot of the current listing data so the list
+    // can still render historically even if the upstream listing row is later deleted.
+    let listingSnapshot: any = null
+    if (itemType === 'listing') {
+      try {
+        // Try unified view first (covers fsbo_leads, frbo_leads, imports, etc.)
+        const { data: byId, error: byIdError } = await supabase
+          .from('listings_unified')
+          .select('*')
+          .eq('listing_id', itemId)
+          .maybeSingle()
+
+        if (!byIdError && byId) {
+          listingSnapshot = byId
+        } else {
+          const { data: byUrl, error: byUrlError } = await supabase
+            .from('listings_unified')
+            .select('*')
+            .eq('property_url', itemId)
+            .maybeSingle()
+
+          if (!byUrlError && byUrl) {
+            listingSnapshot = byUrl
+          }
+        }
+      } catch (snapshotError) {
+        console.warn('Failed to capture listing snapshot for list_membership:', snapshotError)
+      }
+    }
+
+    // Insert new membership (including snapshot when available)
+    const insertPayload: any = {
+      list_id: listId,
+      item_type: itemType,
+      item_id: itemId,
+    }
+
+    if (itemType === 'listing' && listingSnapshot) {
+      insertPayload.listing_snapshot = listingSnapshot
+    }
+
     const { data: membership, error: insertError } = await supabase
       .from('list_memberships')
-      .insert({
-        list_id: listId,
-        item_type: itemType,
-        item_id: itemId,
-      })
+      .insert(insertPayload)
       .select()
       .single()
 

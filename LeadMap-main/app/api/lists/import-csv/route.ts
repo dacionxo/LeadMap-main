@@ -131,18 +131,22 @@ export async function POST(request: NextRequest) {
             continue
           }
 
+          // Snapshot payload we will store on the membership for historical lists
+          let listingSnapshot: any = null
+
           // Check if listing exists in database, if not create it
           let listingId = record.listing_id
           if (!listingId && record.property_url) {
             // Try to find existing listing by property_url
             const { data: existing } = await supabase
               .from('listings')
-              .select('listing_id')
+              .select('*')
               .eq('property_url', record.property_url)
               .single()
 
             if (existing) {
               listingId = existing.listing_id
+              listingSnapshot = existing
             } else {
               // Create new listing from CSV data
               const newListing = {
@@ -170,7 +174,7 @@ export async function POST(request: NextRequest) {
               const { data: created, error: createError } = await supabase
                 .from('listings')
                 .insert(newListing)
-                .select('listing_id')
+                .select('*')
                 .single()
 
               if (createError) {
@@ -179,17 +183,51 @@ export async function POST(request: NextRequest) {
               }
 
               listingId = created.listing_id
+              listingSnapshot = created
             }
           }
 
-          // Add to list_memberships
+          // If we still don't have a snapshot (e.g. listing_id was provided directly),
+          // try to hydrate from listings_unified or listings.
+          if (!listingSnapshot && listingId) {
+            try {
+              const { data: unified, error: unifiedError } = await supabase
+                .from('listings_unified')
+                .select('*')
+                .eq('listing_id', listingId)
+                .maybeSingle()
+
+              if (!unifiedError && unified) {
+                listingSnapshot = unified
+              } else {
+                const { data: listingRow } = await supabase
+                  .from('listings')
+                  .select('*')
+                  .eq('listing_id', listingId)
+                  .maybeSingle()
+                if (listingRow) {
+                  listingSnapshot = listingRow
+                }
+              }
+            } catch (snapshotError) {
+              console.warn('Failed to hydrate listing snapshot during CSV import:', snapshotError)
+            }
+          }
+
+          // Add to list_memberships (including snapshot when available)
+          const membershipPayload: any = {
+            list_id: listId,
+            item_type: 'listing',
+            item_id: listingId
+          }
+
+          if (listingSnapshot) {
+            membershipPayload.listing_snapshot = listingSnapshot
+          }
+
           const { error: membershipError } = await supabase
             .from('list_memberships')
-            .insert({
-              list_id: listId,
-              item_type: 'listing',
-              item_id: listingId
-            })
+            .insert(membershipPayload)
 
           if (membershipError) {
             // Ignore duplicate errors

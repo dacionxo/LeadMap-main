@@ -34,6 +34,11 @@ CREATE TABLE list_memberships (
   list_id UUID REFERENCES lists(id) ON DELETE CASCADE NOT NULL,
   item_type TEXT NOT NULL CHECK (item_type IN ('listing', 'contact', 'company')),
   item_id TEXT NOT NULL, -- References listing_id, contact.id, or company.id
+  -- Optional JSON snapshot of listing data at time of list membership creation.
+  -- This preserves historical list context even if the upstream FSBO/FRBO/etc.
+  -- rows are later deleted from their source tables.
+  listing_snapshot JSONB,
+  listing_snapshot_created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(list_id, item_type, item_id) -- Prevents duplicates
 );

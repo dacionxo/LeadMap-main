@@ -209,7 +209,7 @@ export async function GET(
       )
     }
 
-    const safeTotalCount = totalCount || 0
+    let safeTotalCount = totalCount || 0
     const hasSearch = search && search.trim().length > 0
 
     // When search is applied: fetch ALL memberships (no DB pagination), filter in memory, then paginate.
@@ -217,12 +217,12 @@ export async function GET(
     const maxFetchWhenSearching = 5000
     const ascending = sortOrder === 'asc'
 
-    let listItems: { id: string; item_type: string; item_id: string; created_at: string }[]
+    let listItems: { id: string; item_type: string; item_id: string; created_at: string; listing_snapshot?: any }[]
 
     if (hasSearch) {
       let allItemsQuery = supabase
         .from('list_memberships')
-        .select('id, item_type, item_id, created_at')
+        .select('id, item_type, item_id, created_at, listing_snapshot')
         .eq('list_id', listId)
       if (effectiveItemType) allItemsQuery = allItemsQuery.eq('item_type', effectiveItemType)
       allItemsQuery = allItemsQuery.order(sortBy === 'created_at' ? 'created_at' : 'item_id', { ascending }).limit(maxFetchWhenSearching)
@@ -244,7 +244,7 @@ export async function GET(
 
       let paginatedQuery = supabase
         .from('list_memberships')
-        .select('id, item_type, item_id, created_at')
+        .select('id, item_type, item_id, created_at, listing_snapshot')
         .eq('list_id', listId)
       if (effectiveItemType) paginatedQuery = paginatedQuery.eq('item_type', effectiveItemType)
       paginatedQuery = paginatedQuery.order(sortBy === 'created_at' ? 'created_at' : 'item_id', { ascending }).range(safeOffset, safeOffset + pageSize - 1)
@@ -594,28 +594,83 @@ export async function GET(
         fetchedItems.push(...orderedListings)
 
         console.log(`📊 Apollo Step 4: Total listings in order: ${orderedListings.length} out of ${listingItems.length} memberships`)
-        
-        // Debug: Show which item_ids were NOT found
-        if (orderedListings.length < listingItemIds.length) {
-          const foundIds = new Set(orderedListings.map((l: any) => String(l.listing_id || l.property_url || '')))
-          const foundUrls = new Set(orderedListings.map((l: any) => String(l.property_url || l.listing_id || '').toLowerCase()))
-          const missingIds = listingItemIds.filter(id => {
-            const normalizedId = normalizeListingIdentifier(id) || id
-            return !foundIds.has(id) && 
-                   !foundIds.has(normalizedId) &&
-                   !foundUrls.has(id.toLowerCase()) &&
-                   !foundUrls.has(normalizedId.toLowerCase())
-          })
-          
-          if (missingIds.length > 0) {
-            console.warn(`⚠️ WARNING: ${missingIds.length} item_ids from memberships were NOT found in any listings tables`)
-            console.warn('Missing item_ids (first 5):', missingIds.slice(0, 5))
-            console.warn('This means item_id values in list_memberships do not match listing_id, property_url, or id in any source tables')
-            console.warn('Searched tables:', safeSourceTables.join(', '))
+
+        // Debug & fallback: find list_memberships whose listings no longer exist anywhere
+        // and try to hydrate them from stored snapshots so historical list data is preserved.
+        if (orderedListings.length < listingItems.length) {
+          const membershipIdsWithListings = new Set<string>(
+            orderedListings.map((l: any) => String(l._membership_id))
+          )
+          const missingMemberships = listingItems.filter(
+            (m) => !membershipIdsWithListings.has(String(m.id))
+          )
+
+          if (missingMemberships.length > 0) {
+            const membershipsWithSnapshot = missingMemberships.filter(
+              (m: any) => m.listing_snapshot != null
+            )
+            const membershipsWithoutSnapshot = missingMemberships.filter(
+              (m: any) => m.listing_snapshot == null
+            )
+
+            // 1) For memberships that have a stored snapshot, reconstruct from that snapshot
+            if (membershipsWithSnapshot.length > 0) {
+              console.log(
+                `📦 Hydrating ${membershipsWithSnapshot.length} list_memberships from listing_snapshot because live listings no longer exist`
+              )
+
+              for (const membership of membershipsWithSnapshot) {
+                const snapshot = (membership as any).listing_snapshot
+                if (!snapshot || typeof snapshot !== 'object') continue
+
+                fetchedItems.push({
+                  ...snapshot,
+                  _membership_id: membership.id,
+                  _membership_created_at: membership.created_at,
+                  _item_type: 'listing',
+                  _is_snapshot: true
+                })
+              }
+            }
+
+            // 2) For memberships that have neither a live listing nor a snapshot,
+            //    clean them up so they do not bloat counts or pagination.
+            if (membershipsWithoutSnapshot.length > 0) {
+              const missingMembershipIds = membershipsWithoutSnapshot.map((m) => m.id)
+              const missingItemIds = membershipsWithoutSnapshot.map((m) => m.item_id)
+
+              console.warn(
+                `⚠️ WARNING: ${missingMembershipIds.length} list_memberships have item_ids that were NOT found in any listings tables and have no listing_snapshot`
+              )
+              console.warn(
+                'Missing membership item_ids (first 5):',
+                missingItemIds.slice(0, 5)
+              )
+              console.warn(
+                'This means item_id values in list_memberships do not match listing_id, property_url, or id in any source tables and no historical snapshot is available'
+              )
+              console.warn('Searched tables:', safeSourceTables.join(', '))
+
+              const { error: cleanupError } = await supabase
+                .from('list_memberships')
+                .delete()
+                .in('id', missingMembershipIds)
+
+              if (cleanupError) {
+                console.warn('Error cleaning up dangling list_memberships without snapshots:', cleanupError)
+              } else {
+                safeTotalCount = Math.max(0, safeTotalCount - missingMembershipIds.length)
+                console.log(
+                  `🧹 Cleaned up ${missingMembershipIds.length} dangling list_memberships without snapshots. Adjusted total count to ${safeTotalCount}.`
+                )
+              }
+            }
           }
         }
-        
-        console.log(`📊 Apollo Step 4: Total unique listings reconstructed: ${orderedListings.length} out of ${listingItemIds.length} memberships`)
+
+        console.log(
+          `📊 Apollo Step 4: Total unique listings reconstructed (including snapshots): ${fetchedItems.length} items for ${listingItems.length} memberships`
+        )
       }
     }
 

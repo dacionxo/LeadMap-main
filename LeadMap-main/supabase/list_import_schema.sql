@@ -22,6 +22,8 @@
 --    - list_id (UUID, REFERENCES lists(id))
 --    - item_type (TEXT, CHECK: 'listing' | 'contact' | 'company')
 --    - item_id (TEXT) - References listing_id, contact.id, or company.id
+--    - listing_snapshot (JSONB, nullable) - Historical snapshot of listing data at time of addition
+--    - listing_snapshot_created_at (TIMESTAMPTZ, default NOW())
 --    - created_at (TIMESTAMPTZ)
 --    - UNIQUE(list_id, item_type, item_id)
 
