@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import AppNavSidebar from '../../components/AppNavSidebar'
@@ -52,6 +52,123 @@ interface ListPaginatedResponse {
   hasNextPage: boolean
   hasPreviousPage: boolean
   list: { id: string; name: string; type: string }
+}
+
+// Normalize photos_json to array of image URLs (supports string[] or { url: string }[])
+function getPhotoUrls(photosJson: unknown): string[] {
+  if (!photosJson || !Array.isArray(photosJson)) return []
+  return (photosJson as any[])
+    .map((item) => (typeof item === 'string' ? item : item?.url))
+    .filter(
+      (url): url is string =>
+        typeof url === 'string' && url.startsWith('http')
+    )
+}
+
+const PLACEHOLDER_IMAGE =
+  'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=480&fit=crop'
+const CAROUSEL_INTERVAL_MS = 4000
+
+function PropertyPhotoCarousel({
+  listing,
+}: {
+  listing: Listing | null
+}) {
+  const urls = getPhotoUrls((listing as any)?.photos_json)
+  const primary = (listing as any)?.primary_photo as string | null | undefined
+  const images =
+    urls.length > 0 ? urls : primary ? [primary] : [PLACEHOLDER_IMAGE]
+  const [index, setIndex] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    setIndex(0)
+  }, [listing?.listing_id])
+
+  useEffect(() => {
+    if (images.length <= 1) return
+    intervalRef.current = setInterval(() => {
+      setIndex((i) => (i + 1) % images.length)
+    }, CAROUSEL_INTERVAL_MS)
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [images.length])
+
+  const goTo = (i: number) => {
+    setIndex(i)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = setInterval(() => {
+        setIndex((prev) => (prev + 1) % images.length)
+      }, CAROUSEL_INTERVAL_MS)
+    }
+  }
+
+  if (images.length === 0) return null
+
+  return (
+    <div className="absolute inset-0 w-full h-full overflow-hidden">
+      <div className="absolute inset-0 w-full h-full transform transition-transform duration-500 group-hover:scale-105">
+        {images.map((src, i) => (
+          <img
+            key={i}
+            alt={`Property ${i + 1}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${
+              i === index ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
+            }`}
+            src={src}
+          />
+        ))}
+      </div>
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-600 hover:bg-white hover:text-blue-600 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation()
+              goTo((index - 1 + images.length) % images.length)
+            }}
+            aria-label="Previous photo"
+          >
+            <span className="material-symbols-outlined text-[16px]">
+              chevron_left
+            </span>
+          </button>
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-600 hover:bg-white hover:text-blue-600 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation()
+              goTo((index + 1) % images.length)
+            }}
+            aria-label="Next photo"
+          >
+            <span className="material-symbols-outlined text-[16px]">
+              chevron_right
+            </span>
+          </button>
+          <div className="absolute bottom-2 left-0 right-0 z-10 flex justify-center gap-1">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  i === index ? 'bg-white shadow-md' : 'bg-white/50'
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  goTo(i)
+                }}
+                aria-label={`Go to photo ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 /* ─── AI Score badge (rounded-full: green for high 90+, blue otherwise) ─── */
@@ -496,7 +613,9 @@ function ListDetailContent() {
                             const isDeleting = deletingId === id
                             const isSelected = selectedListing != null && getListingId(selectedListing) === id
 
-                            const propUrl = listing.property_url || (listing.listing_id && String(listing.listing_id).startsWith('http') ? listing.listing_id : null)
+                            // Prefer internal property identifier (listing_id), fall back to property_url
+                            const prospectIdentifier =
+                              listing.listing_id || listing.property_url || null
                             return (
                               <tr
                                 key={id}
@@ -524,17 +643,19 @@ function ListDetailContent() {
                                       <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{address}</span>
                                     </div>
                                     <div className="text-[11px] text-slate-500 dark:text-slate-400 ml-5">{cityStateZip || '—'}</div>
-                                    {propUrl && (
-                                      <a
-                                        href={propUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    {prospectIdentifier && (
+                                      <Link
+                                        href={`/dashboard/prospect-enrich?search=${encodeURIComponent(
+                                          String(prospectIdentifier)
+                                        )}`}
                                         className="text-[10px] font-semibold text-blue-600 hover:underline ml-5 mt-1 inline-flex items-center gap-0.5"
                                         onClick={(e) => e.stopPropagation()}
                                       >
                                         View Property
-                                        <span className="material-symbols-outlined text-[10px]">open_in_new</span>
-                                      </a>
+                                        <span className="material-symbols-outlined text-[10px]">
+                                          arrow_forward
+                                        </span>
+                                      </Link>
                                     )}
                                   </div>
                                 </td>
@@ -760,20 +881,10 @@ function ListDetailContent() {
 
                 {/* ─── PROPERTY DETAIL SIDE PANEL (matches lists index styling) ─── */}
                 {selectedListing && list?.type === 'properties' && (
-                  <div className="w-[30%] min-w-[320px] bg-white dark:bg-slate-800/80 backdrop-blur-2xl border border-gray-200/80 dark:border-slate-600 shadow-float rounded-xl flex flex-col h-full overflow-hidden transition-all">
-                    {/* Image header */}
+                <div className="w-[30%] min-w-[320px] bg-white dark:bg-slate-800/80 backdrop-blur-2xl border border-gray-200/80 dark:border-slate-600 shadow-float rounded-xl flex flex-col h-full overflow-hidden transition-all">
+                    {/* Image header with photos_json carousel (mirrors Deals Kanban styling) */}
                     <div className="relative h-48 shrink-0 group">
-                      {selectedListing.primary_photo ? (
-                        <img
-                          alt={selectedListing.street || 'Property'}
-                          className="w-full h-full object-cover"
-                          src={selectedListing.primary_photo}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-blue-400 text-[48px]">home</span>
-                        </div>
-                      )}
+                      <PropertyPhotoCarousel listing={selectedListing} />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute top-3 right-3">
                         <button
@@ -885,14 +996,22 @@ function ListDetailContent() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (selectedListing.property_url) {
-                            window.open(selectedListing.property_url, '_blank')
-                          }
+                          const identifier =
+                            selectedListing.listing_id ||
+                            (selectedListing as any).property_url
+                          if (!identifier) return
+                          router.push(
+                            `/dashboard/prospect-enrich?search=${encodeURIComponent(
+                              String(identifier)
+                            )}`
+                          )
                         }}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 rounded-lg text-xs font-bold shadow-[0_2px_5px_rgba(59,130,246,0.3)] hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-2"
                       >
                         View Full Profile
-                        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        <span className="material-symbols-outlined text-[16px]">
+                          arrow_forward
+                        </span>
                       </button>
                     </div>
                   </div>
