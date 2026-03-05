@@ -1276,37 +1276,57 @@ function ListDetailContent() {
                         {/* Content — scaled to 90% so section is 10% smaller with same ratios */}
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                           <div className="scale-90 origin-top w-full p-6 md:p-8 space-y-8">
-                          {/* Address / Listing Agent section (using address + agent) */}
+                          {/* Listing Agent: name, email, phone */}
                           <div className="space-y-3">
                             <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.18em]">
-                              Listing Agent
+                              Agent Information
                             </p>
                             <div className="flex items-start gap-3">
-                              <div className="bg-primary/10 p-3 rounded-2xl">
+                              <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
                                 <span className="material-symbols-outlined text-primary text-3xl">
                                   person
                                 </span>
                               </div>
-                              <div>
-                                <h4 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
-                                  {selectedListing.street ||
-                                    "Address not available"}
-                                </h4>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                  {[
-                                    selectedListing.city,
-                                    selectedListing.state,
-                                    selectedListing.zip_code,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(", ") || "City / State not available"}
+                              <div className="min-w-0 space-y-1.5">
+                                <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                                  {selectedListing.agent_name || "—"}
                                 </p>
-                                {selectedListing.agent_name && (
-                                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    Agent:{" "}
-                                    <span className="font-medium text-slate-700 dark:text-slate-200">
-                                      {selectedListing.agent_name}
+                                {selectedListing.agent_email ? (
+                                  <a
+                                    href={`mailto:${selectedListing.agent_email}`}
+                                    className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary truncate"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      mail
                                     </span>
+                                    <span className="truncate">
+                                      {selectedListing.agent_email}
+                                    </span>
+                                  </a>
+                                ) : (
+                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      mail
+                                    </span>
+                                    —
+                                  </p>
+                                )}
+                                {selectedListing.agent_phone ? (
+                                  <a
+                                    href={`tel:${selectedListing.agent_phone}`}
+                                    className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      call
+                                    </span>
+                                    {selectedListing.agent_phone}
+                                  </a>
+                                ) : (
+                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                    <span className="material-symbols-outlined text-[16px] shrink-0">
+                                      call
+                                    </span>
+                                    —
                                   </p>
                                 )}
                               </div>
