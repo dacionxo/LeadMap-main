@@ -30,16 +30,16 @@ module.exports = {
       },
       colors: {
         primary: {
-          DEFAULT: "#5d87ff", // Tailwindadmin primary
-          hover: "#4a76e6",
+          DEFAULT: "#135BEC", // Dashboard primary (replaces #5D87FF)
+          hover: "#0f4fc4",
           soft: "#e3ebff",
           50: "#eef2ff",
           100: "#e3ebff",
           200: "#c7d7ff",
-          300: "#a3c3ff",
-          400: "#7a9fff",
-          500: "#5d87ff",
-          600: "#4a76e6",
+          300: "#6b9ef5",
+          400: "#3d7aed",
+          500: "#135BEC",
+          600: "#0f4fc4",
           700: "#3d5fd9",
           800: "#354cc6",
           900: "#3242a0",
@@ -172,7 +172,7 @@ module.exports = {
           dark: "#7c8fac",
         },
         darklink: "#7c8fac",
-        lightprimary: "rgba(93, 135, 255, 0.12)", // 12% opacity of Tailwindadmin primary
+        lightprimary: "rgba(19, 91, 236, 0.12)", // 12% opacity of dashboard primary (#135BEC)
         lightsecondary: "rgba(73, 190, 255, 0.12)", // 12% opacity of Tailwindadmin secondary
         lightsuccess: "rgba(19, 222, 185, 0.12)",
         lightinfo: "rgba(135, 84, 236, 0.12)",

@@ -623,7 +623,7 @@ function ListDetailContent() {
                 {/* ─── TABLE + DETAIL PANEL LAYOUT ─── */}
                 <div className="flex gap-4 h-full overflow-hidden">
                   {/* ─── TABLE CARD (glass panel with backdrop blur) ─── */}
-                  <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-white dark:border-slate-600/50 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
+                  <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col relative transition-all duration-300">
                     <div className="overflow-auto custom-scrollbar flex-1 pb-16">
                       {loading ? (
                         <div className="flex items-center justify-center py-20">
@@ -669,7 +669,7 @@ function ListDetailContent() {
                           className="w-full text-left text-sm text-slate-600"
                           role="grid"
                         >
-                          <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/60 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-md z-10">
+                          <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 tracking-wider sticky top-0 backdrop-blur-md z-10">
                             <tr>
                               <th
                                 className="px-5 py-3 w-10 font-semibold align-middle"
@@ -879,7 +879,7 @@ function ListDetailContent() {
                           className="w-full text-left text-sm text-slate-600"
                           role="grid"
                         >
-                          <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+                          <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 tracking-wider sticky top-0 backdrop-blur-sm z-10">
                             <tr>
                               <th
                                 className="pl-6 pr-4 py-3 w-12 font-semibold align-middle"
@@ -1012,7 +1012,7 @@ function ListDetailContent() {
                     </div>
 
                     {/* ─── PAGINATION FOOTER ─── */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-600 p-3 flex items-center justify-between z-20">
+                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-700 p-3 flex items-center justify-between z-20">
                       <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                         Showing{" "}
                         <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -1119,14 +1119,14 @@ function ListDetailContent() {
                   {/* ─── PROPERTY DETAIL SIDE PANEL (rebuilt with spotlight card design) ─── */}
                   {selectedListing && list?.type === "properties" && (
                     <div className="w-[30%] min-w-[320px] bg-transparent flex flex-col h-full overflow-hidden transition-all">
-                      <div className="group bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-slate-800 transition-all duration-500 w-full h-full flex flex-col">
+                      <div className="group bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 transition-all duration-500 w-full h-full flex flex-col">
                         {/* Hero / photo header with carousel — 90% size, same ratios */}
                         <div className="relative h-[14.4rem] md:h-[16.2rem] w-full overflow-hidden">
                           <div className="absolute inset-0 w-[111.11%] h-[111.11%] scale-90 origin-top-left">
                           <PropertyPhotoCarousel listing={selectedListing} />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           <div className="absolute top-4 left-4">
-                            <span className="px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-primary text-[10px] font-extrabold uppercase tracking-[0.18em] rounded-xl shadow-lg">
+                            <span className="px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-primary text-[10px] font-semibold uppercase tracking-[0.18em] rounded-xl shadow-lg">
                               Property Spotlight
                             </span>
                           </div>
@@ -1155,12 +1155,10 @@ function ListDetailContent() {
                             </button>
                           </div>
                           <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
-                            <span className="px-3 py-1 bg-primary text-white text-[10px] font-bold uppercase tracking-[0.18em] w-fit rounded-md">
-                              {(
-                                selectedListing.status || "Available Now"
-                              ).toUpperCase()}
+                            <span className="px-3 py-1 bg-primary text-white text-[10px] font-semibold uppercase tracking-[0.18em] w-fit rounded-md">
+                              Available now
                             </span>
-                            <h2 className="text-white text-2xl md:text-3xl font-extrabold tracking-tight">
+                            <h2 className="text-white text-2xl md:text-3xl font-semibold tracking-tight">
                               {selectedListing.list_price != null
                                 ? `$${Number(selectedListing.list_price).toLocaleString()}`
                                 : "Price not available"}
@@ -1173,12 +1171,12 @@ function ListDetailContent() {
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                           <div className="scale-90 origin-top w-full p-6 md:p-8 space-y-8">
                           {/* Listing Price + simple metric */}
-                          <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-700">
                             <div className="space-y-1">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.18em]">
                                 Listing Price
                               </p>
-                              <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+                              <h3 className="text-3xl font-semibold text-slate-900 dark:text-white">
                                 {selectedListing.list_price != null
                                   ? `$${Number(selectedListing.list_price).toLocaleString()}`
                                   : "Price not available"}
@@ -1186,7 +1184,7 @@ function ListDetailContent() {
                             </div>
                             {selectedListing.ai_investment_score != null &&
                             selectedListing.ai_investment_score > 0 ? (
-                              <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
+                              <div className="flex items-center gap-2 text-green-500 font-semibold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
                                 <span className="material-symbols-outlined text-[18px]">
                                   trending_up
                                 </span>
@@ -1199,7 +1197,7 @@ function ListDetailContent() {
                                 </span>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
+                              <div className="flex items-center gap-2 text-green-500 font-semibold text-sm bg-green-500/10 px-3 py-2 rounded-2xl">
                                 <span className="material-symbols-outlined text-[18px]">
                                   trending_up
                                 </span>
@@ -1213,7 +1211,7 @@ function ListDetailContent() {
 
                           {/* Address / Listing Agent section (using address + agent) */}
                           <div className="space-y-3">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.18em]">
                               Listing Agent
                             </p>
                             <div className="flex items-start gap-3">
@@ -1223,7 +1221,7 @@ function ListDetailContent() {
                                 </span>
                               </div>
                               <div>
-                                <h4 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                                <h4 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
                                   {selectedListing.street ||
                                     "Address not available"}
                                 </h4>
@@ -1239,7 +1237,7 @@ function ListDetailContent() {
                                 {selectedListing.agent_name && (
                                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     Agent:{" "}
-                                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                    <span className="font-medium text-slate-700 dark:text-slate-200">
                                       {selectedListing.agent_name}
                                     </span>
                                   </p>
@@ -1254,51 +1252,51 @@ function ListDetailContent() {
                               Property Details
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-200 dark:border-slate-700">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
                                   <span className="material-symbols-outlined text-primary text-2xl">
                                     bed
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                  <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
                                     {selectedListing.beds ?? "—"}
                                   </span>
-                                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
                                     Bedrooms
                                   </span>
                                 </div>
                               </div>
-                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-200 dark:border-slate-700">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
                                   <span className="material-symbols-outlined text-primary text-2xl">
                                     bathtub
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                  <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
                                     {selectedListing.full_baths ?? "—"}
                                   </span>
-                                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
                                     Bathrooms
                                   </span>
                                 </div>
                               </div>
-                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-4 border border-slate-200 dark:border-slate-700">
+                                <div className="size-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
                                   <span className="material-symbols-outlined text-primary text-2xl">
                                     square_foot
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="block text-xl font-extrabold text-slate-800 dark:text-slate-100">
+                                  <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
                                     {selectedListing.sqft != null
                                       ? Number(
                                           selectedListing.sqft
                                         ).toLocaleString()
                                       : "—"}
                                   </span>
-                                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
                                     Total Sqft
                                   </span>
                                 </div>
@@ -1310,7 +1308,7 @@ function ListDetailContent() {
                           <div className="flex flex-col sm:flex-row gap-4 pt-2">
                             <button
                               type="button"
-                              className="flex-[3] flex items-center justify-center gap-3 bg-primary text-white text-sm font-bold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
+                              className="flex-[3] flex items-center justify-center gap-3 bg-primary text-white text-sm font-semibold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
                               onClick={() => {
                                 const identifier =
                                   selectedListing.listing_id ||
@@ -1330,7 +1328,7 @@ function ListDetailContent() {
                             </button>
                             <button
                               type="button"
-                              className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                              className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                               onClick={() => {
                                 const addressParts = [
                                   selectedListing.street,

@@ -1,10 +1,10 @@
 :root {
-  --color-primary: #5d87ff;
+  --color-primary: #135BEC;
   --color-secondary: #49beff;
 }
 
 [data-color-theme="BLUE_THEME"] {
-  --color-primary: #5d87ff;
+  --color-primary: #135BEC;
   --color-secondary: #49beff;
 }
 
@@ -29,6 +29,6 @@
 }
 
 [data-color-theme="CUSTOM_THEME"] {
-  --color-primary: #5d87ff;
+  --color-primary: #135BEC;
   --color-secondary: #49beff;
 }

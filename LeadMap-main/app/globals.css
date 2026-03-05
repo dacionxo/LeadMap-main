@@ -152,11 +152,11 @@
 
     /* Lighter/opacity-like versions (using rgba fallback for color-mix) */
     --lightprimary: rgba(
-      93,
-      135,
-      255,
+      19,
+      91,
+      236,
       0.12
-    ); /* Fallback: color-mix(in oklab, var(--color-primary) 12%, transparent) */
+    ); /* Fallback: color-mix(in oklab, var(--color-primary) 12%, transparent) — #135BEC */
     --lightsecondary: rgba(73, 190, 255, 0.12);
     --lightsuccess: rgba(19, 222, 185, 0.12);
     --lightinfo: rgba(135, 84, 236, 0.12);
@@ -164,7 +164,7 @@
     --lighterror: rgba(239, 68, 68, 0.12);
 
     /* Darker versions (emphasis) - using rgba approximation */
-    --primary-emphasis: rgba(93, 135, 255, 0.8);
+    --primary-emphasis: rgba(19, 91, 236, 0.8);
     --secondary-emphasis: rgba(73, 190, 255, 0.8);
     --success-emphasis: rgba(19, 222, 185, 0.8);
     --info-emphasis: rgba(135, 84, 236, 0.8);
@@ -275,13 +275,13 @@
     --lightmuted: #5d7287;
     --light-emphasis: #dfe5ef;
     --destructive-foreground: var(--color-white);
-    --lightprimary: rgba(93, 135, 255, 0.12);
+    --lightprimary: rgba(19, 91, 236, 0.12);
     --lightsecondary: rgba(73, 190, 255, 0.12);
     --lightsuccess: rgba(19, 222, 185, 0.12);
     --lightinfo: rgba(135, 84, 236, 0.12);
     --lightwarning: rgba(246, 181, 30, 0.12);
     --lighterror: rgba(239, 68, 68, 0.12);
-    --primary-emphasis: rgba(93, 135, 255, 0.8);
+    --primary-emphasis: rgba(19, 91, 236, 0.8);
     --secondary-emphasis: rgba(73, 190, 255, 0.8);
     --success-emphasis: rgba(19, 222, 185, 0.8);
     --info-emphasis: rgba(135, 84, 236, 0.8);
@@ -717,7 +717,7 @@
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    rgba(93, 135, 255, 0.04) 0%,
+    rgba(19, 91, 236, 0.04) 0%,
     #ffffff 50%,
     #f8fafc 100%
   );
@@ -737,7 +737,7 @@
   background-image:
     radial-gradient(
       circle at 100% 0%,
-      rgba(93, 135, 255, 0.08) 0%,
+      rgba(19, 91, 236, 0.08) 0%,
       transparent 60%
     ),
     radial-gradient(
@@ -750,7 +750,7 @@
   background-image:
     radial-gradient(
       circle at 100% 0%,
-      rgba(93, 135, 255, 0.12) 0%,
+      rgba(19, 91, 236, 0.12) 0%,
       transparent 60%
     ),
     radial-gradient(
@@ -851,7 +851,7 @@
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(226, 232, 240, 1);
-  box-shadow: 0 20px 50px -12px rgba(93, 135, 255, 0.12);
+  box-shadow: 0 20px 50px -12px rgba(19, 91, 236, 0.12);
 }
 .dark .funnel-bar-welcome {
   border: 1px solid rgba(55, 65, 81, 1);
