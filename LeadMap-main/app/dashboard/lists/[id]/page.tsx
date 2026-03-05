@@ -1167,8 +1167,9 @@ function ListDetailContent() {
                           </div>
                         </div>
 
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
+                        {/* Content — scaled to 90% so section is 10% smaller with same ratios */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                          <div className="scale-90 origin-top w-full p-6 md:p-8 space-y-8">
                           {/* Listing Price + simple metric */}
                           <div className="flex flex-wrap items-end justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
                             <div className="space-y-1">
@@ -1355,6 +1356,7 @@ function ListDetailContent() {
                               </span>
                               Street View
                             </button>
+                          </div>
                           </div>
                         </div>
                       </div>
