@@ -9,6 +9,7 @@ import DashboardLayout from "../../components/DashboardLayout";
 import DealsNavbar from "../../crm/deals/components/DealsNavbar";
 import LeadDetailModal from "../../prospect-enrich/components/LeadDetailModal";
 import ImportListModal from "../components/ImportListModal";
+import AddRecordsModal from "../components/AddRecordsModal";
 import { exportListingsToCsv } from "../../prospect-enrich/utils/exportListings";
 import { Manrope } from "next/font/google";
 
@@ -244,6 +245,7 @@ function ListDetailContent() {
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [modalListingId, setModalListingId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAddRecordsModal, setShowAddRecordsModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<
     "any" | "fsbo" | "frbo" | "foreclosure" | "imports"
   >("any");
@@ -580,6 +582,7 @@ function ListDetailContent() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => setShowAddRecordsModal(true)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-1.5"
                         aria-label="Add records"
                       >
@@ -1073,17 +1076,6 @@ function ListDetailContent() {
                                           : "opacity-0 group-hover:opacity-100"
                                       }`}
                                     >
-                                      <button
-                                        type="button"
-                                        className="w-7 h-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50/80 dark:hover:bg-blue-900/30 transition-colors"
-                                        title="Edit"
-                                        aria-label="Edit"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <span className="material-symbols-outlined text-[18px]">
-                                          edit
-                                        </span>
-                                      </button>
                                       <button
                                         type="button"
                                         className="w-7 h-7 flex items-center justify-center rounded-md hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
@@ -1649,6 +1641,22 @@ function ListDetailContent() {
         presetListId={listId}
         presetListName={list?.name ?? undefined}
         presetListType={list?.type}
+      />
+
+      {/* Add records modal */}
+      <AddRecordsModal
+        isOpen={showAddRecordsModal}
+        onClose={() => setShowAddRecordsModal(false)}
+        listId={listId}
+        listName={list?.name ?? "List"}
+        listType={list?.type ?? "properties"}
+        onImportClick={() => {
+          setShowAddRecordsModal(false);
+          setShowImportModal(true);
+        }}
+        onAdded={(count) => {
+          if (count > 0) fetchListData();
+        }}
       />
     </div>
   );

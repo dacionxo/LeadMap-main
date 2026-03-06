@@ -301,6 +301,10 @@ function CalendarPageContent() {
           };
           checkOnboarding();
         }}
+        onConnectCalendar={() => {
+          setIsSettingsOpen(false);
+          setIsConnectCalendarModalOpen(true);
+        }}
       />
 
       {/* Connect Calendar Modal */}
