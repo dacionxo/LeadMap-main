@@ -379,7 +379,7 @@ export default function UniboxContent({
     setComposerMode(null);
   };
 
-  const handleDeleteDraft = useCallback(async () => {
+  const handleDeleteDraft = async () => {
     if (!selectedThread || !selectedThread.id.startsWith("draft-")) return;
     const draftId = selectedThread.id.replace("draft-", "");
     const confirmed = window.confirm("Delete this draft permanently?");
@@ -397,16 +397,24 @@ export default function UniboxContent({
         return;
       }
 
-      // Remove from local state and clear selection
+      // Immediately update local UI
       setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
       setSelectedThread(null);
       setThreadDetails(null);
       setTotalThreadCount((prev) => Math.max(0, prev - 1));
+
+      // Ensure list is in sync with Supabase by refetching
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("unibox-refresh"));
+      } else {
+        // Fallback in non-browser contexts
+        fetchThreads();
+      }
     } catch (error) {
       console.error("[UniboxContent] Error deleting draft:", error);
       alert("Failed to delete draft. Please try again.");
     }
-  }, [selectedThread]);
+  };
 
   const handleComposerSend = async (data: any) => {
     if (!selectedThread) return;
