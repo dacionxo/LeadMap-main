@@ -560,16 +560,16 @@ export default function CreateEventModal({
 
               <div>
                 <label
-                  htmlFor="calendar-event-description"
+                  htmlFor="calendar-event-agenda"
                   className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
                 >
-                  <span className="material-symbols-outlined text-lg text-gray-400">notes</span>
-                  Description / Notes
+                  <span className="material-symbols-outlined text-lg text-gray-400">format_list_bulleted</span>
+                  Agenda
                 </label>
                 <textarea
-                  id="calendar-event-description"
+                  id="calendar-event-agenda"
                   className="w-full px-4 py-3 rounded-2xl border-gray-200 text-gray-800 input-focus-glow focus:ring-0 bg-white text-sm shadow-sm transition-all resize-none placeholder:text-gray-400 font-medium"
-                  placeholder="Event description"
+                  placeholder="Add agenda items, notes, or meeting details..."
                   rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value, notes: e.target.value })}

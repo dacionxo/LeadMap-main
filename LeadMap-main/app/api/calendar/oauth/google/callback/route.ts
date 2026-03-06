@@ -156,13 +156,22 @@ export async function GET(request: NextRequest) {
       .eq('email', userEmail)
       .single()
 
+    // Google OpenID userinfo returns "sub" (subject), not "id" - required by calendar_connections.provider_account_id NOT NULL
+    const providerAccountId = userInfo.sub ?? userInfo.id ?? ''
+    if (!providerAccountId) {
+      console.error('Google userinfo missing sub/id:', userInfo)
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=user_info_incomplete`
+      )
+    }
+
     const connectionData = {
       user_id: user.id,
       provider: 'google',
-      provider_account_id: userInfo.id,
+      provider_account_id: providerAccountId,
       email: userEmail,
-      access_token: access_token, // In production, encrypt this
-      refresh_token: refresh_token || null, // In production, encrypt this
+      access_token: access_token,
+      refresh_token: refresh_token || null,
       token_expires_at: tokenExpiresAt,
       calendar_id: calendarId,
       calendar_name: calendarName,
@@ -171,14 +180,26 @@ export async function GET(request: NextRequest) {
     }
 
     if (existing) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('calendar_connections')
         .update(connectionData)
         .eq('id', existing.id)
+      if (updateError) {
+        console.error('Calendar connection update failed:', updateError)
+        return NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=db_error`
+        )
+      }
     } else {
-      await supabase
+      const { error: insertError } = await supabase
         .from('calendar_connections')
         .insert([connectionData])
+      if (insertError) {
+        console.error('Calendar connection insert failed:', insertError)
+        return NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=db_error`
+        )
+      }
     }
 
     // Update user calendar settings: mark onboarding complete and set calendar type
