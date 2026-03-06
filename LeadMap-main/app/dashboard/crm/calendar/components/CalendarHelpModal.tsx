@@ -19,8 +19,10 @@ export default function CalendarHelpModal({ isOpen, onClose }: CalendarHelpModal
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 mesh-bg" onClick={onClose}>
-      <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm z-40 transition-opacity" />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 dark:bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
 
       <div
         className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl z-50 overflow-hidden flex flex-col max-h-[90vh]"
