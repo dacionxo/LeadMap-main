@@ -397,19 +397,14 @@ export default function UniboxContent({
         return;
       }
 
-      // Immediately update local UI
-      setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
+      // Immediately update local UI (clear selection first so refresh handler doesn't fetch deleted draft)
       setSelectedThread(null);
       setThreadDetails(null);
+      setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
       setTotalThreadCount((prev) => Math.max(0, prev - 1));
 
-      // Ensure list is in sync with Supabase by refetching
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("unibox-refresh"));
-      } else {
-        // Fallback in non-browser contexts
-        fetchThreads();
-      }
+      // Refetch list from Supabase (don't use unibox-refresh - it would call fetchThreadDetails with stale selectedThread → GET 404)
+      fetchThreads();
     } catch (error) {
       console.error("[UniboxContent] Error deleting draft:", error);
       alert("Failed to delete draft. Please try again.");
