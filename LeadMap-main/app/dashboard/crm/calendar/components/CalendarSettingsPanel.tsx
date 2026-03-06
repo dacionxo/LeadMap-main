@@ -25,7 +25,7 @@ function formatLastSynced(isoDate: string | null | undefined): string {
   return `Last synced ${d.toLocaleDateString()}`
 }
 
-type SettingsSection = 'general' | 'calendars' | 'notifications' | 'availability' | 'accessibility'
+type SettingsSection = 'general' | 'calendars' | 'notifications' | 'accessibility'
 
 interface CalendarSettingsPanelProps {
   isOpen: boolean
@@ -145,7 +145,6 @@ export default function CalendarSettingsPanel({
     { id: 'general', label: 'General', icon: 'settings' },
     { id: 'calendars', label: 'Calendar Connections', icon: 'calendar_today' },
     { id: 'notifications', label: 'Notifications', icon: 'notifications' },
-    { id: 'availability', label: 'Availability', icon: 'schedule' },
     { id: 'accessibility', label: 'Accessibility', icon: 'accessibility' },
   ]
 
@@ -216,9 +215,6 @@ export default function CalendarSettingsPanel({
                 )}
                 {activeSection === 'notifications' && (
                   <NotificationSettings settings={settings} onUpdate={updateSettings} saving={saving} />
-                )}
-                {activeSection === 'availability' && (
-                  <AvailabilitySection settings={settings} onUpdate={updateSettings} saving={saving} />
                 )}
                 {activeSection === 'accessibility' && (
                   <AccessibilitySection settings={settings} onUpdate={updateSettings} saving={saving} />
@@ -624,25 +620,6 @@ function NotificationSettings({
   )
 }
 
-function AvailabilitySection({
-  settings,
-  onUpdate,
-  saving,
-}: {
-  settings: any
-  onUpdate: (u: any) => Promise<void>
-  saving: boolean
-}) {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">Availability</h2>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
-        Set your working hours and availability. This section can be expanded later.
-      </p>
-    </div>
-  )
-}
-
 function AccessibilitySection({
   settings,
   onUpdate,
@@ -703,7 +680,6 @@ function AccessibilitySection({
                       ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50'
                   }`}
-                  aria-pressed={isActive ? 'true' : 'false'}
                 >
                   <span className={`material-symbols-outlined text-xl mb-1 ${isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-500'}`}>
                     {opt.icon}

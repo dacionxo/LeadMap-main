@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { MdChat, MdClose, MdHelpOutline, MdKeyboard, MdLaunch } from 'react-icons/md'
 
 interface CalendarHelpModalProps {
   isOpen: boolean
@@ -41,7 +42,7 @@ export default function CalendarHelpModal({ isOpen, onClose }: CalendarHelpModal
             className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label="Close"
           >
-            <span className="material-icons">close</span>
+            <MdClose className="text-[24px]" aria-hidden />
           </button>
         </div>
 
@@ -63,7 +64,7 @@ export default function CalendarHelpModal({ isOpen, onClose }: CalendarHelpModal
 
           <section>
             <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white flex items-center gap-2">
-              <span className="material-icons text-slate-400">keyboard</span>
+              <MdKeyboard className="text-slate-400 text-[20px]" aria-hidden />
               Keyboard Shortcuts
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -119,7 +120,7 @@ export default function CalendarHelpModal({ isOpen, onClose }: CalendarHelpModal
 
           <section>
             <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white flex items-center gap-2">
-              <span className="material-icons text-slate-400">help_outline</span>
+              <MdHelpOutline className="text-slate-400 text-[20px]" aria-hidden />
               Common Questions
             </h3>
             <div className="space-y-6">
@@ -150,14 +151,14 @@ export default function CalendarHelpModal({ isOpen, onClose }: CalendarHelpModal
             className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors flex items-center gap-1.5"
             href="#"
           >
-            <span className="material-icons text-[18px]">launch</span>
+            <MdLaunch className="text-[18px]" aria-hidden />
             View Full Documentation
           </a>
           <button
             type="button"
             className="bg-primary hover:bg-blue-600 text-white px-6 py-2.5 rounded-full font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-slate-900 w-full sm:w-auto justify-center"
           >
-            <span className="material-icons text-[20px]">chat</span>
+            <MdChat className="text-[20px]" aria-hidden />
             Contact Support
           </button>
         </div>
