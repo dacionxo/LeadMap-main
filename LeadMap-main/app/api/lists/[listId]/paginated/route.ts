@@ -87,6 +87,8 @@ function generateIdentifierCandidates(value: string) {
  * - search: Search query for filtering
  * - itemType: Filter by item_type ('listing', 'contact', 'company')
  * - table: Optional source table filter for listings ('listings', 'expired_listings', etc.)
+ * - minPrice: Optional minimum list_price (number) for listings
+ * - maxPrice: Optional maximum list_price (number) for listings
  * 
  * Returns paginated list items with full listing/contact data joined from source tables.
  */
@@ -106,6 +108,10 @@ export async function GET(
     const search = searchParams.get('search') || ''
     const itemType = searchParams.get('itemType') || null
     const sourceTable = searchParams.get('table') || null // Optional: filter by source table for listings
+    const minPriceParam = searchParams.get('minPrice') || ''
+    const maxPriceParam = searchParams.get('maxPrice') || ''
+    const minPrice = minPriceParam !== '' ? parseInt(minPriceParam, 10) : null
+    const maxPrice = maxPriceParam !== '' ? parseInt(maxPriceParam, 10) : null
     
     // Validate sortBy - only allow valid columns
     const validSortColumns = ['created_at', 'item_id', 'list_price', 'city', 'state', 'agent_name']
@@ -210,7 +216,7 @@ export async function GET(
     }
 
     let safeTotalCount = totalCount || 0
-    const hasSearch = search && search.trim().length > 0
+    const hasSearch = (search && search.trim().length > 0) || minPrice != null || maxPrice != null
 
     // When search is applied: fetch ALL memberships (no DB pagination), filter in memory, then paginate.
     // This fixes the bug where paginating first then filtering could return 0 items per page.
@@ -729,7 +735,7 @@ export async function GET(
     let filteredItems = fetchedItems
     if (search) {
       const searchLower = search.toLowerCase().trim()
-      filteredItems = fetchedItems.filter(item => {
+      filteredItems = filteredItems.filter(item => {
         return (
           item.street?.toLowerCase().includes(searchLower) ||
           item.city?.toLowerCase().includes(searchLower) ||
@@ -743,6 +749,18 @@ export async function GET(
           item.last_name?.toLowerCase().includes(searchLower) ||
           item.company?.toLowerCase().includes(searchLower)
         )
+      })
+    }
+    if (minPrice != null && Number.isFinite(minPrice)) {
+      filteredItems = filteredItems.filter(item => {
+        const price = item.list_price != null ? Number(item.list_price) : null
+        return price != null && price >= minPrice
+      })
+    }
+    if (maxPrice != null && Number.isFinite(maxPrice)) {
+      filteredItems = filteredItems.filter(item => {
+        const price = item.list_price != null ? Number(item.list_price) : null
+        return price != null && price <= maxPrice
       })
     }
 

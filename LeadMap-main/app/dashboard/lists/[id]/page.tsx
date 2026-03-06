@@ -241,6 +241,22 @@ function ListDetailContent() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [modalListingId, setModalListingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<
+    "any" | "fsbo" | "frbo" | "foreclosure" | "imports"
+  >("any");
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  type PriceRangeKey =
+    | "any"
+    | "0-100"
+    | "100-250"
+    | "250-500"
+    | "500-1000"
+    | "1000+";
+  const [priceRangeFilter, setPriceRangeFilter] =
+    useState<PriceRangeKey>("any");
+  const [priceDropdownOpen, setPriceDropdownOpen] = useState(false);
+  const priceDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -249,6 +265,42 @@ function ListDetailContent() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [priceRangeFilter]);
+
+  useEffect(() => {
+    if (!statusDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        statusDropdownRef.current &&
+        !statusDropdownRef.current.contains(e.target as Node)
+      ) {
+        setStatusDropdownOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [statusDropdownOpen]);
+
+  useEffect(() => {
+    if (!priceDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        priceDropdownRef.current &&
+        !priceDropdownRef.current.contains(e.target as Node)
+      ) {
+        setPriceDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [priceDropdownOpen]);
 
   const fetchListData = useCallback(async () => {
     if (!listId) return;
@@ -262,6 +314,32 @@ function ListDetailContent() {
         sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
       });
+      if (statusFilter !== "any") {
+        const table =
+          statusFilter === "fsbo"
+            ? "fsbo_leads"
+            : statusFilter === "frbo"
+              ? "frbo_leads"
+              : statusFilter === "foreclosure"
+                ? "foreclosure_listings"
+                : "imports";
+        searchParams.set("table", table);
+      }
+      if (priceRangeFilter !== "any") {
+        const ranges: Record<
+          Exclude<PriceRangeKey, "any">,
+          { min: number; max: number | null }
+        > = {
+          "0-100": { min: 0, max: 100_000 },
+          "100-250": { min: 100_000, max: 250_000 },
+          "250-500": { min: 250_000, max: 500_000 },
+          "500-1000": { min: 500_000, max: 1_000_000 },
+          "1000+": { min: 1_000_000, max: null },
+        };
+        const { min, max } = ranges[priceRangeFilter];
+        searchParams.set("minPrice", String(min));
+        if (max != null) searchParams.set("maxPrice", String(max));
+      }
 
       const response = await fetch(
         `/api/lists/${listId}/paginated?${searchParams}`,
@@ -310,6 +388,8 @@ function ListDetailContent() {
     sortBy,
     sortOrder,
     debouncedSearch,
+    statusFilter,
+    priceRangeFilter,
     router,
   ]);
 
@@ -595,36 +675,139 @@ function ListDetailContent() {
                   </div>
                   <div className="h-6 w-px bg-gray-200 dark:bg-gray-600 mx-2 shrink-0" />
                   <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                      aria-label="Status filter"
-                    >
-                      Status: Any
-                      <span className="material-symbols-outlined text-[16px] text-slate-400">
-                        expand_more
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                      aria-label="Price range filter"
-                    >
-                      Price Range
-                      <span className="material-symbols-outlined text-[16px] text-slate-400">
-                        expand_more
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                      aria-label="More filters"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-slate-500">
-                        filter_list
-                      </span>
-                      More Filters
-                    </button>
+                    {list?.type === "properties" && (
+                      <div
+                        className="relative"
+                        ref={statusDropdownRef}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setStatusDropdownOpen((open) => !open)
+                          }
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                          aria-label="Status filter"
+                          aria-expanded={statusDropdownOpen ? "true" : "false"}
+                          aria-haspopup="listbox"
+                        >
+                          Status:{" "}
+                          {statusFilter === "any"
+                            ? "Any"
+                            : statusFilter === "fsbo"
+                              ? "For Sale"
+                              : statusFilter === "frbo"
+                                ? "For Rent"
+                                : statusFilter === "foreclosure"
+                                  ? "Foreclosures"
+                                  : "Imports"}
+                          <span className="material-symbols-outlined text-[16px] text-slate-400">
+                            expand_more
+                          </span>
+                        </button>
+                        {statusDropdownOpen && (
+                          <div
+                            className="absolute left-0 top-full mt-1 min-w-[160px] py-1 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50"
+                            role="listbox"
+                          >
+                            {(
+                              [
+                                { value: "any", label: "Any" },
+                                { value: "fsbo", label: "For Sale" },
+                                { value: "frbo", label: "For Rent" },
+                                { value: "foreclosure", label: "Foreclosures" },
+                                { value: "imports", label: "Imports" },
+                              ] as const
+                            ).map(({ value, label }) => (
+                              <button
+                                key={value}
+                                type="button"
+                                role="option"
+                                aria-selected={statusFilter === value ? "true" : "false"}
+                                onClick={() => {
+                                  setStatusFilter(value);
+                                  setStatusDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors ${
+                                  statusFilter === value
+                                    ? "bg-primary/10 text-primary dark:text-primary"
+                                    : "text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {list?.type === "properties" && (
+                      <div
+                        className="relative"
+                        ref={priceDropdownRef}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPriceDropdownOpen((open) => !open)
+                          }
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                          aria-label="Price range filter"
+                          aria-expanded={priceDropdownOpen ? "true" : "false"}
+                          aria-haspopup="listbox"
+                        >
+                          Price:{" "}
+                          {priceRangeFilter === "any"
+                            ? "Any"
+                            : priceRangeFilter === "0-100"
+                              ? "Under $100k"
+                              : priceRangeFilter === "100-250"
+                                ? "$100k – $250k"
+                                : priceRangeFilter === "250-500"
+                                  ? "$250k – $500k"
+                                  : priceRangeFilter === "500-1000"
+                                    ? "$500k – $1M"
+                                    : "$1M+"}
+                          <span className="material-symbols-outlined text-[16px] text-slate-400">
+                            expand_more
+                          </span>
+                        </button>
+                        {priceDropdownOpen && (
+                          <div
+                            className="absolute left-0 top-full mt-1 min-w-[180px] py-1 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50"
+                            role="listbox"
+                          >
+                            {(
+                              [
+                                { value: "any" as const, label: "Any" },
+                                { value: "0-100" as const, label: "Under $100k" },
+                                { value: "100-250" as const, label: "$100k – $250k" },
+                                { value: "250-500" as const, label: "$250k – $500k" },
+                                { value: "500-1000" as const, label: "$500k – $1M" },
+                                { value: "1000+" as const, label: "$1M+" },
+                              ]
+                            ).map(({ value, label }) => (
+                              <button
+                                key={value}
+                                type="button"
+                                role="option"
+                                aria-selected={priceRangeFilter === value ? "true" : "false"}
+                                onClick={() => {
+                                  setPriceRangeFilter(value);
+                                  setPriceDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors ${
+                                  priceRangeFilter === value
+                                    ? "bg-primary/10 text-primary dark:text-primary"
+                                    : "text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
