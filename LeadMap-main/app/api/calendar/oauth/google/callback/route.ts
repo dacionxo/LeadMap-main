@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Decode state to get user ID and email
+    // Decode state to get user ID (state may come from initiate with email or from direct Google OAuth with just userId)
     let userId: string
     let stateEmail: string | undefined
     let provider: string | undefined
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       const decoded = JSON.parse(Buffer.from(state, 'base64').toString())
       userId = decoded.userId
       stateEmail = decoded.email
-      provider = decoded.provider || 'google'
+      provider = decoded.provider ?? 'google'
     } catch {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=invalid_state`

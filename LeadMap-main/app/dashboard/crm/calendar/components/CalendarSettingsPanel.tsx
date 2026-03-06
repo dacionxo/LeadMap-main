@@ -30,14 +30,17 @@ type SettingsSection = 'general' | 'calendars' | 'notifications' | 'availability
 interface CalendarSettingsPanelProps {
   isOpen: boolean
   onClose: () => void
-  /** When provided, "Connect Google" / "Connect Outlook" will call this (e.g. to open ConnectCalendarModal). */
+  /** Called when "Connect Outlook" is clicked (opens ConnectCalendarModal). */
   onConnectCalendar?: () => void
+  /** When provided, "Connect Google" uses this for direct OAuth (no modal). Otherwise falls back to onConnectCalendar. */
+  onConnectGoogle?: () => void
 }
 
 export default function CalendarSettingsPanel({
   isOpen,
   onClose,
   onConnectCalendar,
+  onConnectGoogle,
 }: CalendarSettingsPanelProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>('general')
   const [settings, setSettings] = useState<any>(null)
@@ -110,7 +113,10 @@ export default function CalendarSettingsPanel({
   }
 
   const handleConnectGoogle = () => {
-    if (onConnectCalendar) {
+    if (onConnectGoogle) {
+      onClose()
+      onConnectGoogle()
+    } else if (onConnectCalendar) {
       onClose()
       onConnectCalendar()
     }

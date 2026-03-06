@@ -5,9 +5,11 @@ import { Check, ExternalLink, Calendar } from 'lucide-react'
 interface CalendarOnboardingViewProps {
   onDateSelect?: (date: Date, time: string) => void
   onConnectCalendar?: () => void
+  /** When provided, "Connect with Google" uses direct OAuth (no modal). */
+  onConnectGoogle?: () => void
 }
 
-export default function CalendarOnboardingView({ onDateSelect, onConnectCalendar }: CalendarOnboardingViewProps) {
+export default function CalendarOnboardingView({ onDateSelect, onConnectCalendar, onConnectGoogle }: CalendarOnboardingViewProps) {
   // Note: Left panel is now just an image - no interactive elements
 
   return (
@@ -103,14 +105,34 @@ export default function CalendarOnboardingView({ onDateSelect, onConnectCalendar
             </div>
           </div>
 
-          {/* Connect Calendar Button */}
-          <button
-            onClick={onConnectCalendar}
-            className="w-full px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            Connect calendar
-            <ExternalLink className="w-4 h-4" />
-          </button>
+          {/* Connect Calendar Buttons */}
+          {onConnectGoogle ? (
+            <div className="w-full space-y-3">
+              <button
+                onClick={onConnectGoogle}
+                className="w-full px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                Connect with Google
+                <ExternalLink className="w-4 h-4" />
+              </button>
+              {onConnectCalendar && (
+                <button
+                  onClick={onConnectCalendar}
+                  className="w-full px-6 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Connect with Outlook or other calendar
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={onConnectCalendar}
+              className="w-full px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              Connect calendar
+              <ExternalLink className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </div>

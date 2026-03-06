@@ -53,8 +53,9 @@ const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as cons
 const WEEKS_IN_VIEW = 5
 const DAYS_IN_VIEW = WEEKS_IN_VIEW * 7
 const MAX_EVENTS_PER_DAY = 2
-const TIME_GRID_START_HOUR = 8
-const TIME_GRID_END_HOUR = 18
+// Week, Day, and Agenda: full 24h range (0–23). Do not use 8–18 or only business hours will show.
+const TIME_GRID_START_HOUR = 0
+const TIME_GRID_END_HOUR = 23
 const MINUTES_PER_HOUR = 60
 const PIXELS_PER_MINUTE_DAY = 85 / 60
 
@@ -378,12 +379,13 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
   }, [currentDate, view])
 
   const timeLabels = useMemo(() => {
-    return Array.from({ length: TIME_GRID_END_HOUR - TIME_GRID_START_HOUR + 1 }).map((_, idx) => {
+    const count = TIME_GRID_END_HOUR - TIME_GRID_START_HOUR + 1
+    return Array.from({ length: count }, (_, idx) => {
       const hour = TIME_GRID_START_HOUR + idx
       const label = moment().hour(hour).minute(0).format('h A')
       return { hour, label }
     })
-  }, [])
+  }, [TIME_GRID_START_HOUR, TIME_GRID_END_HOUR])
 
   if (!settingsLoaded || loading) {
     return (

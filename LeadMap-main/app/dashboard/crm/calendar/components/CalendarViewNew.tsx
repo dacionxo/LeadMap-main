@@ -665,6 +665,8 @@ export default function CalendarViewNew({ onEventClick, onDateSelect, calendarTy
             eventPropGetter={eventStyleGetter}
             defaultDate={new Date()}
             scrollToTime={new Date(1970, 1, 1, 6)}
+            min={new Date(1970, 0, 1, 0, 0, 0)}
+            max={new Date(1970, 0, 1, 23, 59, 59)}
             showMultiDayTimes
             step={60}
             timeslots={1}

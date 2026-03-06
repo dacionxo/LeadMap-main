@@ -1020,12 +1020,17 @@
     radial-gradient(at 0% 100%, hsla(220, 100%, 98%, 1) 0px, transparent 50%);
 }
 
-/* Calendar Week View - Elite CRM grid (1:1 with design reference) */
+/* Calendar Week View - full 24h (12am–11:59pm), 24 rows × 60px = 1440px */
 .week-grid-container {
   display: grid;
   grid-template-columns: 60px repeat(7, 1fr);
   overflow-y: auto;
   position: relative;
+  min-height: 0;
+}
+.week-grid-container .time-column,
+.week-grid-container .day-column {
+  min-height: 1440px; /* 24 hours × 60px so full day is scrollable */
 }
 .week-grid-container--day {
   grid-template-columns: 60px 1fr;
@@ -1066,12 +1071,17 @@
   transform: translateY(-50%);
 }
 
-/* Calendar Day View - compact Elite CRM layout */
+/* Calendar Day View - full 24h (12am–11:59pm), 24 rows × 85px = 2040px */
 .day-grid-container {
   display: grid;
   grid-template-columns: 80px 1fr;
   overflow-y: auto;
   position: relative;
+  min-height: 0;
+}
+.day-grid-container .time-column,
+.day-grid-container .day-column {
+  min-height: 2040px; /* 24 hours × 85px so full day is scrollable */
 }
 .day-grid-container .time-column {
   border-right: 1px solid #f1f5f9;

@@ -161,8 +161,30 @@ function CalendarPageContent() {
   };
 
   const handleConnectCalendar = () => {
-    // Open the connect calendar modal
     setIsConnectCalendarModalOpen(true);
+  };
+
+  const handleConnectGoogleDirect = async () => {
+    try {
+      const response = await fetch("/api/calendar/oauth/google", {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to connect Google Calendar");
+      }
+      const { authUrl } = await response.json();
+      if (authUrl) {
+        window.location.href = authUrl;
+      } else {
+        throw new Error("No authentication URL received");
+      }
+    } catch (err: unknown) {
+      console.error("Error connecting Google Calendar:", err);
+      alert(
+        err instanceof Error ? err.message : "Failed to connect Google Calendar. Please try again."
+      );
+    }
   };
 
   // Note: handleCalendarConnected is no longer needed as OAuth callback handles it
@@ -229,6 +251,7 @@ function CalendarPageContent() {
                 <CalendarOnboardingView
                   onDateSelect={handleOnboardingDateSelect}
                   onConnectCalendar={handleConnectCalendar}
+                  onConnectGoogle={handleConnectGoogleDirect}
                 />
               ) : (
                 <CalendarView
@@ -305,6 +328,7 @@ function CalendarPageContent() {
           setIsSettingsOpen(false);
           setIsConnectCalendarModalOpen(true);
         }}
+        onConnectGoogle={handleConnectGoogleDirect}
       />
 
       {/* Connect Calendar Modal */}
