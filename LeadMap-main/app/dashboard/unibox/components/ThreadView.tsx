@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { EmailBodySandbox } from './EmailBodySandbox'
 
 interface Message {
   id: string
@@ -252,18 +253,20 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
               const from = getFromParticipant(message)
               return (
                 <div key={message.id} className="space-y-4">
-                  <div className="prose prose-sm max-w-none dark:prose-invert overflow-x-auto">
-                    {message.body_html ? (
-                      <div
-                        dangerouslySetInnerHTML={{ __html: message.body_html }}
-                        className="text-slate-900 dark:text-slate-100 max-w-full"
+                  {message.body_html ? (
+                    <div className="overflow-x-auto max-w-full min-w-0">
+                      <EmailBodySandbox
+                        html={message.body_html}
+                        className="text-slate-900 dark:text-slate-100"
                       />
-                    ) : (
+                    </div>
+                  ) : (
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
                       <p className="whitespace-pre-wrap text-slate-900 dark:text-slate-100">
                         {message.body_plain || message.snippet || ''}
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   {Array.isArray(message.email_attachments) && message.email_attachments.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                       <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
