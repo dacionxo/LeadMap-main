@@ -7,29 +7,40 @@ interface ImportListModalProps {
   isOpen: boolean
   onClose: () => void
   onImportComplete: (count: number) => void
+  /** When on a list detail page: pass current list so user doesn't have to select it */
+  presetListId?: string
+  presetListName?: string
+  presetListType?: 'properties' | 'people'
 }
 
 export default function ImportListModal({
   isOpen,
   onClose,
-  onImportComplete
+  onImportComplete,
+  presetListId,
+  presetListName,
+  presetListType
 }: ImportListModalProps) {
   const [file, setFile] = useState<File | null>(null)
   const [listId, setListId] = useState<string>('')
   const [lists, setLists] = useState<Array<{ id: string; name: string; type: string }>>([])
   const [loading, setLoading] = useState(false)
+  const effectiveListId = presetListId ?? listId
   const [uploading, setUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
   const [importCount, setImportCount] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Fetch lists when modal opens
+  // Fetch lists when modal opens (only if no preset list)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !presetListId) {
       fetchLists()
     }
-  }, [isOpen])
+    if (isOpen && presetListId) {
+      setListId(presetListId)
+    }
+  }, [isOpen, presetListId])
 
   async function fetchLists() {
     try {
@@ -106,7 +117,7 @@ export default function ImportListModal({
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('listId', listId)
+      formData.append('listId', effectiveListId)
 
       const response = await fetch('/api/lists/import-csv', {
         method: 'POST',
@@ -130,10 +141,10 @@ export default function ImportListModal({
         }, 1500)
       }
 
-      // Reset file after successful upload
+      // Reset file after successful upload (clear listId only when not preset)
       setTimeout(() => {
         setFile(null)
-        setListId('')
+        if (!presetListId) setListId('')
         if (fileInputRef.current) {
           fileInputRef.current.value = ''
         }
@@ -150,7 +161,7 @@ export default function ImportListModal({
   const handleClose = () => {
     if (!uploading) {
       setFile(null)
-      setListId('')
+      if (!presetListId) setListId('')
       setUploadStatus('idle')
       setMessage('')
       setImportCount(0)
@@ -250,54 +261,69 @@ export default function ImportListModal({
           overflow: 'auto',
           padding: '24px'
         }}>
-          {/* List Selection */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
+          {/* List Selection (only when not preset from list detail page) */}
+          {!presetListId ? (
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#374151',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}>
+                Select List
+              </label>
+              {loading ? (
+                <div style={{ padding: '12px', textAlign: 'center', color: '#6b7280' }}>
+                  Loading lists...
+                </div>
+              ) : (
+                <select
+                  value={listId}
+                  onChange={(e) => setListId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#6366f1'
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#d1d5db'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  <option value="">-- Select a list --</option>
+                  {lists.map((list) => (
+                    <option key={list.id} value={list.id}>
+                      {list.name} ({list.type})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          ) : (
+            <div style={{
+              marginBottom: '24px',
+              padding: '12px 16px',
+              background: '#f0f9ff',
+              borderRadius: '8px',
+              border: '1px solid #bae6fd',
               fontSize: '14px',
-              fontWeight: 500,
-              color: '#374151',
+              color: '#0c4a6e',
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
             }}>
-              Select List
-            </label>
-            {loading ? (
-              <div style={{ padding: '12px', textAlign: 'center', color: '#6b7280' }}>
-                Loading lists...
-              </div>
-            ) : (
-              <select
-                value={listId}
-                onChange={(e) => setListId(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  outline: 'none',
-                  cursor: 'pointer'
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#6366f1'
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = '#d1d5db'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
-              >
-                <option value="">-- Select a list --</option>
-                {lists.map((list) => (
-                  <option key={list.id} value={list.id}>
-                    {list.name} ({list.type})
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+              <strong>Importing into:</strong> {presetListName || 'This list'} ({presetListType === 'people' ? 'People' : 'Properties'})
+            </div>
+          )}
 
           {/* File Upload Area */}
           <div
@@ -463,23 +489,23 @@ export default function ImportListModal({
           </button>
           <button
             onClick={handleUpload}
-            disabled={uploading || !file || !listId}
+            disabled={uploading || !file || !effectiveListId}
             style={{
               padding: '10px 20px',
               border: 'none',
               borderRadius: '8px',
-              background: uploading || !file || !listId
+              background: uploading || !file || !effectiveListId
                 ? '#9ca3af'
                 : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: '#ffffff',
-              cursor: uploading || !file || !listId ? 'not-allowed' : 'pointer',
+              cursor: uploading || !file || !effectiveListId ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               fontWeight: 600,
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              opacity: uploading || !file || !listId ? 0.6 : 1
+              opacity: uploading || !file || !effectiveListId ? 0.6 : 1
             }}
           >
             {uploading ? (

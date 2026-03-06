@@ -8,6 +8,8 @@ import AppNavSidebar from "../../components/AppNavSidebar";
 import DashboardLayout from "../../components/DashboardLayout";
 import DealsNavbar from "../../crm/deals/components/DealsNavbar";
 import LeadDetailModal from "../../prospect-enrich/components/LeadDetailModal";
+import ImportListModal from "../components/ImportListModal";
+import { exportListingsToCsv } from "../../prospect-enrich/utils/exportListings";
 import { Manrope } from "next/font/google";
 
 interface List {
@@ -241,6 +243,7 @@ function ListDetailContent() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [modalListingId, setModalListingId] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<
     "any" | "fsbo" | "frbo" | "foreclosure" | "imports"
   >("any");
@@ -437,7 +440,7 @@ function ListDetailContent() {
   const handleExportCSV = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/lists/${listId}/paginated?page=1&pageSize=1000${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""}`,
+        `/api/lists/${listId}/paginated?page=1&pageSize=10000${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""}`,
         {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -446,52 +449,12 @@ function ListDetailContent() {
       if (!response.ok) return;
       const { data: items } = await response.json();
       const rows = items || [];
-
-      const headers = [
-        "Listing ID",
-        "Address",
-        "City",
-        "State",
-        "Zip Code",
-        "Price",
-        "Beds",
-        "Baths",
-        "Sqft",
-        "Status",
-        "Agent Name",
-        "Agent Email",
-        "Agent Phone",
-      ];
-      const csvRows = rows.map((r: Listing) => [
-        r.listing_id || "",
-        r.street || "",
-        r.city || "",
-        r.state || "",
-        r.zip_code || "",
-        r.list_price?.toString() || "",
-        r.beds?.toString() || "",
-        r.full_baths?.toString() || "",
-        r.sqft?.toString() || "",
-        r.status || "",
-        r.agent_name || "",
-        r.agent_email || "",
-        r.agent_phone || "",
-      ]);
-      const csv =
-        headers.join(",") +
-        "\n" +
-        csvRows
-          .map((row: (string | number)[]) =>
-            row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
-          )
-          .join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${(list?.name || "list").replace(/[^a-z0-9]/gi, "_")}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
+      if (rows.length === 0) {
+        alert("No records to export");
+        return;
+      }
+      const filenamePrefix = (list?.name || "list").replace(/[^a-z0-9]/gi, "_");
+      exportListingsToCsv(rows as Parameters<typeof exportListingsToCsv>[0], filenamePrefix);
     } catch {
       alert("Failed to export");
     }
@@ -595,7 +558,7 @@ function ListDetailContent() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => {}}
+                        onClick={() => setShowImportModal(true)}
                         className="px-3.5 py-2 rounded-full bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-gray-600 shadow-sm text-gray-600 dark:text-slate-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-blue-600 transition-all flex items-center gap-1.5"
                         aria-label="Import"
                       >
@@ -624,25 +587,6 @@ function ListDetailContent() {
                           add
                         </span>
                         Add records
-                      </button>
-                      <button
-                        type="button"
-                        className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-violet-500/20 transition-all flex items-center gap-1.5"
-                        aria-label="Research with AI"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">
-                          auto_awesome
-                        </span>
-                        Research with AI
-                      </button>
-                      <button
-                        type="button"
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-gray-600 shadow-sm text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all"
-                        aria-label="More options"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">
-                          more_vert
-                        </span>
                       </button>
                     </div>
                   </div>
@@ -1694,6 +1638,18 @@ function ListDetailContent() {
           sourceTable={(listings[0] as any)?.source_category ?? null}
         />
       )}
+
+      {/* Import CSV to this list */}
+      <ImportListModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={(count) => {
+          if (count > 0) fetchListData();
+        }}
+        presetListId={listId}
+        presetListName={list?.name ?? undefined}
+        presetListType={list?.type}
+      />
     </div>
   );
 }
