@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import ErrorBoundary from "../marketing/components/ErrorBoundary";
+import ErrorBoundary from "../../marketing/components/ErrorBoundary";
 import ComposeEmailModal from "./ComposeEmailModal";
 import ReplyComposer from "./ReplyComposer";
 import ThreadList from "./ThreadList";
