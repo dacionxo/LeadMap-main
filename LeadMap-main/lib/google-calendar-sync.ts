@@ -1,7 +1,44 @@
 /**
  * Google Calendar Sync Utilities
- * Functions to push events to Google Calendar and refresh access tokens
+ * Functions to push events to Google Calendar and refresh access tokens.
+ *
+ * Bi-directional sync design (inspired by cal-sync & google_calendar_oauth2):
+ *  - Every event pushed from LeadMap to Google is stamped with
+ *    extendedProperties.shared.synced_by_system = "true" so the import loop
+ *    can skip it and prevent duplicates (loop prevention).
+ *  - computeEventContentHash() produces a SHA-256 fingerprint of the 9
+ *    comparable event fields so incremental sync can skip no-op updates.
  */
+import { createHash } from 'crypto'
+
+/**
+ * Compute a SHA-256 hash of the event fields that matter for change detection.
+ * Same approach as cal-sync sync_engine.py compute_content_hash().
+ */
+export function computeEventContentHash(event: {
+  summary?: string
+  description?: string
+  location?: string
+  start?: any
+  end?: any
+  recurrence?: any
+  transparency?: string
+  visibility?: string
+  colorId?: string
+}): string {
+  const comparable = {
+    summary: event.summary ?? '',
+    description: event.description ?? '',
+    location: event.location ?? '',
+    start: JSON.stringify(event.start ?? {}),
+    end: JSON.stringify(event.end ?? {}),
+    recurrence: JSON.stringify(event.recurrence ?? []),
+    transparency: event.transparency ?? '',
+    visibility: event.visibility ?? '',
+    colorId: event.colorId ?? '',
+  }
+  return createHash('sha256').update(JSON.stringify(comparable)).digest('hex')
+}
 
 /**
  * Refresh Google Calendar access token using refresh token
@@ -201,6 +238,18 @@ export async function pushEventToGoogleCalendar(
           minutes: minutes,
         })),
       }
+    }
+
+    // Loop-prevention stamp: any event we push to Google carries this flag.
+    // The import pipeline (sync/google and sync/manual) checks for it and
+    // skips the event so it is never re-imported as a duplicate.
+    // Approach from cal-sync sync_engine.py build_payload_from_source().
+    googleEvent.extendedProperties = {
+      shared: {
+        synced_by_system: 'true',
+        origin: 'leadmap',
+        leadmap_event_id: event.id ? String(event.id) : '',
+      },
     }
 
     // Determine if this is an update or create

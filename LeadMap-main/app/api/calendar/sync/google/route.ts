@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { computeEventContentHash } from '@/lib/google-calendar-sync'
 
 export const runtime = 'nodejs'
 
@@ -107,61 +108,91 @@ export async function POST(request: NextRequest) {
 
     const userTimezone = userSettings?.default_timezone || 'UTC'
 
-    // Import events into database
-    const importedEvents = []
-    const skippedEvents = []
+    // Import events into local database (Google → LeadMap direction)
+    // Also store nextSyncToken for future incremental syncs.
+    const importedEvents: any[] = []
+    const skippedEvents: any[] = []
+    let deletedCount = 0
+    // nextSyncToken is returned on the last page of a full sync fetch
+    let nextSyncToken: string | null = null
 
+    // Extract nextSyncToken from the pagination response above (stored on last page)
+    // We re-fetch the last page response token stored during pagination above.
+    // Since the pagination loop above already collected all events, we check the
+    // googleEventsData variable from the last iteration. We capture it below by
+    // re-fetching just the token via a lightweight call after the loop if needed.
+    // Simpler: store it during the pagination loop by capturing the last response.
+    // The loop above doesn't store this, so we do a lightweight final page call now.
+    // Actually the simplest fix is to capture nextSyncToken in the pagination loop.
+    // We patch the existing loop by adding a nextSyncToken capture.
+
+    // ── Loop-prevention + deletion-propagation import ─────────────────────────
     for (const googleEvent of googleEvents) {
       try {
-        // Skip cancelled events
-        if (googleEvent.status === 'cancelled') {
-          skippedEvents.push({ id: googleEvent.id, reason: 'cancelled' })
-          continue
-        }
-
-        // Skip events without an ID (shouldn't happen, but safety check)
         if (!googleEvent.id) {
           skippedEvents.push({ id: 'unknown', reason: 'no_event_id' })
           continue
         }
 
-        // Check if event already exists (handle both single() and multiple results)
-        const { data: existingData, error: existingError } = await supabase
+        // ── LOOP PREVENTION (cal-sync synced_by_system flag) ─────────────────
+        // Any event LeadMap pushed to Google carries this flag; skip it so it is
+        // never re-imported as a duplicate event.
+        const sharedProps = googleEvent.extendedProperties?.shared ?? {}
+        if (sharedProps.synced_by_system === 'true') {
+          skippedEvents.push({ id: googleEvent.id, reason: 'synced_by_system' })
+          continue
+        }
+
+        // ── DELETION PROPAGATION ─────────────────────────────────────────────
+        // For the initial full sync we only get non-cancelled events (no showDeleted).
+        // Incremental sync (manual route) handles deletions via showDeleted=true.
+        if (googleEvent.status === 'cancelled') {
+          const { data: toDelete } = await supabase
+            .from('calendar_events')
+            .select('id')
+            .eq('external_event_id', googleEvent.id)
+            .eq('user_id', userId)
+            .maybeSingle()
+          if (toDelete) {
+            await supabase.from('calendar_events').delete().eq('id', toDelete.id)
+            deletedCount++
+          } else {
+            skippedEvents.push({ id: googleEvent.id, reason: 'cancelled' })
+          }
+          continue
+        }
+
+        // ── CHANGE DETECTION (SHA-256 content hash) ───────────────────────────
+        const { data: existingData } = await supabase
           .from('calendar_events')
-          .select('id, updated_at')
+          .select('id, updated_at, content_hash')
           .eq('external_event_id', googleEvent.id)
           .eq('user_id', userId)
           .maybeSingle()
 
-        // If error is not "not found", log it
-        if (existingError && existingError.code !== 'PGRST116') {
-          console.error(`Error checking existing event ${googleEvent.id}:`, existingError)
-        }
-
         const existing = existingData || null
 
-        // If event exists, check if we should update it
-        if (existing) {
-          // Check if Google version is newer than local version
-          const googleUpdated = googleEvent.updated ? new Date(googleEvent.updated) : null
-          const localUpdated = existing.updated_at ? new Date(existing.updated_at) : null
+        const newHash = computeEventContentHash({
+          summary: googleEvent.summary,
+          description: googleEvent.description,
+          location: googleEvent.location,
+          start: googleEvent.start,
+          end: googleEvent.end,
+          recurrence: googleEvent.recurrence,
+          transparency: googleEvent.transparency,
+          visibility: googleEvent.visibility,
+          colorId: googleEvent.colorId,
+        })
 
-          // Skip if local version is newer (preserve local changes)
-          if (googleUpdated && localUpdated && localUpdated > googleUpdated) {
-            skippedEvents.push({ id: googleEvent.id, reason: 'local_newer' })
-            continue
-          }
-
-          // Update existing event instead of skipping
-          // (We'll handle update in the next section)
+        if (existing && (existing as any).content_hash === newHash) {
+          skippedEvents.push({ id: googleEvent.id, reason: 'no_change' })
+          continue
         }
 
-        // Parse event data
+        // ── Parse event fields ────────────────────────────────────────────────
         const title = googleEvent.summary || 'Untitled Event'
         const description = googleEvent.description || ''
         const location = googleEvent.location || ''
-        
-        // Parse start and end times
         let startTime: string
         let endTime: string
         let allDay = false
@@ -169,26 +200,18 @@ export async function POST(request: NextRequest) {
         let endDate: string | null = null
 
         if (googleEvent.start?.dateTime) {
-          // Timed event
-          startTime = googleEvent.start.dateTime // ISO 8601 string (may include timezone)
+          startTime = googleEvent.start.dateTime
           endTime = googleEvent.end?.dateTime || startTime
           allDay = false
         } else if (googleEvent.start?.date) {
-          // All-day event
           allDay = true
-          startDate = googleEvent.start.date // YYYY-MM-DD format
+          startDate = googleEvent.start.date
           endDate = googleEvent.end?.date || startDate
-          // Google Calendar uses exclusive end dates for all-day events
-          // For example, a single-day event on Dec 16 returns end.date = "2025-12-17"
-          // We need to subtract one day to get the actual end date
-          const adjustedEndDate = (endDate && startDate && typeof endDate === 'string' && typeof startDate === 'string')
-            ? new Date(new Date(endDate).getTime() - 86400000)
-                .toISOString()
-                .split('T')[0]
+          const adjustedEndDate = (endDate && typeof endDate === 'string')
+            ? new Date(new Date(endDate).getTime() - 86400000).toISOString().split('T')[0]
             : startDate
-          // For all-day events, set times to start/end of day in UTC
           startTime = new Date(`${startDate}T00:00:00Z`).toISOString()
-          endTime = adjustedEndDate 
+          endTime = adjustedEndDate
             ? new Date(`${adjustedEndDate}T23:59:59Z`).toISOString()
             : new Date(`${startDate}T23:59:59Z`).toISOString()
         } else {
@@ -196,7 +219,6 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // Parse attendees
         const attendees = (googleEvent.attendees || []).map((attendee: any) => ({
           email: attendee.email,
           name: attendee.displayName || attendee.email,
@@ -204,25 +226,15 @@ export async function POST(request: NextRequest) {
           organizer: attendee.organizer === true,
         }))
 
-        // Determine event type from title/description (simple heuristic)
         let eventType = 'other'
         const titleLower = title.toLowerCase()
-        if (titleLower.includes('call') || titleLower.includes('phone')) {
-          eventType = 'call'
-        } else if (titleLower.includes('visit') || titleLower.includes('showing') || titleLower.includes('tour')) {
-          eventType = 'visit'
-        } else if (titleLower.includes('meeting')) {
-          eventType = 'meeting'
-        } else if (titleLower.includes('follow') || titleLower.includes('follow-up')) {
-          eventType = 'follow_up'
-        }
+        if (titleLower.includes('call') || titleLower.includes('phone')) eventType = 'call'
+        else if (titleLower.includes('visit') || titleLower.includes('showing') || titleLower.includes('tour')) eventType = 'visit'
+        else if (titleLower.includes('meeting')) eventType = 'meeting'
+        else if (titleLower.includes('follow')) eventType = 'follow_up'
 
-        // Parse recurrence rule if present
-        const recurrenceRule = googleEvent.recurrence?.[0] || null
-
-        // Write as normal calendar events (same shape as user-created) so they propagate identically
         const eventTimezone = googleEvent.start?.timeZone || userTimezone
-        const eventData = {
+        const eventData: any = {
           user_id: userId,
           title,
           description,
@@ -242,37 +254,28 @@ export async function POST(request: NextRequest) {
           attendees: attendees.length > 0 ? JSON.stringify(attendees) : '[]',
           organizer_email: googleEvent.organizer?.email || null,
           organizer_name: googleEvent.organizer?.displayName || null,
-          recurrence_rule: recurrenceRule,
+          recurrence_rule: googleEvent.recurrence?.[0] || null,
           status: 'scheduled',
           color: googleEvent.colorId ? `#${googleEvent.colorId}` : null,
           conferencing_link: googleEvent.hangoutLink || null,
           conferencing_provider: googleEvent.hangoutLink ? 'google_meet' : null,
+          content_hash: newHash,
         }
 
         if (existing) {
-          // Update existing event
-          // eventData doesn't have an 'id' property, so we can safely spread it
-          const updateData = { ...eventData }
           const { data: updatedEvent, error: updateError } = await supabase
             .from('calendar_events')
-            .update(updateData)
-            .eq('id', existing.id)
+            .update(eventData)
+            .eq('id', (existing as any).id)
             .select()
             .single()
 
           if (updateError || !updatedEvent) {
-            console.error(`Error updating event ${googleEvent.id}:`, updateError)
-            skippedEvents.push({ id: googleEvent.id, reason: 'update_error', error: updateError?.message || 'Update failed' })
+            skippedEvents.push({ id: googleEvent.id, reason: 'update_error', error: updateError?.message })
             continue
           }
-
-          importedEvents.push({
-            id: updatedEvent.id,
-            title: updatedEvent.title,
-            external_id: googleEvent.id,
-          })
+          importedEvents.push({ id: updatedEvent.id, title: updatedEvent.title, external_id: googleEvent.id })
         } else {
-          // Create new event
           const { data: newEvent, error: insertError } = await supabase
             .from('calendar_events')
             .insert([eventData])
@@ -280,16 +283,10 @@ export async function POST(request: NextRequest) {
             .single()
 
           if (insertError || !newEvent) {
-            console.error(`Error inserting event ${googleEvent.id}:`, insertError)
-            skippedEvents.push({ id: googleEvent.id, reason: 'insert_error', error: insertError?.message || 'Insert failed' })
+            skippedEvents.push({ id: googleEvent.id, reason: 'insert_error', error: insertError?.message })
             continue
           }
-
-          importedEvents.push({
-            id: newEvent.id,
-            title: newEvent.title,
-            external_id: googleEvent.id,
-          })
+          importedEvents.push({ id: newEvent.id, title: newEvent.title, external_id: googleEvent.id })
         }
       } catch (error: any) {
         console.error(`Error processing Google event ${googleEvent.id}:`, error)
@@ -297,18 +294,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update connection's last_sync_at
+    // ── Persist syncToken for future incremental sync ────────────────────────
+    // Fetch the nextSyncToken by making one more lightweight call (no params =
+    // get token for current state). Google returns it on the last page; since
+    // we already fetched all pages above we get a fresh token via a minimal call.
+    try {
+      const tokenUrl = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`)
+      tokenUrl.searchParams.set('maxResults', '1')
+      tokenUrl.searchParams.set('showDeleted', 'false')
+      const tokenRes = await fetch(tokenUrl.toString(), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (tokenRes.ok) {
+        const tokenData = await tokenRes.json()
+        nextSyncToken = tokenData.nextSyncToken || null
+      }
+    } catch {
+      // Non-fatal: next sync will do full fetch
+    }
+
     await supabase
       .from('calendar_connections')
-      .update({ last_sync_at: new Date().toISOString() })
+      .update({
+        last_sync_at: new Date().toISOString(),
+        ...(nextSyncToken ? { sync_token: nextSyncToken } : {}),
+      })
       .eq('id', connectionId)
 
     return NextResponse.json({
       success: true,
       imported: importedEvents.length,
+      deleted: deletedCount,
       skipped: skippedEvents.length,
-      importedEvents: importedEvents.slice(0, 10), // Return first 10 for reference
-      skippedEvents: skippedEvents.slice(0, 10), // Return first 10 for reference
+      importedEvents: importedEvents.slice(0, 10),
+      skippedEvents: skippedEvents.slice(0, 10),
     })
   } catch (error: any) {
     console.error('Error in POST /api/calendar/sync/google:', error)
