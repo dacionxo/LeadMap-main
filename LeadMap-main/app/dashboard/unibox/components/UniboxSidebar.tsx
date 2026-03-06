@@ -21,8 +21,8 @@ interface UniboxSidebarProps {
   onFolderFilterChange: (folder: FilterFolder) => void
   mailboxUnreadCounts: Record<string, number>
   unreadCount: number
-  /** Total thread count from API for current filters (accurate inbox total) */
-  totalThreadCount?: number
+  /** Per-folder counts; each tab retains its own count when switching */
+  folderCounts?: Partial<Record<FilterFolder, number>>
   onCompose?: () => void
 }
 
@@ -45,9 +45,13 @@ export default function UniboxSidebar({
   onFolderFilterChange,
   mailboxUnreadCounts,
   unreadCount,
-  totalThreadCount = 0,
+  folderCounts = {},
   onCompose,
 }: UniboxSidebarProps) {
+  const inboxCount = folderCounts.inbox ?? -1
+  const starredCount = folderCounts.starred ?? -1
+  const draftsCount = folderCounts.drafts ?? -1
+  const archivedCount = folderCounts.archived ?? -1
   const handleCompose = () => {
     onCompose?.()
   }
@@ -80,44 +84,65 @@ export default function UniboxSidebar({
             <span className="hidden lg:inline">Inbox</span>
           </div>
           <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold" title={unreadCount > 0 ? `${unreadCount} unread` : undefined}>
-            {totalThreadCount >= 0 ? totalThreadCount : unreadCount}
+            {inboxCount >= 0 ? inboxCount : unreadCount}
           </span>
         </button>
         <button
           type="button"
           onClick={() => onFolderFilterChange('starred')}
-          className={`w-full flex items-center px-4 py-3 rounded-2xl transition-colors ${
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-colors ${
             folderFilter === 'starred'
               ? 'bg-unibox-primary/10 text-unibox-primary'
               : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>star_border</span>
-          <span className="font-medium hidden lg:inline">Starred</span>
+          <div className="flex items-center">
+            <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>star_border</span>
+            <span className="font-medium hidden lg:inline">Starred</span>
+          </div>
+          {starredCount >= 0 && (
+            <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">
+              {starredCount}
+            </span>
+          )}
         </button>
         <button
           type="button"
           onClick={() => onFolderFilterChange('drafts')}
-          className={`w-full flex items-center px-4 py-3 rounded-2xl transition-colors ${
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-colors ${
             folderFilter === 'drafts'
               ? 'bg-slate-900/90 text-white dark:bg-slate-800'
               : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>drafts</span>
-          <span className="font-medium hidden lg:inline">Drafts</span>
+          <div className="flex items-center">
+            <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>drafts</span>
+            <span className="font-medium hidden lg:inline">Drafts</span>
+          </div>
+          {draftsCount >= 0 && (
+            <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">
+              {draftsCount}
+            </span>
+          )}
         </button>
         <button
           type="button"
           onClick={() => onFolderFilterChange('archived')}
-          className={`w-full flex items-center px-4 py-3 rounded-2xl transition-colors ${
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-colors ${
             folderFilter === 'archived'
               ? 'bg-unibox-primary/10 text-unibox-primary'
               : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>archive</span>
-          <span className="font-medium hidden lg:inline">Archived</span>
+          <div className="flex items-center">
+            <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>archive</span>
+            <span className="font-medium hidden lg:inline">Archived</span>
+          </div>
+          {archivedCount >= 0 && (
+            <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">
+              {archivedCount}
+            </span>
+          )}
         </button>
 
         <div className="pt-8 pb-3 hidden lg:block">

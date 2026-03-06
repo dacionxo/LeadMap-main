@@ -40,6 +40,9 @@ export default function UniboxWrapper() {
   >(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [folderCounts, setFolderCounts] = useState<
+    Partial<Record<UniboxFilterFolder, number>>
+  >({});
 
   // Fetch mailboxes
   useEffect(() => {
@@ -140,6 +143,7 @@ export default function UniboxWrapper() {
 
             setThreads(mapped);
             setHasMore(false);
+            setFolderCounts((prev) => ({ ...prev, drafts: mapped.length }));
 
             // Auto-select first draft if none selected
             if (!selectedThread && mapped.length > 0) {
@@ -172,8 +176,10 @@ export default function UniboxWrapper() {
       const response = await fetch(`/api/unibox/threads?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
+        const total = data.pagination?.total ?? 0;
         setThreads(data.threads || []);
         setHasMore(data.pagination.page < data.pagination.totalPages);
+        setFolderCounts((prev) => ({ ...prev, [folderFilter]: total }));
 
         // Auto-select first thread if none selected
         if (!selectedThread && data.threads && data.threads.length > 0) {
@@ -322,6 +328,10 @@ export default function UniboxWrapper() {
     const prevDetails = threadDetails;
 
     setThreads((t) => t.filter((x) => x.id !== targetId));
+    setFolderCounts((prev) => ({
+      ...prev,
+      drafts: Math.max(0, (prev.drafts ?? 0) - 1),
+    }));
     if (selectedThread?.id === targetId) {
       setSelectedThread(null);
       setThreadDetails(null);
@@ -340,6 +350,10 @@ export default function UniboxWrapper() {
     } catch (error) {
       console.error("[UniboxWrapper] Error deleting draft:", error);
       setThreads(prevThreads);
+      setFolderCounts((prev) => ({
+        ...prev,
+        drafts: prevThreads.length,
+      }));
       setSelectedThread(prevSelected);
       setThreadDetails(prevDetails);
       alert(error instanceof Error ? error.message : "Failed to delete draft. Please try again.");
@@ -424,6 +438,7 @@ export default function UniboxWrapper() {
           onFolderFilterChange={(folder) => setFolderFilter(folder)}
           mailboxUnreadCounts={mailboxUnreadCounts}
           unreadCount={unreadCount}
+          folderCounts={folderCounts}
         />
 
         {/* Middle - Thread List */}

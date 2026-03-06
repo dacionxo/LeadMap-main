@@ -82,7 +82,9 @@ export default function UniboxContent({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [totalThreadCount, setTotalThreadCount] = useState<number>(0);
+  const [folderCounts, setFolderCounts] = useState<
+    Partial<Record<FilterFolder, number>>
+  >({});
 
   useEffect(() => {
     fetchMailboxes();
@@ -195,7 +197,7 @@ export default function UniboxContent({
               };
             });
 
-            setTotalThreadCount(mapped.length);
+            setFolderCounts((prev) => ({ ...prev, drafts: mapped.length }));
             setHasMore(false);
 
             if (isFirstPage) {
@@ -230,7 +232,7 @@ export default function UniboxContent({
         const newThreads = data.threads || [];
         const total = data.pagination?.total ?? 0;
         const totalPages = data.pagination?.totalPages ?? 1;
-        setTotalThreadCount(total);
+        setFolderCounts((prev) => ({ ...prev, [folderFilter]: total }));
         setHasMore(page < totalPages);
         if (isFirstPage) {
           setThreads(newThreads);
@@ -391,7 +393,10 @@ export default function UniboxContent({
     const prevDetails = threadDetails;
 
     setThreads((t) => t.filter((x) => x.id !== targetId));
-    setTotalThreadCount((c) => Math.max(0, c - 1));
+    setFolderCounts((prev) => ({
+      ...prev,
+      drafts: Math.max(0, (prev.drafts ?? 0) - 1),
+    }));
     if (selectedThread?.id === targetId) {
       setSelectedThread(null);
       setThreadDetails(null);
@@ -410,7 +415,10 @@ export default function UniboxContent({
     } catch (error) {
       console.error("[UniboxContent] Error deleting draft:", error);
       setThreads(prevThreads);
-      setTotalThreadCount((c) => prevThreads.length);
+      setFolderCounts((prev) => ({
+        ...prev,
+        drafts: prevThreads.length,
+      }));
       setSelectedThread(prevSelected);
       setThreadDetails(prevDetails);
       alert(error instanceof Error ? error.message : "Failed to delete draft. Please try again.");
@@ -489,7 +497,7 @@ export default function UniboxContent({
         onFolderFilterChange={setFolderFilter}
         mailboxUnreadCounts={mailboxUnreadCounts}
         unreadCount={unreadCount}
-        totalThreadCount={totalThreadCount}
+        folderCounts={folderCounts}
         onCompose={() => setShowComposeModal(true)}
       />
 
