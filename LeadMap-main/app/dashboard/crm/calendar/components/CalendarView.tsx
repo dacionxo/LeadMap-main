@@ -587,7 +587,13 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 flex flex-col overflow-auto custom-scrollbar relative bg-white">
+      <main
+        className={`flex-1 min-h-0 flex flex-col relative bg-white ${
+          view === 'week' || view === 'day'
+            ? 'overflow-hidden'
+            : 'overflow-auto custom-scrollbar'
+        }`}
+      >
         {view === 'week' && (
           <>
             <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-200 bg-gray-50/80 sticky top-0 z-30 backdrop-blur-sm">

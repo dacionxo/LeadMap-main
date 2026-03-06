@@ -175,7 +175,7 @@ export default function CalendarSettingsPanel({
         </header>
 
         <div className="flex flex-1 overflow-hidden min-h-0">
-          <aside className="w-64 border-r border-slate-200 dark:border-slate-800 p-4 space-y-1 overflow-y-auto shrink-0 hidden md:block">
+          <aside className="w-64 border-r border-slate-200 dark:border-slate-800 p-4 space-y-1 overflow-y-auto custom-scrollbar shrink-0 hidden md:block">
             <nav className="space-y-1">
               {navItems.map((item) => (
                 <button
@@ -195,7 +195,7 @@ export default function CalendarSettingsPanel({
             </nav>
           </aside>
 
-          <main className="flex-1 p-8 overflow-y-auto min-w-0">
+          <main className="flex-1 p-8 overflow-y-auto custom-scrollbar min-w-0">
             {loading ? (
               <div className="flex items-center justify-center h-full min-h-[200px]">
                 <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
