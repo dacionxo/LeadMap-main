@@ -43,11 +43,35 @@ export default function UniboxWrapper() {
   const [folderCounts, setFolderCounts] = useState<
     Partial<Record<UniboxFilterFolder, number>>
   >({});
+  const [statusByFolder, setStatusByFolder] = useState<
+    Record<string, Record<UniboxFilterStatus, number>>
+  >({});
+  const [mailboxCounts, setMailboxCounts] = useState<Record<string, number>>({});
+
+  const fetchCounts = useCallback(async () => {
+    try {
+      const response = await fetch("/api/unibox/counts", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setFolderCounts(data.folders || {});
+        setStatusByFolder(data.statusByFolder || {});
+        setMailboxCounts(data.mailboxCounts || {});
+      }
+    } catch (error) {
+      console.error("[UniboxWrapper] Error fetching counts:", error);
+    }
+  }, []);
 
   // Fetch mailboxes
   useEffect(() => {
     fetchMailboxes();
   }, []);
+
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
 
   // Fetch threads
   useEffect(() => {
@@ -179,7 +203,6 @@ export default function UniboxWrapper() {
         const total = data.pagination?.total ?? 0;
         setThreads(data.threads || []);
         setHasMore(data.pagination.page < data.pagination.totalPages);
-        setFolderCounts((prev) => ({ ...prev, [folderFilter]: total }));
 
         // Auto-select first thread if none selected
         if (!selectedThread && data.threads && data.threads.length > 0) {
@@ -439,6 +462,12 @@ export default function UniboxWrapper() {
           mailboxUnreadCounts={mailboxUnreadCounts}
           unreadCount={unreadCount}
           folderCounts={folderCounts}
+          statusCounts={
+            folderFilter === "drafts"
+              ? (statusByFolder.inbox as Record<UniboxFilterStatus, number>) ?? {}
+              : (statusByFolder[folderFilter] as Record<UniboxFilterStatus, number>) ?? {}
+          }
+          mailboxCounts={mailboxCounts}
         />
 
         {/* Middle - Thread List */}

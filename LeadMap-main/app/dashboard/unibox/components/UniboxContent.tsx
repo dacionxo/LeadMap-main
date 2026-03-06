@@ -85,10 +85,34 @@ export default function UniboxContent({
   const [folderCounts, setFolderCounts] = useState<
     Partial<Record<FilterFolder, number>>
   >({});
+  const [statusByFolder, setStatusByFolder] = useState<
+    Record<string, Record<FilterStatus, number>>
+  >({});
+  const [mailboxCounts, setMailboxCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchMailboxes();
   }, []);
+
+  const fetchCounts = useCallback(async () => {
+    try {
+      const response = await fetch("/api/unibox/counts", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setFolderCounts(data.folders || {});
+        setStatusByFolder(data.statusByFolder || {});
+        setMailboxCounts(data.mailboxCounts || {});
+      }
+    } catch (error) {
+      console.error("[UniboxContent] Error fetching counts:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
 
   // Reset to page 1 when filters or search change so next fetch replaces the list
   useEffect(() => {
@@ -102,11 +126,12 @@ export default function UniboxContent({
   useEffect(() => {
     const handleRefresh = () => {
       fetchThreads();
+      fetchCounts();
       if (selectedThread) fetchThreadDetails(selectedThread.id);
     };
     window.addEventListener("unibox-refresh", handleRefresh);
     return () => window.removeEventListener("unibox-refresh", handleRefresh);
-  }, [selectedThread]);
+  }, [selectedThread, fetchCounts]);
 
   const fetchMailboxes = async () => {
     try {
@@ -232,7 +257,7 @@ export default function UniboxContent({
         const newThreads = data.threads || [];
         const total = data.pagination?.total ?? 0;
         const totalPages = data.pagination?.totalPages ?? 1;
-        setFolderCounts((prev) => ({ ...prev, [folderFilter]: total }));
+        // Folder counts come from GET /api/unibox/counts; don't overwrite here
         setHasMore(page < totalPages);
         if (isFirstPage) {
           setThreads(newThreads);
@@ -498,6 +523,12 @@ export default function UniboxContent({
         mailboxUnreadCounts={mailboxUnreadCounts}
         unreadCount={unreadCount}
         folderCounts={folderCounts}
+        statusCounts={
+          folderFilter === "drafts"
+            ? (statusByFolder.inbox as Record<FilterStatus, number>) ?? {}
+            : (statusByFolder[folderFilter] as Record<FilterStatus, number>) ?? {}
+        }
+        mailboxCounts={mailboxCounts}
         onCompose={() => setShowComposeModal(true)}
       />
 

@@ -23,6 +23,10 @@ interface UniboxSidebarProps {
   unreadCount: number
   /** Per-folder counts; each tab retains its own count when switching */
   folderCounts?: Partial<Record<FilterFolder, number>>
+  /** Status counts for current folder (all, open, needs_reply, etc.) */
+  statusCounts?: Record<FilterStatus, number>
+  /** Mailbox counts for inbox (all + per mailbox id) */
+  mailboxCounts?: Record<string, number>
   onCompose?: () => void
 }
 
@@ -46,6 +50,8 @@ export default function UniboxSidebar({
   mailboxUnreadCounts,
   unreadCount,
   folderCounts = {},
+  statusCounts = {} as Record<FilterStatus, number>,
+  mailboxCounts = {},
   onCompose,
 }: UniboxSidebarProps) {
   const inboxCount = folderCounts.inbox ?? -1
@@ -151,23 +157,33 @@ export default function UniboxSidebar({
           </h3>
         </div>
         <div className="hidden lg:block space-y-1">
-          {statusOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onStatusFilterChange(option.value)}
-              className={`w-full flex items-center px-4 py-2.5 rounded-2xl transition-colors ${
-                statusFilter === option.value
-                  ? 'bg-blue-50 dark:bg-slate-800/50 text-blue-600 dark:text-blue-400'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'
-              }`}
-            >
-              <span className={`material-icons-outlined text-[18px] mr-3 ${statusFilter === option.value ? '' : 'text-slate-400'}`} aria-hidden>
-                {option.icon}
-              </span>
-              <span className="text-sm font-medium">{option.label}</span>
-            </button>
-          ))}
+          {statusOptions.map((option) => {
+            const count = statusCounts[option.value as FilterStatus] ?? -1
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onStatusFilterChange(option.value)}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-2xl transition-colors ${
+                  statusFilter === option.value
+                    ? 'bg-blue-50 dark:bg-slate-800/50 text-blue-600 dark:text-blue-400'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <div className="flex items-center">
+                  <span className={`material-icons-outlined text-[18px] mr-3 ${statusFilter === option.value ? '' : 'text-slate-400'}`} aria-hidden>
+                    {option.icon}
+                  </span>
+                  <span className="text-sm font-medium">{option.label}</span>
+                </div>
+                {count >= 0 && (
+                  <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         <div className="pt-8 pb-3 hidden lg:block">
@@ -179,17 +195,24 @@ export default function UniboxSidebar({
           <button
             type="button"
             onClick={() => onMailboxSelect(null)}
-            className={`w-full flex items-center px-4 py-2.5 rounded-2xl transition-colors ${
+            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-2xl transition-colors ${
               selectedMailboxId === null
                 ? 'bg-blue-50/50 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <span className="material-icons-outlined text-[18px] mr-3 text-unibox-primary" aria-hidden>folder_open</span>
-            <span className="text-sm font-medium">All Mailboxes</span>
+            <div className="flex items-center">
+              <span className="material-icons-outlined text-[18px] mr-3 text-unibox-primary" aria-hidden>folder_open</span>
+              <span className="text-sm font-medium">All Mailboxes</span>
+            </div>
+            {(mailboxCounts['all'] ?? -1) >= 0 && (
+              <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">
+                {mailboxCounts['all']}
+              </span>
+            )}
           </button>
           {mailboxes.map((mailbox) => {
-            const count = mailboxUnreadCounts[mailbox.id] || 0
+            const count = mailboxCounts[mailbox.id] ?? -1
             const label = mailbox.display_name || mailbox.email
             return (
               <button
@@ -202,7 +225,7 @@ export default function UniboxSidebar({
                   <span className="material-icons-outlined text-[18px] mr-3 text-slate-400 shrink-0" aria-hidden>email</span>
                   <span className="text-sm font-medium truncate">{label}</span>
                 </div>
-                {count > 0 && (
+                {count >= 0 && (
                   <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold shrink-0 ml-2">
                     {count}
                   </span>
