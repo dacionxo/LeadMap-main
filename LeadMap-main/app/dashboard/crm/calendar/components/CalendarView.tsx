@@ -3,6 +3,7 @@
 import { RefreshCw } from 'lucide-react'
 import moment from 'moment'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import CalendarHelpModal from './CalendarHelpModal'
 
 moment.locale('en')
 
@@ -67,6 +68,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [view, setView] = useState<CalendarViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
     const handleSettingsUpdate = (event: CustomEvent) => {
@@ -564,6 +566,15 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => setShowHelp(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+              aria-label="Calendar hotkeys"
+              title="Calendar hotkeys"
+            >
+              <span className="material-symbols-outlined text-xl">help</span>
+            </button>
             <button
               type="button"
               onClick={handleOpenCalendarSettings}
@@ -1194,6 +1205,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           )
         })()}
       </main>
+
+      <CalendarHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   )
 }

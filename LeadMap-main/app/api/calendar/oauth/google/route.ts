@@ -35,6 +35,10 @@ export async function GET(request: NextRequest) {
 
     // Google OAuth scopes for Calendar
     const scopes = [
+      // OpenID scopes so callback can reliably read user identity (sub/email)
+      'openid',
+      'email',
+      'profile',
       'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/calendar.events',
       'https://www.googleapis.com/auth/calendar.readonly',

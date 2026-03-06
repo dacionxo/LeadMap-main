@@ -69,6 +69,9 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
+    // PostgREST/Supabase default limit is 1000 rows; set explicit high limit so users see all events (no per-user cap)
+    const EVENTS_QUERY_LIMIT = 50000
+
     // Query timed events (non-all-day)
     let timedQuery = supabase
       .from('calendar_events')
@@ -76,6 +79,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .eq('all_day', false)
       .neq('status', 'cancelled')
+      .limit(EVENTS_QUERY_LIMIT)
 
     // Apply time range filters for timed events (using UTC)
     if (start) {
@@ -104,6 +108,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .eq('all_day', true)
       .neq('status', 'cancelled')
+      .limit(EVENTS_QUERY_LIMIT)
 
     // For all-day events, compare dates only (no timezone conversion)
     if (start) {

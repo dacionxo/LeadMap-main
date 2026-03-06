@@ -52,6 +52,9 @@ export async function POST(request: NextRequest) {
       }
 
       const scopes = [
+        'openid',
+        'email',
+        'profile',
         'https://www.googleapis.com/auth/calendar',
         'https://www.googleapis.com/auth/calendar.events',
         'https://www.googleapis.com/auth/userinfo.email',

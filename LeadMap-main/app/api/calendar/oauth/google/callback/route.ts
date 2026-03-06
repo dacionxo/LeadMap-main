@@ -6,6 +6,19 @@ import { getPrimaryCalendarInfo } from '@/lib/calendar-import'
 
 export const runtime = 'nodejs'
 
+function parseJwtPayload(token: string): any | null {
+  try {
+    const [, payloadB64] = token.split('.')
+    if (!payloadB64) return null
+    const normalized = payloadB64.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
+    const json = Buffer.from(padded, 'base64').toString('utf8')
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
 /**
  * GET /api/calendar/oauth/google/callback
  * Handle Google Calendar OAuth callback
@@ -93,43 +106,45 @@ export async function GET(request: NextRequest) {
     }
 
     const tokens = await tokenResponse.json()
-    const { access_token, refresh_token, expires_in } = tokens
+    const { access_token, refresh_token, expires_in, id_token } = tokens
 
-    // Get user info and calendar info (use OpenID endpoint to avoid 307 redirects)
-    const userInfoResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    })
-
-    if (!userInfoResponse.ok) {
+    // Get user identity (sub/email). Prefer id_token (fast, no extra request),
+    // fall back to OpenID userinfo endpoint.
+    let userInfo: any = null
+    if (id_token) {
+      userInfo = parseJwtPayload(id_token)
+    }
+    if (!userInfo) {
+      const userInfoResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+        headers: { Authorization: `Bearer ${access_token}` },
+      })
+      if (userInfoResponse.ok) {
+        userInfo = await userInfoResponse.json()
+      }
+    }
+    const userEmail = userInfo?.email || stateEmail || user.email
+    const providerAccountId = userInfo?.sub ?? userInfo?.id ?? ''
+    if (!providerAccountId) {
+      console.error('Google userinfo missing sub/id:', userInfo)
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=user_info_failed`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=user_info_incomplete`
       )
     }
-
-    const userInfo = await userInfoResponse.json()
-    const userEmail = userInfo.email || stateEmail
 
     // Get primary calendar via CalendarList.list (cal-sync style); fallback to "primary" + email if list fails
     const { calendarId, calendarName } = await getPrimaryCalendarInfo(access_token, userEmail)
 
-    // Save connection to database
+    // Save connection to database.
+    // Prefer service role (bypasses RLS) but fall back to the authenticated client
+    // so connection works even when SUPABASE_SERVICE_ROLE_KEY isn't configured.
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=db_error`
-      )
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
+    const supabase = (supabaseUrl && supabaseServiceKey)
+      ? createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        })
+      : supabaseAuth
 
     const tokenExpiresAt = expires_in
       ? new Date(Date.now() + expires_in * 1000).toISOString()
@@ -144,22 +159,14 @@ export async function GET(request: NextRequest) {
       .eq('email', userEmail)
       .single()
 
-    // Google OpenID userinfo returns "sub" (subject), not "id" - required by calendar_connections.provider_account_id NOT NULL
-    const providerAccountId = userInfo.sub ?? userInfo.id ?? ''
-    if (!providerAccountId) {
-      console.error('Google userinfo missing sub/id:', userInfo)
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/crm/calendar?calendar_error=user_info_incomplete`
-      )
-    }
-
-    const connectionData = {
+    const connectionData: Record<string, any> = {
       user_id: user.id,
       provider: 'google',
       provider_account_id: providerAccountId,
       email: userEmail,
       access_token: access_token,
-      refresh_token: refresh_token || null,
+      // IMPORTANT: preserve existing refresh_token if Google doesn't return it
+      ...(refresh_token ? { refresh_token } : {}),
       token_expires_at: tokenExpiresAt,
       calendar_id: calendarId,
       calendar_name: calendarName,
