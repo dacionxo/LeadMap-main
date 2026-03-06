@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyCronRequestOrError } from '@/lib/cron/auth'
+import { sendEmail } from '@/lib/sendEmail'
 
 export const runtime = 'nodejs'
 
@@ -12,19 +14,8 @@ export const runtime = 'nodejs'
  */
 async function runCronJob(request: NextRequest) {
   try {
-    // Verify service key or cron secret
-    const authHeader = request.headers.get('authorization')
-    const cronSecret = request.headers.get('x-vercel-cron-secret')
-    const serviceKey = request.headers.get('x-service-key')
-    
-    const isValidRequest = 
-      cronSecret === process.env.CRON_SECRET ||
-      serviceKey === process.env.CALENDAR_SERVICE_KEY ||
-      authHeader === `Bearer ${process.env.CALENDAR_SERVICE_KEY}`
-
-    if (!isValidRequest) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authError = verifyCronRequestOrError(request)
+    if (authError) return authError
 
     // Use service role for queries
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -163,49 +154,34 @@ async function sendReminderNotification({
     const eventEnd = new Date(event.end_time)
     const reminderMinutes = reminder.reminder_minutes
 
-    // Use Resend to send email (if configured)
-    if (process.env.RESEND_API_KEY) {
-      const { Resend } = await import('resend')
-      const resend = new Resend(process.env.RESEND_API_KEY)
+    const subject = `Reminder: ${event.title} in ${reminderMinutes} minutes`
+    const calendarUrl = `${(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')}/dashboard/crm/calendar`
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #111827;">Event Reminder</h2>
+        <p><strong>${event.title}</strong></p>
+        <p><strong>Time:</strong> ${eventStart.toLocaleString()} - ${eventEnd.toLocaleString()}</p>
+        ${event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : ''}
+        ${event.description ? `<p>${event.description}</p>` : ''}
+        <p style="color: #6b7280; font-size: 14px; margin-top: 18px;">
+          This is a reminder that your event starts in ${reminderMinutes} minutes.
+        </p>
+        <p style="margin-top: 18px;">
+          <a href="${calendarUrl}" style="background: #2563eb; color: white; padding: 10px 16px; text-decoration: none; border-radius: 8px; display: inline-block;">
+            Open Calendar
+          </a>
+        </p>
+      </div>
+    `
 
-      const subject = `Reminder: ${event.title} in ${reminderMinutes} minutes`
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Event Reminder</h2>
-          <p><strong>${event.title}</strong></p>
-          <p><strong>Time:</strong> ${eventStart.toLocaleString()} - ${eventEnd.toLocaleString()}</p>
-          ${event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : ''}
-          ${event.description ? `<p>${event.description}</p>` : ''}
-          <p style="color: #666; font-size: 14px; margin-top: 20px;">
-            This is a reminder that your event starts in ${reminderMinutes} minutes.
-          </p>
-          <p style="margin-top: 20px;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/crm/calendar" style="background: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-              View Calendar
-            </a>
-          </p>
-        </div>
-      `
-
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'noreply@leadmap.com',
-        to: userEmail,
-        subject,
-        html,
-      })
-
-      return true
-    }
-
-    // Fallback: log reminder (for development)
-    console.log('Reminder notification:', {
-      userEmail,
-      eventTitle: event.title,
-      reminderMinutes,
-      eventTime: eventStart.toISOString(),
+    const ok = await sendEmail({
+      to: userEmail,
+      subject,
+      html,
+      from: process.env.RESEND_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_FROM || undefined,
     })
 
-    return true
+    return ok
   } catch (error) {
     console.error('Error sending reminder notification:', error)
     return false

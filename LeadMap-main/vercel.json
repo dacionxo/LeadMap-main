@@ -46,6 +46,10 @@
       "schedule": "0 2 * * *"
     },
     {
+      "path": "/api/calendar/reminders/process",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/cron/property-map-refresh",
       "schedule": "0 */6 * * *"
     },

@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Calendar, Clock, MapPin, Users, Bell, Settings, Search, MousePointerClick, Move } from 'lucide-react'
+import { useEffect } from 'react'
 
 interface CalendarHelpModalProps {
   isOpen: boolean
@@ -10,155 +10,153 @@ interface CalendarHelpModalProps {
 export default function CalendarHelpModal({ isOpen, onClose }: CalendarHelpModalProps) {
   if (!isOpen) return null
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 mesh-bg" onClick={onClose}>
+      <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm z-40 transition-opacity" />
+
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl z-50 overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="calendar-help-title"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Calendar Help</h2>
+        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-200 dark:border-slate-800 shrink-0">
+          <h2 id="calendar-help-title" className="text-2xl font-bold text-slate-800 dark:text-white">
+            Calendar Help &amp; Shortcuts
+          </h2>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-md transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <span className="material-icons">close</span>
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Getting Started */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
           <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              Getting Started
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <p>• Click on any date to create a new event</p>
-              <p>• Click on an existing event to view or edit details</p>
-              <p>• Drag events to reschedule them</p>
-              <p>• Use the view buttons to switch between Month, Week, Day, and Agenda views</p>
+            <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white">Getting Started</h3>
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+              <p className="font-bold text-slate-800 dark:text-slate-100 mb-4 text-base">
+                Welcome to the Elite CRM Calendar. To get started quickly:
+              </p>
+              <ul className="space-y-3 text-slate-700 dark:text-slate-300 text-sm list-disc pl-5">
+                <li>Sync your external calendars via the Settings &gt; Integrations menu.</li>
+                <li>Use the view toggles (Day, Week, Month) in the header to manage your schedule.</li>
+                <li>Click and drag anywhere on the calendar grid or press 'C' to create a new event.</li>
+                <li>Share your calendar with team members for seamless collaboration.</li>
+              </ul>
             </div>
           </section>
 
-          {/* Creating Events */}
           <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <MousePointerClick className="w-5 h-5 text-green-600" />
-              Creating Events
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <p>• Click the <span className="font-semibold text-gray-900 dark:text-white">+</span> button in the bottom right corner</p>
-              <p>• Or click and drag on the calendar to select a time range</p>
-              <p>• Fill in event details: title, description, location, and reminders</p>
-              <p>• Link events to leads or properties for better tracking</p>
-            </div>
-          </section>
-
-          {/* Searching */}
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <Search className="w-5 h-5 text-purple-600" />
-              Searching Events
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <p>• Click the search icon in the toolbar</p>
-              <p>• Type keywords to search by event title, description, or location</p>
-              <p>• Matching events will be highlighted on the calendar</p>
-              <p>• Clear the search to show all events again</p>
-            </div>
-          </section>
-
-          {/* Managing Events */}
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <Move className="w-5 h-5 text-orange-600" />
-              Managing Events
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <p>• <span className="font-semibold text-gray-900 dark:text-white">Drag and drop</span> events to change their time</p>
-              <p>• <span className="font-semibold text-gray-900 dark:text-white">Resize</span> events by dragging the bottom edge</p>
-              <p>• <span className="font-semibold text-gray-900 dark:text-white">Click</span> an event to view full details</p>
-              <p>• Edit or delete events from the event detail modal</p>
-            </div>
-          </section>
-
-          {/* Settings */}
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-blue-600" />
-              Calendar Settings
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <p>• Access settings via the settings icon in the toolbar</p>
-              <p>• Configure timezone, default event duration, and view preferences</p>
-              <p>• Customize appearance: theme, colors, and view density</p>
-              <p>• Set up notifications and reminders</p>
-            </div>
-          </section>
-
-          {/* Keyboard Shortcuts */}
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white flex items-center gap-2">
+              <span className="material-icons text-slate-400">keyboard</span>
               Keyboard Shortcuts
             </h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                <span className="text-gray-600 dark:text-gray-400">Today</span>
-                <kbd className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs font-mono">T</kbd>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">Today view</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Quickly jump to the current day</div>
+                </div>
+                <kbd className="px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md shadow-sm">T</kbd>
               </div>
-              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                <span className="text-gray-600 dark:text-gray-400">Previous</span>
-                <kbd className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs font-mono">←</kbd>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">Month view</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Switch to a full monthly overview</div>
+                </div>
+                <kbd className="px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md shadow-sm">M</kbd>
               </div>
-              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                <span className="text-gray-600 dark:text-gray-400">Next</span>
-                <kbd className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs font-mono">→</kbd>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">Week view</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Switch to the standard 7-day week</div>
+                </div>
+                <kbd className="px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md shadow-sm">W</kbd>
               </div>
-              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                <span className="text-gray-600 dark:text-gray-400">Month View</span>
-                <kbd className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs font-mono">M</kbd>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">Day view</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Focus on a single day's schedule</div>
+                </div>
+                <kbd className="px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md shadow-sm">D</kbd>
               </div>
-              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                <span className="text-gray-600 dark:text-gray-400">Week View</span>
-                <kbd className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs font-mono">W</kbd>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">Create new event</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Open the new event dialog</div>
+                </div>
+                <kbd className="px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md shadow-sm">C</kbd>
               </div>
-              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                <span className="text-gray-600 dark:text-gray-400">Day View</span>
-                <kbd className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs font-mono">D</kbd>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">Search events</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Focus the calendar search bar</div>
+                </div>
+                <kbd className="px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md shadow-sm">/</kbd>
               </div>
             </div>
           </section>
 
-          {/* Tips */}
           <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <Bell className="w-5 h-5 text-yellow-600" />
-              Tips & Tricks
+            <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white flex items-center gap-2">
+              <span className="material-icons text-slate-400">help_outline</span>
+              Common Questions
             </h3>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <p>• Connect external calendars (Google, Outlook) for unified scheduling</p>
-              <p>• Use event types to color-code your calendar</p>
-              <p>• Set up automated follow-ups after events</p>
-              <p>• Link events to leads or properties for better CRM integration</p>
-              <p>• Use the free/busy feature to avoid double-booking</p>
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">How do I sync my Google Calendar?</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Go to Settings &gt; Integrations &gt; Calendar and click 'Connect Google Calendar'. Follow the authentication steps to sync your events bidirectionally.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Can I share my calendar with team members?</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Yes, click the 'Share' button in the top right corner of the main calendar view to manage permissions for your team members.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">How do I set up recurring events?</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  When creating or editing an event, look for the 'Repeat' dropdown option to set daily, weekly, monthly, or custom recurring rules.
+                </p>
+              </div>
             </div>
           </section>
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium"
+        <div className="px-8 py-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+          <a
+            className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors flex items-center gap-1.5"
+            href="#"
           >
-            Got it!
+            <span className="material-icons text-[18px]">launch</span>
+            View Full Documentation
+          </a>
+          <button
+            type="button"
+            className="bg-primary hover:bg-blue-600 text-white px-6 py-2.5 rounded-full font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-slate-900 w-full sm:w-auto justify-center"
+          >
+            <span className="material-icons text-[20px]">chat</span>
+            Contact Support
           </button>
         </div>
       </div>

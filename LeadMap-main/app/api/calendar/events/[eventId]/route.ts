@@ -282,6 +282,43 @@ export async function PUT(
       )
     }
 
+    // Update reminders for timed events when reminder_minutes or time changes.
+    // Strategy (cal-sync style: deterministic re-derivation):
+    // - Delete pending reminders for this event
+    // - Recreate from event.start_time and event.reminder_minutes
+    try {
+      const reminderMinutes = Array.isArray(event.reminder_minutes) ? event.reminder_minutes : null
+      const hasStart = !!event.start_time
+      const isTimed = !event.all_day
+
+      // Always clear pending reminders on update; create new if applicable.
+      await supabase
+        .from('calendar_reminders')
+        .delete()
+        .eq('event_id', event.id)
+        .eq('user_id', user.id)
+        .in('status', ['pending'])
+
+      if (isTimed && hasStart && reminderMinutes && reminderMinutes.length > 0) {
+        const startUtc = new Date(event.start_time)
+        const newReminders = reminderMinutes.map((minutes: number) => {
+          const reminderTime = new Date(startUtc)
+          reminderTime.setMinutes(reminderTime.getMinutes() - minutes)
+          return {
+            event_id: event.id,
+            user_id: user.id,
+            reminder_minutes: minutes,
+            reminder_time: reminderTime.toISOString(),
+            status: 'pending',
+          }
+        })
+        await supabase.from('calendar_reminders').insert(newReminders)
+      }
+    } catch (reminderErr) {
+      console.error('Error updating calendar reminders:', reminderErr)
+      // non-fatal
+    }
+
     // Sync to Google Calendar if connected (works for both native and Google-synced events)
     try {
       // Prefer the event's own external_calendar_id so we update the correct Google calendar when editing a synced event

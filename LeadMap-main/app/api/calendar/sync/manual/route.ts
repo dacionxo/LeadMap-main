@@ -87,13 +87,47 @@ export async function POST(request: NextRequest) {
     let totalSynced = 0, totalUpdated = 0, totalDeleted = 0, totalSkipped = 0
 
     for (const connection of connections) {
+      let importLogId: string | undefined
       try {
+        // ── Sync logging (Supabase calendar_sync_logs) ───────────────────────
+        // We write one log for import and one for export to match schema:
+        // - import: sync_type = full|incremental, direction = import
+        // - export: sync_type = manual, direction = export
+        const importStartedAt = new Date().toISOString()
+        const initialImportSyncType = connection.sync_token ? 'incremental' : 'full'
+        const { data: importLogRow } = await supabase
+          .from('calendar_sync_logs')
+          .insert([{
+            connection_id: connection.id,
+            user_id: user.id,
+            sync_type: initialImportSyncType,
+            direction: 'import',
+            status: 'running',
+            started_at: importStartedAt,
+          }])
+          .select('id')
+          .single()
+        importLogId = importLogRow?.id as string | undefined
+
+        const failImportLog = async (message: string) => {
+          if (!importLogId) return
+          await supabase
+            .from('calendar_sync_logs')
+            .update({
+              status: 'failed',
+              error_message: message,
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', importLogId)
+        }
+
         const tokenResult = await getValidAccessTokenWithExpiration(
           connection.access_token || '',
           connection.refresh_token || null,
           connection.token_expires_at || null
         )
         if (!tokenResult) {
+          await failImportLog('Token refresh failed')
           syncResults.push({ connectionId: connection.id, email: connection.email, status: 'failed', error: 'Token refresh failed' })
           continue
         }
@@ -122,6 +156,12 @@ export async function POST(request: NextRequest) {
 
         if (fetchResult.syncTokenExpired) {
           await supabase.from('calendar_connections').update({ sync_token: null }).eq('id', connection.id)
+          if (importLogId) {
+            await supabase
+              .from('calendar_sync_logs')
+              .update({ sync_type: 'full' })
+              .eq('id', importLogId)
+          }
           const retry = await fetchGoogleCalendarEvents({
             accessToken: validAccessToken,
             calendarId,
@@ -130,12 +170,14 @@ export async function POST(request: NextRequest) {
             maxPages: 15,
           })
           if (!retry.success) {
+            await failImportLog(retry.error || 'Failed to fetch Google Calendar events')
             syncResults.push({ connectionId: connection.id, email: connection.email, status: 'failed', error: retry.error || 'Failed to fetch Google Calendar events' })
             continue
           }
           allGoogleEvents = retry.events
           nextSyncToken = retry.nextSyncToken
         } else if (!fetchResult.success) {
+          await failImportLog(fetchResult.error || 'Failed to fetch Google Calendar events')
           syncResults.push({ connectionId: connection.id, email: connection.email, status: 'failed', error: fetchResult.error || 'Failed to fetch Google Calendar events' })
           continue
         } else {
@@ -208,10 +250,40 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Mark import log as completed
+        if (importLogId) {
+          await supabase
+            .from('calendar_sync_logs')
+            .update({
+              status: 'completed',
+              events_created: syncedCount,
+              events_updated: updatedCount,
+              events_deleted: deletedCount,
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', importLogId)
+        }
+
         // ── LeadMap → Google (export unsynced native events) ──────────────────
         // Push any LeadMap-native events that don't yet have an external_event_id
         // so they appear in Google Calendar immediately after sync.
         let exportedCount = 0
+        let exportFailed = false
+        const exportStartedAt = new Date().toISOString()
+        const { data: exportLogRow } = await supabase
+          .from('calendar_sync_logs')
+          .insert([{
+            connection_id: connection.id,
+            user_id: user.id,
+            sync_type: 'manual',
+            direction: 'export',
+            status: 'running',
+            started_at: exportStartedAt,
+          }])
+          .select('id')
+          .single()
+        const exportLogId = exportLogRow?.id as string | undefined
+
         try {
           const { data: nativeEvents } = await supabase
             .from('calendar_events')
@@ -236,6 +308,30 @@ export async function POST(request: NextRequest) {
           }
         } catch (exportErr: any) {
           console.error('LeadMap→Google export error:', exportErr)
+          exportFailed = true
+          if (exportLogId) {
+            await supabase
+              .from('calendar_sync_logs')
+              .update({
+                status: 'failed',
+                error_message: exportErr?.message || String(exportErr),
+                completed_at: new Date().toISOString(),
+              })
+              .eq('id', exportLogId)
+          }
+        } finally {
+          if (exportLogId && !exportFailed) {
+            await supabase
+              .from('calendar_sync_logs')
+              .update({
+                status: 'completed',
+                events_created: exportedCount,
+                events_updated: 0,
+                events_deleted: 0,
+                completed_at: new Date().toISOString(),
+              })
+              .eq('id', exportLogId)
+          }
         }
 
         // ── Persist syncToken for next incremental sync ──────────────────────
@@ -263,6 +359,16 @@ export async function POST(request: NextRequest) {
         totalSkipped += skippedCount
       } catch (connErr: any) {
         console.error(`Error syncing connection ${connection.id}:`, connErr)
+        if (importLogId) {
+          await supabase
+            .from('calendar_sync_logs')
+            .update({
+              status: 'failed',
+              error_message: connErr?.message || String(connErr),
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', importLogId)
+        }
         syncResults.push({ connectionId: connection.id, email: connection.email, status: 'failed', error: connErr.message })
       }
     }
