@@ -89,6 +89,7 @@ function getInitial(name: string | null, email: string): string {
 
 export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward }: ThreadViewProps) {
   const [isStarred, setIsStarred] = useState(thread?.starred ?? false)
+  const isDraft = thread?.status === 'draft'
 
   if (loading) {
     return (
@@ -121,45 +122,55 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
       {/* Elite toolbar */}
       <div className="h-20 flex items-center justify-between px-8 border-b border-slate-200/50 dark:border-slate-700/50 flex-shrink-0 backdrop-blur-sm z-10">
         <div className="flex items-center gap-3">
-          <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-full uppercase tracking-wide">
-            Leads
-          </span>
-          <span className="px-3 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-full uppercase tracking-wide">
-            Inbox
-          </span>
+          {isDraft ? (
+            <span className="px-3 py-1 bg-slate-900 text-white dark:bg-slate-800 dark:text-slate-100 text-xs font-bold rounded-full uppercase tracking-wide">
+              Draft
+            </span>
+          ) : (
+            <>
+              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-full uppercase tracking-wide">
+                Leads
+              </span>
+              <span className="px-3 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-full uppercase tracking-wide">
+                Inbox
+              </span>
+            </>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onReply}
-            className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-            aria-label="Reply"
-          >
-            <span className="material-icons-round text-[20px] transform -scale-x-100" aria-hidden>reply</span>
-          </button>
-          <button
-            type="button"
-            className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-            aria-label="Archive"
-          >
-            <span className="material-icons-outlined text-[20px]" aria-hidden>archive</span>
-          </button>
-          <button
-            type="button"
-            className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-            aria-label="Delete"
-          >
-            <span className="material-icons-outlined text-[20px]" aria-hidden>delete</span>
-          </button>
-          <div className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-2" aria-hidden />
-          <button
-            type="button"
-            className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-            aria-label="More options"
-          >
-            <span className="material-icons-outlined text-[20px]" aria-hidden>more_vert</span>
-          </button>
-        </div>
+        {!isDraft && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onReply}
+              className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+              aria-label="Reply"
+            >
+              <span className="material-icons-round text-[20px] transform -scale-x-100" aria-hidden>reply</span>
+            </button>
+            <button
+              type="button"
+              className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+              aria-label="Archive"
+            >
+              <span className="material-icons-outlined text-[20px]" aria-hidden>archive</span>
+            </button>
+            <button
+              type="button"
+              className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+              aria-label="Delete"
+            >
+              <span className="material-icons-outlined text-[20px]" aria-hidden>delete</span>
+            </button>
+            <div className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-2" aria-hidden />
+            <button
+              type="button"
+              className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+              aria-label="More options"
+            >
+              <span className="material-icons-outlined text-[20px]" aria-hidden>more_vert</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Message content - Elite card */}

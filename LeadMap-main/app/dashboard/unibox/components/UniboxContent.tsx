@@ -52,7 +52,7 @@ type FilterStatus =
   | "waiting"
   | "closed"
   | "ignored";
-type FilterFolder = "inbox" | "archived" | "starred";
+type FilterFolder = "inbox" | "archived" | "starred" | "drafts";
 
 interface UniboxContentProps {
   /** When true, render only the three-pane layout (no Elite header/mesh). For use inside dashboard layout. */
@@ -123,6 +123,97 @@ export default function UniboxContent({
     try {
       if (isFirstPage) setLoading(true);
       else setLoadingMore(true);
+
+      // Drafts view: load from email_drafts instead of unibox threads
+      if (folderFilter === "drafts") {
+        try {
+          const response = await fetch(`/api/emails/drafts?limit=100`, {
+            credentials: "include",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            let drafts: any[] = data.drafts || [];
+
+            // Client-side search over subject + preview text + from email
+            if (searchQuery.trim()) {
+              const q = searchQuery.toLowerCase();
+              drafts = drafts.filter((d) => {
+                const subject = (d.subject || "").toLowerCase();
+                const preview = (d.preview_text || "").toLowerCase();
+                const fromEmail = (d.from_email || "").toLowerCase();
+                return (
+                  subject.includes(q) ||
+                  preview.includes(q) ||
+                  fromEmail.includes(q)
+                );
+              });
+            }
+
+            const mapped: Thread[] = drafts.map((d: any) => {
+              const fallbackDate = new Date().toISOString();
+              const lastMessageAt = d.updated_at || d.created_at || fallbackDate;
+              const rawHtml: string = d.html_content || "";
+              const plainFromHtml = rawHtml
+                .replace(/<style[\s\S]*?<\/style>/gi, "")
+                .replace(/<[^>]+>/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+              const snippetSource =
+                d.preview_text || plainFromHtml || "(Empty draft)";
+              const snippet =
+                snippetSource.length > 220
+                  ? `${snippetSource.slice(0, 217)}...`
+                  : snippetSource;
+
+              return {
+                id: `draft-${d.id}`,
+                subject: d.subject || "(Draft)",
+                mailbox: {
+                  id: d.mailbox_id || "draft",
+                  email: d.from_email || "",
+                  display_name: d.from_name || d.from_email || null,
+                  provider: "draft",
+                },
+                status: "draft",
+                unread: false,
+                unreadCount: 0,
+                starred: false,
+                archived: false,
+                lastMessage: {
+                  direction: "outbound",
+                  snippet,
+                  received_at: lastMessageAt,
+                  read: true,
+                },
+                lastMessageAt,
+                contactId: null,
+                listingId: null,
+                campaignId: null,
+                messageCount: 1,
+                createdAt: d.created_at || null,
+                updatedAt: d.updated_at || null,
+              };
+            });
+
+            setTotalThreadCount(mapped.length);
+            setHasMore(false);
+
+            if (isFirstPage) {
+              setThreads(mapped);
+              if (!selectedThread && mapped.length > 0) {
+                handleThreadSelect(mapped[0]);
+              }
+            } else {
+              setThreads(mapped);
+            }
+          }
+        } finally {
+          if (isFirstPage) setLoading(false);
+          else setLoadingMore(false);
+        }
+        return;
+      }
+
       const params = new URLSearchParams();
       if (selectedMailboxId) params.append("mailboxId", selectedMailboxId);
       if (statusFilter !== "all") params.append("status", statusFilter);
@@ -165,12 +256,95 @@ export default function UniboxContent({
   const fetchThreadDetails = async (threadId: string) => {
     try {
       setLoadingThread(true);
-      const response = await fetch(`/api/unibox/threads/${threadId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setThreadDetails(data.thread);
+      // Draft detail view uses email_drafts instead of unibox threads
+      if (threadId.startsWith("draft-")) {
+        const draftId = threadId.replace("draft-", "");
+        const response = await fetch(`/api/emails/drafts/${draftId}`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const d = data.draft;
+          if (d) {
+            const fallbackDate = new Date().toISOString();
+            const lastMessageAt =
+              d.updated_at || d.created_at || fallbackDate;
+            const rawHtml: string = d.html_content || "";
+            const plainFromHtml = rawHtml
+              .replace(/<style[\s\S]*?<\/style>/gi, "")
+              .replace(/<[^>]+>/g, " ")
+              .replace(/\s+/g, " ")
+              .trim();
+            const snippetSource =
+              d.preview_text || plainFromHtml || "(Empty draft)";
+            const snippet =
+              snippetSource.length > 220
+                ? `${snippetSource.slice(0, 217)}...`
+                : snippetSource;
+
+            const toEmails: string[] = Array.isArray(d.to_emails)
+              ? d.to_emails
+              : [];
+
+            const message = {
+              id: `draft-msg-${d.id}`,
+              direction: "outbound" as const,
+              subject: d.subject || "(Draft)",
+              snippet,
+              body_html: d.html_content || "",
+              body_plain: plainFromHtml,
+              received_at: null,
+              sent_at: lastMessageAt,
+              read: true,
+              email_participants: [
+                {
+                  type: "from" as const,
+                  email: d.from_email || "",
+                  name: d.from_name || null,
+                },
+                ...toEmails.map((email: string) => ({
+                  type: "to" as const,
+                  email,
+                  name: null as string | null,
+                })),
+              ],
+              email_attachments: [],
+            };
+
+            const threadDetail = {
+              id: threadId,
+              subject: d.subject || "(Draft)",
+              status: "draft",
+              unread: false,
+              starred: false,
+              archived: false,
+              mailbox: {
+                id: d.mailbox_id || "draft",
+                email: d.from_email || "",
+                display_name: d.from_name || d.from_email || null,
+                provider: "draft",
+              },
+              messages: [message],
+              lastMessageAt,
+              contact: undefined,
+              listing: undefined,
+              campaign: undefined,
+            };
+            setThreadDetails(threadDetail);
+          } else {
+            setThreadDetails(null);
+          }
+        } else {
+          setThreadDetails(null);
+        }
       } else {
-        setThreadDetails(null);
+        const response = await fetch(`/api/unibox/threads/${threadId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setThreadDetails(data.thread);
+        } else {
+          setThreadDetails(null);
+        }
       }
     } catch (error) {
       console.error("[UniboxContent] Error fetching thread details:", error);

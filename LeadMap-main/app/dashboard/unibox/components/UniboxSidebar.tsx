@@ -9,7 +9,7 @@ interface Mailbox {
 }
 
 type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
-type FilterFolder = 'inbox' | 'archived' | 'starred'
+type FilterFolder = 'inbox' | 'archived' | 'starred' | 'drafts'
 
 interface UniboxSidebarProps {
   mailboxes: Mailbox[]
@@ -94,6 +94,18 @@ export default function UniboxSidebar({
         >
           <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>star_border</span>
           <span className="font-medium hidden lg:inline">Starred</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onFolderFilterChange('drafts')}
+          className={`w-full flex items-center px-4 py-3 rounded-2xl transition-colors ${
+            folderFilter === 'drafts'
+              ? 'bg-slate-900/90 text-white dark:bg-slate-800'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>drafts</span>
+          <span className="font-medium hidden lg:inline">Drafts</span>
         </button>
         <button
           type="button"
