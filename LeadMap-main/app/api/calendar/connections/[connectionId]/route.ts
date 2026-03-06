@@ -7,7 +7,8 @@ export const runtime = 'nodejs'
 
 /**
  * DELETE /api/calendar/connections/[connectionId]
- * Delete a calendar connection
+ * Delete a calendar connection and all calendar events that were associated
+ * with that connection (synced from or pushed to that Google calendar).
  */
 export async function DELETE(
   request: NextRequest,
@@ -45,10 +46,10 @@ export async function DELETE(
       },
     })
 
-    // Verify connection belongs to user
+    // Fetch connection (need calendar_id to delete associated events)
     const { data: connection, error: fetchError } = await supabase
       .from('calendar_connections')
-      .select('id')
+      .select('id, calendar_id')
       .eq('id', connectionId)
       .eq('user_id', user.id)
       .single()
@@ -58,6 +59,20 @@ export async function DELETE(
         { error: 'Connection not found' },
         { status: 404 }
       )
+    }
+
+    // Delete all calendar events associated with this connection (synced from or pushed to this calendar)
+    if (connection.calendar_id) {
+      const { error: eventsError } = await supabase
+        .from('calendar_events')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('external_calendar_id', connection.calendar_id)
+
+      if (eventsError) {
+        console.error('Error deleting events for connection:', eventsError)
+        // Continue to delete the connection; events cleanup can be retried or done by cron
+      }
     }
 
     // Delete connection

@@ -85,6 +85,7 @@ interface GoogleCalendarEvent {
 
 /**
  * Calendar event structure for database
+ * Synced events use the same shape as user-created events so they propagate as normal events.
  */
 interface CalendarEvent {
   id?: string
@@ -99,10 +100,12 @@ interface CalendarEvent {
   end_date?: string | null
   location?: string | null
   timezone?: string | null
+  event_timezone?: string | null
   external_event_id: string
   external_calendar_id: string
   sync_status: string
   last_synced_at: string
+  status: string
   attendees?: string | null
   organizer_email?: string | null
   organizer_name?: string | null
@@ -420,11 +423,22 @@ function parseGoogleEventToDatabase(
     end_date: endDate,
     location,
     timezone: timezone,
+    event_timezone: timezone,
     external_event_id: googleEvent.id,
     external_calendar_id: calendarId,
     sync_status: 'synced',
     last_synced_at: new Date().toISOString(),
-    attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees) : null,
+    status: 'scheduled',
+    attendees: googleEvent.attendees?.length
+      ? JSON.stringify(
+          googleEvent.attendees.map((a: { email: string; displayName?: string; responseStatus?: string }) => ({
+            email: a.email,
+            name: a.displayName || a.email,
+            status: a.responseStatus || 'needsAction',
+            organizer: false,
+          }))
+        )
+      : '[]',
     organizer_email: googleEvent.organizer?.email || null,
     organizer_name: googleEvent.organizer?.displayName || null,
     recurrence_rule: googleEvent.recurrence?.[0] || null,

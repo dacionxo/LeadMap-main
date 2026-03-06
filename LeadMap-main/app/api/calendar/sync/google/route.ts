@@ -220,7 +220,8 @@ export async function POST(request: NextRequest) {
         // Parse recurrence rule if present
         const recurrenceRule = googleEvent.recurrence?.[0] || null
 
-        // Create or update event in database
+        // Write as normal calendar events (same shape as user-created) so they propagate identically
+        const eventTimezone = googleEvent.start?.timeZone || userTimezone
         const eventData = {
           user_id: userId,
           title,
@@ -232,12 +233,13 @@ export async function POST(request: NextRequest) {
           start_date: startDate,
           end_date: endDate,
           location,
-          timezone: googleEvent.start?.timeZone || userTimezone,
+          timezone: eventTimezone,
+          event_timezone: eventTimezone,
           external_event_id: googleEvent.id,
           external_calendar_id: calendarId,
           sync_status: 'synced',
           last_synced_at: new Date().toISOString(),
-          attendees: attendees.length > 0 ? attendees : [],
+          attendees: attendees.length > 0 ? JSON.stringify(attendees) : '[]',
           organizer_email: googleEvent.organizer?.email || null,
           organizer_name: googleEvent.organizer?.displayName || null,
           recurrence_rule: recurrenceRule,

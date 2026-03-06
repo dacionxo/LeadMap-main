@@ -129,7 +129,7 @@ export default function CreateEventModal({
           location: event.location || '',
           conferencingLink: event.conferencing_link || '',
           notes: event.notes || '',
-          reminderMinutes: event.reminder_minutes || [],
+          reminderMinutes: Array.isArray(event.reminder_minutes) ? event.reminder_minutes : (event.reminder_minutes ? [].concat(event.reminder_minutes) : []),
         })
       }
     } catch (error) {

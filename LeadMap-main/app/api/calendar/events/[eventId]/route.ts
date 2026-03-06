@@ -217,22 +217,25 @@ export async function PUT(
     if (body.allDay !== undefined) updateData.all_day = body.allDay
 
     // Handle time/date fields based on all_day status
+    // Note: DB has NOT NULL on start_time/end_time, so for all-day we set them to start/end of day UTC
     if (isAllDay) {
-      // All-day events: use dates only
+      // All-day events: use dates only; keep start_time/end_time as start/end of day UTC for DB constraint
       if (body.startDate !== undefined) {
         updateData.start_date = body.startDate
-        updateData.start_time = null
+        updateData.start_time = new Date(`${body.startDate}T00:00:00Z`).toISOString()
       } else if (body.startTime !== undefined) {
-        updateData.start_date = body.startTime.split('T')[0]
-        updateData.start_time = null
+        const datePart = body.startTime.split('T')[0]
+        updateData.start_date = datePart
+        updateData.start_time = new Date(`${datePart}T00:00:00Z`).toISOString()
       }
       
       if (body.endDate !== undefined) {
         updateData.end_date = body.endDate
-        updateData.end_time = null
+        updateData.end_time = new Date(`${body.endDate}T23:59:59.999Z`).toISOString()
       } else if (body.endTime !== undefined) {
-        updateData.end_date = body.endTime.split('T')[0]
-        updateData.end_time = null
+        const datePart = body.endTime.split('T')[0]
+        updateData.end_date = datePart
+        updateData.end_time = new Date(`${datePart}T23:59:59.999Z`).toISOString()
       }
     } else {
       // Timed events: Convert from user's timezone to UTC
@@ -279,15 +282,33 @@ export async function PUT(
       )
     }
 
-    // Sync to Google Calendar if connected
+    // Sync to Google Calendar if connected (works for both native and Google-synced events)
     try {
-      const { data: googleConnection } = await supabase
-        .from('calendar_connections')
-        .select('id, access_token, refresh_token, token_expires_at, calendar_id, sync_enabled')
-        .eq('user_id', user.id)
-        .eq('provider', 'google')
-        .eq('sync_enabled', true)
-        .single()
+      // Prefer the event's own external_calendar_id so we update the correct Google calendar when editing a synced event
+      const calendarIdToUse = existingEvent.external_calendar_id || undefined
+      let googleConnection: { id: string; access_token: string; refresh_token: string | null; token_expires_at: string | null; calendar_id: string } | null = null
+
+      if (calendarIdToUse) {
+        const { data: connByCalendar } = await supabase
+          .from('calendar_connections')
+          .select('id, access_token, refresh_token, token_expires_at, calendar_id')
+          .eq('user_id', user.id)
+          .eq('provider', 'google')
+          .eq('sync_enabled', true)
+          .eq('calendar_id', calendarIdToUse)
+          .single()
+        googleConnection = connByCalendar
+      }
+      if (!googleConnection) {
+        const { data: connDefault } = await supabase
+          .from('calendar_connections')
+          .select('id, access_token, refresh_token, token_expires_at, calendar_id')
+          .eq('user_id', user.id)
+          .eq('provider', 'google')
+          .eq('sync_enabled', true)
+          .single()
+        googleConnection = connDefault
+      }
 
       if (googleConnection && googleConnection.calendar_id) {
         const validAccessToken = await getValidAccessToken(
@@ -297,10 +318,11 @@ export async function PUT(
         )
 
         if (validAccessToken) {
+          const calendarIdForPush = existingEvent.external_calendar_id || googleConnection.calendar_id
           const syncResult = await pushEventToGoogleCalendar(
             event,
             validAccessToken,
-            googleConnection.calendar_id
+            calendarIdForPush
           )
 
           if (syncResult.success) {

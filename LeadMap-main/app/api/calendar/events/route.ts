@@ -11,6 +11,8 @@ export const runtime = 'nodejs'
  * Fetch calendar events for the authenticated user.
  * Includes both native (in-app) events and events synced from Google Calendar
  * (all stored in calendar_events with user_id = authenticated user).
+ * Synced events are written with the same shape as native events and are returned
+ * identically—no filtering by sync_status or external_event_id.
  *
  * All times are stored and returned in UTC (ISO 8601 format).
  * The frontend is responsible for converting to the user's timezone for display.
