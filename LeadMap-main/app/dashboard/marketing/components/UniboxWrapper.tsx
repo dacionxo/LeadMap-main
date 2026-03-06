@@ -310,6 +310,42 @@ export default function UniboxWrapper() {
     setComposerMode(null);
   };
 
+  const handleDeleteDraft = async (thread?: UniboxThread | null) => {
+    const target = thread ?? selectedThread;
+    if (!target || !target.id.startsWith("draft-")) return;
+    const draftId = target.id.replace("draft-", "");
+    const targetId = target.id;
+
+    // Optimistic update: remove from UI instantly (like deals kanban)
+    const prevThreads = threads;
+    const prevSelected = selectedThread;
+    const prevDetails = threadDetails;
+
+    setThreads((t) => t.filter((x) => x.id !== targetId));
+    if (selectedThread?.id === targetId) {
+      setSelectedThread(null);
+      setThreadDetails(null);
+    }
+
+    try {
+      const response = await fetch(`/api/emails/drafts/${draftId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data && data.error) || "Failed to delete draft");
+      }
+      fetchThreads();
+    } catch (error) {
+      console.error("[UniboxWrapper] Error deleting draft:", error);
+      setThreads(prevThreads);
+      setSelectedThread(prevSelected);
+      setThreadDetails(prevDetails);
+      alert(error instanceof Error ? error.message : "Failed to delete draft. Please try again.");
+    }
+  };
+
   const handleComposerSend = async (data: any) => {
     if (!selectedThread) return;
 
@@ -415,6 +451,7 @@ export default function UniboxWrapper() {
               selectedThread={selectedThread}
               onThreadSelect={handleThreadSelect}
               loading={loading}
+              onDeleteDraft={folderFilter === "drafts" ? handleDeleteDraft : undefined}
             />
           </div>
         </section>
@@ -428,6 +465,7 @@ export default function UniboxWrapper() {
               onReply={handleReply}
               onReplyAll={handleReplyAll}
               onForward={handleForward}
+              onDeleteDraft={() => handleDeleteDraft()}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">

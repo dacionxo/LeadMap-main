@@ -176,7 +176,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onDeleteDraft}
+              onClick={() => onDeleteDraft?.()}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50 text-xs font-semibold transition-colors"
             >
               <span className="material-icons-outlined text-[16px]" aria-hidden>delete</span>

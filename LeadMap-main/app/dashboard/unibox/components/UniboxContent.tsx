@@ -379,11 +379,23 @@ export default function UniboxContent({
     setComposerMode(null);
   };
 
-  const handleDeleteDraft = async () => {
-    if (!selectedThread || !selectedThread.id.startsWith("draft-")) return;
-    const draftId = selectedThread.id.replace("draft-", "");
-    const confirmed = window.confirm("Delete this draft permanently?");
-    if (!confirmed) return;
+  const handleDeleteDraft = async (threadOrNull?: Thread | null) => {
+    const target = threadOrNull ?? selectedThread;
+    if (!target || !target.id.startsWith("draft-")) return;
+    const draftId = target.id.replace("draft-", "");
+    const targetId = target.id;
+
+    // Optimistic update: remove from UI instantly (like deals kanban)
+    const prevThreads = threads;
+    const prevSelected = selectedThread;
+    const prevDetails = threadDetails;
+
+    setThreads((t) => t.filter((x) => x.id !== targetId));
+    setTotalThreadCount((c) => Math.max(0, c - 1));
+    if (selectedThread?.id === targetId) {
+      setSelectedThread(null);
+      setThreadDetails(null);
+    }
 
     try {
       const response = await fetch(`/api/emails/drafts/${draftId}`, {
@@ -392,22 +404,16 @@ export default function UniboxContent({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        const message = (data && (data.error as string)) || "Failed to delete draft";
-        alert(message);
-        return;
+        throw new Error((data && data.error) || "Failed to delete draft");
       }
-
-      // Immediately update local UI (clear selection first so refresh handler doesn't fetch deleted draft)
-      setSelectedThread(null);
-      setThreadDetails(null);
-      setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
-      setTotalThreadCount((prev) => Math.max(0, prev - 1));
-
-      // Refetch list from Supabase (don't use unibox-refresh - it would call fetchThreadDetails with stale selectedThread → GET 404)
       fetchThreads();
     } catch (error) {
       console.error("[UniboxContent] Error deleting draft:", error);
-      alert("Failed to delete draft. Please try again.");
+      setThreads(prevThreads);
+      setTotalThreadCount((c) => prevThreads.length);
+      setSelectedThread(prevSelected);
+      setThreadDetails(prevDetails);
+      alert(error instanceof Error ? error.message : "Failed to delete draft. Please try again.");
     }
   };
 
@@ -516,6 +522,7 @@ export default function UniboxContent({
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={handleLoadMore}
+            onDeleteDraft={folderFilter === "drafts" ? (t) => handleDeleteDraft(t) : undefined}
           />
         </div>
       </section>

@@ -11,6 +11,8 @@ interface ThreadListProps {
   hasMore?: boolean
   loadingMore?: boolean
   onLoadMore?: () => void
+  /** One-click delete for drafts; when provided, shows delete icon on draft rows */
+  onDeleteDraft?: (thread: UniboxThread) => void
 }
 
 const AVATAR_COLORS = [
@@ -65,6 +67,7 @@ export default function ThreadList({
   hasMore = false,
   loadingMore = false,
   onLoadMore,
+  onDeleteDraft,
 }: ThreadListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const loadMore = useCallback(() => {
@@ -114,10 +117,11 @@ export default function ThreadList({
         const initials = getInitials(thread.subject, thread.mailbox.email)
         const avatarColor = getAvatarColor(index)
 
+        const isDraft = thread.id.startsWith('draft-') && onDeleteDraft
+
         return (
-          <button
+          <div
             key={thread.id}
-            type="button"
             onClick={() => onThreadSelect(thread)}
             className={`group relative w-full text-left px-5 py-5 cursor-pointer transition-all border-b border-slate-100/50 dark:border-slate-700/50 ${
               isSelected
@@ -150,9 +154,25 @@ export default function ThreadList({
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate pr-2">
                     {thread.subject || '(No Subject)'}
                   </h4>
-                  <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap shrink-0">
-                    {formatDate(thread.lastMessageAt)}
-                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isDraft && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          e.preventDefault()
+                          onDeleteDraft(thread)
+                        }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        aria-label="Delete draft"
+                      >
+                        <span className="material-icons-outlined text-[18px]" aria-hidden>delete_outline</span>
+                      </button>
+                    )}
+                    <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">
+                      {formatDate(thread.lastMessageAt)}
+                    </span>
+                  </div>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-1">
                   {thread.mailbox.display_name || thread.mailbox.email}
@@ -162,7 +182,7 @@ export default function ThreadList({
                 </p>
               </div>
             </div>
-          </button>
+          </div>
         )
       })}
       <div ref={sentinelRef} className="h-2 flex-shrink-0" aria-hidden />
