@@ -1119,6 +1119,19 @@
   position: relative;
   min-height: 0;
 }
+.day-grid-container::-webkit-scrollbar {
+  width: 4px;
+}
+.day-grid-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.day-grid-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* light grey scrollbar, consistent with app */
+  border-radius: 20px;
+}
+.dark .day-grid-container::-webkit-scrollbar-thumb {
+  background-color: #475569;
+}
 .day-grid-container .time-column,
 .day-grid-container .day-column {
   min-height: 2040px; /* 24 hours × 85px so full day is scrollable */

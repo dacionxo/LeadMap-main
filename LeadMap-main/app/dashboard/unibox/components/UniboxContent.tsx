@@ -282,8 +282,8 @@ export default function UniboxContent({
       />
 
       {/* Thread list column */}
-      <section className="w-[400px] flex-shrink-0 flex-col border-r border-slate-200/50 dark:border-slate-700/50 bg-white/20 dark:bg-slate-900/20 backdrop-blur-sm hidden md:flex md:flex-col">
-        <div className="h-20 flex items-center px-6 border-b border-slate-200/50 dark:border-slate-700/50">
+      <section className="hidden md:flex md:flex-col w-[400px] flex-shrink-0 border-r border-gray-200/80 dark:border-gray-800/80 bg-white dark:bg-slate-900">
+        <div className="h-20 flex items-center px-6 border-b border-gray-200/80 dark:border-gray-800/80 bg-white dark:bg-slate-900">
           <div className="relative w-full">
             <span
               className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 material-icons-round text-xl pointer-events-none"
@@ -296,7 +296,7 @@ export default function UniboxContent({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search threads..."
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-unibox-primary/50 focus:border-unibox-primary transition-all placeholder-slate-400 shadow-sm"
+              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-unibox-primary/50 focus:border-unibox-primary transition-all placeholder-slate-400 shadow-sm"
               aria-label="Search threads"
             />
           </div>
@@ -315,7 +315,7 @@ export default function UniboxContent({
       </section>
 
       {/* Thread view column */}
-      <section className="flex-1 flex flex-col bg-slate-50/50 dark:bg-slate-900/50 relative overflow-hidden min-w-0">
+      <section className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 relative overflow-hidden min-w-0 border-l border-gray-100 dark:border-slate-800">
         {selectedThread ? (
           <ThreadView
             thread={threadDetails}

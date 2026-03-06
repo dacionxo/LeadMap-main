@@ -40,6 +40,10 @@ CREATE TABLE IF NOT EXISTS user_calendar_settings (
   notifications_sms BOOLEAN DEFAULT false,
   notification_sound_enabled BOOLEAN DEFAULT true,
   
+  -- Onboarding & Calendar Type
+  calendar_onboarding_complete BOOLEAN DEFAULT FALSE,
+  calendar_type TEXT DEFAULT NULL CHECK (calendar_type IN ('native', 'google', 'microsoft365', 'outlook', 'exchange')),
+  
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

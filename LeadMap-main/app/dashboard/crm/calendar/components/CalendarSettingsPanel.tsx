@@ -595,7 +595,6 @@ function NotificationSettings({
         {[
           { key: 'notificationsEmail', label: 'Email notifications', desc: 'Receive event notifications via email' },
           { key: 'notificationsInApp', label: 'In-app notifications', desc: 'Show notifications in the application' },
-          { key: 'notificationsSms', label: 'SMS notifications', desc: 'Receive notifications via text message' },
           { key: 'notificationSoundEnabled', label: 'Notification sound', desc: 'Play sound when notifications arrive' },
         ].map((item) => (
           <div key={item.key} className="flex items-center justify-between">
@@ -730,3 +729,4 @@ function AccessibilitySection({
     </div>
   )
 }
+

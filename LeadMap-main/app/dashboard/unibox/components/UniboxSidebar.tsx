@@ -53,7 +53,7 @@ export default function UniboxSidebar({
   }
 
   return (
-    <aside className="w-20 lg:w-64 flex-shrink-0 flex flex-col border-r border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40">
+    <aside className="w-20 lg:w-64 flex-shrink-0 flex flex-col border-r border-gray-200/80 dark:border-gray-800/80 bg-white dark:bg-slate-900">
       <div className="px-4 lg:px-6 pt-8 pb-6">
         <button
           type="button"
