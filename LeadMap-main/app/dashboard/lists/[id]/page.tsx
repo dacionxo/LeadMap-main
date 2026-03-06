@@ -1654,27 +1654,7 @@ function ListDetailContent() {
                           <div className="flex flex-col sm:flex-row gap-4 pt-2">
                             <button
                               type="button"
-                              className="flex-[3] flex items-center justify-center gap-3 bg-primary text-white text-sm font-semibold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
-                              onClick={() => {
-                                const identifier =
-                                  selectedListing.listing_id ||
-                                  (selectedListing as any).property_url;
-                                if (!identifier) return;
-                                router.push(
-                                  `/dashboard/prospect-enrich?search=${encodeURIComponent(
-                                    String(identifier)
-                                  )}`
-                                );
-                              }}
-                            >
-                              Check Availability
-                              <span className="material-symbols-outlined text-[18px]">
-                                arrow_forward
-                              </span>
-                            </button>
-                            <button
-                              type="button"
-                              className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                              className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-primary text-white text-sm font-semibold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
                               onClick={() => {
                                 const identifier =
                                   selectedListing.listing_id ||
@@ -1690,7 +1670,7 @@ function ListDetailContent() {
                               <span className="material-symbols-outlined text-[18px]">
                                 map
                               </span>
-                              View on Map
+                              View On Map
                             </button>
                           </div>
                           </div>
