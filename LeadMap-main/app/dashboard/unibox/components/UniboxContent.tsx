@@ -379,6 +379,35 @@ export default function UniboxContent({
     setComposerMode(null);
   };
 
+  const handleDeleteDraft = useCallback(async () => {
+    if (!selectedThread || !selectedThread.id.startsWith("draft-")) return;
+    const draftId = selectedThread.id.replace("draft-", "");
+    const confirmed = window.confirm("Delete this draft permanently?");
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/emails/drafts/${draftId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const message = (data && (data.error as string)) || "Failed to delete draft";
+        alert(message);
+        return;
+      }
+
+      // Remove from local state and clear selection
+      setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
+      setSelectedThread(null);
+      setThreadDetails(null);
+      setTotalThreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("[UniboxContent] Error deleting draft:", error);
+      alert("Failed to delete draft. Please try again.");
+    }
+  }, [selectedThread]);
+
   const handleComposerSend = async (data: any) => {
     if (!selectedThread) return;
     try {
@@ -497,6 +526,7 @@ export default function UniboxContent({
             onReply={handleReply}
             onReplyAll={handleReplyAll}
             onForward={handleForward}
+              onDeleteDraft={handleDeleteDraft}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">

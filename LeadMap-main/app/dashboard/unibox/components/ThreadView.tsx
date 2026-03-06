@@ -53,6 +53,7 @@ interface ThreadViewProps {
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
+  onDeleteDraft?: () => void
 }
 
 function formatDate(dateString: string | null): string {
@@ -87,7 +88,7 @@ function getInitial(name: string | null, email: string): string {
   return '?'
 }
 
-export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward }: ThreadViewProps) {
+export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft }: ThreadViewProps) {
   const [isStarred, setIsStarred] = useState(thread?.starred ?? false)
   const isDraft = thread?.status === 'draft'
 
@@ -168,6 +169,18 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
               aria-label="More options"
             >
               <span className="material-icons-outlined text-[20px]" aria-hidden>more_vert</span>
+            </button>
+          </div>
+        )}
+        {isDraft && onDeleteDraft && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onDeleteDraft}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50 text-xs font-semibold transition-colors"
+            >
+              <span className="material-icons-outlined text-[16px]" aria-hidden>delete</span>
+              Delete draft
             </button>
           </div>
         )}
