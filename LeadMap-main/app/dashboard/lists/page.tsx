@@ -202,15 +202,6 @@ function ListsPageContent() {
                           aria-label="Search lists"
                         />
                       </div>
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                        aria-label="View options"
-                      >
-                        <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">grid_view</span>
-                        View
-                        <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
-                      </button>
                       <div className="relative">
                         <button
                           type="button"
@@ -257,14 +248,6 @@ function ListsPageContent() {
                           </>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-600 rounded-full text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                        aria-label="Filter options"
-                      >
-                        <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">filter_list</span>
-                        Filter
-                      </button>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="text-sm text-slate-500 dark:text-slate-400 font-medium bg-gray-50/50 dark:bg-slate-800/50 px-3 py-1 rounded-full border border-gray-100 dark:border-slate-700">
