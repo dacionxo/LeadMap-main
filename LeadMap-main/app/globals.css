@@ -1055,6 +1055,19 @@
   position: relative;
   min-height: 0;
 }
+.week-grid-container::-webkit-scrollbar {
+  width: 4px;
+}
+.week-grid-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.week-grid-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* light grey like Day section */
+  border-radius: 20px;
+}
+.dark .week-grid-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* keep light in dark mode (requested) */
+}
 .week-grid-container .time-column,
 .week-grid-container .day-column {
   min-height: 1440px; /* 24 hours × 60px so full day is scrollable */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppNavSidebar from "../../components/AppNavSidebar";
 import DashboardLayout from "../../components/DashboardLayout";
 import DealsNavbar from "../deals/components/DealsNavbar";
@@ -225,6 +225,22 @@ function CalendarPageContent() {
     window.location.reload();
   };
 
+  const handleCreateEventShortcut = useCallback(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setSeconds(0, 0);
+    const minutes = start.getMinutes();
+    const roundedUp = Math.ceil(minutes / 15) * 15;
+    start.setMinutes(roundedUp % 60);
+    if (roundedUp >= 60) {
+      start.setHours(start.getHours() + 1);
+    }
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    setCreateModalDate(start);
+    setCreateModalEndDate(end);
+    setIsCreateModalOpen(true);
+  }, [setCreateModalDate, setCreateModalEndDate, setIsCreateModalOpen]);
+
   return (
     <div className="-mt-[30px]">
       <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
@@ -258,6 +274,7 @@ function CalendarPageContent() {
                   onEventClick={handleEventClick}
                   onDateSelect={handleDateSelect}
                   calendarType={calendarType}
+                  onCreateEvent={handleCreateEventShortcut}
                 />
               )}
             </div>

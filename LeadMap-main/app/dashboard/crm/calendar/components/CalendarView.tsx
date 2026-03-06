@@ -1,8 +1,8 @@
 'use client'
 
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Search, X } from 'lucide-react'
 import moment from 'moment'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import CalendarHelpModal from './CalendarHelpModal'
 
 moment.locale('en')
@@ -47,6 +47,7 @@ interface CalendarViewProps {
   }) => void
   onDateSelect?: (start: Date, end: Date) => void
   calendarType?: string | null
+  onCreateEvent?: () => void
 }
 
 type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda'
@@ -61,7 +62,25 @@ const TIME_GRID_END_HOUR = 23
 const MINUTES_PER_HOUR = 60
 const PIXELS_PER_MINUTE_DAY = 85 / 60
 
-export default function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) {
+function isEditableElement(target: EventTarget | null) {
+  const el = target as HTMLElement | null
+  if (!el) return false
+  const tag = el.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true
+  if (el.isContentEditable) return true
+  if (el.closest('input, textarea, select, [contenteditable="true"]')) return true
+  return false
+}
+
+function isInModal(target: EventTarget | null) {
+  const el = target as HTMLElement | null
+  if (!el) return false
+  if (el.closest('[role="dialog"]')) return true
+  if (el.closest('[aria-modal="true"]')) return true
+  return false
+}
+
+export default function CalendarView({ onEventClick, onDateSelect, onCreateEvent }: CalendarViewProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState<any>(null)
@@ -69,6 +88,8 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
   const [view, setView] = useState<CalendarViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [showHelp, setShowHelp] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const handleSettingsUpdate = (event: CustomEvent) => {
@@ -284,6 +305,23 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     }
   }, [activeRange.end, activeRange.start, formatEventForCalendar, settings?.show_declined_events])
 
+  const visibleEvents = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return events
+    return events.filter((event) => {
+      const title = event.title?.toLowerCase() || ''
+      const description = event.resource?.description?.toLowerCase() || ''
+      const location = event.resource?.location?.toLowerCase() || ''
+      const eventType = event.resource?.eventType?.toLowerCase() || ''
+      return (
+        title.includes(q) ||
+        description.includes(q) ||
+        location.includes(q) ||
+        eventType.includes(q)
+      )
+    })
+  }, [events, searchQuery])
+
   useEffect(() => {
     if (!settingsLoaded) return
     fetchEvents()
@@ -323,6 +361,64 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     return () => clearInterval(id)
   }, [fetchEvents, settingsLoaded])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const focusSearch = () => {
+      const el = searchInputRef.current
+      if (!el) return
+      el.focus()
+      try {
+        el.select()
+      } catch {}
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (isInModal(e.target)) return
+
+      const key = e.key
+
+      if (key === '/' && !e.shiftKey) {
+        if (isEditableElement(e.target)) return
+        e.preventDefault()
+        focusSearch()
+        return
+      }
+
+      if (isEditableElement(e.target)) return
+
+      if (key === 't' || key === 'T') {
+        e.preventDefault()
+        setCurrentDate(new Date())
+        return
+      }
+      if (key === 'm' || key === 'M') {
+        e.preventDefault()
+        setView('month')
+        return
+      }
+      if (key === 'w' || key === 'W') {
+        e.preventDefault()
+        setView('week')
+        return
+      }
+      if (key === 'd' || key === 'D') {
+        e.preventDefault()
+        setView('day')
+        return
+      }
+      if (key === 'c' || key === 'C') {
+        e.preventDefault()
+        onCreateEvent?.()
+        return
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [onCreateEvent])
+
   const monthDays = useMemo(() => {
     if (view !== 'month') return []
     return Array.from({ length: DAYS_IN_VIEW }).map((_, idx) => monthGridStart.clone().add(idx, 'day').toDate())
@@ -333,7 +429,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     if (view !== 'month') return map
     monthDays.forEach((day) => {
       const dayKey = moment(day).format('YYYY-MM-DD')
-      const dayEvents = events.filter((event) => {
+      const dayEvents = visibleEvents.filter((event) => {
         const start = moment(event.start).startOf('day')
         const end = moment(event.end).startOf('day')
         const target = moment(day).startOf('day')
@@ -342,7 +438,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
       map.set(dayKey, dayEvents)
     })
     return map
-  }, [events, monthDays])
+  }, [monthDays, visibleEvents])
 
   const handleGoToToday = () => setCurrentDate(new Date())
 
@@ -549,6 +645,32 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
           </h1>
 
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white p-1.5 rounded-full border border-gray-200 shadow-sm">
+              <Search className="w-4 h-4 text-gray-400 ml-1" aria-hidden />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search events…"
+                className="w-32 sm:w-44 md:w-52 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+                aria-label="Search events"
+              />
+              {searchQuery.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="w-4 h-4" aria-hidden />
+                </button>
+              ) : (
+                <kbd className="px-2 py-0.5 text-[11px] font-semibold text-gray-500 bg-gray-50 border border-gray-200 rounded-md shadow-sm mr-1">
+                  /
+                </kbd>
+              )}
+            </div>
             <div className="flex items-center bg-white p-1 rounded-full border border-gray-200 shadow-sm">
               {(['month', 'week', 'day', 'agenda'] as CalendarViewMode[]).map((mode) => (
                 <button
@@ -641,7 +763,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
               {weekDays.map((day) => {
                 const dayKey = moment(day).format('YYYY-MM-DD')
                 const isToday = moment(day).isSame(new Date(), 'day')
-                const dayEvents = events
+                const dayEvents = visibleEvents
                   .filter((event) => moment(event.start).isSame(day, 'day') || moment(day).isBetween(event.start, event.end, 'day', '[]'))
                   .filter((event) => !event.allDay)
 
@@ -891,7 +1013,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
                   }}
                 />
 
-                {events
+                {visibleEvents
                   .filter((event) => moment(event.start).isSame(dayForDayView, 'day'))
                   .filter((event) => !event.allDay)
                   .map((event) => {
@@ -997,7 +1119,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
         {view === 'agenda' && (() => {
           // Group events by date
           const eventsByDate = new Map<string, CalendarEvent[]>()
-          const sortedEvents = events
+          const sortedEvents = visibleEvents
             .slice()
             .sort((a, b) => a.start.getTime() - b.start.getTime())
             .filter((event) => !event.allDay) // Filter out all-day events for agenda view
