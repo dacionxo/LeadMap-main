@@ -72,16 +72,25 @@ function formatDate(dateString: string | null): string {
   })
 }
 
-function getFromParticipant(message: Message) {
-  return message.email_participants.find((p) => p.type === 'from')
+function getFromParticipant(message: Message | null | undefined) {
+  if (!message) return undefined
+  const participants = message.email_participants
+  if (!Array.isArray(participants)) return undefined
+  return participants.find((p) => p?.type === 'from')
 }
 
-function getToParticipants(message: Message) {
-  return message.email_participants.filter((p) => p.type === 'to')
+function getToParticipants(message: Message | null | undefined) {
+  if (!message) return []
+  const participants = message.email_participants
+  if (!Array.isArray(participants)) return []
+  return participants.filter((p) => p?.type === 'to')
 }
 
-function getCcParticipants(message: Message) {
-  return message.email_participants.filter((p) => p.type === 'cc')
+function getCcParticipants(message: Message | null | undefined) {
+  if (!message) return []
+  const participants = message.email_participants
+  if (!Array.isArray(participants)) return []
+  return participants.filter((p) => p?.type === 'cc')
 }
 
 function getInitial(name: string | null, email: string): string {
@@ -114,10 +123,11 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
     )
   }
 
-  const firstMessage = thread.messages?.[0]
-  const fromParticipant = firstMessage ? getFromParticipant(firstMessage) : null
+  const messages = Array.isArray(thread.messages) ? thread.messages : []
+  const firstMessage = messages[0]
+  const fromParticipant = getFromParticipant(firstMessage)
   const displayName = fromParticipant?.name || fromParticipant?.email || 'Unknown'
-  const toNames = firstMessage ? getToParticipants(firstMessage).map((p) => p.name || p.email).join(', ') : ''
+  const toNames = firstMessage ? getToParticipants(firstMessage).map((p) => (p?.name || p?.email || '')).filter(Boolean).join(', ') : ''
   const dateStr = firstMessage ? formatDate(firstMessage.received_at || firstMessage.sent_at) : ''
 
   return (
@@ -236,7 +246,9 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
               {thread.subject || '(No Subject)'}
             </h1>
 
-            {thread.messages?.map((message) => {
+            {(Array.isArray(thread.messages) ? thread.messages : [])
+              .filter((m): m is Message => !!m && !!m.id)
+              .map((message) => {
               const from = getFromParticipant(message)
               return (
                 <div key={message.id} className="space-y-4">
@@ -248,17 +260,17 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
                       />
                     ) : (
                       <p className="whitespace-pre-wrap text-slate-900 dark:text-slate-100">
-                        {message.body_plain || message.snippet}
+                        {message.body_plain || message.snippet || ''}
                       </p>
                     )}
                   </div>
-                  {message.email_attachments && message.email_attachments.length > 0 && (
+                  {Array.isArray(message.email_attachments) && message.email_attachments.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                       <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         Attachments:
                       </div>
                       <div className="space-y-2">
-                        {message.email_attachments.map((att) => (
+                        {message.email_attachments.filter((att) => att?.id).map((att) => (
                           <a
                             key={att.id}
                             href={att.storage_path || '#'}
@@ -266,9 +278,9 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
                           >
                             <span className="material-icons-outlined text-slate-400 text-lg" aria-hidden>attach_file</span>
                             <span className="text-sm text-slate-700 dark:text-slate-300">{att.filename}</span>
-                            {att.size_bytes > 0 && (
+                            {(att.size_bytes ?? 0) > 0 && (
                               <span className="text-xs text-slate-500 dark:text-slate-400 ml-auto">
-                                {(att.size_bytes / 1024).toFixed(1)} KB
+                                {((att.size_bytes ?? 0) / 1024).toFixed(1)} KB
                               </span>
                             )}
                           </a>

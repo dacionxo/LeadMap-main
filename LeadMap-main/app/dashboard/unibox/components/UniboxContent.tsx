@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import ErrorBoundary from "../marketing/components/ErrorBoundary";
 import ComposeEmailModal from "./ComposeEmailModal";
 import ReplyComposer from "./ReplyComposer";
 import ThreadList from "./ThreadList";
@@ -369,7 +370,17 @@ export default function UniboxContent({
         const response = await fetch(`/api/unibox/threads/${threadId}`);
         if (response.ok) {
           const data = await response.json();
-          setThreadDetails(data.thread);
+          const raw = data.thread;
+          // Normalize to prevent crashes from malformed API response
+          const thread: any = raw ? {
+            ...raw,
+            messages: Array.isArray(raw.messages) ? raw.messages.map((m: any) => ({
+              ...m,
+              email_participants: Array.isArray(m?.email_participants) ? m.email_participants : [],
+              email_attachments: Array.isArray(m?.email_attachments) ? m.email_attachments : [],
+            })) : [],
+          } : null;
+          setThreadDetails(thread);
         } else {
           setThreadDetails(null);
         }
@@ -383,8 +394,14 @@ export default function UniboxContent({
   };
 
   const handleThreadSelect = useCallback((thread: Thread) => {
-    setSelectedThread(thread);
-    fetchThreadDetails(thread.id);
+    try {
+      setSelectedThread(thread);
+      setThreadDetails(null); // Clear previous while loading
+      fetchThreadDetails(thread.id);
+    } catch (err) {
+      console.error("[UniboxContent] handleThreadSelect error:", err);
+      setThreadDetails(null);
+    }
   }, []);
 
   const handleReply = () => {
@@ -646,33 +663,53 @@ export default function UniboxContent({
 
       {/* Thread view column */}
       <section className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 relative overflow-hidden min-w-0 border-l border-gray-100 dark:border-slate-800">
-        {selectedThread ? (
-          <ThreadView
-            thread={threadDetails}
-            loading={loadingThread}
-            onReply={handleReply}
-            onReplyAll={handleReplyAll}
-            onForward={handleForward}
-            onDeleteDraft={handleDeleteDraft}
-            onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "trash" ? handleMoveToTrash : undefined}
-            onPermanentDelete={folderFilter === "trash" ? handlePermanentDeleteThread : undefined}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
-            <div className="text-center">
-              <span
-                className="material-icons-outlined text-6xl opacity-50 block mb-4"
-                aria-hidden
-              >
-                mail_outline
-              </span>
-              <p className="text-lg font-medium mb-2">No thread selected</p>
-              <p className="text-sm">
-                Select a thread from the list to view conversation
-              </p>
+        <ErrorBoundary
+          key={selectedThread?.id ?? "none"}
+          fallback={
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center text-slate-500 dark:text-slate-400 p-6">
+                <span className="material-icons-outlined text-6xl opacity-50 block mb-4" aria-hidden>error_outline</span>
+                <p className="text-lg font-medium mb-2">Could not load email</p>
+                <p className="text-sm mb-4">Try selecting another email or refresh the page.</p>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedThread(null); setThreadDetails(null); }}
+                  className="px-4 py-2 bg-unibox-primary text-white rounded-lg hover:opacity-90 text-sm font-medium"
+                >
+                  Clear selection
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          }
+        >
+          {selectedThread ? (
+            <ThreadView
+              thread={threadDetails}
+              loading={loadingThread}
+              onReply={handleReply}
+              onReplyAll={handleReplyAll}
+              onForward={handleForward}
+              onDeleteDraft={handleDeleteDraft}
+              onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "trash" ? handleMoveToTrash : undefined}
+              onPermanentDelete={folderFilter === "trash" ? handlePermanentDeleteThread : undefined}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
+              <div className="text-center">
+                <span
+                  className="material-icons-outlined text-6xl opacity-50 block mb-4"
+                  aria-hidden
+                >
+                  mail_outline
+                </span>
+                <p className="text-lg font-medium mb-2">No thread selected</p>
+                <p className="text-sm">
+                  Select a thread from the list to view conversation
+                </p>
+              </div>
+            </div>
+          )}
+        </ErrorBoundary>
       </section>
     </>
   );
