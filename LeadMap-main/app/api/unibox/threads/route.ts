@@ -90,19 +90,25 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Handle folder filter (convenience parameter)
-    if (folder === 'trash') {
-      query = query.not('trashed_at', 'is', null)
-    } else {
-      query = query.is('trashed_at', null)
-      if (folder === 'archived') {
-        query = query.eq('archived', true)
-      } else if (folder === 'starred') {
-        query = query.eq('starred', true)
-      } else if (folder === 'inbox') {
-        query = query.eq('archived', false)
+    // Helper to apply folder filters (trashed_at may not exist if migration not run)
+    const applyFolderFilters = (q: typeof query, useTrashedAt: boolean) => {
+      if (useTrashedAt) {
+        if (folder === 'trash') {
+          return q.not('trashed_at', 'is', null)
+        }
+        q = q.is('trashed_at', null)
+      } else if (folder === 'trash') {
+        // trashed_at column missing: return no rows for trash
+        return q.eq('id', '00000000-0000-0000-0000-000000000000')
       }
+      if (folder === 'archived') return q.eq('archived', true)
+      if (folder === 'starred') return q.eq('starred', true)
+      if (folder === 'inbox') return q.eq('archived', false)
+      return q
     }
+
+    // Handle folder filter
+    query = applyFolderFilters(query, true)
 
     // Handle explicit starred/archived filters (takes precedence over folder, except for trash)
     if (starred !== null) {
@@ -130,8 +136,62 @@ export async function GET(request: NextRequest) {
       query = query.or(`subject.ilike.%${search}%,snippet.ilike.%${search}%`)
     }
 
-    const { data: threads, error, count } = await query
-    
+    let result = await query
+    let threads = result.data
+    let error = result.error
+    let count = result.count
+
+    // Fallback: if error suggests trashed_at column missing, retry without it
+    // (migration add_email_threads_trashed_at may not have run)
+    let errMsg = String(error?.message ?? error ?? '')
+    try {
+      const parsed = JSON.parse(errMsg)
+      errMsg = String(parsed?.message ?? parsed?.details ?? errMsg)
+    } catch { /* use errMsg as is */ }
+    errMsg = errMsg.toLowerCase()
+    const missingColumn = errMsg.includes('trashed_at') || errMsg.includes('42703') || /column.*does not exist/.test(errMsg)
+    if (error && missingColumn) {
+      query = supabase
+        .from('email_threads')
+        .select(`
+          *,
+          mailboxes!inner(id, email, display_name, provider),
+          email_messages(
+            id,
+            direction,
+            subject,
+            snippet,
+            received_at,
+            sent_at,
+            read
+          )
+        `, { count: 'exact' })
+        .eq('user_id', user.id)
+        .order('last_message_at', { ascending: false })
+        .range(offset, offset + pageSize - 1)
+      if (mailboxId) query = query.eq('mailbox_id', mailboxId)
+      if (status && status !== 'all') {
+        const validStatuses = ['open', 'needs_reply', 'waiting', 'closed', 'ignored']
+        if (validStatuses.includes(status)) query = query.eq('status', status)
+      }
+      query = applyFolderFilters(query, false)
+      if (starred !== null) query = query.eq('starred', starred === 'true')
+      if (archived !== null) query = query.eq('archived', archived === 'true')
+      if (folder !== 'trash' && folder !== 'archived' && archived === null && starred === null) {
+        query = query.eq('archived', false)
+      }
+      if (campaignId) query = query.eq('campaign_id', campaignId)
+      if (contactId) query = query.eq('contact_id', contactId)
+      if (search) query = query.or(`subject.ilike.%${search}%,snippet.ilike.%${search}%`)
+      result = await query
+      threads = result.data
+      error = result.error
+      count = result.count
+      if (!error) {
+        console.log(`[GET /api/unibox/threads] Retried without trashed_at for user ${user.id} (migration may not have run)`)
+      }
+    }
+
     // Log query result for debugging (multi-user safe)
     console.log(`[GET /api/unibox/threads] Query result for user ${user.id}:`, {
       threadCount: threads?.length || 0,
@@ -140,7 +200,6 @@ export async function GET(request: NextRequest) {
       error: error?.message,
       timestamp: new Date().toISOString()
     })
-    
     // #region agent log
     fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/unibox/threads/route.ts:77',message:'Threads query result',data:{threadCount:threads?.length||0,count,error:error?.message,mailboxId,status,starred,archived,folder},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
     // #endregion
