@@ -25,7 +25,8 @@ import { verifyCronRequestOrError } from '@/lib/cron/auth'
 import { handleCronError, DatabaseError, ValidationError } from '@/lib/cron/errors'
 import { createSuccessResponse, createNoDataResponse } from '@/lib/cron/responses'
 import { getCronSupabaseClient, executeSelectOperation, executeUpdateOperation, executeInsertOperation } from '@/lib/cron/database'
-import { getValidAccessToken, refreshGoogleAccessToken } from '@/lib/google-calendar-sync'
+import { getValidAccessToken } from '@/lib/google-calendar-sync'
+import { fetchGoogleCalendarEvents as fetchGoogleEvents, normalizeGoogleEventToDb } from '@/lib/calendar-import'
 import { dbDatetimeNullable, dbDatetimeRequired } from '@/lib/cron/zod'
 import type { CronJobResult, BatchProcessingStats } from '@/lib/types/cron'
 
@@ -46,6 +47,7 @@ interface CalendarConnection {
   calendar_name?: string | null
   sync_enabled: boolean
   last_sync_at?: string | null
+  sync_token?: string | null
   created_at: string
   updated_at?: string | null
 }
@@ -156,6 +158,7 @@ const calendarConnectionSchema = z.object({
   calendar_name: z.string().nullable().optional(),
   sync_enabled: z.boolean(),
   last_sync_at: dbDatetimeNullable,
+  sync_token: z.string().nullable().optional(),
   created_at: dbDatetimeRequired,
   updated_at: dbDatetimeNullable,
 })
@@ -281,181 +284,15 @@ async function getValidTokenAndUpdate(
   return validAccessToken
 }
 
-/**
- * Fetches events from Google Calendar API
- * 
- * @param accessToken - Valid access token
- * @param calendarId - Calendar ID (defaults to 'primary')
- * @param timeMin - Minimum time for events
- * @param timeMax - Maximum time for events
- * @returns Array of Google Calendar events or null if fetch failed
- */
-async function fetchGoogleCalendarEvents(
-  accessToken: string,
-  calendarId: string,
-  timeMin: Date,
-  timeMax: Date
-): Promise<GoogleCalendarEvent[] | null> {
-  try {
-    // Fetch all events with pagination support
-    // Google Calendar API returns max 2500 events per page, use pagination to get all
-    const allGoogleEvents: GoogleCalendarEvent[] = []
-    let pageToken: string | null = null
-    let hasMorePages = true
-    let pageCount = 0
-    const maxPages = 10 // Safety limit to prevent infinite loops
+/** Time window for full sync: match manual sync (cal-sync style 90-day lookback, 365-day lookahead) */
+const FULL_SYNC_DAYS_BACK = 90
+const FULL_SYNC_DAYS_FORWARD = 365
 
-    while (hasMorePages && pageCount < maxPages) {
-      pageCount++
-      const googleCalendarUrl = new URL(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`
-      )
-      googleCalendarUrl.searchParams.set('timeMin', timeMin.toISOString())
-      googleCalendarUrl.searchParams.set('timeMax', timeMax.toISOString())
-      googleCalendarUrl.searchParams.set('singleEvents', 'true')
-      googleCalendarUrl.searchParams.set('orderBy', 'startTime')
-      googleCalendarUrl.searchParams.set('maxResults', '2500') // Google Calendar API limit per page
-      
-      if (pageToken) {
-        googleCalendarUrl.searchParams.set('pageToken', pageToken)
-      }
-
-      const eventsResponse = await fetch(googleCalendarUrl.toString(), {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-
-      if (!eventsResponse.ok) {
-        const errorText = await eventsResponse.text()
-        console.error(`[Calendar Sync] Failed to fetch events from Google Calendar (page ${pageCount}): ${errorText}`)
-        
-        // If this is not the first page, return what we have so far
-        if (allGoogleEvents.length > 0) {
-          console.warn(`[Calendar Sync] Fetched ${allGoogleEvents.length} events before pagination error`)
-          return allGoogleEvents
-        }
-        
-        return null
-      }
-
-      const googleEventsData = await eventsResponse.json()
-      const pageEvents = googleEventsData.items || []
-      allGoogleEvents.push(...pageEvents)
-
-      // Check if there are more pages
-      pageToken = googleEventsData.nextPageToken || null
-      hasMorePages = !!pageToken
-
-      console.log(`[Calendar Sync] Fetched page ${pageCount}: ${pageEvents.length} events (total: ${allGoogleEvents.length})`)
-    }
-
-    if (hasMorePages && pageCount >= maxPages) {
-      console.warn(`[Calendar Sync] Reached max pages limit (${maxPages}), may have more events to fetch`)
-    }
-
-    return allGoogleEvents
-  } catch (error) {
-    console.error('[Calendar Sync] Error fetching Google Calendar events:', error)
-    return null
-  }
-}
 
 /**
- * Parses Google Calendar event to database format
- * Handles all-day events and timed events properly
- * 
- * @param googleEvent - Google Calendar event
- * @param userId - User ID
- * @param calendarId - Calendar ID
- * @returns Calendar event data for database
- */
-function parseGoogleEventToDatabase(
-  googleEvent: GoogleCalendarEvent,
-  userId: string,
-  calendarId: string
-): CalendarEvent | null {
-  const title = googleEvent.summary || 'Untitled Event'
-  const description = googleEvent.description || null
-  const location = googleEvent.location || null
-
-  let startTime: string
-  let endTime: string
-  let allDay = false
-  let startDate: string | null = null
-  let endDate: string | null = null
-  let timezone: string | null = null
-
-  if (googleEvent.start?.dateTime) {
-    // Timed event
-    startTime = googleEvent.start.dateTime
-    endTime = googleEvent.end?.dateTime || startTime
-    allDay = false
-    timezone = googleEvent.start.timeZone || 'UTC'
-  } else if (googleEvent.start?.date) {
-    // All-day event
-    allDay = true
-    startDate = googleEvent.start.date
-    endDate = googleEvent.end?.date || startDate
-    // Google Calendar uses exclusive end dates for all-day events
-    // For example, a single-day event on Dec 16 returns end.date = "2025-12-17"
-    // We need to subtract one day to get the actual end date
-    const adjustedEndDate = new Date(new Date(endDate).getTime() - 86400000)
-      .toISOString()
-      .split('T')[0]
-    startTime = new Date(`${startDate}T00:00:00Z`).toISOString()
-    endTime = new Date(`${adjustedEndDate}T23:59:59Z`).toISOString()
-    timezone = googleEvent.start.timeZone || 'UTC'
-  } else {
-    // Invalid event - missing start time
-    return null
-  }
-
-  return {
-    user_id: userId,
-    title,
-    description,
-    event_type: 'other', // Could be enhanced with ML/pattern matching
-    start_time: startTime,
-    end_time: endTime,
-    all_day: allDay,
-    start_date: startDate,
-    end_date: endDate,
-    location,
-    timezone: timezone,
-    event_timezone: timezone,
-    external_event_id: googleEvent.id,
-    external_calendar_id: calendarId,
-    sync_status: 'synced',
-    last_synced_at: new Date().toISOString(),
-    status: 'scheduled',
-    attendees: googleEvent.attendees?.length
-      ? JSON.stringify(
-          googleEvent.attendees.map((a: { email: string; displayName?: string; responseStatus?: string }) => ({
-            email: a.email,
-            name: a.displayName || a.email,
-            status: a.responseStatus || 'needsAction',
-            organizer: false,
-          }))
-        )
-      : '[]',
-    organizer_email: googleEvent.organizer?.email || null,
-    organizer_name: googleEvent.organizer?.displayName || null,
-    recurrence_rule: googleEvent.recurrence?.[0] || null,
-    conferencing_link: googleEvent.hangoutLink || null,
-    conferencing_provider: googleEvent.hangoutLink ? 'google_meet' : null,
-  }
-}
-
-/**
- * Syncs events for a calendar connection
- * 
- * @param connection - Calendar connection
- * @param accessToken - Valid access token
- * @param supabase - Supabase client
- * @param timeMin - Minimum time for events
- * @param timeMax - Maximum time for events
- * @returns Sync result with statistics
+ * Syncs events for a calendar connection.
+ * Uses incremental sync (syncToken) when available; otherwise full sync with wide window (cal-sync style).
+ * Applies loop prevention (synced_by_system) and deletion propagation (cancelled events).
  */
 async function syncConnectionEvents(
   connection: CalendarConnection,
@@ -466,118 +303,134 @@ async function syncConnectionEvents(
 ): Promise<ConnectionSyncResult> {
   const calendarId = connection.calendar_id || 'primary'
 
-  // Fetch events from Google Calendar
-  const googleEvents = await fetchGoogleCalendarEvents(
+  // User timezone for normalizing events
+  let userTimezone = 'UTC'
+  const { data: settings } = await supabase
+    .from('user_calendar_settings')
+    .select('default_timezone')
+    .eq('user_id', connection.user_id)
+    .single()
+  if (settings?.default_timezone) userTimezone = settings.default_timezone
+
+  let events: any[] = []
+  let nextSyncToken: string | null = null
+  let syncTokenExpired = false
+
+  const fetchResult = await fetchGoogleEvents({
     accessToken,
     calendarId,
-    timeMin,
-    timeMax
-  )
+    syncToken: connection.sync_token || undefined,
+    timeMin: timeMin.toISOString(),
+    timeMax: timeMax.toISOString(),
+    maxPages: 15,
+  })
 
-  if (!googleEvents) {
+  if (fetchResult.syncTokenExpired) {
+    syncTokenExpired = true
+    const retry = await fetchGoogleEvents({
+      accessToken,
+      calendarId,
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
+      maxPages: 15,
+    })
+    if (!retry.success) {
+      return {
+        connectionId: connection.id,
+        email: connection.email,
+        status: 'failed',
+        error: retry.error || 'Failed to fetch events after sync token expired',
+      }
+    }
+    events = retry.events
+    nextSyncToken = retry.nextSyncToken
+  } else if (!fetchResult.success) {
     return {
       connectionId: connection.id,
       email: connection.email,
       status: 'failed',
-      error: 'Failed to fetch events from Google Calendar',
+      error: fetchResult.error || 'Failed to fetch events from Google Calendar',
     }
+  } else {
+    events = fetchResult.events
+    nextSyncToken = fetchResult.nextSyncToken
+  }
+
+  if (syncTokenExpired) {
+    await executeUpdateOperation(
+      supabase,
+      'calendar_connections',
+      { sync_token: null },
+      (q) => (q as any).eq('id', connection.id),
+      { operation: 'clear_sync_token', connectionId: connection.id }
+    )
   }
 
   let syncedCount = 0
   let updatedCount = 0
   let skippedCount = 0
 
-  // Process each event
-  for (const googleEvent of googleEvents) {
+  for (const googleEvent of events) {
     try {
-      // Skip cancelled events
-      if (googleEvent.status === 'cancelled') {
+      const normalized = normalizeGoogleEventToDb({
+        googleEvent,
+        userId: connection.user_id,
+        calendarId,
+        userTimezone,
+        includeContentHash: false,
+      })
+
+      if (normalized.skip) {
+        if (normalized.reason === 'cancelled') {
+          const existingResult = await executeSelectOperation<{ id: string }>(
+            supabase,
+            'calendar_events',
+            'id',
+            (q) => (q as any).eq('external_event_id', googleEvent.id).eq('user_id', connection.user_id),
+            { operation: 'find_for_delete', externalEventId: googleEvent.id }
+          )
+          if (existingResult.success && existingResult.data && Array.isArray(existingResult.data) && existingResult.data.length > 0) {
+            await supabase.from('calendar_events').delete().eq('id', existingResult.data[0].id)
+          }
+        }
         skippedCount++
         continue
       }
 
-      // Check if event exists
-      const existingResult = await executeSelectOperation<{ id: string; updated_at: string }>(
+      const eventData = normalized.eventData as Record<string, unknown>
+      const existingResult = await executeSelectOperation<{ id: string }>(
         supabase,
         'calendar_events',
-        'id, updated_at',
-        (query) => {
-          return (query as any)
-            .eq('external_event_id', googleEvent.id)
-            .eq('user_id', connection.user_id)
-        },
-        {
-          operation: 'check_existing_event',
-          externalEventId: googleEvent.id,
-        }
+        'id',
+        (query) => (query as any).eq('external_event_id', googleEvent.id).eq('user_id', connection.user_id),
+        { operation: 'check_existing_event', externalEventId: googleEvent.id }
       )
-
-      // Type guard: ensure existingResult.data is an array
-      let existing: { id: string; updated_at: string } | null = null
+      let existing: { id: string } | null = null
       if (existingResult.success && existingResult.data && Array.isArray(existingResult.data) && existingResult.data.length > 0) {
         existing = existingResult.data[0]
       }
 
-      // Check if event was updated in Google Calendar
-      const googleUpdated = googleEvent.updated ? new Date(googleEvent.updated) : null
-      const localUpdated = existing?.updated_at ? new Date(existing.updated_at) : null
-
-      // Skip if local version is newer (to avoid overwriting local changes)
-      if (existing && localUpdated && googleUpdated && localUpdated > googleUpdated) {
-        skippedCount++
-        continue
-      }
-
-      // Parse event data
-      const eventData = parseGoogleEventToDatabase(googleEvent, connection.user_id, calendarId)
-      if (!eventData) {
-        skippedCount++
-        continue
-      }
-
       if (existing) {
-        // Update existing event (exclude id from update data)
-        const { id: _, ...updateData } = eventData
-        // Convert to Record<string, unknown> for type safety
-        const updatePayload: Record<string, unknown> = {}
-        for (const [key, value] of Object.entries(updateData)) {
-          updatePayload[key] = value
-        }
+        const { id: _id, ...updateData } = eventData
+        const updatePayload: Record<string, unknown> = { ...updateData }
         const updateResult = await executeUpdateOperation(
           supabase,
           'calendar_events',
           updatePayload,
-          (query) => (query as any).eq('id', existing.id),
-          {
-            operation: 'update_calendar_event',
-            eventId: existing.id,
-          }
+          (query) => (query as any).eq('id', existing!.id),
+          { operation: 'update_calendar_event', eventId: existing!.id }
         )
-
-        if (updateResult.success) {
-          updatedCount++
-        } else {
-          console.error(`[Calendar Sync] Failed to update event ${existing.id}:`, updateResult.error)
-          skippedCount++
-        }
+        if (updateResult.success) updatedCount++
+        else skippedCount++
       } else {
-        // Create new event
         const insertResult = await executeInsertOperation(
           supabase,
           'calendar_events',
           eventData,
-          {
-            operation: 'create_calendar_event',
-            externalEventId: googleEvent.id,
-          }
+          { operation: 'create_calendar_event', externalEventId: googleEvent.id }
         )
-
-        if (insertResult.success) {
-          syncedCount++
-        } else {
-          console.error(`[Calendar Sync] Failed to create event for ${googleEvent.id}:`, insertResult.error)
-          skippedCount++
-        }
+        if (insertResult.success) syncedCount++
+        else skippedCount++
       }
     } catch (error) {
       console.error(`[Calendar Sync] Error processing event ${googleEvent.id}:`, error)
@@ -585,24 +438,15 @@ async function syncConnectionEvents(
     }
   }
 
-  // Update connection's last_sync_at
-  const updateResult = await executeUpdateOperation(
+  const connectionUpdate: Record<string, unknown> = { last_sync_at: new Date().toISOString() }
+  if (nextSyncToken) connectionUpdate.sync_token = nextSyncToken
+  await executeUpdateOperation(
     supabase,
     'calendar_connections',
-    {
-      last_sync_at: new Date().toISOString(),
-    },
+    connectionUpdate,
     (query) => (query as any).eq('id', connection.id),
-    {
-      operation: 'update_last_sync_at',
-      connectionId: connection.id,
-    }
+    { operation: 'update_last_sync_at', connectionId: connection.id }
   )
-
-  if (!updateResult.success) {
-    console.error(`[Calendar Sync] Failed to update last_sync_at for connection ${connection.id}:`, updateResult.error)
-    // Still return success since sync was successful, just timestamp update failed
-  }
 
   return {
     connectionId: connection.id,
@@ -646,8 +490,8 @@ async function runCronJob(request: NextRequest) {
     console.log(`[Calendar Sync] Found ${connections.length} active connections to sync`)
 
     const now = new Date()
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const timeMin = new Date(now.getTime() - FULL_SYNC_DAYS_BACK * 24 * 60 * 60 * 1000)
+    const timeMax = new Date(now.getTime() + FULL_SYNC_DAYS_FORWARD * 24 * 60 * 60 * 1000)
 
     const results: ConnectionSyncResult[] = []
     
@@ -667,13 +511,12 @@ async function runCronJob(request: NextRequest) {
           continue
         }
 
-        // Sync events
         const syncResult = await syncConnectionEvents(
           connection,
           accessToken,
           supabase,
-          oneDayAgo,
-          oneWeekFromNow
+          timeMin,
+          timeMax
         )
 
         results.push(syncResult)

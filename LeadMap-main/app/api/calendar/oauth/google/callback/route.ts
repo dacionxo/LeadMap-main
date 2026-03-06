@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { getPrimaryCalendarInfo } from '@/lib/calendar-import'
 
 export const runtime = 'nodejs'
 
@@ -110,21 +111,8 @@ export async function GET(request: NextRequest) {
     const userInfo = await userInfoResponse.json()
     const userEmail = userInfo.email || stateEmail
 
-    // Get primary calendar
-    const calendarResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList/primary', {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    })
-
-    let calendarId = 'primary'
-    let calendarName = userEmail
-
-    if (calendarResponse.ok) {
-      const calendarInfo = await calendarResponse.json()
-      calendarId = calendarInfo.id
-      calendarName = calendarInfo.summary || userEmail
-    }
+    // Get primary calendar via CalendarList.list (cal-sync style); fallback to "primary" + email if list fails
+    const { calendarId, calendarName } = await getPrimaryCalendarInfo(access_token, userEmail)
 
     // Save connection to database
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
