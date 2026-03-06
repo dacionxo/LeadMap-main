@@ -717,7 +717,7 @@ export default function UniboxContent({
   if (embedded) {
     return (
       <>
-        <div className="flex flex-1 min-h-0 overflow-hidden">{threePane}</div>
+        <div className="flex flex-1 min-h-0 overflow-hidden isolate min-w-0">{threePane}</div>
         {showComposer && selectedThread && threadDetails && (
           <ReplyComposer
             thread={threadDetails}

@@ -538,7 +538,7 @@ export default function UniboxWrapper() {
   );
 
   return (
-    <div className="h-[calc(100vh-250px)] flex flex-col bg-unibox-background-light dark:bg-unibox-background-dark -mx-6">
+    <div className="h-[calc(100vh-250px)] flex flex-col bg-unibox-background-light dark:bg-unibox-background-dark -mx-6 isolate overflow-hidden min-w-0">
       {/* Main Content - Three Pane Layout (matches Elite CRM Unibox design) */}
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left Sidebar */}

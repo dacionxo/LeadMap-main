@@ -131,7 +131,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
   const dateStr = firstMessage ? formatDate(firstMessage.received_at || firstMessage.sent_at) : ''
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden min-w-0 isolate">
       {/* Elite toolbar */}
       <div className="h-20 flex items-center justify-between px-8 border-b border-slate-200/50 dark:border-slate-700/50 flex-shrink-0 backdrop-blur-sm z-10">
         <div className="flex items-center gap-3">
@@ -211,8 +211,8 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
         )}
       </div>
 
-      {/* Message content - Elite card */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-8 bg-slate-50/50 dark:bg-slate-900/30">
+      {/* Message content - Elite card. overflow-x-hidden prevents HTML emails from affecting page layout. */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-8 bg-slate-50/50 dark:bg-slate-900/30 min-w-0">
         <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 p-8 mb-24">
           {/* Card header: from, to, date */}
           <div className="flex items-start justify-between mb-8 pb-6 border-b border-slate-100 dark:border-slate-700">
@@ -252,11 +252,11 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
               const from = getFromParticipant(message)
               return (
                 <div key={message.id} className="space-y-4">
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <div className="prose prose-sm max-w-none dark:prose-invert overflow-x-auto">
                     {message.body_html ? (
                       <div
                         dangerouslySetInnerHTML={{ __html: message.body_html }}
-                        className="text-slate-900 dark:text-slate-100"
+                        className="text-slate-900 dark:text-slate-100 max-w-full"
                       />
                     ) : (
                       <p className="whitespace-pre-wrap text-slate-900 dark:text-slate-100">
