@@ -206,30 +206,33 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
     }
   }
 
+  const tableCardClass =
+    'border border-gray-200 dark:border-gray-700 rounded-2xl shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-800/80'
+
   if (lists.length === 0) {
     return (
-      <div className="bg-white/70 backdrop-blur-md border border-white rounded-xl shadow-sm-soft overflow-hidden flex-1 flex flex-col">
-        <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white/30 shrink-0">
+      <div className={tableCardClass}>
+        <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/80 shrink-0">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-slate-700">All Lists</h2>
-            <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200">
+            <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200">All Lists</h2>
+            <span className="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600">
               0
             </span>
           </div>
         </div>
         <div className="flex-1 flex items-center justify-center py-16">
-          <p className="text-slate-500 text-sm font-medium">No lists match your criteria</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No lists match your criteria</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white/70 backdrop-blur-md border border-white rounded-xl shadow-sm-soft overflow-hidden flex-1 flex flex-col min-h-0">
-      <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white/30 shrink-0">
+    <div className={tableCardClass}>
+      <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/80 shrink-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-bold text-slate-700">All Lists</h2>
-          <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200">
+          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200">All Lists</h2>
+          <span className="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600">
             {lists.length}
           </span>
         </div>
@@ -244,8 +247,8 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
       </div>
 
       <div className="overflow-auto custom-scrollbar flex-1 min-h-0">
-        <table className="w-full text-left text-sm text-slate-600" role="grid">
-          <thead className="text-[11px] font-semibold text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100 tracking-wider sticky top-0 backdrop-blur-sm z-10">
+        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300" role="grid">
+          <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/60 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-md z-10">
             <tr>
               <th className="px-5 py-3 w-10 font-semibold" scope="col">
                 <input
@@ -276,7 +279,7 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100/80">
+          <tbody className="divide-y divide-slate-100/80 dark:divide-slate-600/50">
             {lists.map((list) => {
               const listType = list.type || 'properties'
               const isDeleting = deletingId === list.id
@@ -285,7 +288,7 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
               return (
                 <tr
                   key={list.id}
-                  className="bg-white/40 hover:bg-blue-50/40 transition-colors duration-150 group cursor-pointer"
+                  className="bg-white dark:bg-slate-800/40 hover:bg-blue-50/40 dark:hover:bg-slate-700/40 transition-colors duration-150 group cursor-pointer"
                   onClick={() => router.push(`/dashboard/lists/${list.id}`)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {

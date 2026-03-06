@@ -152,13 +152,13 @@ function ListsPageContent() {
                 </div>
               ) : lists.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="w-32 h-32 mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-5xl">
+                  <div className="w-32 h-32 mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-5xl shadow-[0_20px_50px_-12px_rgba(93,135,255,0.2)] border border-blue-200/50 dark:border-blue-800/50">
                     📋
                   </div>
-                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white tracking-tight mb-3">
                     Welcome to your lists
                   </h2>
-                  <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md">
+                  <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md text-base">
                     Lists help you organize your prospects and start targeted campaigns. Pick a
                     template below to get started.
                   </p>
@@ -183,7 +183,7 @@ function ListsPageContent() {
                 </div>
               ) : (
                 <>
-                  {/* Search and filters toolbar */}
+                  {/* Search and filters toolbar — matches deals pipeline toolbar */}
                   <div className="flex items-center justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="flex-1 flex items-center relative group max-w-md">
@@ -219,7 +219,8 @@ function ListsPageContent() {
                           aria-haspopup="true"
                           aria-label="Sort options"
                         >
-                          Sort: {sortLabel}
+                          <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">sort</span>
+                          {sortLabel}
                           <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-slate-500">expand_more</span>
                         </button>
                         {showSortDropdown && (
@@ -230,7 +231,7 @@ function ListsPageContent() {
                               aria-hidden
                             />
                             <div
-                              className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-600 shadow-lg z-50 py-1"
+                              className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-600 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] z-50 py-1"
                               role="menu"
                             >
                               {(['lastModified', 'name', 'created'] as const).map((opt) => (
@@ -264,6 +265,11 @@ function ListsPageContent() {
                         <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-slate-400">filter_list</span>
                         Filter
                       </button>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-sm text-slate-500 dark:text-slate-400 font-medium bg-gray-50/50 dark:bg-slate-800/50 px-3 py-1 rounded-full border border-gray-100 dark:border-slate-700">
+                        Total: <span className="text-gray-900 dark:text-white font-bold">{filteredAndSortedLists.length} list{filteredAndSortedLists.length !== 1 ? 's' : ''}</span>
+                      </span>
                     </div>
                   </div>
 
