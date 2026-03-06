@@ -341,6 +341,17 @@ export async function PATCH(
       }
     }
 
+    // Validate and update trashed_at (move to trash or restore)
+    if (body.trashed_at !== undefined || body.trash !== undefined) {
+      if (body.trash === true) {
+        updates.trashed_at = new Date().toISOString()
+      } else if (body.trash === false || body.trashed_at === null) {
+        updates.trashed_at = null
+      } else if (body.trashed_at && typeof body.trashed_at === 'string') {
+        updates.trashed_at = body.trashed_at
+      }
+    }
+
     // Log update request (multi-user safe)
     console.log(`[PATCH /api/unibox/threads/[id]] Update request from user ${user.id}:`, {
       threadId: id,
@@ -352,7 +363,7 @@ export async function PATCH(
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ 
         error: 'No valid updates provided',
-        details: 'Must provide at least one of: status, unread, starred, archived'
+        details: 'Must provide at least one of: status, unread, starred, archived, trash'
       }, { status: 400 })
     }
 
@@ -455,6 +466,48 @@ export async function PATCH(
         error: 'Internal server error', 
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * DELETE /api/unibox/threads/[id]
+ * Permanently delete a thread (typically from Trash)
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const cookieStore = await cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { error: deleteError } = await supabase
+      .from('email_threads')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (deleteError) {
+      console.error('[DELETE /api/unibox/threads/[id]] Error:', deleteError)
+      return NextResponse.json(
+        { error: 'Failed to delete thread' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('[DELETE /api/unibox/threads/[id]] Exception:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -54,6 +54,8 @@ interface ThreadViewProps {
   onReplyAll: () => void
   onForward: () => void
   onDeleteDraft?: () => void
+  onMoveToTrash?: () => void
+  onPermanentDelete?: () => void
 }
 
 function formatDate(dateString: string | null): string {
@@ -88,7 +90,7 @@ function getInitial(name: string | null, email: string): string {
   return '?'
 }
 
-export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft }: ThreadViewProps) {
+export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onPermanentDelete }: ThreadViewProps) {
   const [isStarred, setIsStarred] = useState(thread?.starred ?? false)
   const isDraft = thread?.status === 'draft'
 
@@ -138,7 +140,19 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
             </>
           )}
         </div>
-        {!isDraft && (
+        {!isDraft && onPermanentDelete && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onPermanentDelete?.()}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50 text-xs font-semibold transition-colors"
+            >
+              <span className="material-icons-outlined text-[16px]" aria-hidden>delete</span>
+              Delete permanently
+            </button>
+          </div>
+        )}
+        {!isDraft && !onPermanentDelete && (
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -157,8 +171,9 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
             </button>
             <button
               type="button"
+              onClick={() => onMoveToTrash?.()}
               className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-              aria-label="Delete"
+              aria-label="Move to trash"
             >
               <span className="material-icons-outlined text-[20px]" aria-hidden>delete</span>
             </button>

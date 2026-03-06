@@ -91,16 +91,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Handle folder filter (convenience parameter)
-    if (folder === 'archived') {
-      query = query.eq('archived', true)
-    } else if (folder === 'starred') {
-      query = query.eq('starred', true)
-    } else if (folder === 'inbox') {
-      // Inbox shows non-archived threads
-      query = query.eq('archived', false)
+    if (folder === 'trash') {
+      query = query.not('trashed_at', 'is', null)
+    } else {
+      query = query.is('trashed_at', null)
+      if (folder === 'archived') {
+        query = query.eq('archived', true)
+      } else if (folder === 'starred') {
+        query = query.eq('starred', true)
+      } else if (folder === 'inbox') {
+        query = query.eq('archived', false)
+      }
     }
 
-    // Handle explicit starred/archived filters (takes precedence over folder)
+    // Handle explicit starred/archived filters (takes precedence over folder, except for trash)
     if (starred !== null) {
       query = query.eq('starred', starred === 'true')
     }
@@ -109,7 +113,7 @@ export async function GET(request: NextRequest) {
     }
 
     // By default, if no folder/archived specified, exclude archived threads (show inbox)
-    if (folder !== 'archived' && archived === null && starred === null) {
+    if (folder !== 'trash' && folder !== 'archived' && archived === null && starred === null) {
       query = query.eq('archived', false)
     }
 

@@ -13,6 +13,8 @@ interface ThreadListProps {
   onLoadMore?: () => void
   /** One-click delete for drafts; when provided, shows delete icon on draft rows */
   onDeleteDraft?: (thread: UniboxThread) => void
+  /** One-click permanent delete for trash; when provided, shows delete icon on trash rows */
+  onDeleteFromTrash?: (thread: UniboxThread) => void
 }
 
 const AVATAR_COLORS = [
@@ -68,6 +70,7 @@ export default function ThreadList({
   loadingMore = false,
   onLoadMore,
   onDeleteDraft,
+  onDeleteFromTrash,
 }: ThreadListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const loadMore = useCallback(() => {
@@ -118,6 +121,7 @@ export default function ThreadList({
         const avatarColor = getAvatarColor(index)
 
         const isDraft = thread.id.startsWith('draft-') && onDeleteDraft
+        const isTrash = onDeleteFromTrash && !thread.id.startsWith('draft-')
 
         return (
           <div
@@ -155,16 +159,17 @@ export default function ThreadList({
                     {thread.subject || '(No Subject)'}
                   </h4>
                   <div className="flex items-center gap-1 shrink-0">
-                    {isDraft && (
+                    {(isDraft || isTrash) && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
                           e.preventDefault()
-                          onDeleteDraft(thread)
+                          if (isDraft && onDeleteDraft) onDeleteDraft(thread)
+                          else if (isTrash && onDeleteFromTrash) onDeleteFromTrash(thread)
                         }}
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        aria-label="Delete draft"
+                        aria-label={isDraft ? "Delete draft" : "Delete permanently"}
                       >
                         <span className="material-icons-outlined text-[18px]" aria-hidden>delete_outline</span>
                       </button>

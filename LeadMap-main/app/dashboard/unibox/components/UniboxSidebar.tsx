@@ -9,7 +9,7 @@ interface Mailbox {
 }
 
 type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
-type FilterFolder = 'inbox' | 'archived' | 'starred' | 'drafts'
+type FilterFolder = 'inbox' | 'archived' | 'starred' | 'drafts' | 'trash'
 
 interface UniboxSidebarProps {
   mailboxes: Mailbox[]
@@ -58,6 +58,7 @@ export default function UniboxSidebar({
   const starredCount = folderCounts.starred ?? -1
   const draftsCount = folderCounts.drafts ?? -1
   const archivedCount = folderCounts.archived ?? -1
+  const trashCount = folderCounts.trash ?? -1
   const handleCompose = () => {
     onCompose?.()
   }
@@ -147,6 +148,25 @@ export default function UniboxSidebar({
           {archivedCount >= 0 && (
             <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">
               {archivedCount}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => onFolderFilterChange('trash')}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-colors ${
+            folderFilter === 'trash'
+              ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <div className="flex items-center">
+            <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>delete_outline</span>
+            <span className="font-medium hidden lg:inline">Trash</span>
+          </div>
+          {trashCount >= 0 && (
+            <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+              {trashCount}
             </span>
           )}
         </button>

@@ -41,4 +41,4 @@ export interface UniboxMailbox {
 }
 
 export type UniboxFilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
-export type UniboxFilterFolder = 'inbox' | 'archived' | 'starred' | 'drafts'
+export type UniboxFilterFolder = 'inbox' | 'archived' | 'starred' | 'drafts' | 'trash'

@@ -52,7 +52,7 @@ type FilterStatus =
   | "waiting"
   | "closed"
   | "ignored";
-type FilterFolder = "inbox" | "archived" | "starred" | "drafts";
+type FilterFolder = "inbox" | "archived" | "starred" | "drafts" | "trash";
 
 interface UniboxContentProps {
   /** When true, render only the three-pane layout (no Elite header/mesh). For use inside dashboard layout. */
@@ -245,7 +245,8 @@ export default function UniboxContent({
       if (selectedMailboxId) params.append("mailboxId", selectedMailboxId);
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (searchQuery) params.append("search", searchQuery);
-      if (folderFilter === "archived") params.append("folder", "archived");
+      if (folderFilter === "trash") params.append("folder", "trash");
+      else if (folderFilter === "archived") params.append("folder", "archived");
       else if (folderFilter === "starred") params.append("folder", "starred");
       else if (folderFilter === "inbox") params.append("folder", "inbox");
       params.append("page", page.toString());
@@ -406,6 +407,82 @@ export default function UniboxContent({
     setComposerMode(null);
   };
 
+  const handleMoveToTrash = async (threadOrNull?: Thread | null) => {
+    const target = threadOrNull ?? selectedThread;
+    if (!target || target.id.startsWith("draft-")) return;
+
+    try {
+      const response = await fetch(`/api/unibox/threads/${target.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ trash: true }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data && data.error) || "Failed to move to trash");
+      }
+      setThreads((t) => t.filter((x) => x.id !== target.id));
+      setFolderCounts((prev) => ({
+        ...prev,
+        trash: (prev.trash ?? 0) + 1,
+        inbox: Math.max(0, (prev.inbox ?? 0) - 1),
+      }));
+      if (selectedThread?.id === target.id) {
+        setSelectedThread(null);
+        setThreadDetails(null);
+      }
+      fetchThreads();
+      fetchCounts();
+    } catch (error) {
+      console.error("[UniboxContent] Error moving to trash:", error);
+      alert(error instanceof Error ? error.message : "Failed to move to trash. Please try again.");
+    }
+  };
+
+  const handlePermanentDeleteThread = async (threadOrNull?: Thread | null) => {
+    const target = threadOrNull ?? selectedThread;
+    if (!target || target.id.startsWith("draft-") || folderFilter !== "trash") return;
+    const targetId = target.id;
+
+    const prevThreads = threads;
+    const prevSelected = selectedThread;
+    const prevDetails = threadDetails;
+
+    setThreads((t) => t.filter((x) => x.id !== targetId));
+    setFolderCounts((prev) => ({
+      ...prev,
+      trash: Math.max(0, (prev.trash ?? 0) - 1),
+    }));
+    if (selectedThread?.id === targetId) {
+      setSelectedThread(null);
+      setThreadDetails(null);
+    }
+
+    try {
+      const response = await fetch(`/api/unibox/threads/${targetId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data && data.error) || "Failed to delete");
+      }
+      fetchThreads();
+      fetchCounts();
+    } catch (error) {
+      console.error("[UniboxContent] Error permanently deleting thread:", error);
+      setThreads(prevThreads);
+      setFolderCounts((prev) => ({
+        ...prev,
+        trash: prevThreads.length,
+      }));
+      setSelectedThread(prevSelected);
+      setThreadDetails(prevDetails);
+      alert(error instanceof Error ? error.message : "Failed to delete. Please try again.");
+    }
+  };
+
   const handleDeleteDraft = async (threadOrNull?: Thread | null) => {
     const target = threadOrNull ?? selectedThread;
     if (!target || !target.id.startsWith("draft-")) return;
@@ -524,7 +601,7 @@ export default function UniboxContent({
         unreadCount={unreadCount}
         folderCounts={folderCounts}
         statusCounts={
-          folderFilter === "drafts"
+          folderFilter === "drafts" || folderFilter === "trash"
             ? (statusByFolder.inbox as Record<FilterStatus, number>) ?? {}
             : (statusByFolder[folderFilter] as Record<FilterStatus, number>) ?? {}
         }
@@ -562,6 +639,7 @@ export default function UniboxContent({
             loadingMore={loadingMore}
             onLoadMore={handleLoadMore}
             onDeleteDraft={folderFilter === "drafts" ? (t) => handleDeleteDraft(t) : undefined}
+            onDeleteFromTrash={folderFilter === "trash" ? (t) => handlePermanentDeleteThread(t) : undefined}
           />
         </div>
       </section>
@@ -575,7 +653,9 @@ export default function UniboxContent({
             onReply={handleReply}
             onReplyAll={handleReplyAll}
             onForward={handleForward}
-              onDeleteDraft={handleDeleteDraft}
+            onDeleteDraft={handleDeleteDraft}
+            onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "trash" ? handleMoveToTrash : undefined}
+            onPermanentDelete={folderFilter === "trash" ? handlePermanentDeleteThread : undefined}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">

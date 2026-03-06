@@ -9,7 +9,7 @@ import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 
-type FilterFolder = 'inbox' | 'starred' | 'archived'
+type FilterFolder = 'inbox' | 'starred' | 'archived' | 'trash'
 type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
 
 async function countThreads(
@@ -22,12 +22,17 @@ async function countThreads(
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
 
-  if (opts.folder === 'inbox') {
-    query = query.eq('archived', false)
-  } else if (opts.folder === 'starred') {
-    query = query.eq('archived', false).eq('starred', true)
-  } else if (opts.folder === 'archived') {
-    query = query.eq('archived', true)
+  if (opts.folder === 'trash') {
+    query = query.not('trashed_at', 'is', null)
+  } else {
+    query = query.is('trashed_at', null)
+    if (opts.folder === 'inbox') {
+      query = query.eq('archived', false)
+    } else if (opts.folder === 'starred') {
+      query = query.eq('archived', false).eq('starred', true)
+    } else if (opts.folder === 'archived') {
+      query = query.eq('archived', true)
+    }
   }
 
   if (opts.status && opts.status !== 'all') {
@@ -66,6 +71,7 @@ export async function GET(request: NextRequest) {
     const statuses: FilterStatus[] = ['all', 'open', 'needs_reply', 'waiting', 'closed', 'ignored']
 
     // Build all count queries
+    const trashCountPromise = countThreads(supabase, userId, { folder: 'trash' })
     const folderPromises = [
       countThreads(supabase, userId, { folder: 'inbox' }),
       countThreads(supabase, userId, { folder: 'starred' }),
@@ -103,6 +109,7 @@ export async function GET(request: NextRequest) {
       mailboxAllCount,
       mailboxCountsArray,
       draftsCount,
+      trashCount,
     ] = await Promise.all([
       ...folderPromises,
       Promise.all(statusInboxPromises),
@@ -111,6 +118,7 @@ export async function GET(request: NextRequest) {
       mailboxAllPromise,
       Promise.all(mailboxPerIdPromises),
       draftsPromise,
+      trashCountPromise,
     ])
 
     const statusByFolder = {
@@ -130,6 +138,7 @@ export async function GET(request: NextRequest) {
         starred: starredTotal,
         drafts: draftsCount,
         archived: archivedTotal,
+        trash: trashCount,
       },
       statusByFolder,
       mailboxCounts: mailboxCountMap,
