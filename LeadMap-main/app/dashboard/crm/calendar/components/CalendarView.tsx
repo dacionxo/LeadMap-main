@@ -41,6 +41,7 @@ interface CalendarViewProps {
       relatedType?: string
       relatedId?: string
       status?: string
+      conferencingLink?: string
     }
   }) => void
   onDateSelect?: (start: Date, end: Date) => void
@@ -294,6 +295,32 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
     return () => window.removeEventListener('calendarSyncComplete', handleSyncComplete)
   }, [fetchEvents])
 
+  // Routinely refresh calendar events (no connection-status refresh)
+  useEffect(() => {
+    if (!settingsLoaded) return
+    const intervalMs = 5 * 60 * 1000 // 5 minutes
+    const id = setInterval(fetchEvents, intervalMs)
+    return () => clearInterval(id)
+  }, [fetchEvents, settingsLoaded])
+
+  // Periodically sync from connected calendars then refresh events
+  useEffect(() => {
+    if (!settingsLoaded) return
+    const intervalMs = 10 * 60 * 1000 // 10 minutes
+    const id = setInterval(() => {
+      fetch('/api/calendar/sync/manual', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      })
+        .then((res) => {
+          if (res.ok) setTimeout(fetchEvents, 1500)
+        })
+        .catch(() => {})
+    }, intervalMs)
+    return () => clearInterval(id)
+  }, [fetchEvents, settingsLoaded])
+
   const monthDays = useMemo(() => {
     if (view !== 'month') return []
     return Array.from({ length: DAYS_IN_VIEW }).map((_, idx) => monthGridStart.clone().add(idx, 'day').toDate())
@@ -341,6 +368,7 @@ export default function CalendarView({ onEventClick, onDateSelect }: CalendarVie
         relatedType: event.resource?.relatedType,
         relatedId: event.resource?.relatedId,
         status: event.resource?.status,
+        conferencingLink: event.resource?.conferencingLink,
       },
     })
   }

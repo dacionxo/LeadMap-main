@@ -51,9 +51,16 @@ export default function CalendarSettingsPanel({
   useEffect(() => {
     if (isOpen) {
       fetchSettings()
-      fetchCalendars()
     }
   }, [isOpen])
+
+  // Only refetch connection list when user views Calendar Connections section (or after disconnect/sync)
+  // so added calendars stay visible and we don't refresh connection status unnecessarily
+  useEffect(() => {
+    if (isOpen && activeSection === 'calendars') {
+      fetchCalendars()
+    }
+  }, [isOpen, activeSection])
 
   const fetchSettings = async () => {
     try {
@@ -73,12 +80,15 @@ export default function CalendarSettingsPanel({
 
   const fetchCalendars = async () => {
     try {
-      const response = await fetch('/api/calendar/settings/calendars', {
+      // Use connections API as source of truth so Google OAuth connections always show
+      const response = await fetch('/api/calendar/connections', {
         credentials: 'include',
       })
       if (response.ok) {
         const data = await response.json()
-        setCalendars(data.calendars || [])
+        const conns = data.connections || []
+        // Shape expected by CalendarConnectionsSection: { connection, settings }[]
+        setCalendars(conns.map((c: any) => ({ connection: c, settings: null })))
       }
     } catch (error) {
       console.error('Error fetching calendars:', error)
@@ -420,7 +430,10 @@ function CalendarConnectionsSection({
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       })
-      if (res.ok) await onRefresh()
+      if (res.ok) {
+        // Don't refetch connections list after sync—only refresh events on the calendar view
+        window.dispatchEvent(new CustomEvent('calendarSyncComplete'))
+      }
     } catch (e) {
       console.error(e)
     } finally {
