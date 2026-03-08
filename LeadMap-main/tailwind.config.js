@@ -209,11 +209,11 @@ module.exports = {
         "text-muted": "#64748B", // Slate-500
         "bg-surface": "#F8FAFC", // Slate-50
         "grid-border": "#F1F5F9", // Slate-100
-        /* Elite CRM Unibox design tokens (1:1 reference HTML) */
+        /* Elite CRM Unibox design tokens (1:1 reference) */
         unibox: {
           primary: "#137fec",
-          "primary-light": "#5a8dee",
-          "primary-dark": "#0f6bd4",
+          "primary-light": "#3d9af0",
+          "primary-dark": "#0d5fb3",
           "background-light": "#fbfbfd",
           "background-dark": "#101922",
           "surface-light": "#ffffff",
@@ -278,8 +278,8 @@ module.exports = {
         "sm-soft": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
         float: "0 10px 40px -10px rgba(0,0,0,0.08)",
         "action-btn": "0 2px 5px rgba(59, 130, 246, 0.3)",
-        "unibox-soft": "0 10px 40px -10px rgba(43, 108, 238, 0.1)",
-        "unibox-glass": "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        "unibox-soft": "0 10px 40px -10px rgba(19, 127, 236, 0.1)",
+        "unibox-glass": "0 32px 64px -16px rgba(0, 0, 0, 0.08)",
         /* Elite CRM Compose Modal (1:1 reference) */
         "modal-depth":
           "0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.02)",

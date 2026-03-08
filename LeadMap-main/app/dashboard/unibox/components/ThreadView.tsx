@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { EmailBodySandbox } from './EmailBodySandbox'
 
 interface Message {
@@ -62,11 +61,12 @@ interface ThreadViewProps {
   onPermanentDelete?: () => void
 }
 
+const PRIMARY = '#137fec'
+
 function formatDate(dateString: string | null): string {
   if (!dateString) return ''
   const date = new Date(dateString)
   return date.toLocaleString('en-US', {
-    weekday: 'long',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -90,27 +90,34 @@ function getToParticipants(message: Message | null | undefined) {
   return participants.filter((p) => p?.type === 'to')
 }
 
-function getCcParticipants(message: Message | null | undefined) {
-  if (!message) return []
-  const participants = message.email_participants
-  if (!Array.isArray(participants)) return []
-  return participants.filter((p) => p?.type === 'cc')
-}
-
 function getInitial(name: string | null, email: string): string {
   if (name && name.length >= 1) return name.slice(0, 1).toUpperCase()
   if (email && email.length >= 1) return email.slice(0, 1).toUpperCase()
   return '?'
 }
 
-export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete }: ThreadViewProps) {
-  const [isStarred, setIsStarred] = useState(thread?.starred ?? false)
+export default function ThreadView({
+  thread,
+  loading,
+  onReply,
+  onReplyAll,
+  onForward,
+  onDeleteDraft,
+  onMoveToTrash,
+  onArchive,
+  onStar,
+  onRestore,
+  onPermanentDelete,
+}: ThreadViewProps) {
   const isDraft = thread?.status === 'draft'
+  const isRecyclingBin = !!onRestore || !!onPermanentDelete
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <span className="material-symbols-outlined text-4xl text-slate-400 animate-spin" aria-hidden>refresh</span>
+        <span className="material-symbols-outlined text-4xl text-slate-400 animate-spin">
+          refresh
+        </span>
         <span className="sr-only">Loading thread</span>
       </div>
     )
@@ -119,9 +126,10 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
   if (!thread) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center text-slate-500 dark:text-slate-400">
-          <span className="material-symbols-outlined text-6xl opacity-50 block mb-4" aria-hidden>mail</span>
-          <p className="text-lg font-medium mb-2">No thread selected</p>
+        <div className="text-center text-slate-500">
+          <span className="material-symbols-outlined text-6xl opacity-30 block mb-4">mail</span>
+          <p className="text-lg font-medium mb-1">No email selected</p>
+          <p className="text-sm text-slate-400">Select an email to read it here</p>
         </div>
       </div>
     )
@@ -131,119 +139,254 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
   const firstMessage = messages[0]
   const fromParticipant = getFromParticipant(firstMessage)
   const displayName = fromParticipant?.name || fromParticipant?.email || 'Unknown'
-  const toNames = firstMessage ? getToParticipants(firstMessage).map((p) => (p?.name || p?.email || '')).filter(Boolean).join(', ') : ''
+  const toParticipants = getToParticipants(firstMessage)
+  const toNames = toParticipants.map((p) => p?.name || p?.email || '').filter(Boolean).join(', ')
   const dateStr = firstMessage ? formatDate(firstMessage.received_at || firstMessage.sent_at) : ''
+  const initial = getInitial(fromParticipant?.name ?? null, fromParticipant?.email ?? '')
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden min-w-0 isolate">
-      {/* Reading Header - design 1:1 */}
+    <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      {/* Toolbar — matches HTML header h-20 */}
       <header className="h-20 flex items-center justify-between px-10 border-b border-white/20 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          {onArchive && !onPermanentDelete && (
-            <button type="button" onClick={() => onArchive?.()} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Archive">
-              <span className="material-symbols-outlined" aria-hidden>archive</span>
+        {isDraft ? (
+          /* Draft toolbar */
+          <div className="flex items-center gap-4">
+            <span className="px-3 py-1 bg-slate-900 text-white text-xs font-bold rounded-full uppercase tracking-wide">
+              Draft
+            </span>
+          </div>
+        ) : isRecyclingBin ? (
+          /* Recycling bin toolbar */
+          <div className="flex items-center gap-3">
+            {onRestore && (
+              <button
+                type="button"
+                onClick={() => onRestore?.()}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-slate-100 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">restore</span>
+                Restore
+              </button>
+            )}
+            {onPermanentDelete && (
+              <button
+                type="button"
+                onClick={() => onPermanentDelete?.()}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-slate-100 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+                Delete permanently
+              </button>
+            )}
+          </div>
+        ) : (
+          /* Normal inbox toolbar — left action icons */
+          <div className="flex items-center gap-4">
+            {onArchive && (
+              <button
+                type="button"
+                onClick={() => onArchive?.()}
+                className="text-slate-500 hover:text-[#137fec] transition-colors"
+                aria-label={thread.archived ? 'Unarchive' : 'Archive'}
+              >
+                <span className="material-symbols-outlined">archive</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="text-slate-500 hover:text-[#137fec] transition-colors"
+              aria-label="Report spam"
+            >
+              <span className="material-symbols-outlined">report</span>
             </button>
-          )}
-          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Report">
-            <span className="material-symbols-outlined" aria-hidden>report</span>
-          </button>
-          {(onMoveToTrash || onPermanentDelete) && (
-            <button type="button" onClick={() => (onPermanentDelete ? onPermanentDelete() : onMoveToTrash?.())} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Delete">
-              <span className="material-symbols-outlined" aria-hidden>delete</span>
+            {onMoveToTrash && (
+              <button
+                type="button"
+                onClick={() => onMoveToTrash?.()}
+                className="text-slate-500 hover:text-[#137fec] transition-colors"
+                aria-label="Move to Trash"
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
+            )}
+            <div className="h-4 w-px bg-slate-200 mx-2" aria-hidden />
+            <button
+              type="button"
+              className="text-slate-500 hover:text-[#137fec] transition-colors"
+              aria-label="Mark as unread"
+            >
+              <span className="material-symbols-outlined">mark_as_unread</span>
             </button>
-          )}
-          <div className="h-4 w-[1px] bg-slate-200 mx-2" aria-hidden />
-          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Mark as unread">
-            <span className="material-symbols-outlined" aria-hidden>mark_as_unread</span>
-          </button>
-          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Schedule">
-            <span className="material-symbols-outlined" aria-hidden>schedule</span>
-          </button>
-        </div>
+            {onStar && (
+              <button
+                type="button"
+                onClick={() => onStar?.()}
+                className="text-slate-500 hover:text-[#137fec] transition-colors"
+                aria-label={thread.starred ? 'Unstar' : 'Star'}
+              >
+                <span className="material-symbols-outlined">{thread.starred ? 'star' : 'schedule'}</span>
+              </button>
+            )}
+            {!onStar && (
+              <button
+                type="button"
+                className="text-slate-500 hover:text-[#137fec] transition-colors"
+                aria-label="Snooze"
+              >
+                <span className="material-symbols-outlined">schedule</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Right side — Reply + more */}
         <div className="flex items-center gap-3">
-          {!isDraft && (
-            <button type="button" onClick={onReply} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-100 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors" aria-label="Reply">
-              <span className="material-symbols-outlined text-[18px]" aria-hidden>reply</span> Reply
+          {isDraft && onDeleteDraft ? (
+            <button
+              type="button"
+              onClick={() => onDeleteDraft?.()}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-100 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">delete</span>
+              Delete draft
             </button>
-          )}
-          <button type="button" className="size-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white transition-all" aria-label="More options">
-            <span className="material-symbols-outlined" aria-hidden>more_horiz</span>
+          ) : !isRecyclingBin ? (
+            <button
+              type="button"
+              onClick={onReply}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-100 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">reply</span>
+              Reply
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white transition-all"
+            aria-label="More options"
+          >
+            <span className="material-symbols-outlined">more_horiz</span>
           </button>
         </div>
       </header>
 
-      {/* Email Content - design 1:1 */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden unibox-no-scrollbar p-10 min-w-0">
+      {/* Email content area */}
+      <div className="flex-1 overflow-y-auto no-scrollbar p-10">
         <div className="max-w-[800px] mx-auto">
+          {/* Email meta header */}
           <div className="mb-10">
-            <h1 className="text-3xl font-semibold text-slate-900 mb-6 tracking-tight">{thread.subject || '(No Subject)'}</h1>
+            <h1 className="text-3xl font-semibold text-slate-900 mb-6 tracking-tight">
+              {thread.subject || '(No Subject)'}
+            </h1>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="size-12 rounded-full bg-[#137fec]/10 flex items-center justify-center text-[#137fec] font-bold overflow-hidden">
-                  {getInitial(fromParticipant?.name ?? null, fromParticipant?.email ?? '')}
+                {/* Avatar */}
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg overflow-hidden flex-shrink-0"
+                  style={{ background: 'rgba(19,127,236,0.10)', color: PRIMARY }}
+                >
+                  {initial}
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-slate-900">{displayName}</p>
                     {fromParticipant?.email && (
-                      <span className="text-xs text-slate-400">&lt;{fromParticipant.email}&gt;</span>
+                      <span className="text-xs text-slate-400">
+                        &lt;{fromParticipant.email}&gt;
+                      </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500">to me</p>
+                  <p className="text-xs text-slate-500">
+                    {toNames ? `to ${toNames}` : 'to me'}
+                  </p>
                 </div>
               </div>
-              <p className="text-xs text-slate-400 font-medium">{dateStr}</p>
+              <p className="text-xs text-slate-400 font-medium flex-shrink-0">{dateStr}</p>
             </div>
           </div>
-          <div className="space-y-6">
+
+          {/* Email content card */}
+          <div className="bg-white rounded-lg p-1 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
             {(Array.isArray(thread.messages) ? thread.messages : [])
               .filter((m): m is Message => !!m && !!m.id)
-              .map((message) => {
-              const from = getFromParticipant(message)
-              return (
-                <div key={message.id} className="space-y-4">
+              .map((message) => (
+                <div key={message.id}>
                   {message.body_html ? (
                     <div className="overflow-x-auto max-w-full min-w-0">
                       <EmailBodySandbox
                         html={message.body_html}
-                        className="text-slate-900 dark:text-slate-100"
+                        className="text-slate-900"
                       />
                     </div>
                   ) : (
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <p className="whitespace-pre-wrap text-slate-900 dark:text-slate-100">
+                    <div className="p-8">
+                      <p className="whitespace-pre-wrap text-slate-900 text-sm leading-relaxed">
                         {message.body_plain || message.snippet || ''}
                       </p>
                     </div>
                   )}
-                  {Array.isArray(message.email_attachments) && message.email_attachments.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                      <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Attachments:
+                  {Array.isArray(message.email_attachments) &&
+                    message.email_attachments.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-slate-100 px-8 pb-6">
+                        <div className="text-sm font-medium text-slate-700 mb-2">
+                          Attachments
+                        </div>
+                        <div className="space-y-2">
+                          {message.email_attachments
+                            .filter((att) => att?.id)
+                            .map((att) => (
+                              <a
+                                key={att.id}
+                                href={att.storage_path || '#'}
+                                className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-slate-400 text-lg">
+                                  attach_file
+                                </span>
+                                <span className="text-sm text-slate-700">{att.filename}</span>
+                                {(att.size_bytes ?? 0) > 0 && (
+                                  <span className="text-xs text-slate-500 ml-auto">
+                                    {((att.size_bytes ?? 0) / 1024).toFixed(1)} KB
+                                  </span>
+                                )}
+                              </a>
+                            ))}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        {message.email_attachments.filter((att) => att?.id).map((att) => (
-                          <a
-                            key={att.id}
-                            href={att.storage_path || '#'}
-                            className="flex items-center gap-2 p-2 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                          >
-                            <span className="material-symbols-outlined text-slate-400 text-lg" aria-hidden>attach_file</span>
-                            <span className="text-sm text-slate-700 dark:text-slate-300">{att.filename}</span>
-                            {(att.size_bytes ?? 0) > 0 && (
-                              <span className="text-xs text-slate-500 dark:text-slate-400 ml-auto">
-                                {((att.size_bytes ?? 0) / 1024).toFixed(1)} KB
-                              </span>
-                            )}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    )}
                 </div>
-              )
-            })}
+              ))}
           </div>
+
+          {/* Reply actions at bottom */}
+          {!isDraft && !isRecyclingBin && (
+            <div className="mt-10 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onReply}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-white border border-slate-100 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">reply</span>
+                Reply
+              </button>
+              <button
+                type="button"
+                onClick={onReplyAll}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-white border border-slate-100 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">reply_all</span>
+                Reply All
+              </button>
+              <button
+                type="button"
+                onClick={onForward}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-white border border-slate-100 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">forward</span>
+                Forward
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
