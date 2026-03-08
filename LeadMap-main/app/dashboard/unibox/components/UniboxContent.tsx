@@ -855,11 +855,12 @@ export default function UniboxContent({
       <UniboxSidebar
         folderFilter={folderFilter}
         onFolderFilterChange={setFolderFilter}
+        folderCounts={folderCounts}
       />
 
       {/* Thread list column - design 1:1 */}
       <main className="w-[420px] flex flex-col bg-white/10 border-l border-[#F3F4F6] shrink-0">
-        <header className="p-6 pb-4">
+        <header className="p-6 pb-4 border-b border-[#F3F4F6]">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold tracking-tight">{FOLDER_LABELS[folderFilter] ?? "Inbox"}</h1>
           <div className="flex items-center gap-2">
