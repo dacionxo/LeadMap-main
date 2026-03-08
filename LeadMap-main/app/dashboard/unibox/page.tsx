@@ -1,39 +1,31 @@
 "use client";
 
 import { Suspense } from "react";
-import AppNavSidebar from "../components/AppNavSidebar";
 import DashboardLayout from "../components/DashboardLayout";
-import DealsNavbar from "../crm/deals/components/DealsNavbar";
 import UniboxContent from "./components/UniboxContent";
+import "./unibox-styles.css";
 
 function UniboxPageContent() {
   return (
-    <div className="-mt-[30px]">
-      <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
-        <DealsNavbar />
-        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
-          <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
-            <AppNavSidebar />
-            <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative">
-            <div
-              className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
-              aria-hidden
-            />
-
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                    Loading Unibox...
-                  </div>
-                }
-              >
-                <UniboxContent embedded />
-              </Suspense>
+    <div className="unibox-page bg-unibox-background-light text-slate-900 min-h-screen flex items-center justify-center p-6 lg:p-12">
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet"
+      />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet"
+      />
+      <div className="unibox-glass w-full max-w-[1400px] h-[850px] rounded-xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] flex overflow-hidden border border-white/40">
+        <Suspense
+          fallback={
+            <div className="flex-1 flex items-center justify-center text-slate-500">
+              Loading Unibox...
             </div>
-            </div>
-          </div>
-        </div>
+          }
+        >
+          <UniboxContent embedded />
+        </Suspense>
       </div>
     </div>
   );

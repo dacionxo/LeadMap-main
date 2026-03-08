@@ -53,7 +53,7 @@ type FilterStatus =
   | "waiting"
   | "closed"
   | "ignored";
-type FilterFolder = "inbox" | "archived" | "starred" | "drafts" | "recycling_bin";
+type FilterFolder = "inbox" | "archived" | "starred" | "drafts" | "recycling_bin" | "sent";
 
 interface UniboxContentProps {
   /** When true, render only the three-pane layout (no Elite header/mesh). For use inside dashboard layout. */
@@ -254,7 +254,7 @@ export default function UniboxContent({
       if (folderFilter === "recycling_bin") params.append("folder", "recycling_bin");
       else if (folderFilter === "archived") params.append("folder", "archived");
       else if (folderFilter === "starred") params.append("folder", "starred");
-      else if (folderFilter === "inbox") params.append("folder", "inbox");
+      else if (folderFilter === "inbox" || folderFilter === "sent") params.append("folder", "inbox");
       params.append("page", page.toString());
       params.append("pageSize", "50");
 
@@ -837,32 +837,43 @@ export default function UniboxContent({
     if (hasMore && !loadingMore && !loading) setPage((p) => p + 1);
   }, [hasMore, loadingMore, loading]);
 
+  const FOLDER_LABELS: Record<string, string> = { inbox: "Inbox", starred: "Starred", sent: "Sent", drafts: "Drafts", archived: "Archive", recycling_bin: "Trash" };
+
   const threePane = (
     <>
       <UniboxSidebar
-        mailboxes={mailboxes}
-        selectedMailboxId={selectedMailboxId}
-        onMailboxSelect={setSelectedMailboxId}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
         folderFilter={folderFilter}
         onFolderFilterChange={setFolderFilter}
-        mailboxUnreadCounts={mailboxUnreadCounts}
-        unreadCount={unreadCount}
-        folderCounts={folderCounts}
-        statusCounts={
-          folderFilter === "drafts" || folderFilter === "recycling_bin"
-            ? (statusByFolder.inbox as Record<FilterStatus, number>) ?? {}
-            : (statusByFolder[folderFilter] as Record<FilterStatus, number>) ?? {}
-        }
-        mailboxCounts={mailboxCounts}
-        onCompose={() => setShowComposeModal(true)}
       />
 
-      {/* Thread list column */}
-      <section className="hidden md:flex md:flex-col w-[400px] flex-shrink-0 border-r border-gray-200/80 dark:border-gray-800/80 bg-white dark:bg-slate-900">
+      {/* Thread list column - design 1:1 */}
+      <main className="w-[420px] flex flex-col bg-white/10 border-l border-white/20 shrink-0">
+        <header className="p-6 pb-4">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">{FOLDER_LABELS[folderFilter] ?? "Inbox"}</h1>
+          <button
+            type="button"
+            onClick={() => setShowComposeModal(true)}
+            className="size-9 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:text-[#137fec] transition-colors"
+            aria-label="Compose"
+          >
+            <span className="material-symbols-outlined text-[20px]" aria-hidden>edit_note</span>
+          </button>
+        </div>
+        <div className="relative">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]" aria-hidden>search</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search emails"
+            className="w-full bg-slate-100/50 border-none rounded-lg py-2.5 pl-10 text-sm focus:ring-1 focus:ring-[#137fec]/20 placeholder:text-slate-400"
+            aria-label="Search emails"
+          />
+        </div>
+        </header>
         {selectedThreadIds.size > 0 && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-gray-200/80 dark:border-gray-800/80 bg-unibox-primary/10 dark:bg-unibox-primary/20 shrink-0">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-white/20 bg-[#137fec]/10 shrink-0">
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
               {selectedThreadIds.size} selected
             </span>
@@ -875,7 +886,7 @@ export default function UniboxContent({
                 title="Star"
                 aria-label="Star selected emails"
               >
-                <span className="material-icons-round text-lg" aria-hidden>star_outline</span>
+                <span className="material-symbols-outlined text-lg" aria-hidden>star</span>
               </button>
               <button
                 type="button"
@@ -885,7 +896,7 @@ export default function UniboxContent({
                 title="Archive"
                 aria-label="Archive selected emails"
               >
-                <span className="material-icons-round text-lg" aria-hidden>archive</span>
+                <span className="material-symbols-outlined text-lg" aria-hidden>archive</span>
               </button>
               {folderFilter === "recycling_bin" && (
                 <button
@@ -896,7 +907,7 @@ export default function UniboxContent({
                   title="Restore to Inbox"
                   aria-label="Restore selected emails to Inbox"
                 >
-                  <span className="material-icons-round text-lg" aria-hidden>restore</span>
+                  <span className="material-symbols-outlined text-lg" aria-hidden>restore</span>
                 </button>
               )}
               <button
@@ -907,7 +918,7 @@ export default function UniboxContent({
                 title={folderFilter === "recycling_bin" ? "Delete permanently" : "Move to Recycling"}
                 aria-label={folderFilter === "recycling_bin" ? "Delete selected emails permanently" : "Move selected emails to Recycling"}
               >
-                <span className="material-icons-round text-lg" aria-hidden>delete_outline</span>
+                <span className="material-symbols-outlined text-lg" aria-hidden>delete</span>
               </button>
             </div>
             <button
@@ -920,25 +931,7 @@ export default function UniboxContent({
             </button>
           </div>
         )}
-        <div className="h-20 flex items-center px-6 border-b border-gray-200/80 dark:border-gray-800/80 bg-white dark:bg-slate-900">
-          <div className="relative w-full">
-            <span
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 material-icons-round text-xl pointer-events-none"
-              aria-hidden
-            >
-              search
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search threads..."
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-unibox-primary/50 focus:border-unibox-primary transition-all placeholder-slate-400 shadow-sm"
-              aria-label="Search threads"
-            />
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+        <div className="flex-1 overflow-y-auto unibox-no-scrollbar min-h-0 px-3 space-y-1">
           <ThreadList
             threads={threads}
             selectedThread={selectedThread}
@@ -953,16 +946,16 @@ export default function UniboxContent({
             onSelectionChange={setSelectedThreadIds}
           />
         </div>
-      </section>
+      </main>
 
-      {/* Thread view column */}
-      <section className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 relative overflow-hidden min-w-0 border-l border-gray-100 dark:border-slate-800">
+      {/* Reading pane - design 1:1 */}
+      <section className="flex-1 flex flex-col bg-white/40 border-l border-white/20 relative overflow-hidden min-w-0">
         <ErrorBoundary
           key={selectedThread?.id ?? "none"}
           fallback={
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-slate-500 dark:text-slate-400 p-6">
-                <span className="material-icons-outlined text-6xl opacity-50 block mb-4" aria-hidden>error_outline</span>
+                <span className="material-symbols-outlined text-6xl opacity-50 block mb-4" aria-hidden>error</span>
                 <p className="text-lg font-medium mb-2">Could not load email</p>
                 <p className="text-sm mb-4">Try selecting another email or refresh the page.</p>
                 <button
@@ -994,7 +987,7 @@ export default function UniboxContent({
             <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
               <div className="text-center">
                 <span
-                  className="material-icons-outlined text-6xl opacity-50 block mb-4"
+                  className="material-symbols-outlined text-6xl opacity-50 block mb-4"
                   aria-hidden
                 >
                   mail_outline

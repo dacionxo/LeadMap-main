@@ -209,13 +209,13 @@ module.exports = {
         "text-muted": "#64748B", // Slate-500
         "bg-surface": "#F8FAFC", // Slate-50
         "grid-border": "#F1F5F9", // Slate-100
-        /* Elite CRM Unibox design tokens (1:1 reference) */
+        /* Elite CRM Unibox design tokens (1:1 reference HTML) */
         unibox: {
-          primary: "#2b6cee",
+          primary: "#137fec",
           "primary-light": "#5a8dee",
-          "primary-dark": "#1a4bb0",
-          "background-light": "#f6f6f8",
-          "background-dark": "#101622",
+          "primary-dark": "#0f6bd4",
+          "background-light": "#fbfbfd",
+          "background-dark": "#101922",
           "surface-light": "#ffffff",
           "surface-dark": "#1e293b",
         },

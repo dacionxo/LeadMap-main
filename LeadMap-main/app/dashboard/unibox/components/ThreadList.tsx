@@ -21,48 +21,21 @@ interface ThreadListProps {
   onSelectionChange?: (ids: Set<string>) => void
 }
 
-const AVATAR_COLORS = [
-  'bg-red-100 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
-  'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600',
-  'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
-  'bg-yellow-100 text-yellow-600 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
-]
-
-function getInitials(subject: string, email: string): string {
-  if (subject && subject.length >= 2) {
-    const words = subject.trim().split(/\s+/)
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase().slice(0, 2)
-    }
-    return subject.slice(0, 2).toUpperCase()
-  }
-  if (email) {
-    const part = email.split('@')[0] || email
-    return part.slice(0, 2).toUpperCase()
-  }
-  return '?'
-}
-
-function getAvatarColor(index: number): string {
-  return AVATAR_COLORS[index % AVATAR_COLORS.length]
-}
-
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
+  const isToday = date.toDateString() === now.toDateString()
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const isYesterday = date.toDateString() === yesterday.toDateString()
   const diffDays = Math.floor(diffMs / 86400000)
   if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-  })
+  if (isToday) return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  if (isYesterday) return 'Yesterday'
+  if (diffDays < 7) return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
 }
 
 function toggleSet<T>(set: Set<T>, value: T): Set<T> {
@@ -118,7 +91,7 @@ export default function ThreadList({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <span className="material-icons-round text-3xl text-slate-400 animate-spin" aria-hidden>refresh</span>
+        <span className="material-symbols-outlined text-3xl text-slate-400 animate-spin" aria-hidden>refresh</span>
         <span className="sr-only">Loading threads</span>
       </div>
     )
@@ -127,8 +100,8 @@ export default function ThreadList({
   if (threads.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center text-slate-500 dark:text-slate-400">
-          <span className="material-icons-outlined text-5xl opacity-50 block mb-4" aria-hidden>mail_outline</span>
+        <div className="text-center text-slate-500">
+          <span className="material-symbols-outlined text-5xl opacity-50 block mb-4" aria-hidden>mail</span>
           <p className="text-sm">No threads found</p>
         </div>
       </div>
@@ -136,41 +109,11 @@ export default function ThreadList({
   }
 
   return (
-    <div className="flex-1 flex flex-col">
-      {selectionMode && threads.length > 0 && (
-        <div
-          className="flex items-center gap-3 px-5 py-3 border-b border-slate-100/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30"
-          role="region"
-          aria-label="Selection"
-        >
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              ref={selectAllRef}
-              type="checkbox"
-              checked={allSelected}
-              onChange={(e) => {
-                e.stopPropagation()
-                if (allSelected) {
-                  onSelectionChange?.(new Set())
-                } else {
-                  onSelectionChange?.(new Set(threads.map((t) => t.id)))
-                }
-              }}
-              className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-unibox-primary focus:ring-2 focus:ring-unibox-primary/50"
-              aria-label={allSelected ? "Deselect all" : "Select all"}
-            />
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {someSelected ? `${selectedIds.size} selected` : "Select emails"}
-            </span>
-          </label>
-        </div>
-      )}
-      {threads.map((thread, index) => {
+    <div className="flex-1 flex flex-col space-y-1">
+      {threads.map((thread) => {
         const isSelected = selectedThread?.id === thread.id
         const snippet = thread.lastMessage?.snippet || 'No preview'
-        const initials = getInitials(thread.subject, thread.mailbox.email)
-        const avatarColor = getAvatarColor(index)
-
+        const senderName = thread.mailbox.display_name || thread.mailbox.email || 'Unknown'
         const isDraft = thread.id.startsWith('draft-') && onDeleteDraft
         const isTrash = onDeleteFromTrash && !thread.id.startsWith('draft-')
 
@@ -178,79 +121,39 @@ export default function ThreadList({
           <div
             key={thread.id}
             onClick={() => onThreadSelect(thread)}
-            className={`group relative w-full text-left px-5 py-5 cursor-pointer transition-all border-b border-slate-100/50 dark:border-slate-700/50 ${
+            className={`group relative flex items-start gap-3 p-4 rounded-lg cursor-pointer transition-all ${
               isSelected
-                ? 'bg-white dark:bg-slate-800 shadow-sm border-b border-slate-100 dark:border-slate-700'
-                : 'hover:bg-white/60 dark:hover:bg-slate-800/60'
+                ? 'bg-white shadow-sm border border-slate-100/50'
+                : 'hover:bg-white/40'
             }`}
           >
             {isSelected && (
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-unibox-primary" aria-hidden />
+              <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#137fec] rounded-full" aria-hidden />
             )}
-            {!isSelected && (
-              <div className="absolute left-0 top-5 bottom-5 w-1 bg-unibox-primary rounded-r-full opacity-0 group-hover:opacity-50 transition-opacity" aria-hidden />
-            )}
-            <div className="flex items-start gap-3">
-              {selectionMode && (
-                <label
-                  className="shrink-0 flex items-center mt-2.5 cursor-pointer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(thread.id)}
-                    onChange={() => onSelectionChange?.(toggleSet(selectedIds, thread.id))}
-                    className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-unibox-primary focus:ring-2 focus:ring-unibox-primary/50"
-                    aria-label={selectedIds.has(thread.id) ? "Deselect email" : "Select email"}
-                  />
-                </label>
+            <div className="flex items-center pt-1" onClick={(e) => e.stopPropagation()}>
+              {selectionMode ? (
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(thread.id)}
+                  onChange={() => onSelectionChange?.(toggleSet(selectedIds, thread.id))}
+                  className={`rounded-full size-4 border-slate-300 text-[#137fec] focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer ${isSelected ? '' : 'opacity-0 group-hover:opacity-100'}`}
+                  aria-label={selectedIds.has(thread.id) ? "Deselect email" : "Select email"}
+                />
+              ) : (
+                <div className="size-4 shrink-0" aria-hidden />
               )}
-              <div className="relative shrink-0">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs border ${avatarColor}`}
-                  aria-hidden
-                >
-                  {initials}
-                </div>
-                {thread.unread && (
-                  <div className="absolute -right-1 -bottom-1 w-4 h-4 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-unibox-primary" aria-hidden />
-                  </div>
-                )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-center mb-0.5">
+                <span className={`text-sm truncate ${isSelected ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
+                  {senderName}
+                </span>
+                <span className="text-[11px] text-slate-400 shrink-0 ml-2">{formatDate(thread.lastMessageAt)}</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate pr-2">
-                    {thread.subject || '(No Subject)'}
-                  </h4>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {(isDraft || isTrash) && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          e.preventDefault()
-                          if (isDraft && onDeleteDraft) onDeleteDraft(thread)
-                          else if (isTrash && onDeleteFromTrash) onDeleteFromTrash(thread)
-                        }}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        aria-label={isDraft ? "Delete draft" : "Delete permanently"}
-                      >
-                        <span className="material-icons-outlined text-[18px]" aria-hidden>delete_outline</span>
-                      </button>
-                    )}
-                    <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">
-                      {formatDate(thread.lastMessageAt)}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-1">
-                  {thread.mailbox.display_name || thread.mailbox.email}
-                </p>
-                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                  {snippet}
-                </p>
-              </div>
+              <h4 className={`text-sm truncate mb-1 ${isSelected ? 'font-medium text-[#137fec]' : 'font-normal text-slate-900'}`}>
+                {thread.subject || '(No Subject)'}
+              </h4>
+              <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{snippet}</p>
             </div>
           </div>
         )
@@ -258,7 +161,7 @@ export default function ThreadList({
       <div ref={sentinelRef} className="h-2 flex-shrink-0" aria-hidden />
       {loadingMore && (
         <div className="flex items-center justify-center py-4">
-          <span className="material-icons-round text-2xl text-slate-400 animate-spin" aria-hidden>refresh</span>
+          <span className="material-symbols-outlined text-2xl text-slate-400 animate-spin" aria-hidden>refresh</span>
           <span className="sr-only">Loading more threads</span>
         </div>
       )}

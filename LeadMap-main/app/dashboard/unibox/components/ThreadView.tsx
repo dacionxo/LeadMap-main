@@ -110,7 +110,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <span className="material-icons-round text-4xl text-slate-400 animate-spin" aria-hidden>refresh</span>
+        <span className="material-symbols-outlined text-4xl text-slate-400 animate-spin" aria-hidden>refresh</span>
         <span className="sr-only">Loading thread</span>
       </div>
     )
@@ -120,7 +120,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center text-slate-500 dark:text-slate-400">
-          <span className="material-icons-outlined text-6xl opacity-50 block mb-4" aria-hidden>mail_outline</span>
+          <span className="material-symbols-outlined text-6xl opacity-50 block mb-4" aria-hidden>mail</span>
           <p className="text-lg font-medium mb-2">No thread selected</p>
         </div>
       </div>
@@ -136,173 +136,66 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-w-0 isolate">
-      {/* Elite toolbar */}
-      <div className="h-20 flex items-center justify-between px-8 border-b border-slate-200/50 dark:border-slate-700/50 flex-shrink-0 backdrop-blur-sm z-10">
-        <div className="flex items-center gap-3">
-          {isDraft ? (
-            <span className="px-3 py-1 bg-slate-900 text-white dark:bg-slate-800 dark:text-slate-100 text-xs font-bold rounded-full uppercase tracking-wide">
-              Draft
-            </span>
-          ) : (
-            <>
-              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-full uppercase tracking-wide">
-                Leads
-              </span>
-              <span className="px-3 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-full uppercase tracking-wide">
-                Inbox
-              </span>
-            </>
+      {/* Reading Header - design 1:1 */}
+      <header className="h-20 flex items-center justify-between px-10 border-b border-white/20 flex-shrink-0">
+        <div className="flex items-center gap-4">
+          {onArchive && !onPermanentDelete && (
+            <button type="button" onClick={() => onArchive?.()} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Archive">
+              <span className="material-symbols-outlined" aria-hidden>archive</span>
+            </button>
           )}
+          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Report">
+            <span className="material-symbols-outlined" aria-hidden>report</span>
+          </button>
+          {(onMoveToTrash || onPermanentDelete) && (
+            <button type="button" onClick={() => (onPermanentDelete ? onPermanentDelete() : onMoveToTrash?.())} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Delete">
+              <span className="material-symbols-outlined" aria-hidden>delete</span>
+            </button>
+          )}
+          <div className="h-4 w-[1px] bg-slate-200 mx-2" aria-hidden />
+          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Mark as unread">
+            <span className="material-symbols-outlined" aria-hidden>mark_as_unread</span>
+          </button>
+          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Schedule">
+            <span className="material-symbols-outlined" aria-hidden>schedule</span>
+          </button>
         </div>
-        {!isDraft && (onRestore || onPermanentDelete) && (
-          <div className="flex items-center gap-2">
-            {onArchive && (
-              <button
-                type="button"
-                onClick={() => onArchive?.()}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold transition-colors"
-                aria-label="Archive"
-              >
-                <span className="material-icons-outlined text-[16px]" aria-hidden>archive</span>
-                Archive
-              </button>
-            )}
-            {onStar && (
-              <button
-                type="button"
-                onClick={() => onStar?.()}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-xs font-semibold transition-colors"
-                aria-label={thread?.starred ? "Unstar" : "Star"}
-              >
-                <span className="material-icons-outlined text-[16px]" aria-hidden>
-                  {thread?.starred ? "star" : "star_border"}
-                </span>
-                {thread?.starred ? "Unstar" : "Star"}
-              </button>
-            )}
-            {onRestore && (
-              <button
-                type="button"
-                onClick={() => onRestore?.()}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-unibox-primary/10 text-unibox-primary hover:bg-unibox-primary/20 dark:bg-unibox-primary/20 dark:text-unibox-primary dark:hover:bg-unibox-primary/30 text-xs font-semibold transition-colors"
-              >
-                <span className="material-icons-outlined text-[16px]" aria-hidden>restore</span>
-                Restore to Inbox
-              </button>
-            )}
-            {onPermanentDelete && (
-              <button
-                type="button"
-                onClick={() => onPermanentDelete?.()}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50 text-xs font-semibold transition-colors"
-              >
-                <span className="material-icons-outlined text-[16px]" aria-hidden>delete</span>
-                Delete permanently
-              </button>
-            )}
-          </div>
-        )}
-        {!isDraft && !onPermanentDelete && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onReply}
-              className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-              aria-label="Reply"
-            >
-              <span className="material-icons-round text-[20px] transform -scale-x-100" aria-hidden>reply</span>
+        <div className="flex items-center gap-3">
+          {!isDraft && (
+            <button type="button" onClick={onReply} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-100 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors" aria-label="Reply">
+              <span className="material-symbols-outlined text-[18px]" aria-hidden>reply</span> Reply
             </button>
-            {onArchive && (
-              <button
-                type="button"
-                onClick={() => onArchive?.()}
-                className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-                aria-label={thread?.archived ? "Unarchive" : "Archive"}
-                title={thread?.archived ? "Unarchive" : "Archive"}
-              >
-                <span className="material-icons-outlined text-[20px]" aria-hidden>archive</span>
-              </button>
-            )}
-            {onStar && (
-              <button
-                type="button"
-                onClick={() => onStar?.()}
-                className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-                aria-label={thread?.starred ? "Unstar" : "Star"}
-                title={thread?.starred ? "Unstar" : "Star"}
-              >
-                <span className="material-icons-outlined text-[20px]" aria-hidden>
-                  {thread?.starred ? "star" : "star_border"}
-                </span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => onMoveToTrash?.()}
-              className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-              aria-label="Move to Recycling"
-            >
-              <span className="material-icons-outlined text-[20px]" aria-hidden>delete</span>
-            </button>
-            <div className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-2" aria-hidden />
-            <button
-              type="button"
-              className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-              aria-label="More options"
-            >
-              <span className="material-icons-round text-[20px]" aria-hidden>more_vert</span>
-            </button>
-          </div>
-        )}
-        {isDraft && onDeleteDraft && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onDeleteDraft?.()}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50 text-xs font-semibold transition-colors"
-            >
-              <span className="material-icons-outlined text-[16px]" aria-hidden>delete</span>
-              Delete draft
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+          <button type="button" className="size-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white transition-all" aria-label="More options">
+            <span className="material-symbols-outlined" aria-hidden>more_horiz</span>
+          </button>
+        </div>
+      </header>
 
-      {/* Message content - Elite card. overflow-x-hidden prevents HTML emails from affecting page layout. */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-8 bg-slate-50/50 dark:bg-slate-900/30 min-w-0">
-        <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 p-8 mb-24">
-          {/* Card header: from, to, date */}
-          <div className="flex items-start justify-between mb-8 pb-6 border-b border-slate-100 dark:border-slate-700">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-lg shadow-md shrink-0">
-                {getInitial(fromParticipant?.name ?? null, fromParticipant?.email ?? '')}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-slate-900 dark:text-white text-base">{displayName}</span>
-                  {fromParticipant?.email && (
-                    <span className="text-slate-400 dark:text-slate-500 text-xs">
-                      &lt;{fromParticipant.email}&gt;
-                    </span>
-                  )}
+      {/* Email Content - design 1:1 */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden unibox-no-scrollbar p-10 min-w-0">
+        <div className="max-w-[800px] mx-auto">
+          <div className="mb-10">
+            <h1 className="text-3xl font-semibold text-slate-900 mb-6 tracking-tight">{thread.subject || '(No Subject)'}</h1>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="size-12 rounded-full bg-[#137fec]/10 flex items-center justify-center text-[#137fec] font-bold overflow-hidden">
+                  {getInitial(fromParticipant?.name ?? null, fromParticipant?.email ?? '')}
                 </div>
-                {toNames && (
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    to: <span className="text-slate-700 dark:text-slate-300 font-medium">{toNames}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-slate-900">{displayName}</p>
+                    {fromParticipant?.email && (
+                      <span className="text-xs text-slate-400">&lt;{fromParticipant.email}&gt;</span>
+                    )}
                   </div>
-                )}
+                  <p className="text-xs text-slate-500">to me</p>
+                </div>
               </div>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-xs text-slate-500 dark:text-slate-400">{dateStr}</p>
+              <p className="text-xs text-slate-400 font-medium">{dateStr}</p>
             </div>
           </div>
-
           <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-              {thread.subject || '(No Subject)'}
-            </h1>
-
             {(Array.isArray(thread.messages) ? thread.messages : [])
               .filter((m): m is Message => !!m && !!m.id)
               .map((message) => {
@@ -335,7 +228,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
                             href={att.storage_path || '#'}
                             className="flex items-center gap-2 p-2 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                           >
-                            <span className="material-icons-outlined text-slate-400 text-lg" aria-hidden>attach_file</span>
+                            <span className="material-symbols-outlined text-slate-400 text-lg" aria-hidden>attach_file</span>
                             <span className="text-sm text-slate-700 dark:text-slate-300">{att.filename}</span>
                             {(att.size_bytes ?? 0) > 0 && (
                               <span className="text-xs text-slate-500 dark:text-slate-400 ml-auto">
