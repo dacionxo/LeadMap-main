@@ -93,6 +93,7 @@ export default function UniboxContent({
   const [selectedThreadIds, setSelectedThreadIds] = useState<Set<string>>(
     new Set()
   );
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   useEffect(() => {
     fetchMailboxes();
@@ -548,6 +549,56 @@ export default function UniboxContent({
     }
   };
 
+  const applyBulkAction = useCallback(
+    async (action: "star" | "archive" | "trash") => {
+      const ids = Array.from(selectedThreadIds).filter(
+        (id) => !id.startsWith("draft-")
+      );
+      if (ids.length === 0) return;
+      setBulkActionLoading(true);
+      try {
+        const body: Record<string, unknown> =
+          action === "star"
+            ? { starred: true }
+            : action === "archive"
+              ? { archived: true }
+              : { trash: true };
+        const responses = await Promise.all(
+          ids.map((id) =>
+            fetch(`/api/unibox/threads/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify(body),
+            })
+          )
+        );
+        const failed = responses.filter((r) => !r.ok);
+        if (failed.length > 0) {
+          alert(
+            `${ids.length - failed.length} updated. ${failed.length} failed. Please try again.`
+          );
+        }
+        setSelectedThreadIds(new Set());
+        fetchThreads();
+        fetchCounts();
+        if (selectedThread && ids.includes(selectedThread.id)) {
+          fetchThreadDetails(selectedThread.id);
+        }
+      } catch (error) {
+        console.error("[UniboxContent] Bulk action error:", error);
+        alert(error instanceof Error ? error.message : "Bulk action failed. Please try again.");
+      } finally {
+        setBulkActionLoading(false);
+      }
+    },
+    [selectedThreadIds, selectedThread]
+  );
+
+  const handleBulkStar = () => applyBulkAction("star");
+  const handleBulkArchive = () => applyBulkAction("archive");
+  const handleBulkTrash = () => applyBulkAction("trash");
+
   const handleComposerSend = async (data: any) => {
     if (!selectedThread) return;
     try {
@@ -632,6 +683,53 @@ export default function UniboxContent({
 
       {/* Thread list column */}
       <section className="hidden md:flex md:flex-col w-[400px] flex-shrink-0 border-r border-gray-200/80 dark:border-gray-800/80 bg-white dark:bg-slate-900">
+        {selectedThreadIds.size > 0 && (
+          <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-gray-200/80 dark:border-gray-800/80 bg-unibox-primary/10 dark:bg-unibox-primary/20 shrink-0">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              {selectedThreadIds.size} selected
+            </span>
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={handleBulkStar}
+                disabled={bulkActionLoading}
+                className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 disabled:opacity-50 transition-colors"
+                title="Star"
+                aria-label="Star selected emails"
+              >
+                <span className="material-icons-round text-lg" aria-hidden>star_outline</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkArchive}
+                disabled={bulkActionLoading}
+                className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 disabled:opacity-50 transition-colors"
+                title="Archive"
+                aria-label="Archive selected emails"
+              >
+                <span className="material-icons-round text-lg" aria-hidden>archive</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkTrash}
+                disabled={bulkActionLoading || folderFilter === "trash"}
+                className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 disabled:opacity-50 transition-colors"
+                title="Trash"
+                aria-label="Move selected emails to trash"
+              >
+                <span className="material-icons-round text-lg" aria-hidden>delete_outline</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedThreadIds(new Set())}
+              className="text-xs font-medium text-unibox-primary hover:underline shrink-0"
+              aria-label="Clear selection"
+            >
+              Clear
+            </button>
+          </div>
+        )}
         <div className="h-20 flex items-center px-6 border-b border-gray-200/80 dark:border-gray-800/80 bg-white dark:bg-slate-900">
           <div className="relative w-full">
             <span
