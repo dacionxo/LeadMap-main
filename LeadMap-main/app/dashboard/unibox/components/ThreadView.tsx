@@ -56,6 +56,8 @@ interface ThreadViewProps {
   onForward: () => void
   onDeleteDraft?: () => void
   onMoveToTrash?: () => void
+  onArchive?: () => void
+  onStar?: () => void
   onRestore?: () => void
   onPermanentDelete?: () => void
 }
@@ -101,7 +103,7 @@ function getInitial(name: string | null, email: string): string {
   return '?'
 }
 
-export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onRestore, onPermanentDelete }: ThreadViewProps) {
+export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete }: ThreadViewProps) {
   const [isStarred, setIsStarred] = useState(thread?.starred ?? false)
   const isDraft = thread?.status === 'draft'
 
@@ -154,6 +156,30 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
         </div>
         {!isDraft && (onRestore || onPermanentDelete) && (
           <div className="flex items-center gap-2">
+            {onArchive && (
+              <button
+                type="button"
+                onClick={() => onArchive?.()}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold transition-colors"
+                aria-label="Archive"
+              >
+                <span className="material-icons-outlined text-[16px]" aria-hidden>archive</span>
+                Archive
+              </button>
+            )}
+            {onStar && (
+              <button
+                type="button"
+                onClick={() => onStar?.()}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-xs font-semibold transition-colors"
+                aria-label={thread?.starred ? "Unstar" : "Star"}
+              >
+                <span className="material-icons-outlined text-[16px]" aria-hidden>
+                  {thread?.starred ? "star" : "star_border"}
+                </span>
+                {thread?.starred ? "Unstar" : "Star"}
+              </button>
+            )}
             {onRestore && (
               <button
                 type="button"
@@ -186,13 +212,30 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
             >
               <span className="material-icons-round text-[20px] transform -scale-x-100" aria-hidden>reply</span>
             </button>
-            <button
-              type="button"
-              className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-              aria-label="Archive"
-            >
-              <span className="material-icons-outlined text-[20px]" aria-hidden>archive</span>
-            </button>
+            {onArchive && (
+              <button
+                type="button"
+                onClick={() => onArchive?.()}
+                className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+                aria-label={thread?.archived ? "Unarchive" : "Archive"}
+                title={thread?.archived ? "Unarchive" : "Archive"}
+              >
+                <span className="material-icons-outlined text-[20px]" aria-hidden>archive</span>
+              </button>
+            )}
+            {onStar && (
+              <button
+                type="button"
+                onClick={() => onStar?.()}
+                className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
+                aria-label={thread?.starred ? "Unstar" : "Star"}
+                title={thread?.starred ? "Unstar" : "Star"}
+              >
+                <span className="material-icons-outlined text-[20px]" aria-hidden>
+                  {thread?.starred ? "star" : "star_border"}
+                </span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onMoveToTrash?.()}
@@ -207,7 +250,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
               className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
               aria-label="More options"
             >
-              <span className="material-icons-outlined text-[20px]" aria-hidden>more_vert</span>
+              <span className="material-icons-round text-[20px]" aria-hidden>more_vert</span>
             </button>
           </div>
         )}

@@ -430,6 +430,77 @@ export default function UniboxWrapper() {
     }
   };
 
+  const handleArchiveThread = async (thread?: UniboxThread | null) => {
+    const target = thread ?? selectedThread;
+    if (!target || target.id.startsWith("draft-")) return;
+    const shouldArchive = folderFilter !== "archived";
+
+    try {
+      const response = await fetch(`/api/unibox/threads/${target.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ archived: shouldArchive }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data && data.error) || "Failed to update");
+      }
+      setThreads((t) => t.filter((x) => x.id !== target.id));
+      setFolderCounts((prev) => ({
+        ...prev,
+        archived: Math.max(0, (prev.archived ?? 0) + (shouldArchive ? 1 : -1)),
+        inbox: Math.max(0, (prev.inbox ?? 0) + (shouldArchive ? -1 : 1)),
+        starred: shouldArchive && folderFilter === "starred" ? Math.max(0, (prev.starred ?? 0) - 1) : (prev.starred ?? 0),
+      }));
+      if (selectedThread?.id === target.id) {
+        setSelectedThread(null);
+        setThreadDetails(null);
+      }
+      fetchThreads();
+      fetchCounts();
+    } catch (error) {
+      console.error("[UniboxWrapper] Error archiving:", error);
+      alert(error instanceof Error ? error.message : "Failed to update. Please try again.");
+    }
+  };
+
+  const handleStarThread = async (thread?: UniboxThread | null) => {
+    const target = thread ?? selectedThread;
+    if (!target || target.id.startsWith("draft-")) return;
+    const currentStarred = threadDetails?.starred ?? target.starred ?? false;
+    const newStarred = !currentStarred;
+
+    try {
+      const response = await fetch(`/api/unibox/threads/${target.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ starred: newStarred }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data && data.error) || "Failed to update");
+      }
+      setThreads((t) =>
+        t.map((x) =>
+          x.id === target.id ? { ...x, starred: newStarred } : x
+        )
+      );
+      setFolderCounts((prev) => ({
+        ...prev,
+        starred: Math.max(0, (prev.starred ?? 0) + (newStarred ? 1 : -1)),
+      }));
+      if (threadDetails?.id === target.id) {
+        setThreadDetails({ ...threadDetails, starred: newStarred });
+      }
+      fetchCounts();
+    } catch (error) {
+      console.error("[UniboxWrapper] Error starring:", error);
+      alert(error instanceof Error ? error.message : "Failed to update. Please try again.");
+    }
+  };
+
   const handleRestoreFromRecycling = async (thread?: UniboxThread | null) => {
     const target = thread ?? selectedThread;
     if (!target || target.id.startsWith("draft-") || folderFilter !== "recycling_bin") return;
@@ -655,6 +726,8 @@ export default function UniboxWrapper() {
                 onForward={handleForward}
                 onDeleteDraft={() => handleDeleteDraft()}
                 onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "recycling_bin" ? handleMoveToTrash : undefined}
+                onArchive={folderFilter !== "drafts" ? handleArchiveThread : undefined}
+                onStar={folderFilter !== "drafts" ? handleStarThread : undefined}
                 onRestore={folderFilter === "recycling_bin" ? handleRestoreFromRecycling : undefined}
                 onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
               />
