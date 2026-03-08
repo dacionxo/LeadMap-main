@@ -15,6 +15,10 @@ interface ThreadListProps {
   onDeleteDraft?: (thread: UniboxThread) => void
   /** One-click permanent delete for trash; when provided, shows delete icon on trash rows */
   onDeleteFromTrash?: (thread: UniboxThread) => void
+  /** Selected thread IDs for bulk selection */
+  selectedIds?: Set<string>
+  /** Callback when selection changes */
+  onSelectionChange?: (ids: Set<string>) => void
 }
 
 const AVATAR_COLORS = [
@@ -61,6 +65,13 @@ function formatDate(dateString: string): string {
   })
 }
 
+function toggleSet<T>(set: Set<T>, value: T): Set<T> {
+  const next = new Set(set)
+  if (next.has(value)) next.delete(value)
+  else next.add(value)
+  return next
+}
+
 export default function ThreadList({
   threads,
   selectedThread,
@@ -71,11 +82,23 @@ export default function ThreadList({
   onLoadMore,
   onDeleteDraft,
   onDeleteFromTrash,
+  selectedIds = new Set(),
+  onSelectionChange,
 }: ThreadListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
+  const selectAllRef = useRef<HTMLInputElement>(null)
+  const selectionMode = Boolean(onSelectionChange)
+  const allSelected = threads.length > 0 && threads.every((t) => selectedIds.has(t.id))
+  const someSelected = selectedIds.size > 0
+
   const loadMore = useCallback(() => {
     if (hasMore && !loadingMore && !loading && onLoadMore) onLoadMore()
   }, [hasMore, loadingMore, loading, onLoadMore])
+
+  useEffect(() => {
+    const el = selectAllRef.current
+    if (el) el.indeterminate = someSelected && !allSelected
+  }, [someSelected, allSelected])
 
   useEffect(() => {
     if (!onLoadMore || !hasMore || loadingMore || loading) return
@@ -114,6 +137,34 @@ export default function ThreadList({
 
   return (
     <div className="flex-1 flex flex-col">
+      {selectionMode && threads.length > 0 && (
+        <div
+          className="flex items-center gap-3 px-5 py-3 border-b border-slate-100/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30"
+          role="region"
+          aria-label="Selection"
+        >
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={allSelected}
+              onChange={(e) => {
+                e.stopPropagation()
+                if (allSelected) {
+                  onSelectionChange?.(new Set())
+                } else {
+                  onSelectionChange?.(new Set(threads.map((t) => t.id)))
+                }
+              }}
+              className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-unibox-primary focus:ring-2 focus:ring-unibox-primary/50"
+              aria-label={allSelected ? "Deselect all" : "Select all"}
+            />
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {someSelected ? `${selectedIds.size} selected` : "Select emails"}
+            </span>
+          </label>
+        </div>
+      )}
       {threads.map((thread, index) => {
         const isSelected = selectedThread?.id === thread.id
         const snippet = thread.lastMessage?.snippet || 'No preview'
@@ -140,6 +191,20 @@ export default function ThreadList({
               <div className="absolute left-0 top-5 bottom-5 w-1 bg-unibox-primary rounded-r-full opacity-0 group-hover:opacity-50 transition-opacity" aria-hidden />
             )}
             <div className="flex items-start gap-3">
+              {selectionMode && (
+                <label
+                  className="shrink-0 flex items-center mt-2.5 cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(thread.id)}
+                    onChange={() => onSelectionChange?.(toggleSet(selectedIds, thread.id))}
+                    className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-unibox-primary focus:ring-2 focus:ring-unibox-primary/50"
+                    aria-label={selectedIds.has(thread.id) ? "Deselect email" : "Select email"}
+                  />
+                </label>
+              )}
               <div className="relative shrink-0">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs border ${avatarColor}`}

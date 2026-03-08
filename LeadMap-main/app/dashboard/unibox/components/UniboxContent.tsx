@@ -90,6 +90,9 @@ export default function UniboxContent({
     Record<string, Record<FilterStatus, number>>
   >({});
   const [mailboxCounts, setMailboxCounts] = useState<Record<string, number>>({});
+  const [selectedThreadIds, setSelectedThreadIds] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     fetchMailboxes();
@@ -115,9 +118,10 @@ export default function UniboxContent({
     fetchCounts();
   }, [fetchCounts]);
 
-  // Reset to page 1 when filters or search change so next fetch replaces the list
+  // Reset to page 1 and clear selection when filters or search change
   useEffect(() => {
     setPage(1);
+    setSelectedThreadIds(new Set());
   }, [selectedMailboxId, statusFilter, folderFilter, searchQuery]);
 
   useEffect(() => {
@@ -657,6 +661,8 @@ export default function UniboxContent({
             onLoadMore={handleLoadMore}
             onDeleteDraft={folderFilter === "drafts" ? (t) => handleDeleteDraft(t) : undefined}
             onDeleteFromTrash={folderFilter === "trash" ? (t) => handlePermanentDeleteThread(t) : undefined}
+            selectedIds={selectedThreadIds}
+            onSelectionChange={setSelectedThreadIds}
           />
         </div>
       </section>
