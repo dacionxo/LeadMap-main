@@ -41,6 +41,7 @@ export default function ComposeEmailModal({
   const [bcc, setBcc] = useState('')
   const [replyTo, setReplyTo] = useState('')
   const [sending, setSending] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
   const [sendLaterOpen, setSendLaterOpen] = useState(false)
 
   const fetchMailboxes = useCallback(async () => {
@@ -67,9 +68,50 @@ export default function ComposeEmailModal({
     fetchMailboxes()
   }, [fetchMailboxes])
 
+  const handleSaveDraft = async () => {
+    if (!subject && !body) return
+    setSavingDraft(true)
+    try {
+      const m = mailboxes.find((mb) => mb.id === mailboxId)
+      const toList = to
+        .split(',')
+        .map((e) => e.trim())
+        .filter(Boolean)
+      const response = await fetch('/api/emails/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          subject: subject || '(No Subject)',
+          htmlContent: body.trim() || '',
+          to: toList,
+          mailboxId: mailboxId || null,
+          fromName: m?.display_name || null,
+          fromEmail: m?.email || null,
+          replyTo: showReplyTo && replyTo.trim() ? replyTo.trim() : null,
+          previewText: previewText.trim() || null,
+        }),
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to save draft')
+      }
+      onSent?.()
+      onClose()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to save draft')
+    } finally {
+      setSavingDraft(false)
+    }
+  }
+
   const handleDiscard = () => {
     if (to || subject || body) {
-      if (window.confirm('Discard this email?')) onClose()
+      const action = window.confirm(
+        'Discard this email? Click Cancel to save as draft instead.'
+      )
+      if (action) onClose()
+      else handleSaveDraft()
     } else {
       onClose()
     }
@@ -396,14 +438,30 @@ export default function ComposeEmailModal({
 
         {/* Footer */}
         <div className="px-8 py-5 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={handleDiscard}
-            className="px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-full transition-colors"
-            aria-label="Discard"
-          >
-            Discard
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDiscard}
+              className="px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-full transition-colors"
+              aria-label="Discard"
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={savingDraft || (!subject && !body)}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Save draft"
+            >
+              {savingDraft ? (
+                <span className="material-symbols-outlined text-[18px] animate-spin">refresh</span>
+              ) : (
+                <span className="material-symbols-outlined text-[18px]">drafts</span>
+              )}
+              Save Draft
+            </button>
+          </div>
           <div className="flex items-center gap-3">
             <div className="relative group">
               <button

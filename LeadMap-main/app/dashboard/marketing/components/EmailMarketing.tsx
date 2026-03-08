@@ -7,6 +7,7 @@ import {
   Mail, 
   Plus, 
   Send, 
+  Save,
   Calendar, 
   FileText, 
   X, 
@@ -373,6 +374,38 @@ function EmailMarketingContent() {
     }
   }
 
+  const handleSaveDraft = async () => {
+    if (!composeData.subject && !composeData.html) return
+    try {
+      const toList = composeData.to
+        ? composeData.to
+            .split(',')
+            .map((e: string) => e.trim())
+            .filter(Boolean)
+        : []
+      const response = await fetch('/api/emails/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          subject: composeData.subject || '(No Subject)',
+          htmlContent: composeData.html || '',
+          to: toList,
+          mailboxId: selectedMailbox || null,
+        }),
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to save draft')
+      }
+      alert('Draft saved! View it in Unibox > Drafts.')
+      setShowComposeModal(false)
+      setComposeData({ to: '', subject: '', html: '', templateId: '' })
+    } catch (err: any) {
+      alert(err?.message || 'Failed to save draft')
+    }
+  }
+
   const handleSendEmail = async () => {
     if (!selectedMailbox || !composeData.to || !composeData.subject || !composeData.html) {
       alert('Please fill in all required fields')
@@ -551,6 +584,7 @@ function EmailMarketingContent() {
         <ComposeEmailModal
           onClose={() => setShowComposeModal(false)}
           onSend={handleSendEmail}
+          onSaveDraft={handleSaveDraft}
           templates={templates}
           composeData={composeData}
           setComposeData={setComposeData}
@@ -1757,12 +1791,14 @@ function ConnectMailboxModal({
 function ComposeEmailModal({
   onClose,
   onSend,
+  onSaveDraft,
   templates,
   composeData,
   setComposeData,
 }: {
   onClose: () => void
   onSend: () => void
+  onSaveDraft?: () => void
   templates: EmailTemplate[]
   composeData: any
   setComposeData: (data: any) => void
@@ -1851,16 +1887,26 @@ function ComposeEmailModal({
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Cancel
               </button>
+              {onSaveDraft && (
+                <button
+                  onClick={onSaveDraft}
+                  disabled={!composeData.subject && !composeData.html}
+                  className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Draft
+                </button>
+              )}
               <button
                 onClick={onSend}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 min-w-[120px]"
               >
                 <Send className="w-4 h-4" />
                 Send Now

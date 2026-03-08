@@ -31,6 +31,7 @@ export default function ComposeEmail() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
   
   const [formData, setFormData] = useState({
     mailboxId: '',
@@ -80,6 +81,47 @@ export default function ComposeEmail() {
         subject: template.title,
         html: template.body
       }))
+    }
+  }
+
+  const handleSaveDraft = async () => {
+    if (!formData.subject && !formData.html) return
+    setSavingDraft(true)
+    try {
+      const toList = formData.to
+        ? formData.to
+            .split(',')
+            .map((e) => e.trim())
+            .filter(Boolean)
+        : []
+      const response = await fetch('/api/emails/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          subject: formData.subject || '(No Subject)',
+          htmlContent: formData.html || '',
+          to: toList,
+          mailboxId: formData.mailboxId || null,
+        }),
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to save draft')
+      }
+      alert('Draft saved! View it in Unibox > Drafts.')
+      setFormData({
+        mailboxId: formData.mailboxId,
+        to: '',
+        subject: '',
+        html: '',
+        scheduleAt: '',
+        scheduleEnabled: false,
+      })
+    } catch (err: any) {
+      alert(err?.message || 'Failed to save draft')
+    } finally {
+      setSavingDraft(false)
     }
   }
 
@@ -282,8 +324,15 @@ export default function ComposeEmail() {
               )}
             </button>
             <button
+              onClick={handleSaveDraft}
+              disabled={savingDraft || (!formData.subject && !formData.html)}
+              className="flex items-center gap-2 px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Save className="w-4 h-4" />
+              {savingDraft ? 'Saving...' : 'Save Draft'}
+            </button>
+            <button
               onClick={() => {
-                // Reset form
                 setFormData({
                   mailboxId: formData.mailboxId,
                   to: '',
