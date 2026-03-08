@@ -20,8 +20,8 @@ function UniboxPageContent() {
                 className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
                 aria-hidden
               />
-              <div className="flex-1 flex items-center justify-center p-6 lg:p-12 min-h-0 overflow-hidden">
-                <div className="unibox-glass w-full max-w-[1400px] h-full min-h-0 rounded-xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] flex overflow-hidden border border-white/40">
+              <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+                <div className="unibox-glass flex-1 w-full min-h-0 rounded-xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] flex overflow-hidden border border-white/40">
                   <Suspense
                     fallback={
                       <div className="flex-1 flex items-center justify-center text-slate-500">
