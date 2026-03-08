@@ -653,7 +653,9 @@ export default function UniboxWrapper() {
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           folderFilter={folderFilter}
-          onFolderFilterChange={(folder) => setFolderFilter(folder)}
+          onFolderFilterChange={(folder) => {
+            if (folder !== 'sent') setFolderFilter(folder as UniboxFilterFolder);
+          }}
           mailboxUnreadCounts={mailboxUnreadCounts}
           unreadCount={unreadCount}
           folderCounts={folderCounts}

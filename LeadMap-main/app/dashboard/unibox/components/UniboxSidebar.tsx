@@ -1,10 +1,22 @@
 'use client'
 
 type FilterFolder = 'inbox' | 'starred' | 'sent' | 'drafts' | 'archived' | 'recycling_bin'
+type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
 
 interface UniboxSidebarProps {
   folderFilter: FilterFolder
   onFolderFilterChange: (folder: FilterFolder) => void
+  // Optional props for UniboxWrapper compatibility (ignored by this simplified sidebar)
+  mailboxes?: Array<{ id: string; email: string; display_name: string | null; provider: string; active: boolean }>
+  selectedMailboxId?: string | null
+  onMailboxSelect?: (id: string | null) => void
+  statusFilter?: FilterStatus
+  onStatusFilterChange?: (status: FilterStatus) => void
+  mailboxUnreadCounts?: Record<string, number>
+  unreadCount?: number
+  folderCounts?: Partial<Record<FilterFolder, number>>
+  statusCounts?: Record<FilterStatus, number>
+  mailboxCounts?: Record<string, number>
 }
 
 const FOLDER_ITEMS: Array<{ value: FilterFolder; label: string; icon: string }> = [
@@ -16,7 +28,7 @@ const FOLDER_ITEMS: Array<{ value: FilterFolder; label: string; icon: string }> 
   { value: 'recycling_bin', label: 'Trash', icon: 'delete' },
 ]
 
-export default function UniboxSidebar({ folderFilter, onFolderFilterChange }: UniboxSidebarProps) {
+export default function UniboxSidebar({ folderFilter, onFolderFilterChange, ..._rest }: UniboxSidebarProps) {
   return (
     <aside className="w-64 flex flex-col py-8 px-6 bg-white/30 shrink-0">
       <div className="flex items-center gap-3 px-2 mb-10">
