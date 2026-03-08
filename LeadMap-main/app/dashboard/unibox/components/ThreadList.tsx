@@ -19,6 +19,8 @@ interface ThreadListProps {
   selectedIds?: Set<string>
   /** Callback when selection changes */
   onSelectionChange?: (ids: Set<string>) => void
+  /** When true, checkboxes are always visible (not just on row hover) */
+  forceShowCheckboxes?: boolean
 }
 
 function formatDate(dateString: string): string {
@@ -57,6 +59,7 @@ export default function ThreadList({
   onDeleteFromTrash,
   selectedIds = new Set(),
   onSelectionChange,
+  forceShowCheckboxes = false,
 }: ThreadListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const selectAllRef = useRef<HTMLInputElement>(null)
@@ -136,7 +139,7 @@ export default function ThreadList({
                   type="checkbox"
                   checked={selectedIds.has(thread.id)}
                   onChange={() => onSelectionChange?.(toggleSet(selectedIds, thread.id))}
-                  className={`rounded-full size-4 border-slate-300 text-[#137fec] focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer ${isSelected ? '' : 'opacity-0 group-hover:opacity-100'}`}
+                  className={`rounded-full size-4 border-slate-300 text-[#137fec] focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer ${isSelected || forceShowCheckboxes ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                   aria-label={selectedIds.has(thread.id) ? "Deselect email" : "Select email"}
                 />
               ) : (

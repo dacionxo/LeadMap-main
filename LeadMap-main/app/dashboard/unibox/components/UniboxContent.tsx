@@ -94,6 +94,17 @@ export default function UniboxContent({
     new Set()
   );
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [selectionModeVisible, setSelectionModeVisible] = useState(false);
+
+  const handleSelectAllButtonClick = useCallback(() => {
+    if (!selectionModeVisible) {
+      setSelectionModeVisible(true);
+    } else if (selectedThreadIds.size >= threads.length && threads.length > 0) {
+      setSelectedThreadIds(new Set());
+    } else {
+      setSelectedThreadIds(new Set(threads.map((t) => t.id)));
+    }
+  }, [selectionModeVisible, selectedThreadIds.size, threads]);
 
   useEffect(() => {
     fetchMailboxes();
@@ -847,18 +858,47 @@ export default function UniboxContent({
       />
 
       {/* Thread list column - design 1:1 */}
-      <main className="w-[420px] flex flex-col bg-white/10 border-l border-white/20 shrink-0">
+      <main className="w-[420px] flex flex-col bg-white/10 border-l border-[#F3F4F6] shrink-0">
         <header className="p-6 pb-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold tracking-tight">{FOLDER_LABELS[folderFilter] ?? "Inbox"}</h1>
-          <button
-            type="button"
-            onClick={() => setShowComposeModal(true)}
-            className="size-9 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:text-[#137fec] transition-colors"
-            aria-label="Compose"
-          >
-            <span className="material-symbols-outlined text-[20px]" aria-hidden>edit_note</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowComposeModal(true)}
+              className="size-9 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:text-[#137fec] transition-colors"
+              aria-label="Compose"
+            >
+              <span className="material-symbols-outlined text-[20px]" aria-hidden>edit_note</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSelectAllButtonClick}
+              className={`size-9 rounded-full flex items-center justify-center shadow-sm border transition-colors ${
+                selectionModeVisible
+                  ? selectedThreadIds.size >= threads.length && threads.length > 0
+                    ? "bg-[#137fec]/10 border-[#137fec]/30 text-[#137fec]"
+                    : "bg-[#137fec]/10 border-[#137fec]/30 text-[#137fec]"
+                  : "bg-white border-slate-100 text-slate-600 hover:text-[#137fec]"
+              }`}
+              aria-label={
+                !selectionModeVisible
+                  ? "Show selection checkboxes"
+                  : selectedThreadIds.size >= threads.length && threads.length > 0
+                    ? "Deselect all"
+                    : "Select all"
+              }
+              title={
+                !selectionModeVisible
+                  ? "Click 1: Show checkboxes · Click 2: Select all · Click 3: Deselect all"
+                  : selectedThreadIds.size >= threads.length && threads.length > 0
+                    ? "Deselect all"
+                    : "Select all"
+              }
+            >
+              <span className="material-symbols-outlined text-[20px]" aria-hidden>select_all</span>
+            </button>
+          </div>
         </div>
         <div className="relative">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]" aria-hidden>search</span>
@@ -944,12 +984,13 @@ export default function UniboxContent({
             onDeleteFromTrash={folderFilter === "recycling_bin" ? (t) => handlePermanentDeleteThread(t) : undefined}
             selectedIds={selectedThreadIds}
             onSelectionChange={setSelectedThreadIds}
+            forceShowCheckboxes={selectionModeVisible}
           />
         </div>
       </main>
 
       {/* Reading pane - design 1:1 */}
-      <section className="flex-1 flex flex-col bg-white/40 border-l border-white/20 relative overflow-hidden min-w-0">
+      <section className="flex-1 flex flex-col bg-white/40 border-l border-[#F3F4F6] relative overflow-hidden min-w-0">
         <ErrorBoundary
           key={selectedThread?.id ?? "none"}
           fallback={
