@@ -9,7 +9,7 @@ import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 
-type FilterFolder = 'inbox' | 'starred' | 'archived' | 'recycling_bin' | 'trash'
+type FilterFolder = 'inbox' | 'starred' | 'archived' | 'recycling_bin' | 'trash' | 'sent'
 type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
 
 async function countThreads(
@@ -26,14 +26,19 @@ async function countThreads(
     query = query.not('trashed_at', 'is', null)
   } else {
     query = query.is('trashed_at', null)
-    // Only count threads with inbound messages (matches threads API filter)
-    query = query.not('last_inbound_at', 'is', null)
-    if (opts.folder === 'inbox') {
-      query = query.eq('archived', false)
-    } else if (opts.folder === 'starred') {
-      query = query.eq('archived', false).eq('starred', true)
-    } else if (opts.folder === 'archived') {
-      query = query.eq('archived', true)
+    if (opts.folder === 'sent') {
+      // Sent: only count threads where user has sent at least one message
+      query = query.not('last_outbound_at', 'is', null)
+    } else {
+      // Inbox/starred/archived: only count threads with inbound messages
+      query = query.not('last_inbound_at', 'is', null)
+      if (opts.folder === 'inbox') {
+        query = query.eq('archived', false)
+      } else if (opts.folder === 'starred') {
+        query = query.eq('archived', false).eq('starred', true)
+      } else if (opts.folder === 'archived') {
+        query = query.eq('archived', true)
+      }
     }
   }
 
@@ -74,6 +79,7 @@ export async function GET(request: NextRequest) {
 
     // Build all count queries
     const recyclingBinCountPromise = countThreads(supabase, userId, { folder: 'recycling_bin' })
+    const sentCountPromise = countThreads(supabase, userId, { folder: 'sent' })
     const folderPromises = [
       countThreads(supabase, userId, { folder: 'inbox' }),
       countThreads(supabase, userId, { folder: 'starred' }),
@@ -112,6 +118,7 @@ export async function GET(request: NextRequest) {
       mailboxCountsArray,
       draftsCount,
       recyclingBinCount,
+      sentTotal,
     ] = await Promise.all([
       ...folderPromises,
       Promise.all(statusInboxPromises),
@@ -121,6 +128,7 @@ export async function GET(request: NextRequest) {
       Promise.all(mailboxPerIdPromises),
       draftsPromise,
       recyclingBinCountPromise,
+      sentCountPromise,
     ])
 
     const statusByFolder = {
@@ -138,6 +146,7 @@ export async function GET(request: NextRequest) {
       folders: {
         inbox: inboxTotal,
         starred: starredTotal,
+        sent: sentTotal,
         drafts: draftsCount,
         archived: archivedTotal,
         recycling_bin: recyclingBinCount,

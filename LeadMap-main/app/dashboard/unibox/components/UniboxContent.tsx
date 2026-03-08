@@ -265,7 +265,8 @@ export default function UniboxContent({
       if (folderFilter === "recycling_bin") params.append("folder", "recycling_bin");
       else if (folderFilter === "archived") params.append("folder", "archived");
       else if (folderFilter === "starred") params.append("folder", "starred");
-      else if (folderFilter === "inbox" || folderFilter === "sent") params.append("folder", "inbox");
+      else if (folderFilter === "sent") params.append("folder", "sent");
+      else if (folderFilter === "inbox") params.append("folder", "inbox");
       params.append("page", page.toString());
       params.append("pageSize", "50");
 

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { EmailBodySandbox } from './EmailBodySandbox'
 
 interface Message {
@@ -104,7 +103,6 @@ function getInitial(name: string | null, email: string): string {
 }
 
 export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete }: ThreadViewProps) {
-  const [isStarred, setIsStarred] = useState(thread?.starred ?? false)
   const isDraft = thread?.status === 'draft'
 
   if (loading) {
@@ -140,25 +138,27 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
       <header className="h-20 flex items-center justify-between px-10 border-b border-[#F3F4F6] flex-shrink-0">
         <div className="flex items-center gap-4">
           {onArchive && !onPermanentDelete && (
-            <button type="button" onClick={() => onArchive?.()} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Archive">
+            <button type="button" onClick={() => onArchive?.()} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Add to Archive" title="Add to Archive">
               <span className="material-symbols-outlined" aria-hidden>archive</span>
             </button>
           )}
-          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Report">
-            <span className="material-symbols-outlined" aria-hidden>report</span>
-          </button>
+          {onStar && (
+            <button
+              type="button"
+              onClick={() => onStar?.()}
+              className={`transition-colors ${thread?.starred ? 'text-amber-500' : 'text-slate-500 hover:text-[#137fec]'}`}
+              aria-label="Add to Starred"
+              title="Add to Starred"
+            >
+              <span className="material-symbols-outlined" aria-hidden>{thread?.starred ? 'star' : 'star_border'}</span>
+            </button>
+          )}
           {(onMoveToTrash || onPermanentDelete) && (
-            <button type="button" onClick={() => (onPermanentDelete ? onPermanentDelete() : onMoveToTrash?.())} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Delete">
+            <button type="button" onClick={() => (onPermanentDelete ? onPermanentDelete() : onMoveToTrash?.())} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Move to Recycling bin" title="Move to Recycling bin">
               <span className="material-symbols-outlined" aria-hidden>delete</span>
             </button>
           )}
           <div className="h-4 w-[1px] bg-slate-200 mx-2" aria-hidden />
-          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Mark as unread">
-            <span className="material-symbols-outlined" aria-hidden>mark_as_unread</span>
-          </button>
-          <button type="button" className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Schedule">
-            <span className="material-symbols-outlined" aria-hidden>schedule</span>
-          </button>
         </div>
         <div className="flex items-center gap-3">
           {!isDraft && (

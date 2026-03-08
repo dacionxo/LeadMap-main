@@ -210,6 +210,66 @@ export async function POST(request: NextRequest) {
           provider_message_id: sendResult.providerMessageId
         })
         .eq('id', emailRecord.id)
+
+      // Create email_thread + email_message so compose emails appear in Unibox Sent folder
+      const sentAt = new Date().toISOString()
+      const providerThreadId = `compose-${emailRecord.id}`
+      const toEmails = Array.isArray(to) ? to : (typeof to === 'string' ? to.split(',').map((e: string) => e.trim()).filter(Boolean) : [])
+      const snippet = (html || '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 200) || '(No preview)'
+
+      const { data: newThread, error: threadError } = await supabaseAdmin
+        .from('email_threads')
+        .insert({
+          user_id: user.id,
+          mailbox_id: mailboxId,
+          provider_thread_id: providerThreadId,
+          subject: subject || '(No Subject)',
+          last_message_at: sentAt,
+          last_outbound_at: sentAt,
+          status: 'open',
+          unread: false,
+        })
+        .select('id')
+        .single()
+
+      if (!threadError && newThread) {
+        const { data: newMessage, error: messageError } = await supabaseAdmin
+          .from('email_messages')
+          .insert({
+            thread_id: newThread.id,
+            user_id: user.id,
+            mailbox_id: mailboxId,
+            direction: 'outbound',
+            provider_message_id: sendResult.providerMessageId || `compose-${emailRecord.id}`,
+            subject: subject || '(No Subject)',
+            snippet,
+            body_html: html || null,
+            body_plain: (html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || null,
+            sent_at: sentAt,
+            read: true,
+          })
+          .select('id')
+          .single()
+
+        if (!messageError && newMessage) {
+          const participants: Array<{ message_id: string; type: string; email: string; name: string | null }> = [
+            { message_id: newMessage.id, type: 'from', email: mailbox.email, name: mailbox.display_name || null },
+            ...toEmails.map((email: string) => ({ message_id: newMessage.id, type: 'to', email, name: null })),
+          ]
+          for (const p of participants) {
+            await supabaseAdmin.from('email_participants').insert({
+              message_id: p.message_id,
+              type: p.type,
+              email: p.email,
+              name: p.name,
+            })
+          }
+        }
+      }
     } else {
       await supabase
         .from('emails')

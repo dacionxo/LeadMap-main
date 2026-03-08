@@ -53,8 +53,9 @@ export async function GET(request: NextRequest) {
     })
 
     // Build query
-    // IMPORTANT: Only show threads that have at least one inbound message
-    // Unibox should only display received/incoming emails, not sent emails
+    // For inbox/archived/starred: only show threads with at least one inbound (received)
+    // For sent: only show threads with at least one outbound (sent by user)
+    const isSentFolder = folder === 'sent'
     let query = supabase
       .from('email_threads')
       .select(`
@@ -93,6 +94,7 @@ export async function GET(request: NextRequest) {
     // Helper to apply folder filters (trashed_at may not exist if migration not run)
     const applyFolderFilters = (q: typeof query, useTrashedAt: boolean) => {
       const isRecyclingBin = folder === 'trash' || folder === 'recycling_bin'
+      const isSent = folder === 'sent'
       if (useTrashedAt) {
         if (isRecyclingBin) {
           return q.not('trashed_at', 'is', null)
@@ -101,6 +103,10 @@ export async function GET(request: NextRequest) {
       } else if (isRecyclingBin) {
         // trashed_at column missing: return no rows for trash
         return q.eq('id', '00000000-0000-0000-0000-000000000000')
+      }
+      if (isSent) {
+        // Sent: only threads where user has sent at least one message (never show received-only)
+        return q.not('last_outbound_at', 'is', null)
       }
       if (folder === 'archived') return q.eq('archived', true)
       if (folder === 'starred') return q.eq('starred', true)
@@ -120,8 +126,9 @@ export async function GET(request: NextRequest) {
     }
 
     // By default, if no folder/archived specified, exclude archived threads (show inbox)
+    // Sent folder shows all sent (archived or not); inbox/starred exclude archived
     const isRecyclingBin = folder === 'trash' || folder === 'recycling_bin'
-    if (!isRecyclingBin && folder !== 'archived' && archived === null && starred === null) {
+    if (!isRecyclingBin && folder !== 'archived' && folder !== 'sent' && archived === null && starred === null) {
       query = query.eq('archived', false)
     }
 
@@ -180,7 +187,7 @@ export async function GET(request: NextRequest) {
       if (starred !== null) query = query.eq('starred', starred === 'true')
       if (archived !== null) query = query.eq('archived', archived === 'true')
       const retryIsRecyclingBin = folder === 'trash' || folder === 'recycling_bin'
-      if (!retryIsRecyclingBin && folder !== 'archived' && archived === null && starred === null) {
+      if (!retryIsRecyclingBin && folder !== 'archived' && folder !== 'sent' && archived === null && starred === null) {
         query = query.eq('archived', false)
       }
       if (campaignId) query = query.eq('campaign_id', campaignId)
@@ -241,18 +248,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform threads to include unread count and last message preview
-    // FILTER: Only include threads that have at least one inbound message
-    // Unibox should only display received/incoming emails, not sent emails
+    // Inbox/archived/starred: only include threads with at least one inbound (received)
+    // Sent: only include threads with at least one outbound (sent by user)
     const transformedThreads = (threads || [])
       .map((thread: any) => {
       const messages = thread.email_messages || []
         const inboundMessages = messages.filter((m: any) => m.direction === 'inbound')
-        
-        // Skip threads with no inbound messages (only show received emails)
-        if (inboundMessages.length === 0) {
-          return null
+        const outboundMessages = messages.filter((m: any) => m.direction === 'outbound')
+
+        if (isSentFolder) {
+          if (outboundMessages.length === 0) return null
+        } else {
+          if (inboundMessages.length === 0) return null
         }
-        
+
       const lastMessage = messages[messages.length - 1]
       const unreadCount = inboundMessages.filter((m: any) => !m.read).length
       // #region agent log
