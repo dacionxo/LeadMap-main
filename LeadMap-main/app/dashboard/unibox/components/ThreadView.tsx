@@ -56,6 +56,7 @@ interface ThreadViewProps {
   onForward: () => void
   onDeleteDraft?: () => void
   onMoveToTrash?: () => void
+  onRestore?: () => void
   onPermanentDelete?: () => void
 }
 
@@ -100,7 +101,7 @@ function getInitial(name: string | null, email: string): string {
   return '?'
 }
 
-export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onPermanentDelete }: ThreadViewProps) {
+export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onRestore, onPermanentDelete }: ThreadViewProps) {
   const [isStarred, setIsStarred] = useState(thread?.starred ?? false)
   const isDraft = thread?.status === 'draft'
 
@@ -151,16 +152,28 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
             </>
           )}
         </div>
-        {!isDraft && onPermanentDelete && (
+        {!isDraft && (onRestore || onPermanentDelete) && (
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onPermanentDelete?.()}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50 text-xs font-semibold transition-colors"
-            >
-              <span className="material-icons-outlined text-[16px]" aria-hidden>delete</span>
-              Delete permanently
-            </button>
+            {onRestore && (
+              <button
+                type="button"
+                onClick={() => onRestore?.()}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-unibox-primary/10 text-unibox-primary hover:bg-unibox-primary/20 dark:bg-unibox-primary/20 dark:text-unibox-primary dark:hover:bg-unibox-primary/30 text-xs font-semibold transition-colors"
+              >
+                <span className="material-icons-outlined text-[16px]" aria-hidden>restore</span>
+                Restore to Inbox
+              </button>
+            )}
+            {onPermanentDelete && (
+              <button
+                type="button"
+                onClick={() => onPermanentDelete?.()}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50 text-xs font-semibold transition-colors"
+              >
+                <span className="material-icons-outlined text-[16px]" aria-hidden>delete</span>
+                Delete permanently
+              </button>
+            )}
           </div>
         )}
         {!isDraft && !onPermanentDelete && (
@@ -184,7 +197,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
               type="button"
               onClick={() => onMoveToTrash?.()}
               className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-              aria-label="Move to Recycling Bin"
+              aria-label="Move to Recycling"
             >
               <span className="material-icons-outlined text-[20px]" aria-hidden>delete</span>
             </button>

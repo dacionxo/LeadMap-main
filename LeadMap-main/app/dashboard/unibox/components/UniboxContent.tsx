@@ -442,7 +442,7 @@ export default function UniboxContent({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error((data && data.error) || "Failed to move to Recycling Bin");
+        throw new Error((data && data.error) || "Failed to move to Recycling");
       }
       setThreads((t) => t.filter((x) => x.id !== target.id));
       setFolderCounts((prev) => ({
@@ -458,7 +458,40 @@ export default function UniboxContent({
       fetchCounts();
     } catch (error) {
       console.error("[UniboxContent] Error moving to trash:", error);
-      alert(error instanceof Error ? error.message : "Failed to move to Recycling Bin. Please try again.");
+      alert(error instanceof Error ? error.message : "Failed to move to Recycling. Please try again.");
+    }
+  };
+
+  const handleRestoreFromRecycling = async (threadOrNull?: Thread | null) => {
+    const target = threadOrNull ?? selectedThread;
+    if (!target || target.id.startsWith("draft-") || folderFilter !== "recycling_bin") return;
+
+    try {
+      const response = await fetch(`/api/unibox/threads/${target.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ trash: false }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data && data.error) || "Failed to restore");
+      }
+      setThreads((t) => t.filter((x) => x.id !== target.id));
+      setFolderCounts((prev) => ({
+        ...prev,
+        recycling_bin: Math.max(0, (prev.recycling_bin ?? 0) - 1),
+        inbox: (prev.inbox ?? 0) + 1,
+      }));
+      if (selectedThread?.id === target.id) {
+        setSelectedThread(null);
+        setThreadDetails(null);
+      }
+      fetchThreads();
+      fetchCounts();
+    } catch (error) {
+      console.error("[UniboxContent] Error restoring from Recycling:", error);
+      alert(error instanceof Error ? error.message : "Failed to restore. Please try again.");
     }
   };
 
@@ -598,6 +631,44 @@ export default function UniboxContent({
   const handleBulkStar = () => applyBulkAction("star");
   const handleBulkArchive = () => applyBulkAction("archive");
   const handleBulkTrash = () => applyBulkAction("trash");
+
+  const handleBulkRestore = useCallback(async () => {
+    const ids = Array.from(selectedThreadIds).filter(
+      (id) => !id.startsWith("draft-")
+    );
+    if (ids.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const responses = await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/unibox/threads/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ trash: false }),
+          })
+        )
+      );
+      const failed = responses.filter((r) => !r.ok);
+      if (failed.length > 0) {
+        alert(
+          `${ids.length - failed.length} restored. ${failed.length} failed. Please try again.`
+        );
+      }
+      setSelectedThreadIds(new Set());
+      fetchThreads();
+      fetchCounts();
+      if (selectedThread && ids.includes(selectedThread.id)) {
+        setSelectedThread(null);
+        setThreadDetails(null);
+      }
+    } catch (error) {
+      console.error("[UniboxContent] Bulk restore error:", error);
+      alert(error instanceof Error ? error.message : "Restore failed. Please try again.");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  }, [selectedThreadIds, selectedThread]);
 
   const handleBulkPermanentDelete = useCallback(async () => {
     const ids = Array.from(selectedThreadIds).filter(
@@ -745,13 +816,25 @@ export default function UniboxContent({
               >
                 <span className="material-icons-round text-lg" aria-hidden>archive</span>
               </button>
+              {folderFilter === "recycling_bin" && (
+                <button
+                  type="button"
+                  onClick={handleBulkRestore}
+                  disabled={bulkActionLoading}
+                  className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 disabled:opacity-50 transition-colors"
+                  title="Restore to Inbox"
+                  aria-label="Restore selected emails to Inbox"
+                >
+                  <span className="material-icons-round text-lg" aria-hidden>restore</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={folderFilter === "recycling_bin" ? handleBulkPermanentDelete : handleBulkTrash}
                 disabled={bulkActionLoading}
                 className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 disabled:opacity-50 transition-colors"
-                title={folderFilter === "recycling_bin" ? "Delete permanently" : "Move to Recycling Bin"}
-                aria-label={folderFilter === "recycling_bin" ? "Delete selected emails permanently" : "Move selected emails to Recycling Bin"}
+                title={folderFilter === "recycling_bin" ? "Delete permanently" : "Move to Recycling"}
+                aria-label={folderFilter === "recycling_bin" ? "Delete selected emails permanently" : "Move selected emails to Recycling"}
               >
                 <span className="material-icons-round text-lg" aria-hidden>delete_outline</span>
               </button>
@@ -831,6 +914,7 @@ export default function UniboxContent({
               onForward={handleForward}
               onDeleteDraft={handleDeleteDraft}
               onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "recycling_bin" ? handleMoveToTrash : undefined}
+              onRestore={folderFilter === "recycling_bin" ? handleRestoreFromRecycling : undefined}
               onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
             />
           ) : (

@@ -162,7 +162,7 @@ export default function UniboxSidebar({
         >
           <div className="flex items-center">
             <span className="material-icons-outlined text-[20px] lg:mr-3" aria-hidden>delete_outline</span>
-            <span className="font-medium hidden lg:inline">Recycling Bin</span>
+            <span className="font-medium hidden lg:inline">Recycling</span>
           </div>
           {recyclingBinCount >= 0 && (
             <span className="hidden lg:flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-unibox-primary text-white text-[10px] font-bold">

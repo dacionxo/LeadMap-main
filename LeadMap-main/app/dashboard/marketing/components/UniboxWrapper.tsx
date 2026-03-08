@@ -367,7 +367,7 @@ export default function UniboxWrapper() {
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error((data && data.error) || "Failed to move to Recycling Bin");
+        throw new Error((data && data.error) || "Failed to move to Recycling");
       }
       setThreads((t) => t.filter((x) => x.id !== target.id));
       setFolderCounts((prev) => ({
@@ -383,7 +383,7 @@ export default function UniboxWrapper() {
       fetchCounts();
     } catch (error) {
       console.error("[UniboxWrapper] Error moving to trash:", error);
-      alert(error instanceof Error ? error.message : "Failed to move to Recycling Bin. Please try again.");
+      alert(error instanceof Error ? error.message : "Failed to move to Recycling. Please try again.");
     }
   };
 
@@ -422,11 +422,44 @@ export default function UniboxWrapper() {
       setThreads(prevThreads);
       setFolderCounts((prev) => ({
         ...prev,
-        trash: prevThreads.length,
+        recycling_bin: prevThreads.length,
       }));
       setSelectedThread(prevSelected);
       setThreadDetails(prevDetails);
       alert(error instanceof Error ? error.message : "Failed to delete. Please try again.");
+    }
+  };
+
+  const handleRestoreFromRecycling = async (thread?: UniboxThread | null) => {
+    const target = thread ?? selectedThread;
+    if (!target || target.id.startsWith("draft-") || folderFilter !== "recycling_bin") return;
+
+    try {
+      const response = await fetch(`/api/unibox/threads/${target.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ trash: false }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data && data.error) || "Failed to restore");
+      }
+      setThreads((t) => t.filter((x) => x.id !== target.id));
+      setFolderCounts((prev) => ({
+        ...prev,
+        recycling_bin: Math.max(0, (prev.recycling_bin ?? 0) - 1),
+        inbox: (prev.inbox ?? 0) + 1,
+      }));
+      if (selectedThread?.id === target.id) {
+        setSelectedThread(null);
+        setThreadDetails(null);
+      }
+      fetchThreads();
+      fetchCounts();
+    } catch (error) {
+      console.error("[UniboxWrapper] Error restoring from Recycling:", error);
+      alert(error instanceof Error ? error.message : "Failed to restore. Please try again.");
     }
   };
 
@@ -622,6 +655,7 @@ export default function UniboxWrapper() {
                 onForward={handleForward}
                 onDeleteDraft={() => handleDeleteDraft()}
                 onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "recycling_bin" ? handleMoveToTrash : undefined}
+                onRestore={folderFilter === "recycling_bin" ? handleRestoreFromRecycling : undefined}
                 onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
               />
             ) : (
