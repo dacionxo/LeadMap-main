@@ -176,8 +176,8 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
       <div className="flex-1 overflow-y-auto overflow-x-hidden unibox-no-scrollbar p-10 min-w-0">
         <div className="max-w-[800px] mx-auto">
           <div className="mb-10">
-            <h1 className="text-3xl font-semibold text-slate-900 mb-6 tracking-tight">{thread.subject || '(No Subject)'}</h1>
-            <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-semibold text-slate-900 pb-6 mb-6 border-b border-[#F3F4F6] tracking-tight">{thread.subject || '(No Subject)'}</h1>
+            <div className="flex items-center justify-between pb-6 border-b border-[#F3F4F6]">
               <div className="flex items-center gap-4">
                 <div className="size-12 rounded-full bg-[#137fec]/10 flex items-center justify-center text-[#137fec] font-bold overflow-hidden">
                   {getInitial(fromParticipant?.name ?? null, fromParticipant?.email ?? '')}

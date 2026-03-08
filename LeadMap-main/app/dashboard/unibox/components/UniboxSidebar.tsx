@@ -48,7 +48,7 @@ export default function UniboxSidebar({
               key={value}
               type="button"
               onClick={() => onFolderFilterChange(value)}
-              className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-all duration-200 ${
+              className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-all duration-200 border-b border-[#F3F4F6] ${
                 folderFilter === value
                   ? 'unibox-sidebar-active'
                   : 'text-slate-500 hover:bg-slate-100/50'
