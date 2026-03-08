@@ -647,22 +647,8 @@ export default function UniboxWrapper() {
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left Sidebar */}
         <UniboxSidebar
-          mailboxes={mailboxes}
-          selectedMailboxId={selectedMailboxId}
-          onMailboxSelect={setSelectedMailboxId}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
           folderFilter={folderFilter}
           onFolderFilterChange={(folder) => setFolderFilter(folder)}
-          mailboxUnreadCounts={mailboxUnreadCounts}
-          unreadCount={unreadCount}
-          folderCounts={folderCounts}
-          statusCounts={
-            folderFilter === "drafts" || folderFilter === "recycling_bin"
-              ? (statusByFolder.inbox as Record<UniboxFilterStatus, number>) ?? {}
-              : (statusByFolder[folderFilter] as Record<UniboxFilterStatus, number>) ?? {}
-          }
-          mailboxCounts={mailboxCounts}
         />
 
         {/* Middle - Thread List */}

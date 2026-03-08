@@ -1,13 +1,13 @@
 'use client'
 
-type FilterFolder = 'inbox' | 'starred' | 'sent' | 'drafts' | 'archived' | 'recycling_bin'
+import type { UniboxFilterFolder } from '../types'
 
 interface UniboxSidebarProps {
-  folderFilter: FilterFolder
-  onFolderFilterChange: (folder: FilterFolder) => void
+  folderFilter: UniboxFilterFolder
+  onFolderFilterChange: (folder: UniboxFilterFolder) => void
 }
 
-const FOLDER_ITEMS: Array<{ value: FilterFolder; label: string; icon: string }> = [
+const FOLDER_ITEMS: Array<{ value: UniboxFilterFolder; label: string; icon: string }> = [
   { value: 'inbox', label: 'Inbox', icon: 'inbox' },
   { value: 'starred', label: 'Starred', icon: 'star' },
   { value: 'sent', label: 'Sent', icon: 'send' },
