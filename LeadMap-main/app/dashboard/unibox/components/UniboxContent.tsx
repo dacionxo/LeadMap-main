@@ -53,7 +53,7 @@ type FilterStatus =
   | "waiting"
   | "closed"
   | "ignored";
-type FilterFolder = "inbox" | "archived" | "starred" | "drafts" | "trash";
+type FilterFolder = "inbox" | "archived" | "starred" | "drafts" | "recycling_bin";
 
 interface UniboxContentProps {
   /** When true, render only the three-pane layout (no Elite header/mesh). For use inside dashboard layout. */
@@ -251,7 +251,7 @@ export default function UniboxContent({
       if (selectedMailboxId) params.append("mailboxId", selectedMailboxId);
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (searchQuery) params.append("search", searchQuery);
-      if (folderFilter === "trash") params.append("folder", "trash");
+      if (folderFilter === "recycling_bin") params.append("folder", "recycling_bin");
       else if (folderFilter === "archived") params.append("folder", "archived");
       else if (folderFilter === "starred") params.append("folder", "starred");
       else if (folderFilter === "inbox") params.append("folder", "inbox");
@@ -442,12 +442,12 @@ export default function UniboxContent({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error((data && data.error) || "Failed to move to trash");
+        throw new Error((data && data.error) || "Failed to move to Recycling Bin");
       }
       setThreads((t) => t.filter((x) => x.id !== target.id));
       setFolderCounts((prev) => ({
         ...prev,
-        trash: (prev.trash ?? 0) + 1,
+        recycling_bin: (prev.recycling_bin ?? 0) + 1,
         inbox: Math.max(0, (prev.inbox ?? 0) - 1),
       }));
       if (selectedThread?.id === target.id) {
@@ -458,13 +458,13 @@ export default function UniboxContent({
       fetchCounts();
     } catch (error) {
       console.error("[UniboxContent] Error moving to trash:", error);
-      alert(error instanceof Error ? error.message : "Failed to move to trash. Please try again.");
+      alert(error instanceof Error ? error.message : "Failed to move to Recycling Bin. Please try again.");
     }
   };
 
   const handlePermanentDeleteThread = async (threadOrNull?: Thread | null) => {
     const target = threadOrNull ?? selectedThread;
-    if (!target || target.id.startsWith("draft-") || folderFilter !== "trash") return;
+    if (!target || target.id.startsWith("draft-") || folderFilter !== "recycling_bin") return;
     const targetId = target.id;
 
     const prevThreads = threads;
@@ -474,7 +474,7 @@ export default function UniboxContent({
     setThreads((t) => t.filter((x) => x.id !== targetId));
     setFolderCounts((prev) => ({
       ...prev,
-      trash: Math.max(0, (prev.trash ?? 0) - 1),
+      recycling_bin: Math.max(0, (prev.recycling_bin ?? 0) - 1),
     }));
     if (selectedThread?.id === targetId) {
       setSelectedThread(null);
@@ -497,7 +497,7 @@ export default function UniboxContent({
       setThreads(prevThreads);
       setFolderCounts((prev) => ({
         ...prev,
-        trash: prevThreads.length,
+        recycling_bin: prevThreads.length,
       }));
       setSelectedThread(prevSelected);
       setThreadDetails(prevDetails);
@@ -673,7 +673,7 @@ export default function UniboxContent({
         unreadCount={unreadCount}
         folderCounts={folderCounts}
         statusCounts={
-          folderFilter === "drafts" || folderFilter === "trash"
+          folderFilter === "drafts" || folderFilter === "recycling_bin"
             ? (statusByFolder.inbox as Record<FilterStatus, number>) ?? {}
             : (statusByFolder[folderFilter] as Record<FilterStatus, number>) ?? {}
         }
@@ -712,10 +712,10 @@ export default function UniboxContent({
               <button
                 type="button"
                 onClick={handleBulkTrash}
-                disabled={bulkActionLoading || folderFilter === "trash"}
+                disabled={bulkActionLoading || folderFilter === "recycling_bin"}
                 className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 disabled:opacity-50 transition-colors"
-                title="Trash"
-                aria-label="Move selected emails to trash"
+                title="Move to Recycling Bin"
+                aria-label="Move selected emails to Recycling Bin"
               >
                 <span className="material-icons-round text-lg" aria-hidden>delete_outline</span>
               </button>
@@ -758,7 +758,7 @@ export default function UniboxContent({
             loadingMore={loadingMore}
             onLoadMore={handleLoadMore}
             onDeleteDraft={folderFilter === "drafts" ? (t) => handleDeleteDraft(t) : undefined}
-            onDeleteFromTrash={folderFilter === "trash" ? (t) => handlePermanentDeleteThread(t) : undefined}
+            onDeleteFromTrash={folderFilter === "recycling_bin" ? (t) => handlePermanentDeleteThread(t) : undefined}
             selectedIds={selectedThreadIds}
             onSelectionChange={setSelectedThreadIds}
           />
@@ -794,8 +794,8 @@ export default function UniboxContent({
               onReplyAll={handleReplyAll}
               onForward={handleForward}
               onDeleteDraft={handleDeleteDraft}
-              onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "trash" ? handleMoveToTrash : undefined}
-              onPermanentDelete={folderFilter === "trash" ? handlePermanentDeleteThread : undefined}
+              onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "recycling_bin" ? handleMoveToTrash : undefined}
+              onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">

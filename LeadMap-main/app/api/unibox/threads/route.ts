@@ -92,12 +92,13 @@ export async function GET(request: NextRequest) {
 
     // Helper to apply folder filters (trashed_at may not exist if migration not run)
     const applyFolderFilters = (q: typeof query, useTrashedAt: boolean) => {
+      const isRecyclingBin = folder === 'trash' || folder === 'recycling_bin'
       if (useTrashedAt) {
-        if (folder === 'trash') {
+        if (isRecyclingBin) {
           return q.not('trashed_at', 'is', null)
         }
         q = q.is('trashed_at', null)
-      } else if (folder === 'trash') {
+      } else if (isRecyclingBin) {
         // trashed_at column missing: return no rows for trash
         return q.eq('id', '00000000-0000-0000-0000-000000000000')
       }
@@ -119,7 +120,8 @@ export async function GET(request: NextRequest) {
     }
 
     // By default, if no folder/archived specified, exclude archived threads (show inbox)
-    if (folder !== 'trash' && folder !== 'archived' && archived === null && starred === null) {
+    const isRecyclingBin = folder === 'trash' || folder === 'recycling_bin'
+    if (!isRecyclingBin && folder !== 'archived' && archived === null && starred === null) {
       query = query.eq('archived', false)
     }
 
@@ -177,7 +179,8 @@ export async function GET(request: NextRequest) {
       query = applyFolderFilters(query, false)
       if (starred !== null) query = query.eq('starred', starred === 'true')
       if (archived !== null) query = query.eq('archived', archived === 'true')
-      if (folder !== 'trash' && folder !== 'archived' && archived === null && starred === null) {
+      const retryIsRecyclingBin = folder === 'trash' || folder === 'recycling_bin'
+      if (!retryIsRecyclingBin && folder !== 'archived' && archived === null && starred === null) {
         query = query.eq('archived', false)
       }
       if (campaignId) query = query.eq('campaign_id', campaignId)

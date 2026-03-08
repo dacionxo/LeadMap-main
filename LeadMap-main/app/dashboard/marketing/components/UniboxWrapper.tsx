@@ -187,7 +187,7 @@ export default function UniboxWrapper() {
       if (searchQuery) params.append("search", searchQuery);
 
       // Add folder filter support
-      if (folderFilter === "trash") params.append("folder", "trash");
+      if (folderFilter === "recycling_bin") params.append("folder", "recycling_bin");
       else if (folderFilter === "archived") params.append("folder", "archived");
       else if (folderFilter === "starred") params.append("folder", "starred");
       else if (folderFilter === "inbox") params.append("folder", "inbox");
@@ -367,12 +367,12 @@ export default function UniboxWrapper() {
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error((data && data.error) || "Failed to move to trash");
+        throw new Error((data && data.error) || "Failed to move to Recycling Bin");
       }
       setThreads((t) => t.filter((x) => x.id !== target.id));
       setFolderCounts((prev) => ({
         ...prev,
-        trash: (prev.trash ?? 0) + 1,
+        recycling_bin: (prev.recycling_bin ?? 0) + 1,
         inbox: Math.max(0, (prev.inbox ?? 0) - 1),
       }));
       if (selectedThread?.id === target.id) {
@@ -383,13 +383,13 @@ export default function UniboxWrapper() {
       fetchCounts();
     } catch (error) {
       console.error("[UniboxWrapper] Error moving to trash:", error);
-      alert(error instanceof Error ? error.message : "Failed to move to trash. Please try again.");
+      alert(error instanceof Error ? error.message : "Failed to move to Recycling Bin. Please try again.");
     }
   };
 
   const handlePermanentDeleteThread = async (thread?: UniboxThread | null) => {
     const target = thread ?? selectedThread;
-    if (!target || target.id.startsWith("draft-") || folderFilter !== "trash") return;
+    if (!target || target.id.startsWith("draft-") || folderFilter !== "recycling_bin") return;
     const targetId = target.id;
 
     const prevThreads = threads;
@@ -399,7 +399,7 @@ export default function UniboxWrapper() {
     setThreads((t) => t.filter((x) => x.id !== targetId));
     setFolderCounts((prev) => ({
       ...prev,
-      trash: Math.max(0, (prev.trash ?? 0) - 1),
+      recycling_bin: Math.max(0, (prev.recycling_bin ?? 0) - 1),
     }));
     if (selectedThread?.id === targetId) {
       setSelectedThread(null);
@@ -554,7 +554,7 @@ export default function UniboxWrapper() {
           unreadCount={unreadCount}
           folderCounts={folderCounts}
           statusCounts={
-            folderFilter === "drafts"
+            folderFilter === "drafts" || folderFilter === "recycling_bin"
               ? (statusByFolder.inbox as Record<UniboxFilterStatus, number>) ?? {}
               : (statusByFolder[folderFilter] as Record<UniboxFilterStatus, number>) ?? {}
           }
@@ -587,7 +587,7 @@ export default function UniboxWrapper() {
               onThreadSelect={handleThreadSelect}
               loading={loading}
               onDeleteDraft={folderFilter === "drafts" ? handleDeleteDraft : undefined}
-              onDeleteFromTrash={folderFilter === "trash" ? handlePermanentDeleteThread : undefined}
+              onDeleteFromTrash={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
             />
           </div>
         </section>
@@ -621,8 +621,8 @@ export default function UniboxWrapper() {
                 onReplyAll={handleReplyAll}
                 onForward={handleForward}
                 onDeleteDraft={() => handleDeleteDraft()}
-                onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "trash" ? handleMoveToTrash : undefined}
-                onPermanentDelete={folderFilter === "trash" ? handlePermanentDeleteThread : undefined}
+                onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "recycling_bin" ? handleMoveToTrash : undefined}
+                onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
               />
             ) : (
               <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">

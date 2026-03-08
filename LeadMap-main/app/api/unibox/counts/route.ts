@@ -9,7 +9,7 @@ import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 
-type FilterFolder = 'inbox' | 'starred' | 'archived' | 'trash'
+type FilterFolder = 'inbox' | 'starred' | 'archived' | 'recycling_bin' | 'trash'
 type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
 
 async function countThreads(
@@ -22,7 +22,7 @@ async function countThreads(
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
 
-  if (opts.folder === 'trash') {
+  if (opts.folder === 'trash' || opts.folder === 'recycling_bin') {
     query = query.not('trashed_at', 'is', null)
   } else {
     query = query.is('trashed_at', null)
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const statuses: FilterStatus[] = ['all', 'open', 'needs_reply', 'waiting', 'closed', 'ignored']
 
     // Build all count queries
-    const trashCountPromise = countThreads(supabase, userId, { folder: 'trash' })
+    const recyclingBinCountPromise = countThreads(supabase, userId, { folder: 'recycling_bin' })
     const folderPromises = [
       countThreads(supabase, userId, { folder: 'inbox' }),
       countThreads(supabase, userId, { folder: 'starred' }),
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       mailboxAllCount,
       mailboxCountsArray,
       draftsCount,
-      trashCount,
+      recyclingBinCount,
     ] = await Promise.all([
       ...folderPromises,
       Promise.all(statusInboxPromises),
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
       mailboxAllPromise,
       Promise.all(mailboxPerIdPromises),
       draftsPromise,
-      trashCountPromise,
+      recyclingBinCountPromise,
     ])
 
     const statusByFolder = {
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
         starred: starredTotal,
         drafts: draftsCount,
         archived: archivedTotal,
-        trash: trashCount,
+        recycling_bin: recyclingBinCount,
       },
       statusByFolder,
       mailboxCounts: mailboxCountMap,

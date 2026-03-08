@@ -13,7 +13,7 @@ interface ThreadListProps {
   onLoadMore?: () => void
   /** One-click delete for drafts; when provided, shows delete icon on draft rows */
   onDeleteDraft?: (thread: UniboxThread) => void
-  /** One-click permanent delete for trash; when provided, shows delete icon on trash rows */
+  /** One-click permanent delete from Recycling Bin; when provided, shows delete icon on rows */
   onDeleteFromTrash?: (thread: UniboxThread) => void
   /** Selected thread IDs for bulk selection */
   selectedIds?: Set<string>

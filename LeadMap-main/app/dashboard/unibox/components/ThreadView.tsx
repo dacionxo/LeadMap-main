@@ -184,7 +184,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
               type="button"
               onClick={() => onMoveToTrash?.()}
               className="w-9 h-9 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center"
-              aria-label="Move to trash"
+              aria-label="Move to Recycling Bin"
             >
               <span className="material-icons-outlined text-[20px]" aria-hidden>delete</span>
             </button>
