@@ -137,7 +137,7 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-w-0 isolate">
       {/* Reading Header - design 1:1 */}
-      <header className="h-20 flex items-center justify-between px-10 border-b border-white/20 flex-shrink-0">
+      <header className="h-20 flex items-center justify-between px-10 border-b border-[#F3F4F6] flex-shrink-0">
         <div className="flex items-center gap-4">
           {onArchive && !onPermanentDelete && (
             <button type="button" onClick={() => onArchive?.()} className="text-slate-500 hover:text-[#137fec] transition-colors" aria-label="Archive">

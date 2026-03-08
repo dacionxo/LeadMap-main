@@ -36,7 +36,7 @@ export default function UniboxSidebar({
 }: UniboxSidebarProps) {
   return (
     <aside className="w-64 flex flex-col py-8 px-6 bg-white/30 shrink-0">
-      <div className="flex items-center gap-3 px-2 mb-10 pb-6 border-b border-[#F3F4F6]">
+      <div className="flex items-center justify-center px-2 mb-10 pb-6 border-b border-[#F3F4F6]">
         <h2 className="text-xl font-semibold tracking-tight" style={{ fontFamily: 'Inter, sans-serif' }}>Unibox</h2>
       </div>
       <nav className="flex flex-col gap-1">

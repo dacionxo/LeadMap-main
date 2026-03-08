@@ -901,7 +901,7 @@ export default function UniboxContent({
             </button>
           </div>
         </div>
-        <div className="relative">
+        <div className="relative pt-4 mt-4 border-t border-[#F3F4F6]">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]" aria-hidden>search</span>
           <input
             type="text"
