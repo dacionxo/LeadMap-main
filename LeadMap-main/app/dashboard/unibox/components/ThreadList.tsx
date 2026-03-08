@@ -124,9 +124,9 @@ export default function ThreadList({
           <div
             key={thread.id}
             onClick={() => onThreadSelect(thread)}
-            className={`group relative flex items-start gap-3 p-4 rounded-lg cursor-pointer transition-all ${
+            className={`group relative flex items-start gap-3 p-4 rounded-lg cursor-pointer transition-all border-b border-[#F3F4F6] ${
               isSelected
-                ? 'bg-white shadow-sm border border-slate-100/50'
+                ? 'bg-white shadow-sm border border-slate-100/50 border-b-[#F3F4F6]'
                 : 'hover:bg-white/40'
             }`}
           >
