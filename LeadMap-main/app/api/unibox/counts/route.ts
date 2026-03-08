@@ -26,6 +26,8 @@ async function countThreads(
     query = query.not('trashed_at', 'is', null)
   } else {
     query = query.is('trashed_at', null)
+    // Only count threads with inbound messages (matches threads API filter)
+    query = query.not('last_inbound_at', 'is', null)
     if (opts.folder === 'inbox') {
       query = query.eq('archived', false)
     } else if (opts.folder === 'starred') {

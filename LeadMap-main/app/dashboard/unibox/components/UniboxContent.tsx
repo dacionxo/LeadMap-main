@@ -599,6 +599,42 @@ export default function UniboxContent({
   const handleBulkArchive = () => applyBulkAction("archive");
   const handleBulkTrash = () => applyBulkAction("trash");
 
+  const handleBulkPermanentDelete = useCallback(async () => {
+    const ids = Array.from(selectedThreadIds).filter(
+      (id) => !id.startsWith("draft-")
+    );
+    if (ids.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const responses = await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/unibox/threads/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+          })
+        )
+      );
+      const failed = responses.filter((r) => !r.ok);
+      if (failed.length > 0) {
+        alert(
+          `${ids.length - failed.length} deleted. ${failed.length} failed. Please try again.`
+        );
+      }
+      setSelectedThreadIds(new Set());
+      fetchThreads();
+      fetchCounts();
+      if (selectedThread && ids.includes(selectedThread.id)) {
+        setSelectedThread(null);
+        setThreadDetails(null);
+      }
+    } catch (error) {
+      console.error("[UniboxContent] Bulk permanent delete error:", error);
+      alert(error instanceof Error ? error.message : "Delete failed. Please try again.");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  }, [selectedThreadIds, selectedThread]);
+
   const handleComposerSend = async (data: any) => {
     if (!selectedThread) return;
     try {
@@ -711,11 +747,11 @@ export default function UniboxContent({
               </button>
               <button
                 type="button"
-                onClick={handleBulkTrash}
-                disabled={bulkActionLoading || folderFilter === "recycling_bin"}
+                onClick={folderFilter === "recycling_bin" ? handleBulkPermanentDelete : handleBulkTrash}
+                disabled={bulkActionLoading}
                 className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 disabled:opacity-50 transition-colors"
-                title="Move to Recycling Bin"
-                aria-label="Move selected emails to Recycling Bin"
+                title={folderFilter === "recycling_bin" ? "Delete permanently" : "Move to Recycling Bin"}
+                aria-label={folderFilter === "recycling_bin" ? "Delete selected emails permanently" : "Move selected emails to Recycling Bin"}
               >
                 <span className="material-icons-round text-lg" aria-hidden>delete_outline</span>
               </button>
