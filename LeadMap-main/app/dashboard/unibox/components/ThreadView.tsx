@@ -59,6 +59,8 @@ interface ThreadViewProps {
   thread: Thread | null
   loading: boolean
   folderFilter?: FolderFilter
+  /** Number of threads selected via checkbox. Show three-dots only when 0 or 1 (single-thread view). */
+  selectedCount?: number
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
@@ -113,7 +115,7 @@ function getInitial(name: string | null, email: string): string {
   return '?'
 }
 
-export default function ThreadView({ thread, loading, folderFilter = 'inbox', onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete, onEditDraft, onSendDraft }: ThreadViewProps) {
+export default function ThreadView({ thread, loading, folderFilter = 'inbox', selectedCount = 1, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete, onEditDraft, onSendDraft }: ThreadViewProps) {
   const isDraft = thread?.status === 'draft'
 
   if (loading) {
@@ -177,6 +179,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', on
               <span className="material-symbols-outlined text-[18px]" aria-hidden>reply</span> Reply
             </button>
           )}
+          {selectedCount <= 1 && folderFilter !== 'sent' ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button type="button" className="size-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white transition-all" aria-label="More options">
@@ -324,36 +327,9 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', on
                   )}
                 </>
               )}
-              {folderFilter === 'sent' && (
-                <>
-                  {onArchive && (
-                    <DropdownMenuItem onClick={onArchive}>
-                      <span className="material-symbols-outlined text-lg mr-2">archive</span>
-                      Archive
-                    </DropdownMenuItem>
-                  )}
-                  {onStar && (
-                    <DropdownMenuItem onClick={onStar}>
-                      <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
-                      {thread?.starred ? 'Unstar' : 'Star'}
-                    </DropdownMenuItem>
-                  )}
-                  {!isDraft && onReply && (
-                    <DropdownMenuItem onClick={onReply}>
-                      <span className="material-symbols-outlined text-lg mr-2">reply</span>
-                      Reply
-                    </DropdownMenuItem>
-                  )}
-                  {onMoveToTrash && (
-                    <DropdownMenuItem onClick={onMoveToTrash} className="text-red-600 focus:text-red-600">
-                      <span className="material-symbols-outlined text-lg mr-2">delete</span>
-                      Move to Trash
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
             </DropdownMenuContent>
           </DropdownMenu>
+          ) : null}
         </div>
       </header>
 

@@ -1077,6 +1077,7 @@ export default function UniboxContent({
               thread={threadDetails}
               loading={loadingThread}
               folderFilter={folderFilter}
+              selectedCount={selectedThreadIds.size}
               onReply={handleReply}
               onReplyAll={handleReplyAll}
               onForward={handleForward}
