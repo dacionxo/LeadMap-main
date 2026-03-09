@@ -72,6 +72,8 @@ export default function UniboxContent({
   );
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
   const [folderFilter, setFolderFilter] = useState<FilterFolder>("inbox");
+  // Search-and-filtering-system pattern: keep raw input + apply debounced query for efficient filtering.
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
@@ -141,11 +143,27 @@ export default function UniboxContent({
     fetchCounts();
   }, [fetchCounts]);
 
+  // Debounce search input to reduce API calls while typing
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [searchInput]);
+
   // Reset to page 1 and clear selection when filters or search change
   useEffect(() => {
     setPage(1);
     setSelectedThreadIds(new Set());
   }, [selectedMailboxId, statusFilter, folderFilter, searchQuery]);
+
+  // Auto-refresh inbox list and counts every 2 minutes (matches backend sync cadence)
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      window.dispatchEvent(new Event("unibox-refresh"));
+    }, 120000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     fetchThreads();
@@ -1218,8 +1236,8 @@ export default function UniboxContent({
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]" aria-hidden>search</span>
           <input
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search emails"
             className="w-full bg-slate-100/50 border border-[#F3F4F6] rounded-lg py-2.5 pl-10 text-sm focus:ring-1 focus:ring-[#137fec]/20 placeholder:text-slate-400"
             aria-label="Search emails"

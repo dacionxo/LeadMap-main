@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { logThreadList } from '@/lib/email/unibox/activity-logger'
+import { parseUniboxSearchQuery } from '@/lib/email/unibox/parse-search'
 
 export const runtime = 'nodejs'
 
@@ -52,25 +53,151 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
 
-    // Build query
-    // For inbox/archived/starred: only show threads with at least one inbound (received)
-    // For sent: only show threads with at least one outbound (sent by user)
     const isSentFolder = folder === 'sent'
+
+    const selectForList = `
+      *,
+      mailboxes!inner(id, email, display_name, provider),
+      email_messages(
+        id,
+        direction,
+        subject,
+        snippet,
+        received_at,
+        sent_at,
+        read
+      )
+    `
+
+    // Fast path for search: use RPC + FTS-backed paging of thread ids.
+    // Falls back to the legacy ILIKE search if RPC doesn't exist (e.g. migration not applied yet).
+    if (search && search.trim()) {
+      const parsed = parseUniboxSearchQuery(search)
+      const after = parsed.after ? new Date(`${parsed.after}T00:00:00.000Z`).toISOString() : null
+      const before = parsed.before ? new Date(`${parsed.before}T23:59:59.999Z`).toISOString() : null
+
+      try {
+        const { data: idRows, error: rpcError } = await supabase.rpc('unibox_search_thread_ids', {
+          p_user_id: user.id,
+          p_mailbox_id: mailboxId,
+          p_folder: folder,
+          p_status: status && status !== 'all' ? status : null,
+          p_starred: starred !== null ? starred === 'true' : null,
+          p_archived: archived !== null ? archived === 'true' : null,
+          p_campaign_id: campaignId,
+          p_contact_id: contactId,
+          p_text: parsed.text || null,
+          p_subject: parsed.subject || null,
+          p_from: parsed.from || null,
+          p_to: parsed.to || null,
+          p_has_attachment: typeof parsed.hasAttachment === 'boolean' ? parsed.hasAttachment : null,
+          p_is_read: typeof parsed.isRead === 'boolean' ? parsed.isRead : null,
+          p_is_unread: typeof parsed.isUnread === 'boolean' ? parsed.isUnread : null,
+          p_after: after,
+          p_before: before,
+          p_limit: pageSize,
+          p_offset: offset,
+        })
+
+        if (rpcError) throw rpcError
+
+        const ids = (idRows || []).map((r: any) => r.thread_id).filter(Boolean)
+        const total = Number((idRows?.[0] as any)?.total_count ?? 0)
+
+        if (ids.length === 0) {
+          return NextResponse.json({
+            threads: [],
+            pagination: { page, pageSize, total: 0, totalPages: 0 },
+          })
+        }
+
+        const { data: threads, error: threadsError } = await supabase
+          .from('email_threads')
+          .select(selectForList)
+          .eq('user_id', user.id)
+          .in('id', ids)
+          .order('last_message_at', { ascending: false })
+
+        if (threadsError) {
+          return NextResponse.json(
+            {
+              error: 'Failed to fetch threads',
+              details: process.env.NODE_ENV === 'development' ? threadsError.message : undefined,
+            },
+            { status: 500 }
+          )
+        }
+
+        const transformedThreads = (threads || [])
+          .map((thread: any) => {
+            const messages = thread.email_messages || []
+            const inboundMessages = messages.filter((m: any) => m.direction === 'inbound')
+            const outboundMessages = messages.filter((m: any) => m.direction === 'outbound')
+
+            if (isSentFolder) {
+              if (outboundMessages.length === 0) return null
+            } else {
+              if (inboundMessages.length === 0) return null
+            }
+
+            const lastMessage = messages[messages.length - 1]
+            const unreadCount = inboundMessages.filter((m: any) => !m.read).length
+
+            return {
+              id: thread.id,
+              subject: thread.subject,
+              mailbox: {
+                id: thread.mailboxes.id,
+                email: thread.mailboxes.email,
+                display_name: thread.mailboxes.display_name,
+                provider: thread.mailboxes.provider,
+              },
+              status: thread.status,
+              unread: thread.unread,
+              unreadCount,
+              starred: thread.starred || false,
+              archived: thread.archived || false,
+              lastMessage: lastMessage
+                ? {
+                    direction: lastMessage.direction,
+                    snippet: lastMessage.snippet,
+                    received_at: lastMessage.received_at || lastMessage.sent_at,
+                    read: lastMessage.read,
+                  }
+                : null,
+              lastMessageAt: thread.last_message_at,
+              contactId: thread.contact_id,
+              listingId: thread.listing_id,
+              campaignId: thread.campaign_id,
+              messageCount: messages.length,
+              createdAt: thread.created_at,
+              updatedAt: thread.updated_at,
+            }
+          })
+          .filter((t: any) => t !== null)
+
+        return NextResponse.json({
+          threads: transformedThreads,
+          pagination: {
+            page,
+            pageSize,
+            total,
+            totalPages: Math.ceil(total / pageSize),
+          },
+        })
+      } catch (rpcOrSearchError: any) {
+        console.warn('[GET /api/unibox/threads] Search RPC unavailable, falling back to ILIKE.', {
+          message: rpcOrSearchError?.message,
+          code: rpcOrSearchError?.code,
+        })
+        // continue to legacy query below
+      }
+    }
+
+    // Legacy path (no search or RPC unavailable): basic filtering via PostgREST
     let query = supabase
       .from('email_threads')
-      .select(`
-        *,
-        mailboxes!inner(id, email, display_name, provider),
-        email_messages(
-          id,
-          direction,
-          subject,
-          snippet,
-          received_at,
-          sent_at,
-          read
-        )
-      `, { count: 'exact' })
+      .select(selectForList, { count: 'exact' })
       .eq('user_id', user.id)
       .order('last_message_at', { ascending: false })
       .range(offset, offset + pageSize - 1)
@@ -140,10 +267,11 @@ export async function GET(request: NextRequest) {
       query = query.eq('contact_id', contactId)
     }
 
-    // Full-text search (PostgreSQL) - escape ILIKE special chars %, _, \
+    // Basic search (legacy): escape ILIKE special chars %, _, \
     if (search && search.trim()) {
       const escaped = search.trim().replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
-      query = query.or(`subject.ilike.%${escaped}%,snippet.ilike.%${escaped}%`)
+      // NOTE: Keep this intentionally simple as a fallback when RPC is unavailable.
+      query = query.ilike('subject', `%${escaped}%`)
     }
 
     let result = await query
@@ -214,9 +342,6 @@ export async function GET(request: NextRequest) {
       error: error?.message,
       timestamp: new Date().toISOString()
     })
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/unibox/threads/route.ts:77',message:'Threads query result',data:{threadCount:threads?.length||0,count,error:error?.message,mailboxId,status,starred,archived,folder},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-    // #endregion
 
     if (error) {
       console.error(`[GET /api/unibox/threads] Database error for user ${user.id}:`, error)
@@ -268,10 +393,6 @@ export async function GET(request: NextRequest) {
 
       const lastMessage = messages[messages.length - 1]
       const unreadCount = inboundMessages.filter((m: any) => !m.read).length
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/unibox/threads/route.ts:87',message:'Thread transformation',data:{threadId:thread.id,messageCount:messages.length,inboundCount:inboundMessages.length,unreadCount,lastMessageDirection:lastMessage?.direction},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
-
       return {
         id: thread.id,
         subject: thread.subject,
