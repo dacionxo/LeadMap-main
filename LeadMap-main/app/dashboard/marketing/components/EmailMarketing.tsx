@@ -374,7 +374,7 @@ function EmailMarketingContent() {
     }
   }
 
-  const handleSaveDraft = async () => {
+  const handleSaveDraft = async (silent = false) => {
     if (!composeData.subject && !composeData.html) return
     try {
       const toList = composeData.to
@@ -398,11 +398,20 @@ function EmailMarketingContent() {
         const data = await response.json().catch(() => ({}))
         throw new Error(data.error || 'Failed to save draft')
       }
-      alert('Draft saved! View it in Unibox > Drafts.')
+      if (!silent) alert('Draft saved! View it in Unibox > Drafts.')
       setShowComposeModal(false)
       setComposeData({ to: '', subject: '', html: '', templateId: '' })
     } catch (err: any) {
-      alert(err?.message || 'Failed to save draft')
+      if (!silent) alert(err?.message || 'Failed to save draft')
+      else setShowComposeModal(false)
+    }
+  }
+
+  const handleCloseComposeModal = () => {
+    if (composeData.subject || composeData.html || composeData.to) {
+      handleSaveDraft(true)
+    } else {
+      setShowComposeModal(false)
     }
   }
 
@@ -582,9 +591,9 @@ function EmailMarketingContent() {
       {/* Compose Email Modal */}
       {showComposeModal && (
         <ComposeEmailModal
-          onClose={() => setShowComposeModal(false)}
+          onClose={handleCloseComposeModal}
           onSend={handleSendEmail}
-          onSaveDraft={handleSaveDraft}
+          onSaveDraft={() => handleSaveDraft(false)}
           templates={templates}
           composeData={composeData}
           setComposeData={setComposeData}
@@ -1816,7 +1825,12 @@ function ComposeEmailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      role="dialog"
+    >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
@@ -1891,6 +1905,7 @@ function ComposeEmailModal({
               <button
                 onClick={onClose}
                 className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                type="button"
               >
                 Cancel
               </button>

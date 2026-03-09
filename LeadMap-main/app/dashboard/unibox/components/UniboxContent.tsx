@@ -856,6 +856,7 @@ export default function UniboxContent({
       <UniboxSidebar
         folderFilter={folderFilter}
         onFolderFilterChange={setFolderFilter}
+        onCompose={() => setShowComposeModal(true)}
         folderCounts={folderCounts}
       />
 

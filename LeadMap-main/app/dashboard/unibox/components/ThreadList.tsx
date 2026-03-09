@@ -139,7 +139,7 @@ export default function ThreadList({
                   type="checkbox"
                   checked={selectedIds.has(thread.id)}
                   onChange={() => onSelectionChange?.(toggleSet(selectedIds, thread.id))}
-                  className={`rounded-full size-4 border-slate-300 text-[#137fec] focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer ${isSelected || forceShowCheckboxes ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                  className="rounded-full size-4 border-slate-300 text-[#137fec] focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer opacity-100"
                   aria-label={selectedIds.has(thread.id) ? "Deselect email" : "Select email"}
                 />
               ) : (

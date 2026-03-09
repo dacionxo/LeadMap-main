@@ -6,6 +6,8 @@ type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ign
 interface UniboxSidebarProps {
   folderFilter: FilterFolder
   onFolderFilterChange: (folder: FilterFolder) => void
+  /** Called when user clicks Compose - opens compose modal when provided */
+  onCompose?: () => void
   // Optional props for UniboxWrapper compatibility (ignored by this simplified sidebar)
   mailboxes?: Array<{ id: string; email: string; display_name: string | null; provider: string; active: boolean }>
   selectedMailboxId?: string | null
@@ -22,15 +24,16 @@ interface UniboxSidebarProps {
 const FOLDER_ITEMS: Array<{ value: FilterFolder; label: string; icon: string }> = [
   { value: 'inbox', label: 'Inbox', icon: 'inbox' },
   { value: 'starred', label: 'Starred', icon: 'star' },
-  { value: 'sent', label: 'Sent', icon: 'send' },
   { value: 'drafts', label: 'Drafts', icon: 'drafts' },
   { value: 'archived', label: 'Archive', icon: 'archive' },
+  { value: 'sent', label: 'Sent', icon: 'send' },
   { value: 'recycling_bin', label: 'Trash', icon: 'delete' },
 ]
 
 export default function UniboxSidebar({
   folderFilter,
   onFolderFilterChange,
+  onCompose,
   folderCounts = {},
   ..._rest
 }: UniboxSidebarProps) {
@@ -40,6 +43,16 @@ export default function UniboxSidebar({
         <h2 className="text-xl font-semibold tracking-tight" style={{ fontFamily: 'Inter, sans-serif' }}>Unibox</h2>
       </div>
       <nav className="flex flex-col gap-1">
+        {onCompose && (
+          <button
+            type="button"
+            onClick={onCompose}
+            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg transition-all duration-200 border-b border-[#F3F4F6] text-[#137fec] hover:bg-[#137fec]/10 font-medium"
+          >
+            <span className="material-symbols-outlined text-[22px]" aria-hidden>edit_note</span>
+            <span className="text-sm">Compose</span>
+          </button>
+        )}
         {FOLDER_ITEMS.map(({ value, label, icon }) => {
           const count = folderCounts[value] ?? -1
           const showCount = count >= 0
@@ -61,7 +74,17 @@ export default function UniboxSidebar({
               {showCount && (
                 <span
                   className={`flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[10px] font-bold shrink-0 ${
-                    folderFilter === value ? 'bg-[#137fec] text-white' : 'bg-slate-200/80 text-slate-600'
+                    folderFilter === value
+                      ? value === 'recycling_bin'
+                        ? 'bg-red-500 text-white'
+                        : value === 'sent'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-[#137fec] text-white'
+                      : value === 'recycling_bin'
+                        ? 'bg-red-100 text-red-700'
+                        : value === 'sent'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-slate-200/80 text-slate-600'
                   }`}
                 >
                   {count}

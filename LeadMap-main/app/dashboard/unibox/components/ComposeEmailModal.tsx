@@ -68,7 +68,9 @@ export default function ComposeEmailModal({
     fetchMailboxes()
   }, [fetchMailboxes])
 
-  const handleSaveDraft = async () => {
+  const hasContent = !!(to || subject || body)
+
+  const handleSaveDraft = async (andClose = false) => {
     if (!subject && !body) return
     setSavingDraft(true)
     try {
@@ -96,26 +98,27 @@ export default function ComposeEmailModal({
         const data = await response.json().catch(() => ({}))
         throw new Error(data.error || 'Failed to save draft')
       }
-      onSent?.()
-      onClose()
+      if (andClose) {
+        onSent?.()
+        onClose()
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save draft')
+      if (andClose) onClose()
+      else alert(err instanceof Error ? err.message : 'Failed to save draft')
     } finally {
       setSavingDraft(false)
     }
   }
 
-  const handleDiscard = () => {
-    if (to || subject || body) {
-      const action = window.confirm(
-        'Discard this email? Click Cancel to save as draft instead.'
-      )
-      if (action) onClose()
-      else handleSaveDraft()
+  const handleCloseOrDiscard = () => {
+    if (hasContent) {
+      handleSaveDraft(true)
     } else {
       onClose()
     }
   }
+
+  const handleDiscard = () => handleCloseOrDiscard()
 
   const handleSendNow = async () => {
     const toList = to
@@ -153,9 +156,7 @@ export default function ComposeEmailModal({
       })
 
       const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send email')
-      }
+      if (!response.ok) throw new Error(data.error || 'Failed to send email')
       onSent?.()
       onClose()
     } catch (err) {
@@ -168,7 +169,7 @@ export default function ComposeEmailModal({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       e.preventDefault()
-      onClose()
+      handleCloseOrDiscard()
     }
   }
 
@@ -176,6 +177,7 @@ export default function ComposeEmailModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 font-sans bg-slate-900/40 backdrop-blur-sm"
       onKeyDown={handleKeyDown}
+      onClick={handleCloseOrDiscard}
       role="dialog"
       aria-modal="true"
       aria-labelledby="compose-email-title"
@@ -194,7 +196,7 @@ export default function ComposeEmailModal({
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCloseOrDiscard}
             className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             aria-label="Close"
           >
@@ -449,7 +451,7 @@ export default function ComposeEmailModal({
             </button>
             <button
               type="button"
-              onClick={handleSaveDraft}
+              onClick={() => handleSaveDraft(true)}
               disabled={savingDraft || (!subject && !body)}
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Save draft"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Tag, Eye, AlertCircle, Save, FolderOpen, Link2, TestTube, X } from 'lucide-react'
 import ErrorBoundary from '../ErrorBoundary'
@@ -348,6 +348,20 @@ export default function ComposeEmailEnhanced({
     debounceMs: 3000,
     onSave: handleSaveDraft,
   })
+
+  // Save draft on unmount (e.g. user navigates away) if there's content
+  const saveDraftRef = useRef(handleSaveDraft)
+  const compositionRef = useRef(composition)
+  saveDraftRef.current = handleSaveDraft
+  compositionRef.current = composition
+  useEffect(() => {
+    return () => {
+      const c = compositionRef.current
+      if (c?.subject || c?.htmlContent || (c?.to && c.to.length > 0)) {
+        saveDraftRef.current?.()
+      }
+    }
+  }, [])
 
   // Load drafts
   const fetchDrafts = useCallback(async () => {

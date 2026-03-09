@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Mail, 
@@ -41,10 +41,32 @@ export default function ComposeEmail() {
     scheduleAt: '',
     scheduleEnabled: false
   })
+  const formDataRef = useRef(formData)
+  formDataRef.current = formData
 
   useEffect(() => {
     fetchMailboxes()
     fetchTemplates()
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      const fd = formDataRef.current
+      if (fd.subject || fd.html || fd.to) {
+        const toList = fd.to ? fd.to.split(',').map((e) => e.trim()).filter(Boolean) : []
+        fetch('/api/emails/drafts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            subject: fd.subject || '(No Subject)',
+            htmlContent: fd.html || '',
+            to: toList,
+            mailboxId: fd.mailboxId || null,
+          }),
+        }).catch(() => {})
+      }
+    }
   }, [])
 
   const fetchMailboxes = async () => {
