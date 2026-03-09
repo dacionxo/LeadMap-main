@@ -86,31 +86,35 @@ export async function dispatchEmailQueueBatch(
   items: EmailQueueItem[]
 ): Promise<{
   dispatched: number
-  legacy: number
+  legacyCount: number
+  legacyItems: EmailQueueItem[]
   errors: number
 }> {
   if (!shouldUseSymphonyForEmailQueue()) {
-    return { dispatched: 0, legacy: items.length, errors: 0 }
+    return { dispatched: 0, legacyCount: items.length, legacyItems: items, errors: 0 }
   }
 
   let dispatched = 0
-  let legacy = 0
+  let legacyCount = 0
   let errors = 0
+  const legacyItems: EmailQueueItem[] = []
 
   for (const item of items) {
     try {
       const result = await dispatchEmailQueueItem(item)
       if (result.useLegacy) {
-        legacy++
+        legacyCount++
+        legacyItems.push(item)
       } else {
         dispatched++
       }
     } catch (error) {
       errors++
       console.error('Failed to dispatch email queue item:', error)
+      legacyItems.push(item)
     }
   }
 
-  return { dispatched, legacy, errors }
+  return { dispatched, legacyCount, legacyItems, errors }
 }
 

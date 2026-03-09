@@ -570,11 +570,21 @@ async function runCronJob(request: NextRequest) {
         queuedEmails as SymphonyEmailQueueItem[]
       )
 
-      // Return response indicating Symphony processing
+      // Fallback: process any items that need legacy handling (useLegacy=true or dispatch error)
+      const legacyItems = dispatchResult.legacyItems || []
+      const legacyResults: EmailProcessingResult[] = []
+
+      for (const email of legacyItems) {
+        const result = await processEmail(email as EmailQueueItem, supabase, now)
+        legacyResults.push(result)
+      }
+
+      // Return response indicating Symphony processing + legacy fallback
       return createSuccessResponse({
-        message: 'Emails dispatched to Symphony Messenger',
+        message: 'Emails dispatched to Symphony Messenger (with legacy fallback)',
         dispatched: dispatchResult.dispatched,
-        legacy: dispatchResult.legacy,
+        legacy: legacyItems.length,
+        legacyResults,
         errors: dispatchResult.errors,
         total: queuedEmails.length,
       })

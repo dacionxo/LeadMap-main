@@ -30,6 +30,17 @@ interface ComposeEmailModalProps {
   } | null
 }
 
+const getMinScheduleDateTimeLocal = () => {
+  const now = new Date(Date.now() + 60000)
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  const year = now.getFullYear()
+  const month = pad(now.getMonth() + 1)
+  const day = pad(now.getDate())
+  const hours = pad(now.getHours())
+  const minutes = pad(now.getMinutes())
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 /**
  * Elite CRM Advanced Compose Modal
  * 1:1 design with reference HTML: Inter, Material Symbols, slate/primary tokens.
@@ -710,7 +721,7 @@ export default function ComposeEmailModal({
                           type="datetime-local"
                           value={customScheduleAt}
                           onChange={(e) => setCustomScheduleAt(e.target.value)}
-                          min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                          min={getMinScheduleDateTimeLocal()}
                           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                           aria-label="Custom date and time for scheduled send"
                         />
