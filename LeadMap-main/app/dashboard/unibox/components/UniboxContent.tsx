@@ -205,8 +205,8 @@ export default function UniboxContent({
             const data = await response.json();
             const items: any[] = data.scheduled || [];
             const mapped: Thread[] = items.map((r: any) => {
-              const fallbackDate = new Date().toISOString();
-              const scheduledAt = r.scheduled_at || fallbackDate;
+              // Use scheduled send time (not created_at) for display
+              const scheduledAt = r.scheduled_at || r.created_at || new Date().toISOString();
               const rawHtml: string = r.html || "";
               const plainFromHtml = rawHtml
                 .replace(/<style[\s\S]*?<\/style>/gi, "")
