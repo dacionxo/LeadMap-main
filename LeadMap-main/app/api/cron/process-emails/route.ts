@@ -147,8 +147,14 @@ const requiredDatetimeSchema = z.preprocess(
 /** Optional UUID: accepts uuid string or null/undefined */
 const optionalUuidSchema = z.union([z.string().uuid(), z.string().min(1), z.null(), z.undefined()]).optional()
 
+/** Lenient email: accepts typical email format (local@domain) without strict RFC validation */
+const emailSchema = z
+  .string()
+  .min(1)
+  .refine((s) => s.trim().includes('@') && s.trim().length >= 3, { message: 'Invalid email format' })
+
 /**
- * Zod schema for queued email validation (lenient for DB format variations)
+ * Zod schema for queued email validation (maximally lenient for DB format variations)
  */
 const queuedEmailSchema = z.object({
   id: z.union([z.string().uuid(), z.string().min(1)]),
@@ -157,10 +163,14 @@ const queuedEmailSchema = z.object({
   campaign_id: optionalUuidSchema,
   campaign_step_id: optionalUuidSchema,
   campaign_recipient_id: optionalUuidSchema,
-  to_email: z.string().email(),
-  subject: z.string(),
-  html: z.string(),
-  status: z.enum(['queued', 'sending', 'sent', 'failed']),
+  to_email: emailSchema,
+  subject: z.union([z.string(), z.null(), z.undefined()]).transform((v) => (v != null ? String(v) : '')),
+  html: z.union([z.string(), z.null(), z.undefined()]).transform((v) => (v != null ? String(v) : '')),
+  status: z.union([z.enum(['queued', 'sending', 'sent', 'failed']), z.string()]).transform((v) => {
+    const s = String(v || '').toLowerCase()
+    if (['queued', 'sending', 'sent', 'failed'].includes(s)) return s as 'queued' | 'sending' | 'sent' | 'failed'
+    return 'queued'
+  }),
   direction: z.union([z.literal('sent'), z.literal('outbound'), z.string()]).optional().default('sent').transform(() => 'sent' as const),
   scheduled_at: optionalDatetimeSchema,
   sent_at: optionalDatetimeSchema,
@@ -180,7 +190,9 @@ function validateQueuedEmail(data: unknown): Omit<QueuedEmail, 'mailbox'> {
   const result = queuedEmailSchema.safeParse(data)
 
   if (!result.success) {
-    throw new ValidationError('Invalid queued email structure', result.error.issues)
+    const issues = result.error.issues
+    console.warn('[process-emails] Validation failed:', JSON.stringify(issues))
+    throw new ValidationError('Invalid queued email structure', issues)
   }
 
   return result.data

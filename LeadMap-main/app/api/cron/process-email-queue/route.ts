@@ -321,6 +321,26 @@ async function calculateRecentEmailCounts(
 }
 
 /**
+ * Atomically claim a queued item (queued -> processing). Prevents duplicate sends when
+ * multiple cron instances fetch the same items. Returns true if claimed, false if
+ * another instance already claimed it.
+ */
+async function claimQueuedItem(
+  supabase: ReturnType<typeof getCronSupabaseClient>,
+  emailId: string
+): Promise<boolean> {
+  const { data, error } = await (supabase as any)
+    .from('email_queue')
+    .update({ status: 'processing' })
+    .eq('id', emailId)
+    .eq('status', 'queued')
+    .select('id')
+    .single()
+
+  return !error && !!data
+}
+
+/**
  * Updates email queue status
  * 
  * @param supabase - Supabase client
@@ -407,10 +427,15 @@ async function processEmail(
   const emailId = email.id
 
   try {
-    // Mark as processing
-    await updateEmailQueueStatus(supabase, emailId, {
-      status: 'processing',
-    })
+    // Atomically claim (queued -> processing) to prevent duplicate sends
+    const claimed = await claimQueuedItem(supabase, emailId)
+    if (!claimed) {
+      return {
+        email_id: emailId,
+        status: 'skipped',
+        reason: 'Already claimed by another processor',
+      }
+    }
 
     // Fetch and validate mailbox
     let mailbox: Mailbox
@@ -628,8 +653,19 @@ async function runCronJob(request: NextRequest) {
         queuedEmails as SymphonyEmailQueueItem[]
       )
 
-      // Fallback: process any items that need legacy handling (useLegacy=true or dispatch error)
       const legacyItems = dispatchResult.legacyItems || []
+      const legacyItemIds = new Set(legacyItems.map((e) => e.id))
+
+      // Mark dispatched (non-legacy) items as processing immediately to prevent duplicate sends
+      // when cron runs again before Symphony handler completes
+      const dispatchedIds = queuedEmails
+        .filter((e) => !legacyItemIds.has(e.id))
+        .map((e) => e.id)
+      for (const id of dispatchedIds) {
+        await updateEmailQueueStatus(supabase, id, { status: 'processing' })
+      }
+
+      // Fallback: process any items that need legacy handling (useLegacy=true or dispatch error)
       const legacyResults: EmailProcessingResult[] = []
 
       for (const email of legacyItems) {
