@@ -1078,6 +1078,11 @@ export default function UniboxContent({
               loading={loadingThread}
               folderFilter={folderFilter}
               selectedCount={selectedThreadIds.size}
+              actionTargetThread={
+                selectedThreadIds.size === 1
+                  ? threads.find((t) => selectedThreadIds.has(t.id)) ?? selectedThread
+                  : selectedThread
+              }
               onReply={handleReply}
               onReplyAll={handleReplyAll}
               onForward={handleForward}

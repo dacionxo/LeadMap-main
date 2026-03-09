@@ -59,17 +59,19 @@ interface ThreadViewProps {
   thread: Thread | null
   loading: boolean
   folderFilter?: FolderFilter
-  /** Number of threads selected via checkbox. Show three-dots only when 0 or 1 (single-thread view). */
+  /** Number of threads selected via checkbox. Show three-dots only when exactly 1 is selected. */
   selectedCount?: number
+  /** Thread to act on for more_horiz actions. When exactly 1 selected, use the checked thread; otherwise the viewed thread. Must have at least id. */
+  actionTargetThread?: { id: string } | null
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
-  onDeleteDraft?: () => void
-  onMoveToTrash?: () => void
-  onArchive?: () => void
-  onStar?: () => void
-  onRestore?: () => void
-  onPermanentDelete?: () => void
+  onDeleteDraft?: (thread?: { id: string } | null) => void
+  onMoveToTrash?: (thread?: { id: string } | null) => void
+  onArchive?: (thread?: { id: string } | null) => void
+  onStar?: (thread?: { id: string } | null) => void
+  onRestore?: (thread?: { id: string } | null) => void
+  onPermanentDelete?: (thread?: { id: string } | null) => void
   onEditDraft?: () => void
   onSendDraft?: () => void
 }
@@ -115,7 +117,7 @@ function getInitial(name: string | null, email: string): string {
   return '?'
 }
 
-export default function ThreadView({ thread, loading, folderFilter = 'inbox', selectedCount = 1, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete, onEditDraft, onSendDraft }: ThreadViewProps) {
+export default function ThreadView({ thread, loading, folderFilter = 'inbox', selectedCount = 1, actionTargetThread, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete, onEditDraft, onSendDraft }: ThreadViewProps) {
   const isDraft = thread?.status === 'draft'
 
   if (loading) {
@@ -144,6 +146,8 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
   const displayName = fromParticipant?.name || fromParticipant?.email || 'Unknown'
   const toNames = firstMessage ? getToParticipants(firstMessage).map((p) => (p?.name || p?.email || '')).filter(Boolean).join(', ') : ''
   const dateStr = firstMessage ? formatDate(firstMessage.received_at || firstMessage.sent_at) : ''
+
+  const target = (actionTargetThread ?? thread) as { id: string }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-w-0 isolate">
@@ -179,7 +183,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
               <span className="material-symbols-outlined text-[18px]" aria-hidden>reply</span> Reply
             </button>
           )}
-          {selectedCount <= 1 && folderFilter !== 'sent' ? (
+          {selectedCount === 1 ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button type="button" className="size-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white transition-all" aria-label="More options">
@@ -202,7 +206,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
                     </DropdownMenuItem>
                   )}
                   {onDeleteDraft && (
-                    <DropdownMenuItem onClick={onDeleteDraft} className="text-red-600 focus:text-red-600">
+                    <DropdownMenuItem onClick={() => onDeleteDraft(target)} className="text-red-600 focus:text-red-600">
                       <span className="material-symbols-outlined text-lg mr-2">delete</span>
                       Delete
                     </DropdownMenuItem>
@@ -212,13 +216,13 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
               {folderFilter === 'archived' && (
                 <>
                   {onArchive && (
-                    <DropdownMenuItem onClick={onArchive}>
+                    <DropdownMenuItem onClick={() => onArchive(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">unarchive</span>
                       Unarchive
                     </DropdownMenuItem>
                   )}
                   {onStar && (
-                    <DropdownMenuItem onClick={onStar}>
+                    <DropdownMenuItem onClick={() => onStar(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
                       {thread?.starred ? 'Unstar' : 'Star'}
                     </DropdownMenuItem>
@@ -230,7 +234,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
                     </DropdownMenuItem>
                   )}
                   {onMoveToTrash && (
-                    <DropdownMenuItem onClick={onMoveToTrash} className="text-red-600 focus:text-red-600">
+                    <DropdownMenuItem onClick={() => onMoveToTrash(target)} className="text-red-600 focus:text-red-600">
                       <span className="material-symbols-outlined text-lg mr-2">delete</span>
                       Move to Trash
                     </DropdownMenuItem>
@@ -240,13 +244,13 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
               {folderFilter === 'inbox' && (
                 <>
                   {onArchive && (
-                    <DropdownMenuItem onClick={onArchive}>
+                    <DropdownMenuItem onClick={() => onArchive(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">archive</span>
                       Archive
                     </DropdownMenuItem>
                   )}
                   {onStar && (
-                    <DropdownMenuItem onClick={onStar}>
+                    <DropdownMenuItem onClick={() => onStar(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
                       {thread?.starred ? 'Unstar' : 'Star'}
                     </DropdownMenuItem>
@@ -258,7 +262,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
                     </DropdownMenuItem>
                   )}
                   {onMoveToTrash && (
-                    <DropdownMenuItem onClick={onMoveToTrash} className="text-red-600 focus:text-red-600">
+                    <DropdownMenuItem onClick={() => onMoveToTrash(target)} className="text-red-600 focus:text-red-600">
                       <span className="material-symbols-outlined text-lg mr-2">delete</span>
                       Move to Trash
                     </DropdownMenuItem>
@@ -268,13 +272,13 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
               {folderFilter === 'starred' && (
                 <>
                   {onArchive && (
-                    <DropdownMenuItem onClick={onArchive}>
+                    <DropdownMenuItem onClick={() => onArchive(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">archive</span>
                       Archive
                     </DropdownMenuItem>
                   )}
                   {onStar && (
-                    <DropdownMenuItem onClick={onStar}>
+                    <DropdownMenuItem onClick={() => onStar(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">star</span>
                       Unstar
                     </DropdownMenuItem>
@@ -286,7 +290,35 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
                     </DropdownMenuItem>
                   )}
                   {onMoveToTrash && (
-                    <DropdownMenuItem onClick={onMoveToTrash} className="text-red-600 focus:text-red-600">
+                    <DropdownMenuItem onClick={() => onMoveToTrash(target)} className="text-red-600 focus:text-red-600">
+                      <span className="material-symbols-outlined text-lg mr-2">delete</span>
+                      Move to Trash
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {folderFilter === 'sent' && (
+                <>
+                  {onArchive && (
+                    <DropdownMenuItem onClick={() => onArchive(target)}>
+                      <span className="material-symbols-outlined text-lg mr-2">archive</span>
+                      Archive
+                    </DropdownMenuItem>
+                  )}
+                  {onStar && (
+                    <DropdownMenuItem onClick={() => onStar(target)}>
+                      <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
+                      {thread?.starred ? 'Unstar' : 'Star'}
+                    </DropdownMenuItem>
+                  )}
+                  {!isDraft && onReply && (
+                    <DropdownMenuItem onClick={onReply}>
+                      <span className="material-symbols-outlined text-lg mr-2">reply</span>
+                      Reply
+                    </DropdownMenuItem>
+                  )}
+                  {onMoveToTrash && (
+                    <DropdownMenuItem onClick={() => onMoveToTrash(target)} className="text-red-600 focus:text-red-600">
                       <span className="material-symbols-outlined text-lg mr-2">delete</span>
                       Move to Trash
                     </DropdownMenuItem>
@@ -296,19 +328,19 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
               {folderFilter === 'recycling_bin' && (
                 <>
                   {onRestore && (
-                    <DropdownMenuItem onClick={onRestore}>
+                    <DropdownMenuItem onClick={() => onRestore(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">unarchive</span>
                       Restore
                     </DropdownMenuItem>
                   )}
                   {onArchive && (
-                    <DropdownMenuItem onClick={onArchive}>
+                    <DropdownMenuItem onClick={() => onArchive(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">archive</span>
                       Archive
                     </DropdownMenuItem>
                   )}
                   {onStar && (
-                    <DropdownMenuItem onClick={onStar}>
+                    <DropdownMenuItem onClick={() => onStar(target)}>
                       <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
                       {thread?.starred ? 'Unstar' : 'Star'}
                     </DropdownMenuItem>
@@ -320,7 +352,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
                     </DropdownMenuItem>
                   )}
                   {onPermanentDelete && (
-                    <DropdownMenuItem onClick={onPermanentDelete} className="text-red-600 focus:text-red-600">
+                    <DropdownMenuItem onClick={() => onPermanentDelete(target)} className="text-red-600 focus:text-red-600">
                       <span className="material-symbols-outlined text-lg mr-2">delete_forever</span>
                       Permanently Delete
                     </DropdownMenuItem>
