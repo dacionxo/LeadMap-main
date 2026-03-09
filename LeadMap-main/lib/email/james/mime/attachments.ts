@@ -216,13 +216,18 @@ export function getMimeTypeFromFilename(filename: string): string {
   
   // Common MIME types
   const mimeTypes: Record<string, string> = {
-    // Images
+    // Images (JPG/JPEG, PNG, GIF, SVG, WebP, AVIF, TIFF, HEIC)
     'jpg': 'image/jpeg',
     'jpeg': 'image/jpeg',
     'png': 'image/png',
     'gif': 'image/gif',
     'webp': 'image/webp',
     'svg': 'image/svg+xml',
+    'avif': 'image/avif',
+    'tiff': 'image/tiff',
+    'tif': 'image/tiff',
+    'heic': 'image/heic',
+    'heif': 'image/heif',
     'ico': 'image/x-icon',
     
     // Documents

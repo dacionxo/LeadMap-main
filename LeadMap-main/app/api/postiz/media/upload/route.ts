@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRouteHandlerClient, getServiceRoleClient } from '@/lib/supabase-singleton'
 import type { MediaType, ProcessingStatus } from '@/lib/postiz/data-model'
+import { ALLOWED_IMAGE_MIME_TYPES } from '@/lib/email/attachment-types'
 
 export const runtime = 'nodejs'
 
@@ -212,26 +213,30 @@ async function validateFile(file: File): Promise<{
     return { valid: false, error: 'File size exceeds 100MB limit' }
   }
 
-  // Check MIME type
-  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  // Check MIME type (JPG/JPEG, PNG, GIF, SVG, WebP, AVIF, TIFF, HEIC)
+  const allowedImageTypes = [...ALLOWED_IMAGE_MIME_TYPES]
   const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo']
 
   let type: MediaType | undefined
   let extension: string
 
+  const mimeToExt: Record<string, string> = {
+    'image/svg+xml': 'svg',
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+  }
   if (allowedImageTypes.includes(file.type)) {
-    // Check if it's a GIF specifically
     if (file.type === 'image/gif') {
       type = 'gif'
     } else {
       type = 'image'
     }
-    extension = file.type.split('/')[1]
+    extension = mimeToExt[file.type] || file.type.split('/')[1]?.replace(/\+.*/, '') || 'bin'
   } else if (allowedVideoTypes.includes(file.type)) {
     type = 'video'
     extension = file.type.split('/')[1]
   } else {
-    return { valid: false, error: 'Unsupported file type. Only images (JPEG, PNG, GIF, WebP) and videos (MP4, MOV, AVI) are allowed.' }
+    return { valid: false, error: 'Unsupported file type. Images: JPEG, PNG, GIF, SVG, WebP, AVIF, TIFF, HEIC. Videos: MP4, MOV, AVI.' }
   }
 
   // For images and GIFs, get dimensions (basic validation)

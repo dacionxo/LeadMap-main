@@ -7,6 +7,7 @@ import type { Message, MessageHandler, HandlerContext } from '@/lib/types/sympho
 import type { EmailMessagePayload } from '../utils/message-builders'
 import type { Mailbox, EmailPayload } from '@/lib/email/types'
 import { sendViaMailbox } from '@/lib/email/sendViaMailbox'
+import { recordSentEmailToUnibox } from '@/lib/email/unibox/record-sent-email'
 import { HandlerError } from '../errors'
 import { getServiceRoleClient } from '@/lib/supabase-singleton'
 
@@ -68,14 +69,31 @@ export class EmailMessageHandler implements MessageHandler {
       )
     }
 
-    // Mark email_queue as sent so item is removed from Scheduled tab
+    const sentAt = new Date().toISOString()
     const queueId = payload.emailId
+
+    // Record to Unibox so sent email appears in Sent tab
+    await recordSentEmailToUnibox({
+      supabase,
+      userId: payload.userId,
+      mailboxId: payload.mailboxId,
+      subject: payload.subject,
+      html: payload.html,
+      toEmail: payload.toEmail,
+      fromEmail: payload.fromEmail || mailboxData.from_email || mailboxData.email,
+      fromName: payload.fromName || mailboxData.from_name || mailboxData.display_name,
+      providerMessageId: result.providerMessageId,
+      providerThreadId: queueId ? `scheduled-${queueId}` : `symphony-${Date.now()}`,
+      sentAt,
+    })
+
+    // Mark email_queue as sent so item is removed from Scheduled tab
     if (queueId) {
       await (supabase as any)
         .from('email_queue')
         .update({
           status: 'sent',
-          processed_at: new Date().toISOString(),
+          processed_at: sentAt,
         })
         .eq('id', queueId)
     }

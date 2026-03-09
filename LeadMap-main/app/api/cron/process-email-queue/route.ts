@@ -20,6 +20,7 @@ import { handleCronError, DatabaseError, ValidationError } from '@/lib/cron/erro
 import { createSuccessResponse, createErrorResponse, createNoDataResponse, createBatchResponse } from '@/lib/cron/responses'
 import { getCronSupabaseClient, executeUpdateOperation, executeSelectOperation, executeInsertOperation } from '@/lib/cron/database'
 import { sendViaMailbox, checkMailboxLimits } from '@/lib/email/sendViaMailbox'
+import { recordSentEmailToUnibox } from '@/lib/email/unibox/record-sent-email'
 import type { Mailbox, EmailPayload, SendResult } from '@/lib/email/types'
 import type { CronJobResult, BatchProcessingStats } from '@/lib/types/cron'
 import { dispatchEmailQueueBatch, type EmailQueueItem as SymphonyEmailQueueItem } from '@/lib/symphony/integration/email-queue'
@@ -98,6 +99,24 @@ const requiredDatetimeSchema = z.preprocess((v) => {
   return s ?? ''
 }, z.string().min(1))
 
+/** Lenient email: accepts typical email format (local@domain) without strict RFC validation */
+const emailSchema = z
+  .string()
+  .min(1)
+  .refine((s) => {
+    const t = s.trim()
+    return t.includes('@') && t.length >= 3
+  }, { message: 'Invalid email format' })
+
+/** Optional email: lenient, allows null/undefined/empty; validates format when present */
+const optionalEmailSchema = z.preprocess(
+  (v) => (v == null || v === '' || (typeof v === 'string' && v.trim() === '')) ? undefined : (typeof v === 'string' ? v.trim() : v),
+  z.union([
+    emailSchema,
+    z.undefined(),
+  ])
+)
+
 /**
  * Zod schema for email queue item validation (lenient for DB format variations)
  */
@@ -105,11 +124,11 @@ const emailQueueItemSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
   mailbox_id: z.string().uuid(),
-  to_email: z.string().email(),
+  to_email: emailSchema,
   subject: z.string(),
   html: z.string(),
   from_name: z.string().nullable().optional(),
-  from_email: z.union([z.string().email(), z.null(), z.undefined()]).optional(),
+  from_email: optionalEmailSchema,
   type: z.string().nullable().optional(),
   campaign_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
   campaign_recipient_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
@@ -491,6 +510,23 @@ async function processEmail(
         type: email.type || null,
         campaign_id: email.campaign_id || null,
         campaign_recipient_id: email.campaign_recipient_id || null,
+      })
+
+      // Record to Unibox so sent email appears in Sent tab
+      const fromEmail = email.from_email || mailbox.from_email || mailbox.email
+      const fromName = email.from_name || mailbox.from_name || mailbox.display_name
+      await recordSentEmailToUnibox({
+        supabase,
+        userId: email.user_id,
+        mailboxId: email.mailbox_id,
+        subject: email.subject,
+        html: email.html,
+        toEmail: email.to_email,
+        fromEmail,
+        fromName,
+        providerMessageId: sendResult.providerMessageId,
+        providerThreadId: `scheduled-${emailId}`,
+        sentAt: now.toISOString(),
       })
 
       // Mark queue entry as sent

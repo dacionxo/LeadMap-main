@@ -297,7 +297,17 @@ export function getPostStatusColor(state: PostState): string {
  */
 export function isValidMediaType(mimeType: string, mediaType: MediaType): boolean {
   const validMimeTypes: Record<MediaType, string[]> = {
-    image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+    image: [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
+      'image/avif',
+      'image/tiff',
+      'image/heic',
+      'image/heif',
+    ],
     video: ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/webm', 'video/x-msvideo'],
     gif: ['image/gif', 'video/gif'],
     document: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],

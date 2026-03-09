@@ -122,34 +122,51 @@ interface MailboxProcessingResult {
   error?: string
 }
 
-/** Optional datetime: accepts string, Date, null, or undefined (DB format variations) */
-const optionalDatetimeSchema = z
-  .union([z.string(), z.date(), z.null(), z.undefined()])
-  .optional()
-  .transform((v) =>
-    v == null || v === undefined ? undefined : typeof v === 'string' ? v : (v as Date).toISOString()
-  )
+/** Normalize any datetime-like value to ISO string; null/undefined pass through */
+function toIsoString(v: unknown): string | undefined {
+  if (v == null || v === undefined) return undefined
+  if (v instanceof Date) return v.toISOString()
+  if (typeof v === 'number') return new Date(v).toISOString()
+  if (typeof v === 'string') {
+    const d = new Date(v)
+    return isNaN(d.getTime()) ? v : d.toISOString()
+  }
+  if (typeof v === 'object' && typeof (v as Date).toISOString === 'function') return (v as Date).toISOString()
+  return undefined
+}
+
+/** Optional datetime: accepts any format, normalizes to ISO string */
+const optionalDatetimeSchema = z.preprocess(toIsoString, z.string().optional())
+
+/** Required datetime: accepts any format, normalizes to ISO string */
+const requiredDatetimeSchema = z.preprocess(
+  (v) => toIsoString(v) ?? '',
+  z.string().min(1)
+)
+
+/** Optional UUID: accepts uuid string or null/undefined */
+const optionalUuidSchema = z.union([z.string().uuid(), z.string().min(1), z.null(), z.undefined()]).optional()
 
 /**
  * Zod schema for queued email validation (lenient for DB format variations)
  */
 const queuedEmailSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  mailbox_id: z.string().uuid(),
-  campaign_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
-  campaign_step_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
-  campaign_recipient_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
+  id: z.union([z.string().uuid(), z.string().min(1)]),
+  user_id: z.union([z.string().uuid(), z.string().min(1)]),
+  mailbox_id: z.union([z.string().uuid(), z.string().min(1)]),
+  campaign_id: optionalUuidSchema,
+  campaign_step_id: optionalUuidSchema,
+  campaign_recipient_id: optionalUuidSchema,
   to_email: z.string().email(),
   subject: z.string(),
   html: z.string(),
   status: z.enum(['queued', 'sending', 'sent', 'failed']),
-  direction: z.enum(['sent', 'outbound']).optional().default('sent').transform((v) => 'sent' as const),
+  direction: z.union([z.literal('sent'), z.literal('outbound'), z.string()]).optional().default('sent').transform(() => 'sent' as const),
   scheduled_at: optionalDatetimeSchema,
   sent_at: optionalDatetimeSchema,
   provider_message_id: z.union([z.string(), z.null(), z.undefined()]).optional(),
   error: z.union([z.string(), z.null(), z.undefined()]).optional(),
-  created_at: z.union([z.string(), z.date()]).transform((v) => typeof v === 'string' ? v : (v as Date).toISOString()),
+  created_at: requiredDatetimeSchema,
 })
 
 /**
