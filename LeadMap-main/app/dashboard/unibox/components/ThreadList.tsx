@@ -11,6 +11,8 @@ interface ThreadListProps {
   hasMore?: boolean
   loadingMore?: boolean
   onLoadMore?: () => void
+  /** When true, dates in list are treated as future (e.g. scheduled) for display */
+  showScheduledDates?: boolean
   /** One-click delete for drafts; when provided, shows delete icon on draft rows */
   onDeleteDraft?: (thread: UniboxThread) => void
   /** One-click permanent delete from Recycling; when provided, shows delete icon on rows */
@@ -23,7 +25,7 @@ interface ThreadListProps {
   forceShowCheckboxes?: boolean
 }
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, isFuture = false): string {
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
@@ -32,10 +34,18 @@ function formatDate(dateString: string): string {
   const yesterday = new Date(now)
   yesterday.setDate(yesterday.getDate() - 1)
   const isYesterday = date.toDateString() === yesterday.toDateString()
-  const diffDays = Math.floor(diffMs / 86400000)
-  if (diffMins < 1) return 'Just now'
-  if (isToday) return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const isTomorrow = date.toDateString() === tomorrow.toDateString()
+  if (isFuture && diffMs < 0) {
+    if (isToday) return `Today ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+    if (isTomorrow) return `Tomorrow ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
+  }
+  if (diffMins < 1 && diffMs >= 0) return 'Just now'
+  if (isToday && !isFuture) return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
   if (isYesterday) return 'Yesterday'
+  const diffDays = Math.floor(Math.abs(diffMs) / 86400000)
   if (diffDays < 7) return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
 }
@@ -55,6 +65,7 @@ export default function ThreadList({
   hasMore = false,
   loadingMore = false,
   onLoadMore,
+  showScheduledDates = false,
   onDeleteDraft,
   onDeleteFromTrash,
   selectedIds = new Set(),
@@ -151,7 +162,7 @@ export default function ThreadList({
                 <span className={`text-sm truncate ${isSelected ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
                   {senderName}
                 </span>
-                <span className="text-[11px] text-slate-400 shrink-0 ml-2">{formatDate(thread.lastMessageAt)}</span>
+                <span className="text-[11px] text-slate-400 shrink-0 ml-2">{formatDate(thread.lastMessageAt, showScheduledDates || thread.id.startsWith('scheduled-'))}</span>
               </div>
               <h4 className={`text-sm truncate mb-1 ${isSelected ? 'font-medium text-[#137fec]' : 'font-normal text-slate-900'}`}>
                 {thread.subject || '(No Subject)'}

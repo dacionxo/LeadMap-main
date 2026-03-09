@@ -260,6 +260,11 @@ export default function ComposeEmailModal({
 
   const getScheduleOptions = (): { label: string; value: string }[] => {
     const now = new Date()
+    const in30Min = new Date(now.getTime() + 30 * 60 * 1000)
+    const in1Hour = new Date(now.getTime() + 60 * 60 * 1000)
+    const in2Hours = new Date(now.getTime() + 2 * 60 * 60 * 1000)
+    const today5pm = new Date(now)
+    today5pm.setHours(17, 0, 0, 0)
     const tomorrow = new Date(now)
     tomorrow.setDate(tomorrow.getDate() + 1)
     tomorrow.setHours(9, 0, 0, 0)
@@ -268,16 +273,24 @@ export default function ComposeEmailModal({
     if (daysUntilMonday === 0) daysUntilMonday = 7
     nextMonday.setDate(nextMonday.getDate() + daysUntilMonday)
     nextMonday.setHours(9, 0, 0, 0)
-    const inOneHour = new Date(now.getTime() + 60 * 60 * 1000)
     const nextWeek = new Date(now)
     nextWeek.setDate(nextWeek.getDate() + 7)
     nextWeek.setHours(9, 0, 0, 0)
-    return [
-      { label: 'In 1 hour', value: inOneHour.toISOString() },
+
+    const options: { label: string; value: string }[] = [
+      { label: 'In 30 minutes', value: in30Min.toISOString() },
+      { label: 'In 1 hour', value: in1Hour.toISOString() },
+      { label: 'In 2 hours', value: in2Hours.toISOString() },
+    ]
+    if (today5pm > now) {
+      options.push({ label: 'Today at 5:00 PM', value: today5pm.toISOString() })
+    }
+    options.push(
       { label: 'Tomorrow at 9:00 AM', value: tomorrow.toISOString() },
       { label: 'Next Monday at 9:00 AM', value: nextMonday.toISOString() },
       { label: 'Next week', value: nextWeek.toISOString() },
-    ]
+    )
+    return options
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

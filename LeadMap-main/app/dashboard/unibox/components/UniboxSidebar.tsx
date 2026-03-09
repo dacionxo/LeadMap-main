@@ -1,6 +1,6 @@
 'use client'
 
-type FilterFolder = 'inbox' | 'starred' | 'sent' | 'drafts' | 'archived' | 'recycling_bin'
+type FilterFolder = 'inbox' | 'starred' | 'sent' | 'drafts' | 'scheduled' | 'archived' | 'recycling_bin'
 type FilterStatus = 'all' | 'open' | 'needs_reply' | 'waiting' | 'closed' | 'ignored'
 
 interface UniboxSidebarProps {
@@ -27,6 +27,7 @@ const FOLDER_ITEMS: Array<{ value: FilterFolder; label: string; icon: string }> 
   { value: 'drafts', label: 'Drafts', icon: 'drafts' },
   { value: 'archived', label: 'Archive', icon: 'archive' },
   { value: 'sent', label: 'Sent', icon: 'send' },
+  { value: 'scheduled', label: 'Scheduled', icon: 'schedule' },
   { value: 'recycling_bin', label: 'Trash', icon: 'delete' },
 ]
 
@@ -79,7 +80,9 @@ export default function UniboxSidebar({
                         ? 'bg-red-500 text-white'
                         : value === 'sent'
                           ? 'bg-green-500 text-white'
-                          : 'bg-[#137fec] text-white'
+                          : value === 'scheduled'
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-[#137fec] text-white'
                       : value === 'recycling_bin'
                         ? 'bg-red-100 text-red-700'
                         : value === 'sent'

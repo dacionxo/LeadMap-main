@@ -208,16 +208,19 @@ export async function executeSelectOperation<T>(
 /**
  * Executes a database delete operation with type safety
  * 
+ * In Supabase, .eq(), .lt(), etc. exist on the builder returned by .delete(),
+ * not on supabase.from(table). The filter receives the delete builder.
+ * 
  * @param supabase - Supabase client
  * @param table - Table name
- * @param filter - Filter function (e.g., .eq('id', id))
+ * @param filter - Filter function that receives the delete builder (e.g., (q) => q.lt('created_at', value))
  * @param context - Context for error messages
  * @returns Result with success flag (Supabase delete returns null for data by default)
  */
 export async function executeDeleteOperation(
   supabase: SupabaseClient,
   table: string,
-  filter: (query: ReturnType<typeof supabase.from>) => ReturnType<typeof supabase.from>,
+  filter: (deleteBuilder: ReturnType<ReturnType<typeof supabase.from>['delete']>) => ReturnType<ReturnType<typeof supabase.from>['delete']>,
   context?: {
     operation?: string
     [key: string]: unknown
@@ -225,9 +228,9 @@ export async function executeDeleteOperation(
 ): Promise<DatabaseOperationResult<null>> {
   return executeDatabaseOperation(
     async () => {
-      let query = supabase.from(table)
-      query = filter(query as ReturnType<typeof supabase.from>) as typeof query
-      const result = await query.delete()
+      const deleteBuilder = supabase.from(table).delete()
+      const filteredQuery = filter(deleteBuilder)
+      const result = await filteredQuery
       return {
         data: result.data,
         error: result.error,

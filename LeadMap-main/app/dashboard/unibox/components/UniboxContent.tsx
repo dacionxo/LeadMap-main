@@ -53,7 +53,7 @@ type FilterStatus =
   | "waiting"
   | "closed"
   | "ignored";
-type FilterFolder = "inbox" | "archived" | "starred" | "drafts" | "recycling_bin" | "sent";
+type FilterFolder = "inbox" | "archived" | "starred" | "drafts" | "scheduled" | "recycling_bin" | "sent";
 
 interface UniboxContentProps {
   /** When true, render only the three-pane layout (no Elite header/mesh). For use inside dashboard layout. */
@@ -193,6 +193,79 @@ export default function UniboxContent({
       if (isFirstPage) setLoading(true);
       else setLoadingMore(true);
 
+      // Scheduled view: load from email_queue (queued/processing)
+      if (folderFilter === "scheduled") {
+        try {
+          const params = new URLSearchParams({ limit: "100" });
+          if (searchQuery) params.append("search", searchQuery);
+          const response = await fetch(`/api/emails/scheduled?${params}`, {
+            credentials: "include",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const items: any[] = data.scheduled || [];
+            const mapped: Thread[] = items.map((r: any) => {
+              const fallbackDate = new Date().toISOString();
+              const scheduledAt = r.scheduled_at || fallbackDate;
+              const rawHtml: string = r.html || "";
+              const plainFromHtml = rawHtml
+                .replace(/<style[\s\S]*?<\/style>/gi, "")
+                .replace(/<[^>]+>/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+              const snippet = plainFromHtml.length > 220
+                ? `${plainFromHtml.slice(0, 217)}...`
+                : plainFromHtml || `To: ${r.to_email || ""}`;
+
+              return {
+                id: `scheduled-${r.id}`,
+                subject: r.subject || "(Scheduled)",
+                mailbox: {
+                  id: r.mailbox_id || "scheduled",
+                  email: r.from_email || "",
+                  display_name: r.from_name || r.from_email || null,
+                  provider: "scheduled",
+                },
+                status: r.status || "queued",
+                unread: false,
+                unreadCount: 0,
+                starred: false,
+                archived: false,
+                lastMessage: {
+                  direction: "outbound",
+                  snippet,
+                  received_at: scheduledAt,
+                  read: true,
+                },
+                lastMessageAt: scheduledAt,
+                contactId: null,
+                listingId: null,
+                campaignId: null,
+                messageCount: 1,
+                createdAt: r.created_at || null,
+                updatedAt: r.created_at || null,
+              };
+            });
+
+            setFolderCounts((prev) => ({ ...prev, scheduled: mapped.length }));
+            setHasMore(false);
+
+            if (isFirstPage) {
+              setThreads(mapped);
+              if (!selectedThread && mapped.length > 0) {
+                handleThreadSelect(mapped[0]);
+              }
+            } else {
+              setThreads(mapped);
+            }
+          }
+        } finally {
+          if (isFirstPage) setLoading(false);
+          else setLoadingMore(false);
+        }
+        return;
+      }
+
       // Drafts view: load from email_drafts instead of unibox threads
       if (folderFilter === "drafts") {
         try {
@@ -327,6 +400,77 @@ export default function UniboxContent({
   const fetchThreadDetails = async (threadId: string) => {
     try {
       setLoadingThread(true);
+      // Scheduled detail view: fetch full item from /api/emails/scheduled/[id]
+      if (threadId.startsWith("scheduled-")) {
+        const queueId = threadId.replace("scheduled-", "");
+        try {
+          const response = await fetch(`/api/emails/scheduled/${queueId}`, {
+            credentials: "include",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const r = data.scheduled;
+            if (r) {
+              const rawHtml: string = r.html || "";
+              const plainFromHtml = rawHtml
+                .replace(/<style[\s\S]*?<\/style>/gi, "")
+                .replace(/<[^>]+>/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+              const snippet =
+                plainFromHtml.length > 220
+                  ? `${plainFromHtml.slice(0, 217)}...`
+                  : plainFromHtml || `To: ${r.to_email || ""}`;
+              const threadDetail = {
+                id: threadId,
+                subject: r.subject || "(Scheduled)",
+                status: r.status || "queued",
+                unread: false,
+                starred: false,
+                archived: false,
+                mailbox: {
+                  id: r.mailbox_id || "scheduled",
+                  email: r.from_email || "",
+                  display_name: r.from_name || r.from_email || null,
+                  provider: "scheduled",
+                },
+                messages: [
+                  {
+                    id: `scheduled-msg-${threadId}`,
+                    direction: "outbound" as const,
+                    subject: r.subject || "(Scheduled)",
+                    snippet,
+                    body_html: r.html || "",
+                    body_plain: plainFromHtml,
+                    received_at: null,
+                    sent_at: r.scheduled_at || r.created_at,
+                    read: true,
+                    email_participants: [
+                      { type: "from" as const, email: r.from_email || "", name: r.from_name || null },
+                      { type: "to" as const, email: r.to_email || "", name: null },
+                    ],
+                    email_attachments: [],
+                  },
+                ],
+                lastMessageAt: r.scheduled_at || r.created_at,
+                contact: undefined,
+                listing: undefined,
+                campaign: undefined,
+              };
+              setThreadDetails(threadDetail);
+            } else {
+              setThreadDetails(null);
+            }
+          } else {
+            setThreadDetails(null);
+          }
+        } catch {
+          setThreadDetails(null);
+        }
+        setLoadingThread(false);
+        return;
+      }
+
       // Draft detail view uses email_drafts instead of unibox threads
       if (threadId.startsWith("draft-")) {
         const draftId = threadId.replace("draft-", "");
@@ -758,6 +902,36 @@ export default function UniboxContent({
     }
   };
 
+  const handleCancelScheduled = async (threadOrNull?: Thread | null) => {
+    const target = threadOrNull ?? selectedThread;
+    if (!target || !target.id.startsWith("scheduled-")) return;
+    const queueId = target.id.replace("scheduled-", "");
+
+    try {
+      const response = await fetch(`/api/emails/scheduled/${queueId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data && data.error) || "Failed to cancel scheduled email");
+      }
+      setThreads((t) => t.filter((x) => x.id !== target.id));
+      setFolderCounts((prev) => ({
+        ...prev,
+        scheduled: Math.max(0, (prev.scheduled ?? 0) - 1),
+      }));
+      if (selectedThread?.id === target.id) {
+        setSelectedThread(null);
+        setThreadDetails(null);
+      }
+      fetchCounts();
+    } catch (error) {
+      console.error("[UniboxContent] Error cancelling scheduled email:", error);
+      alert(error instanceof Error ? error.message : "Failed to cancel. Please try again.");
+    }
+  };
+
   const handleDeleteDraft = async (threadOrNull?: Thread | null) => {
     const target = threadOrNull ?? selectedThread;
     if (!target || !target.id.startsWith("draft-")) return;
@@ -805,7 +979,7 @@ export default function UniboxContent({
   const applyBulkAction = useCallback(
     async (action: "star" | "archive" | "trash") => {
       const ids = Array.from(selectedThreadIds).filter(
-        (id) => !id.startsWith("draft-")
+        (id) => !id.startsWith("draft-") && !id.startsWith("scheduled-")
       );
       if (ids.length === 0) return;
       setBulkActionLoading(true);
@@ -991,7 +1165,7 @@ export default function UniboxContent({
     if (hasMore && !loadingMore && !loading) setPage((p) => p + 1);
   }, [hasMore, loadingMore, loading]);
 
-  const FOLDER_LABELS: Record<string, string> = { inbox: "Inbox", starred: "Starred", sent: "Sent", drafts: "Drafts", archived: "Archive", recycling_bin: "Trash" };
+  const FOLDER_LABELS: Record<string, string> = { inbox: "Inbox", starred: "Starred", sent: "Sent", drafts: "Drafts", scheduled: "Scheduled", archived: "Archive", recycling_bin: "Trash" };
 
   const threePane = (
     <>
@@ -1117,6 +1291,7 @@ export default function UniboxContent({
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={handleLoadMore}
+            showScheduledDates={folderFilter === "scheduled"}
             onDeleteDraft={folderFilter === "drafts" ? (t) => handleDeleteDraft(t) : undefined}
             onDeleteFromTrash={folderFilter === "recycling_bin" ? (t) => handlePermanentDeleteThread(t) : undefined}
             selectedIds={selectedThreadIds}
@@ -1169,6 +1344,7 @@ export default function UniboxContent({
               onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
               onEditDraft={folderFilter === "drafts" ? handleEditDraft : undefined}
               onSendDraft={folderFilter === "drafts" ? handleSendDraft : undefined}
+              onCancelScheduled={folderFilter === "scheduled" ? handleCancelScheduled : undefined}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">

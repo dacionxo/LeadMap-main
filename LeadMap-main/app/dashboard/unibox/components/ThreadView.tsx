@@ -53,7 +53,7 @@ interface Thread {
   campaign?: { name?: string }
 }
 
-type FolderFilter = 'inbox' | 'starred' | 'drafts' | 'archived' | 'recycling_bin' | 'sent'
+type FolderFilter = 'inbox' | 'starred' | 'drafts' | 'scheduled' | 'archived' | 'recycling_bin' | 'sent'
 
 interface ThreadViewProps {
   thread: Thread | null
@@ -74,6 +74,7 @@ interface ThreadViewProps {
   onPermanentDelete?: (thread?: any) => any
   onEditDraft?: () => void
   onSendDraft?: () => void
+  onCancelScheduled?: (thread?: any) => any
 }
 
 function formatDate(dateString: string | null): string {
@@ -117,8 +118,9 @@ function getInitial(name: string | null, email: string): string {
   return '?'
 }
 
-export default function ThreadView({ thread, loading, folderFilter = 'inbox', selectedCount = 1, actionTargetThread, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete, onEditDraft, onSendDraft }: ThreadViewProps) {
+export default function ThreadView({ thread, loading, folderFilter = 'inbox', selectedCount = 1, actionTargetThread, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete, onEditDraft, onSendDraft, onCancelScheduled }: ThreadViewProps) {
   const isDraft = thread?.status === 'draft'
+  const isScheduled = thread?.id?.startsWith?.('scheduled-')
 
   if (loading) {
     return (
@@ -178,7 +180,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
           <div className="h-4 w-[1px] bg-slate-200 mx-2" aria-hidden />
         </div>
         <div className="flex items-center gap-3">
-          {!isDraft && (
+          {!isDraft && !isScheduled && (
             <button type="button" onClick={onReply} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-100 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors" aria-label="Reply">
               <span className="material-symbols-outlined text-[18px]" aria-hidden>reply</span> Reply
             </button>
@@ -293,6 +295,16 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
                     <DropdownMenuItem onClick={() => onMoveToTrash(target)} className="text-red-600 focus:text-red-600">
                       <span className="material-symbols-outlined text-lg mr-2">delete</span>
                       Move to Trash
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {folderFilter === 'scheduled' && (
+                <>
+                  {onCancelScheduled && (
+                    <DropdownMenuItem onClick={() => onCancelScheduled(target)} className="text-red-600 focus:text-red-600">
+                      <span className="material-symbols-outlined text-lg mr-2">event_busy</span>
+                      Cancel scheduled
                     </DropdownMenuItem>
                   )}
                 </>

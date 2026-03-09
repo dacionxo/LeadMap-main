@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
@@ -107,6 +108,21 @@ export async function GET(request: NextRequest) {
       .eq('user_id', userId)
       .then((res: { count: number | null; error: unknown }) => (res.error ? 0 : res.count ?? 0))
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseAdmin = supabaseUrl && supabaseServiceKey
+      ? createClient(supabaseUrl, supabaseServiceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+      : null
+
+    const scheduledPromise = supabaseAdmin
+      ? supabaseAdmin
+          .from('email_queue')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .in('status', ['queued', 'processing'])
+          .then((res: { count: number | null; error: unknown }) => (res.error ? 0 : res.count ?? 0))
+      : Promise.resolve(0)
+
     const [
       inboxTotal,
       starredTotal,
@@ -117,6 +133,7 @@ export async function GET(request: NextRequest) {
       mailboxAllCount,
       mailboxCountsArray,
       draftsCount,
+      scheduledCount,
       recyclingBinCount,
       sentTotal,
     ] = await Promise.all([
@@ -127,6 +144,7 @@ export async function GET(request: NextRequest) {
       mailboxAllPromise,
       Promise.all(mailboxPerIdPromises),
       draftsPromise,
+      scheduledPromise,
       recyclingBinCountPromise,
       sentCountPromise,
     ])
@@ -148,6 +166,7 @@ export async function GET(request: NextRequest) {
         starred: starredTotal,
         sent: sentTotal,
         drafts: draftsCount,
+        scheduled: scheduledCount,
         archived: archivedTotal,
         recycling_bin: recyclingBinCount,
       },
