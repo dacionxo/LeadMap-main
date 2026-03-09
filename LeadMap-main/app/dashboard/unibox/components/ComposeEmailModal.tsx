@@ -12,9 +12,18 @@ interface Mailbox {
 
 interface ComposeEmailModalProps {
   onClose: () => void
-  onSent?: () => void
+  /** Called when email sent. If editing a draft, passes draftId to delete. */
+  onSent?: (deletedDraftId?: string) => void
   /** Pre-fill mailbox when opened from a thread (optional) */
   defaultMailboxId?: string | null
+  /** Initial draft data when editing a draft (optional) */
+  initialDraft?: {
+    draftId: string
+    to: string | string[]
+    subject: string
+    html: string
+    mailboxId?: string | null
+  } | null
 }
 
 /**
@@ -27,6 +36,7 @@ export default function ComposeEmailModal({
   onClose,
   onSent,
   defaultMailboxId = null,
+  initialDraft = null,
 }: ComposeEmailModalProps) {
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([])
   const [mailboxId, setMailboxId] = useState<string>(defaultMailboxId || '')
@@ -68,6 +78,18 @@ export default function ComposeEmailModal({
     fetchMailboxes()
   }, [fetchMailboxes])
 
+  useEffect(() => {
+    if (initialDraft) {
+      const toStr = Array.isArray(initialDraft.to)
+        ? initialDraft.to.join(', ')
+        : initialDraft.to
+      setTo(toStr || '')
+      setSubject(initialDraft.subject || '')
+      setBody(initialDraft.html || '')
+      if (initialDraft.mailboxId) setMailboxId(initialDraft.mailboxId)
+    }
+  }, [initialDraft])
+
   const hasContent = !!(to || subject || body)
 
   const handleSaveDraft = async (andClose = false) => {
@@ -79,20 +101,24 @@ export default function ComposeEmailModal({
         .split(',')
         .map((e) => e.trim())
         .filter(Boolean)
-      const response = await fetch('/api/emails/drafts', {
-        method: 'POST',
+      const payload = {
+        subject: subject || '(No Subject)',
+        htmlContent: body.trim() || '',
+        to: toList,
+        mailboxId: mailboxId || null,
+        fromName: m?.display_name || null,
+        fromEmail: m?.email || null,
+        replyTo: showReplyTo && replyTo.trim() ? replyTo.trim() : null,
+        previewText: previewText.trim() || null,
+      }
+      const url = initialDraft?.draftId
+        ? `/api/emails/drafts/${initialDraft.draftId}`
+        : '/api/emails/drafts'
+      const response = await fetch(url, {
+        method: initialDraft?.draftId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          subject: subject || '(No Subject)',
-          htmlContent: body.trim() || '',
-          to: toList,
-          mailboxId: mailboxId || null,
-          fromName: m?.display_name || null,
-          fromEmail: m?.email || null,
-          replyTo: showReplyTo && replyTo.trim() ? replyTo.trim() : null,
-          previewText: previewText.trim() || null,
-        }),
+        body: JSON.stringify(payload),
       })
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
@@ -157,7 +183,7 @@ export default function ComposeEmailModal({
 
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Failed to send email')
-      onSent?.()
+      onSent?.(initialDraft?.draftId)
       onClose()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to send email')

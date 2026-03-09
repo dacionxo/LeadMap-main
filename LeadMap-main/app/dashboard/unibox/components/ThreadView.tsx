@@ -1,6 +1,12 @@
 'use client'
 
 import { EmailBodySandbox } from './EmailBodySandbox'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu'
 
 interface Message {
   id: string
@@ -47,9 +53,12 @@ interface Thread {
   campaign?: { name?: string }
 }
 
+type FolderFilter = 'inbox' | 'starred' | 'drafts' | 'archived' | 'recycling_bin' | 'sent'
+
 interface ThreadViewProps {
   thread: Thread | null
   loading: boolean
+  folderFilter?: FolderFilter
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
@@ -59,6 +68,8 @@ interface ThreadViewProps {
   onStar?: () => void
   onRestore?: () => void
   onPermanentDelete?: () => void
+  onEditDraft?: () => void
+  onSendDraft?: () => void
 }
 
 function formatDate(dateString: string | null): string {
@@ -102,7 +113,7 @@ function getInitial(name: string | null, email: string): string {
   return '?'
 }
 
-export default function ThreadView({ thread, loading, onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete }: ThreadViewProps) {
+export default function ThreadView({ thread, loading, folderFilter = 'inbox', onReply, onReplyAll, onForward, onDeleteDraft, onMoveToTrash, onArchive, onStar, onRestore, onPermanentDelete, onEditDraft, onSendDraft }: ThreadViewProps) {
   const isDraft = thread?.status === 'draft'
 
   if (loading) {
@@ -166,9 +177,183 @@ export default function ThreadView({ thread, loading, onReply, onReplyAll, onFor
               <span className="material-symbols-outlined text-[18px]" aria-hidden>reply</span> Reply
             </button>
           )}
-          <button type="button" className="size-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white transition-all" aria-label="More options">
-            <span className="material-symbols-outlined" aria-hidden>more_horiz</span>
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="size-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white transition-all" aria-label="More options">
+                <span className="material-symbols-outlined" aria-hidden>more_horiz</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {folderFilter === 'drafts' && (
+                <>
+                  {onEditDraft && (
+                    <DropdownMenuItem onClick={onEditDraft}>
+                      <span className="material-symbols-outlined text-lg mr-2">edit</span>
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onSendDraft && (
+                    <DropdownMenuItem onClick={onSendDraft}>
+                      <span className="material-symbols-outlined text-lg mr-2">send</span>
+                      Send
+                    </DropdownMenuItem>
+                  )}
+                  {onDeleteDraft && (
+                    <DropdownMenuItem onClick={onDeleteDraft} className="text-red-600 focus:text-red-600">
+                      <span className="material-symbols-outlined text-lg mr-2">delete</span>
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {folderFilter === 'archived' && (
+                <>
+                  {onArchive && (
+                    <DropdownMenuItem onClick={onArchive}>
+                      <span className="material-symbols-outlined text-lg mr-2">unarchive</span>
+                      Unarchive
+                    </DropdownMenuItem>
+                  )}
+                  {onStar && (
+                    <DropdownMenuItem onClick={onStar}>
+                      <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
+                      {thread?.starred ? 'Unstar' : 'Star'}
+                    </DropdownMenuItem>
+                  )}
+                  {!isDraft && onReply && (
+                    <DropdownMenuItem onClick={onReply}>
+                      <span className="material-symbols-outlined text-lg mr-2">reply</span>
+                      Reply
+                    </DropdownMenuItem>
+                  )}
+                  {onMoveToTrash && (
+                    <DropdownMenuItem onClick={onMoveToTrash} className="text-red-600 focus:text-red-600">
+                      <span className="material-symbols-outlined text-lg mr-2">delete</span>
+                      Move to Trash
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {folderFilter === 'inbox' && (
+                <>
+                  {onArchive && (
+                    <DropdownMenuItem onClick={onArchive}>
+                      <span className="material-symbols-outlined text-lg mr-2">archive</span>
+                      Archive
+                    </DropdownMenuItem>
+                  )}
+                  {onStar && (
+                    <DropdownMenuItem onClick={onStar}>
+                      <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
+                      {thread?.starred ? 'Unstar' : 'Star'}
+                    </DropdownMenuItem>
+                  )}
+                  {!isDraft && onReply && (
+                    <DropdownMenuItem onClick={onReply}>
+                      <span className="material-symbols-outlined text-lg mr-2">reply</span>
+                      Reply
+                    </DropdownMenuItem>
+                  )}
+                  {onMoveToTrash && (
+                    <DropdownMenuItem onClick={onMoveToTrash} className="text-red-600 focus:text-red-600">
+                      <span className="material-symbols-outlined text-lg mr-2">delete</span>
+                      Move to Trash
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {folderFilter === 'starred' && (
+                <>
+                  {onArchive && (
+                    <DropdownMenuItem onClick={onArchive}>
+                      <span className="material-symbols-outlined text-lg mr-2">archive</span>
+                      Archive
+                    </DropdownMenuItem>
+                  )}
+                  {onStar && (
+                    <DropdownMenuItem onClick={onStar}>
+                      <span className="material-symbols-outlined text-lg mr-2">star</span>
+                      Unstar
+                    </DropdownMenuItem>
+                  )}
+                  {!isDraft && onReply && (
+                    <DropdownMenuItem onClick={onReply}>
+                      <span className="material-symbols-outlined text-lg mr-2">reply</span>
+                      Reply
+                    </DropdownMenuItem>
+                  )}
+                  {onMoveToTrash && (
+                    <DropdownMenuItem onClick={onMoveToTrash} className="text-red-600 focus:text-red-600">
+                      <span className="material-symbols-outlined text-lg mr-2">delete</span>
+                      Move to Trash
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {folderFilter === 'recycling_bin' && (
+                <>
+                  {onRestore && (
+                    <DropdownMenuItem onClick={onRestore}>
+                      <span className="material-symbols-outlined text-lg mr-2">unarchive</span>
+                      Restore
+                    </DropdownMenuItem>
+                  )}
+                  {onArchive && (
+                    <DropdownMenuItem onClick={onArchive}>
+                      <span className="material-symbols-outlined text-lg mr-2">archive</span>
+                      Archive
+                    </DropdownMenuItem>
+                  )}
+                  {onStar && (
+                    <DropdownMenuItem onClick={onStar}>
+                      <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
+                      {thread?.starred ? 'Unstar' : 'Star'}
+                    </DropdownMenuItem>
+                  )}
+                  {!isDraft && onReply && (
+                    <DropdownMenuItem onClick={onReply}>
+                      <span className="material-symbols-outlined text-lg mr-2">reply</span>
+                      Reply
+                    </DropdownMenuItem>
+                  )}
+                  {onPermanentDelete && (
+                    <DropdownMenuItem onClick={onPermanentDelete} className="text-red-600 focus:text-red-600">
+                      <span className="material-symbols-outlined text-lg mr-2">delete_forever</span>
+                      Permanently Delete
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {folderFilter === 'sent' && (
+                <>
+                  {onArchive && (
+                    <DropdownMenuItem onClick={onArchive}>
+                      <span className="material-symbols-outlined text-lg mr-2">archive</span>
+                      Archive
+                    </DropdownMenuItem>
+                  )}
+                  {onStar && (
+                    <DropdownMenuItem onClick={onStar}>
+                      <span className="material-symbols-outlined text-lg mr-2">{thread?.starred ? 'star' : 'star_border'}</span>
+                      {thread?.starred ? 'Unstar' : 'Star'}
+                    </DropdownMenuItem>
+                  )}
+                  {!isDraft && onReply && (
+                    <DropdownMenuItem onClick={onReply}>
+                      <span className="material-symbols-outlined text-lg mr-2">reply</span>
+                      Reply
+                    </DropdownMenuItem>
+                  )}
+                  {onMoveToTrash && (
+                    <DropdownMenuItem onClick={onMoveToTrash} className="text-red-600 focus:text-red-600">
+                      <span className="material-symbols-outlined text-lg mr-2">delete</span>
+                      Move to Trash
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

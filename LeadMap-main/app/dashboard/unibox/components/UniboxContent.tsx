@@ -80,6 +80,13 @@ export default function UniboxContent({
     "reply" | "reply-all" | "forward" | null
   >(null);
   const [showComposeModal, setShowComposeModal] = useState(false);
+  const [initialDraftData, setInitialDraftData] = useState<{
+    draftId: string;
+    to: string | string[];
+    subject: string;
+    html: string;
+    mailboxId?: string | null;
+  } | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -621,6 +628,66 @@ export default function UniboxContent({
     }
   };
 
+  const handleEditDraft = () => {
+    if (!selectedThread || !selectedThread.id.startsWith("draft-") || !threadDetails) return;
+    const draftId = selectedThread.id.replace("draft-", "");
+    const msg = threadDetails.messages?.[0];
+    const toEmails = msg?.email_participants
+      ?.filter((p: { type: string }) => p.type === "to")
+      ?.map((p: { email: string }) => p.email) ?? [];
+    const subject = msg?.subject ?? threadDetails.subject ?? "";
+    const html = msg?.body_html ?? "";
+    const mailboxId = threadDetails.mailbox?.id && threadDetails.mailbox.id !== "draft"
+      ? threadDetails.mailbox.id
+      : selectedMailboxId;
+    setInitialDraftData({
+      draftId,
+      to: toEmails,
+      subject,
+      html,
+      mailboxId: mailboxId ?? undefined,
+    });
+    setShowComposeModal(true);
+  };
+
+  const handleSendDraft = async () => {
+    if (!selectedThread || !selectedThread.id.startsWith("draft-")) return;
+    const draftId = selectedThread.id.replace("draft-", "");
+    try {
+      const res = await fetch(`/api/emails/drafts/${draftId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load draft");
+      const data = await res.json();
+      const d = data.draft;
+      if (!d) throw new Error("Draft not found");
+      const toList = Array.isArray(d.to_emails) ? d.to_emails : [];
+      const mailboxId = d.mailbox_id;
+      const subject = d.subject || "(No Subject)";
+      const html = d.html_content || "<p></p>";
+      if (!mailboxId || toList.length === 0) {
+        alert("Draft is missing mailbox or recipients. Please edit and add them.");
+        return;
+      }
+      const sendRes = await fetch("/api/emails/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ mailboxId, to: toList, subject, html }),
+      });
+      const sendData = await sendRes.json();
+      if (!sendRes.ok) throw new Error(sendData.error || "Failed to send");
+      await fetch(`/api/emails/drafts/${draftId}`, { method: "DELETE", credentials: "include" });
+      setThreads((t) => t.filter((x) => x.id !== selectedThread.id));
+      setFolderCounts((prev) => ({ ...prev, drafts: Math.max(0, (prev.drafts ?? 0) - 1) }));
+      setSelectedThread(null);
+      setThreadDetails(null);
+      fetchThreads();
+      fetchCounts();
+    } catch (err) {
+      console.error("[UniboxContent] Error sending draft:", err);
+      alert(err instanceof Error ? err.message : "Failed to send draft.");
+    }
+  };
+
   const handleDeleteDraft = async (threadOrNull?: Thread | null) => {
     const target = threadOrNull ?? selectedThread;
     if (!target || !target.id.startsWith("draft-")) return;
@@ -868,14 +935,6 @@ export default function UniboxContent({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setShowComposeModal(true)}
-              className="size-9 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:text-[#137fec] transition-colors"
-              aria-label="Compose"
-            >
-              <span className="material-symbols-outlined text-[20px]" aria-hidden>edit_note</span>
-            </button>
-            <button
-              type="button"
               onClick={handleSelectAllButtonClick}
               className={`size-9 rounded-full flex items-center justify-center shadow-sm border transition-colors ${
                 selectionModeVisible
@@ -910,7 +969,7 @@ export default function UniboxContent({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search emails"
-            className="w-full bg-slate-100/50 border-none rounded-lg py-2.5 pl-10 text-sm focus:ring-1 focus:ring-[#137fec]/20 placeholder:text-slate-400"
+            className="w-full bg-slate-100/50 border border-[#F3F4F6] rounded-lg py-2.5 pl-10 text-sm focus:ring-1 focus:ring-[#137fec]/20 placeholder:text-slate-400"
             aria-label="Search emails"
           />
         </div>
@@ -1017,6 +1076,7 @@ export default function UniboxContent({
             <ThreadView
               thread={threadDetails}
               loading={loadingThread}
+              folderFilter={folderFilter}
               onReply={handleReply}
               onReplyAll={handleReplyAll}
               onForward={handleForward}
@@ -1026,6 +1086,8 @@ export default function UniboxContent({
               onStar={folderFilter !== "drafts" ? handleStarThread : undefined}
               onRestore={folderFilter === "recycling_bin" ? handleRestoreFromRecycling : undefined}
               onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
+              onEditDraft={folderFilter === "drafts" ? handleEditDraft : undefined}
+              onSendDraft={folderFilter === "drafts" ? handleSendDraft : undefined}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
@@ -1063,13 +1125,35 @@ export default function UniboxContent({
         )}
         {showComposeModal && (
           <ComposeEmailModal
-            onClose={() => setShowComposeModal(false)}
-            onSent={() => {
+            onClose={() => {
               setShowComposeModal(false);
+              setInitialDraftData(null);
+            }}
+            onSent={async (deletedDraftId) => {
+              if (deletedDraftId) {
+                try {
+                  await fetch(`/api/emails/drafts/${deletedDraftId}`, {
+                    method: "DELETE",
+                    credentials: "include",
+                  });
+                } catch {
+                  /* ignore */
+                }
+                setThreads((t) => t.filter((x) => x.id !== `draft-${deletedDraftId}`));
+                setFolderCounts((prev) => ({ ...prev, drafts: Math.max(0, (prev.drafts ?? 0) - 1) }));
+                if (selectedThread?.id === `draft-${deletedDraftId}`) {
+                  setSelectedThread(null);
+                  setThreadDetails(null);
+                }
+              }
+              setShowComposeModal(false);
+              setInitialDraftData(null);
               fetchThreads();
-              if (selectedThread) fetchThreadDetails(selectedThread.id);
+              fetchCounts();
+              if (selectedThread && !deletedDraftId) fetchThreadDetails(selectedThread.id);
             }}
             defaultMailboxId={selectedMailboxId}
+            initialDraft={initialDraftData}
           />
         )}
       </>
@@ -1157,13 +1241,35 @@ export default function UniboxContent({
       )}
       {showComposeModal && (
         <ComposeEmailModal
-          onClose={() => setShowComposeModal(false)}
-          onSent={() => {
+          onClose={() => {
             setShowComposeModal(false);
+            setInitialDraftData(null);
+          }}
+          onSent={async (deletedDraftId) => {
+            if (deletedDraftId) {
+              try {
+                await fetch(`/api/emails/drafts/${deletedDraftId}`, {
+                  method: "DELETE",
+                  credentials: "include",
+                });
+              } catch {
+                /* ignore */
+              }
+              setThreads((t) => t.filter((x) => x.id !== `draft-${deletedDraftId}`));
+              setFolderCounts((prev) => ({ ...prev, drafts: Math.max(0, (prev.drafts ?? 0) - 1) }));
+              if (selectedThread?.id === `draft-${deletedDraftId}`) {
+                setSelectedThread(null);
+                setThreadDetails(null);
+              }
+            }
+            setShowComposeModal(false);
+            setInitialDraftData(null);
             fetchThreads();
-            if (selectedThread) fetchThreadDetails(selectedThread.id);
+            fetchCounts();
+            if (selectedThread && !deletedDraftId) fetchThreadDetails(selectedThread.id);
           }}
           defaultMailboxId={selectedMailboxId}
+          initialDraft={initialDraftData}
         />
       )}
     </div>
