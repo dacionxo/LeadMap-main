@@ -74,10 +74,23 @@ export default function UniboxWrapper() {
     fetchCounts();
   }, [fetchCounts]);
 
+  // Reset page when filters or search change (search within current tab)
+  useEffect(() => {
+    setPage(1);
+  }, [selectedMailboxId, statusFilter, folderFilter, searchQuery]);
+
   // Fetch threads
   useEffect(() => {
     fetchThreads();
   }, [selectedMailboxId, statusFilter, folderFilter, searchQuery, page]);
+
+  // Deselect when selected thread no longer exists in the current tab
+  useEffect(() => {
+    if (selectedThread && !threads.some((t) => t.id === selectedThread.id)) {
+      setSelectedThread(null);
+      setThreadDetails(null);
+    }
+  }, [threads, selectedThread?.id]);
 
   const fetchMailboxes = async () => {
     try {
@@ -186,10 +199,11 @@ export default function UniboxWrapper() {
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (searchQuery) params.append("search", searchQuery);
 
-      // Add folder filter support
+      // Add folder filter support (search within current tab)
       if (folderFilter === "recycling_bin") params.append("folder", "recycling_bin");
       else if (folderFilter === "archived") params.append("folder", "archived");
       else if (folderFilter === "starred") params.append("folder", "starred");
+      else if (folderFilter === "sent") params.append("folder", "sent");
       else if (folderFilter === "inbox") params.append("folder", "inbox");
 
       params.append("page", page.toString());
@@ -457,7 +471,7 @@ export default function UniboxWrapper() {
         setSelectedThread(null);
         setThreadDetails(null);
       }
-      fetchThreads();
+      // Only fetchCounts – optimistic filter above removes item; avoid refetch overwriting
       fetchCounts();
     } catch (error) {
       console.error("[UniboxWrapper] Error archiving:", error);
@@ -653,9 +667,7 @@ export default function UniboxWrapper() {
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           folderFilter={folderFilter}
-          onFolderFilterChange={(folder) => {
-            if (folder !== 'sent') setFolderFilter(folder as UniboxFilterFolder);
-          }}
+          onFolderFilterChange={(folder) => setFolderFilter(folder as UniboxFilterFolder)}
           mailboxUnreadCounts={mailboxUnreadCounts}
           unreadCount={unreadCount}
           folderCounts={folderCounts}

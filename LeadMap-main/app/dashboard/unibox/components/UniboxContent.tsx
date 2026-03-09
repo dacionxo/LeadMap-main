@@ -147,6 +147,20 @@ export default function UniboxContent({
     fetchThreads();
   }, [selectedMailboxId, statusFilter, folderFilter, searchQuery, page]);
 
+  // Deselect when items no longer exist in the current tab
+  useEffect(() => {
+    const threadIds = new Set(threads.map((t) => t.id));
+    setSelectedThreadIds((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set(Array.from(prev).filter((id) => threadIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+    if (selectedThread && !threadIds.has(selectedThread.id)) {
+      setSelectedThread(null);
+      setThreadDetails(null);
+    }
+  }, [threads, selectedThread?.id]);
+
   useEffect(() => {
     const handleRefresh = () => {
       fetchThreads();
@@ -508,7 +522,7 @@ export default function UniboxContent({
         setSelectedThread(null);
         setThreadDetails(null);
       }
-      fetchThreads();
+      // Only fetchCounts – optimistic filter above removes item; avoid refetch overwriting
       fetchCounts();
     } catch (error) {
       console.error("[UniboxContent] Error archiving:", error);
@@ -766,7 +780,12 @@ export default function UniboxContent({
         fetchThreads();
         fetchCounts();
         if (selectedThread && ids.includes(selectedThread.id)) {
-          fetchThreadDetails(selectedThread.id);
+          if (action === "archive" || action === "trash") {
+            setSelectedThread(null);
+            setThreadDetails(null);
+          } else {
+            fetchThreadDetails(selectedThread.id);
+          }
         }
       } catch (error) {
         console.error("[UniboxContent] Bulk action error:", error);

@@ -140,9 +140,10 @@ export async function GET(request: NextRequest) {
       query = query.eq('contact_id', contactId)
     }
 
-    // Full-text search (PostgreSQL)
-    if (search) {
-      query = query.or(`subject.ilike.%${search}%,snippet.ilike.%${search}%`)
+    // Full-text search (PostgreSQL) - escape ILIKE special chars %, _, \
+    if (search && search.trim()) {
+      const escaped = search.trim().replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
+      query = query.or(`subject.ilike.%${escaped}%,snippet.ilike.%${escaped}%`)
     }
 
     let result = await query
@@ -192,7 +193,10 @@ export async function GET(request: NextRequest) {
       }
       if (campaignId) query = query.eq('campaign_id', campaignId)
       if (contactId) query = query.eq('contact_id', contactId)
-      if (search) query = query.or(`subject.ilike.%${search}%,snippet.ilike.%${search}%`)
+      if (search && search.trim()) {
+        const escapedRetry = search.trim().replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
+        query = query.or(`subject.ilike.%${escapedRetry}%,snippet.ilike.%${escapedRetry}%`)
+      }
       result = await query
       threads = result.data
       error = result.error
