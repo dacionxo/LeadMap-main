@@ -44,14 +44,33 @@ export async function executeDatabaseOperation<T>(
     const result = await operation()
 
     if (result.error) {
-      const errorMessage =
-        result.error instanceof Error
-          ? result.error.message
-          : 'Database operation failed'
+      const errorMessage = (() => {
+        if (result.error instanceof Error) return result.error.message
+        if (typeof result.error === 'string') return result.error
+        if (result.error && typeof result.error === 'object') {
+          const anyErr = result.error as any
+          if (typeof anyErr.message === 'string' && anyErr.message.trim()) {
+            const parts = [
+              anyErr.message,
+              typeof anyErr.code === 'string' ? `code=${anyErr.code}` : null,
+              typeof anyErr.details === 'string' ? `details=${anyErr.details}` : null,
+              typeof anyErr.hint === 'string' ? `hint=${anyErr.hint}` : null,
+            ].filter(Boolean)
+            return parts.join(' | ')
+          }
+          try {
+            return JSON.stringify(result.error)
+          } catch {
+            return 'Database operation failed'
+          }
+        }
+        return 'Database operation failed'
+      })()
 
       console.error('Database operation error:', {
         ...context,
         error: errorMessage,
+        rawError: result.error,
       })
 
       return {

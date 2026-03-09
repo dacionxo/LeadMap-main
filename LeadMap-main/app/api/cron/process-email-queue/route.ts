@@ -389,7 +389,6 @@ async function createEmailRecord(
     sent_at: string
     provider_message_id?: string
     direction: 'sent'
-    type?: string | null
     campaign_id?: string | null
     campaign_recipient_id?: string | null
   }
@@ -521,40 +520,47 @@ async function processEmail(
     )
 
     if (sendResult.success) {
-      // Create email record
-      await createEmailRecord(supabase, {
-        user_id: email.user_id,
-        mailbox_id: email.mailbox_id,
-        to_email: email.to_email,
-        subject: email.subject,
-        html: email.html,
-        status: 'sent',
-        sent_at: now.toISOString(),
-        provider_message_id: sendResult.providerMessageId,
-        direction: 'sent',
-        type: email.type || null,
-        campaign_id: email.campaign_id || null,
-        campaign_recipient_id: email.campaign_recipient_id || null,
-      })
+      // Best-effort record keeping. A send that succeeds must NOT be retried just because
+      // logging/unibox persistence fails (that causes duplicate sends).
+      try {
+        await createEmailRecord(supabase, {
+          user_id: email.user_id,
+          mailbox_id: email.mailbox_id,
+          to_email: email.to_email,
+          subject: email.subject,
+          html: email.html,
+          status: 'sent',
+          sent_at: now.toISOString(),
+          provider_message_id: sendResult.providerMessageId,
+          direction: 'sent',
+          campaign_id: email.campaign_id || null,
+          campaign_recipient_id: email.campaign_recipient_id || null,
+        })
+      } catch (err) {
+        console.error('[process-email-queue] Failed to insert emails log row (will not retry send):', err)
+      }
 
-      // Record to Unibox so sent email appears in Sent tab
-      const fromEmail = email.from_email || mailbox.from_email || mailbox.email
-      const fromName = email.from_name || mailbox.from_name || mailbox.display_name
-      await recordSentEmailToUnibox({
-        supabase,
-        userId: email.user_id,
-        mailboxId: email.mailbox_id,
-        subject: email.subject,
-        html: email.html,
-        toEmail: email.to_email,
-        fromEmail,
-        fromName,
-        providerMessageId: sendResult.providerMessageId,
-        providerThreadId: `scheduled-${emailId}`,
-        sentAt: now.toISOString(),
-      })
+      try {
+        const fromEmail = email.from_email || mailbox.from_email || mailbox.email
+        const fromName = email.from_name || mailbox.from_name || mailbox.display_name
+        await recordSentEmailToUnibox({
+          supabase,
+          userId: email.user_id,
+          mailboxId: email.mailbox_id,
+          subject: email.subject,
+          html: email.html,
+          toEmail: email.to_email,
+          fromEmail,
+          fromName,
+          providerMessageId: sendResult.providerMessageId,
+          providerThreadId: `scheduled-${emailId}`,
+          sentAt: now.toISOString(),
+        })
+      } catch (err) {
+        console.error('[process-email-queue] Failed to record sent email to Unibox (will not retry send):', err)
+      }
 
-      // Mark queue entry as sent
+      // Mark queue entry as sent (this is the critical idempotency signal)
       await updateEmailQueueStatus(supabase, emailId, {
         status: 'sent',
         processed_at: now.toISOString(),
