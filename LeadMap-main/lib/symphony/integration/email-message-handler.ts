@@ -33,6 +33,19 @@ export class EmailMessageHandler implements MessageHandler {
 
     const supabase = getServiceRoleClient()
 
+    // Idempotency: if this email_queue item is already sent, skip (prevents duplicate sends on retries)
+    const queueId = payload.emailId
+    if (queueId) {
+      const { data: existing } = await (supabase as any)
+        .from('email_queue')
+        .select('status')
+        .eq('id', queueId)
+        .single()
+      if (existing?.status === 'sent') {
+        return // Already sent, nothing to do
+      }
+    }
+
     const { data: mailbox, error: mailboxError } = await supabase
       .from('mailboxes')
       .select('*')
@@ -70,7 +83,6 @@ export class EmailMessageHandler implements MessageHandler {
     }
 
     const sentAt = new Date().toISOString()
-    const queueId = payload.emailId
 
     // Record to Unibox so sent email appears in Sent tab
     await recordSentEmailToUnibox({
