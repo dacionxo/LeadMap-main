@@ -76,29 +76,51 @@ interface ProcessEmailQueueResponse {
   stats?: BatchProcessingStats
 }
 
+/** Normalize any datetime-like value to ISO string; null/undefined pass through */
+function toIsoString(v: unknown): string | undefined {
+  if (v == null || v === undefined) return undefined
+  if (v instanceof Date) return v.toISOString()
+  if (typeof v === 'number') return new Date(v).toISOString()
+  if (typeof v === 'string') {
+    const d = new Date(v)
+    return isNaN(d.getTime()) ? v : d.toISOString()
+  }
+  if (typeof v === 'object' && typeof (v as Date).toISOString === 'function') return (v as Date).toISOString()
+  return undefined
+}
+
+/** Optional datetime: accepts any format, normalizes to ISO string */
+const optionalDatetimeSchema = z.preprocess(toIsoString, z.string().optional())
+
+/** Required datetime: accepts any format, normalizes to ISO string */
+const requiredDatetimeSchema = z.preprocess((v) => {
+  const s = toIsoString(v)
+  return s ?? ''
+}, z.string().min(1))
+
 /**
- * Zod schema for email queue item validation
+ * Zod schema for email queue item validation (lenient for DB format variations)
  */
 const emailQueueItemSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
   mailbox_id: z.string().uuid(),
   to_email: z.string().email(),
-  subject: z.string().min(1),
-  html: z.string().min(1),
+  subject: z.string(),
+  html: z.string(),
   from_name: z.string().nullable().optional(),
-  from_email: z.string().email().nullable().optional(),
+  from_email: z.union([z.string().email(), z.null(), z.undefined()]).optional(),
   type: z.string().nullable().optional(),
-  campaign_id: z.string().uuid().nullable().optional(),
-  campaign_recipient_id: z.string().uuid().nullable().optional(),
+  campaign_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
+  campaign_recipient_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
   status: z.enum(['queued', 'processing', 'sent', 'failed']),
-  priority: z.number().int().nonnegative(),
-  scheduled_at: z.string().datetime().nullable().optional(),
-  retry_count: z.number().int().nonnegative(),
-  max_retries: z.number().int().nonnegative(),
+  priority: z.union([z.number(), z.string()]).transform((v) => (typeof v === 'string' ? parseInt(v, 10) : v)).pipe(z.number().int().nonnegative()),
+  scheduled_at: optionalDatetimeSchema,
+  retry_count: z.union([z.number(), z.string()]).transform((v) => (typeof v === 'string' ? parseInt(v, 10) : v)).pipe(z.number().int().nonnegative()),
+  max_retries: z.union([z.number(), z.string()]).transform((v) => (typeof v === 'string' ? parseInt(v, 10) : v)).pipe(z.number().int().nonnegative()),
   last_error: z.string().nullable().optional(),
-  created_at: z.string().datetime(),
-  processed_at: z.string().datetime().nullable().optional(),
+  created_at: requiredDatetimeSchema,
+  processed_at: optionalDatetimeSchema,
 })
 
 /**

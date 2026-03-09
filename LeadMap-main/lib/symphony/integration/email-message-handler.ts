@@ -71,7 +71,7 @@ export class EmailMessageHandler implements MessageHandler {
     // Mark email_queue as sent so item is removed from Scheduled tab
     const queueId = payload.emailId
     if (queueId) {
-      await supabase
+      await (supabase as any)
         .from('email_queue')
         .update({
           status: 'sent',

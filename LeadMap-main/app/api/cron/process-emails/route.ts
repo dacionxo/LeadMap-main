@@ -122,26 +122,34 @@ interface MailboxProcessingResult {
   error?: string
 }
 
+/** Optional datetime: accepts string, Date, null, or undefined (DB format variations) */
+const optionalDatetimeSchema = z
+  .union([z.string(), z.date(), z.null(), z.undefined()])
+  .optional()
+  .transform((v) =>
+    v == null || v === undefined ? undefined : typeof v === 'string' ? v : (v as Date).toISOString()
+  )
+
 /**
- * Zod schema for queued email validation
+ * Zod schema for queued email validation (lenient for DB format variations)
  */
 const queuedEmailSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
   mailbox_id: z.string().uuid(),
-  campaign_id: z.string().uuid().nullable().optional(),
-  campaign_step_id: z.string().uuid().nullable().optional(),
-  campaign_recipient_id: z.string().uuid().nullable().optional(),
+  campaign_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
+  campaign_step_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
+  campaign_recipient_id: z.union([z.string().uuid(), z.null(), z.undefined()]).optional(),
   to_email: z.string().email(),
-  subject: z.string().min(1),
-  html: z.string().min(1),
+  subject: z.string(),
+  html: z.string(),
   status: z.enum(['queued', 'sending', 'sent', 'failed']),
-  direction: z.literal('sent'),
-  scheduled_at: z.string().datetime().nullable().optional(),
-  sent_at: z.string().datetime().nullable().optional(),
-  provider_message_id: z.string().nullable().optional(),
-  error: z.string().nullable().optional(),
-  created_at: z.string().datetime(),
+  direction: z.enum(['sent', 'outbound']).optional().default('sent').transform((v) => 'sent' as const),
+  scheduled_at: optionalDatetimeSchema,
+  sent_at: optionalDatetimeSchema,
+  provider_message_id: z.union([z.string(), z.null(), z.undefined()]).optional(),
+  error: z.union([z.string(), z.null(), z.undefined()]).optional(),
+  created_at: z.union([z.string(), z.date()]).transform((v) => typeof v === 'string' ? v : (v as Date).toISOString()),
 })
 
 /**
