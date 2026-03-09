@@ -66,12 +66,12 @@ interface ThreadViewProps {
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
-  onDeleteDraft?: (thread?: { id: string } | null) => void
-  onMoveToTrash?: (thread?: { id: string } | null) => void
-  onArchive?: (thread?: { id: string } | null) => void
-  onStar?: (thread?: { id: string } | null) => void
-  onRestore?: (thread?: { id: string } | null) => void
-  onPermanentDelete?: (thread?: { id: string } | null) => void
+  onDeleteDraft?: (thread?: any) => any
+  onMoveToTrash?: (thread?: any) => any
+  onArchive?: (thread?: any) => any
+  onStar?: (thread?: any) => any
+  onRestore?: (thread?: any) => any
+  onPermanentDelete?: (thread?: any) => any
   onEditDraft?: () => void
   onSendDraft?: () => void
 }

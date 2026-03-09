@@ -727,11 +727,31 @@ export default function UniboxWrapper() {
                 onReplyAll={handleReplyAll}
                 onForward={handleForward}
                 onDeleteDraft={() => handleDeleteDraft()}
-                onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "recycling_bin" ? handleMoveToTrash : undefined}
-                onArchive={folderFilter !== "drafts" ? handleArchiveThread : undefined}
-                onStar={folderFilter !== "drafts" ? handleStarThread : undefined}
-                onRestore={folderFilter === "recycling_bin" ? handleRestoreFromRecycling : undefined}
-                onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
+                onMoveToTrash={
+                  folderFilter !== "drafts" && folderFilter !== "recycling_bin"
+                    ? (t) => handleMoveToTrash((t ?? selectedThread) as UniboxThread)
+                    : undefined
+                }
+                onArchive={
+                  folderFilter !== "drafts"
+                    ? (t) => handleArchiveThread((t ?? selectedThread) as UniboxThread)
+                    : undefined
+                }
+                onStar={
+                  folderFilter !== "drafts"
+                    ? (t) => handleStarThread((t ?? selectedThread) as UniboxThread)
+                    : undefined
+                }
+                onRestore={
+                  folderFilter === "recycling_bin"
+                    ? (t) => handleRestoreFromRecycling((t ?? selectedThread) as UniboxThread)
+                    : undefined
+                }
+                onPermanentDelete={
+                  folderFilter === "recycling_bin"
+                    ? (t) => handlePermanentDeleteThread((t ?? selectedThread) as UniboxThread)
+                    : undefined
+                }
               />
             ) : (
               <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
