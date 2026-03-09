@@ -35,25 +35,18 @@ export class EmailMessageHandler implements MessageHandler {
 
     const queueId = payload.emailId
     if (queueId) {
-      // Idempotency: if already sent, skip
-      const { data: existing } = await (supabase as any)
-        .from('email_queue')
-        .select('status, processed_at')
-        .eq('id', queueId)
-        .single()
-      if (existing?.status === 'sent') return
-
-      // Atomic claim: only one handler can win (prevents triple-send race)
-      // UPDATE ... WHERE processed_at IS NULL - first handler sets it, others get 0 rows
+      // Atomic claim: only one handler can send (prevents triple-send when message is delivered multiple times).
+      // First handler to set processed_at wins; others get 0 rows and skip.
+      const claimNow = new Date().toISOString()
       const { data: claimed, error: claimError } = await (supabase as any)
         .from('email_queue')
-        .update({ processed_at: new Date().toISOString() })
+        .update({ processed_at: claimNow })
         .eq('id', queueId)
         .in('status', ['queued', 'processing'])
         .is('processed_at', null)
         .select('id')
         .maybeSingle()
-      if (claimError || !claimed) return // Another handler already claimed or row not found
+      if (claimError || !claimed) return
     }
 
     const { data: mailbox, error: mailboxError } = await supabase
@@ -73,6 +66,16 @@ export class EmailMessageHandler implements MessageHandler {
     const mailboxData = mailbox as Mailbox
     if (!mailboxData.active) {
       throw new HandlerError(`Mailbox ${payload.mailboxId} is not active`, false)
+    }
+
+    // Re-check right before send: another handler may have sent already (race)
+    if (queueId) {
+      const { data: recheck } = await (supabase as any)
+        .from('email_queue')
+        .select('status')
+        .eq('id', queueId)
+        .single()
+      if (recheck?.status === 'sent') return
     }
 
     const emailPayload: EmailPayload = {

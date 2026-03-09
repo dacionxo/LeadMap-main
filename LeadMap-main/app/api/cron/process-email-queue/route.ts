@@ -648,24 +648,22 @@ async function runCronJob(request: NextRequest) {
 
     // Check if Symphony is enabled for email queue
     if (shouldUseSymphonyForEmailQueue()) {
-      // Dispatch emails to Symphony Messenger
+      // CRITICAL: Claim (queued -> processing) BEFORE dispatching so only one cron run can take each item.
+      // Otherwise multiple runs can fetch the same queued item and dispatch it 3x.
+      const toDispatch: EmailQueueItem[] = []
+      for (const email of queuedEmails) {
+        const claimed = await claimQueuedItem(supabase, email.id)
+        if (claimed) toDispatch.push(email)
+      }
+      if (toDispatch.length === 0) {
+        return createNoDataResponse('No emails claimed (all already processing or sent)')
+      }
+
       const dispatchResult = await dispatchEmailQueueBatch(
-        queuedEmails as SymphonyEmailQueueItem[]
+        toDispatch as SymphonyEmailQueueItem[]
       )
 
       const legacyItems = dispatchResult.legacyItems || []
-      const legacyItemIds = new Set(legacyItems.map((e) => e.id))
-
-      // Mark dispatched (non-legacy) items as processing immediately to prevent duplicate sends
-      // when cron runs again before Symphony handler completes
-      const dispatchedIds = queuedEmails
-        .filter((e) => !legacyItemIds.has(e.id))
-        .map((e) => e.id)
-      for (const id of dispatchedIds) {
-        await updateEmailQueueStatus(supabase, id, { status: 'processing' })
-      }
-
-      // Fallback: process any items that need legacy handling (useLegacy=true or dispatch error)
       const legacyResults: EmailProcessingResult[] = []
 
       for (const email of legacyItems) {
@@ -673,14 +671,13 @@ async function runCronJob(request: NextRequest) {
         legacyResults.push(result)
       }
 
-      // Return response indicating Symphony processing + legacy fallback
       return createSuccessResponse({
         message: 'Emails dispatched to Symphony Messenger (with legacy fallback)',
         dispatched: dispatchResult.dispatched,
         legacy: legacyItems.length,
         legacyResults,
         errors: dispatchResult.errors,
-        total: queuedEmails.length,
+        total: toDispatch.length,
       })
     }
 

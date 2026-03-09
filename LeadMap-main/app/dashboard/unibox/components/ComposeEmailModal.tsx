@@ -71,7 +71,7 @@ export default function ComposeEmailModal({
   const [showCustomSchedule, setShowCustomSchedule] = useState(false)
   const [customScheduleAt, setCustomScheduleAt] = useState('')
   const sendLaterRef = useRef<HTMLDivElement>(null)
-  const bodyTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const bodyEditorRef = useRef<HTMLDivElement>(null)
 
   const fetchMailboxes = useCallback(async () => {
     try {
@@ -132,6 +132,14 @@ export default function ComposeEmailModal({
       if (bccStr.trim()) setShowBcc(true)
       if (initialDraft.replyTo?.trim()) setShowReplyTo(true)
     }
+  }, [initialDraft])
+
+  // Hydrate contentEditable body editor when draft loads or new compose
+  useEffect(() => {
+    const el = bodyEditorRef.current
+    if (!el) return
+    const html = initialDraft?.html ?? ''
+    el.innerHTML = html || ''
   }, [initialDraft])
 
   const hasContent = !!(to || subject || body)
@@ -229,6 +237,7 @@ export default function ComposeEmailModal({
   }
 
   const sendEmail = async (scheduleAt?: string) => {
+    if (sending) return // Prevent double/triple submit (e.g. double-click or strict mode)
     const payload = buildSendPayload()
     if (!payload) return
     if (scheduleAt) payload.scheduleAt = scheduleAt
@@ -311,60 +320,38 @@ export default function ComposeEmailModal({
     }
   }
 
-  const applyFormat = (before: string, after: string, placeholder = '') => {
-    const textarea = bodyTextareaRef.current
-    if (!textarea) return
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const selected = body.slice(start, end)
-    const text = placeholder ? placeholder : selected
-    const beforeText = body.slice(0, start)
-    const afterText = body.slice(end)
-    const newValue = beforeText + before + text + after + afterText
-    setBody(newValue)
-    requestAnimationFrame(() => {
-      textarea.focus()
-      const newCursor = start + before.length + text.length
-      textarea.setSelectionRange(newCursor, newCursor)
-    })
+  const syncBodyFromEditor = () => {
+    const el = bodyEditorRef.current
+    if (el) setBody(el.innerHTML)
   }
 
   const handleBold = () => {
-    applyFormat('<strong>', '</strong>')
+    bodyEditorRef.current?.focus()
+    document.execCommand('bold', false)
+    syncBodyFromEditor()
   }
   const handleItalic = () => {
-    applyFormat('<em>', '</em>')
+    bodyEditorRef.current?.focus()
+    document.execCommand('italic', false)
+    syncBodyFromEditor()
   }
   const handleLink = () => {
-    const textarea = bodyTextareaRef.current
-    if (!textarea) return
-    const selected = body.slice(textarea.selectionStart, textarea.selectionEnd)
-    const url = prompt('Enter URL:', selected.startsWith('http') ? selected : 'https://')
+    const el = bodyEditorRef.current
+    if (!el) return
+    el.focus()
+    const sel = window.getSelection()
+    const range = sel?.rangeCount ? sel.getRangeAt(0) : null
+    const selectedText = range ? range.toString() : ''
+    const url = prompt('Enter URL:', selectedText.startsWith('http') ? selectedText : 'https://')
     if (url == null) return
     const href = url.trim() || 'https://'
-    const linkText = selected.trim() || href
-    applyFormat(`<a href="${href.replace(/"/g, '&quot;')}">`, '</a>', linkText)
+    document.execCommand('createLink', false, href)
+    syncBodyFromEditor()
   }
   const handleList = () => {
-    const textarea = bodyTextareaRef.current
-    if (!textarea) return
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const selected = body.slice(start, end)
-    const lines = selected.split(/\r?\n/).filter(Boolean)
-    const listItems = lines.length > 0
-      ? lines.map((line) => `  <li>${line.trim()}</li>`).join('\n')
-      : '  <li></li>'
-    const wrapped = '<ul>\n' + listItems + '\n</ul>'
-    const beforeText = body.slice(0, start)
-    const afterText = body.slice(end)
-    const newValue = beforeText + (lines.length > 0 ? wrapped : wrapped + '\n') + afterText
-    setBody(newValue)
-    requestAnimationFrame(() => {
-      textarea.focus()
-      const newCursor = start + wrapped.length
-      textarea.setSelectionRange(newCursor, newCursor)
-    })
+    bodyEditorRef.current?.focus()
+    document.execCommand('insertUnorderedList', false)
+    syncBodyFromEditor()
   }
 
   return (
@@ -625,12 +612,21 @@ export default function ComposeEmailModal({
                 Trigger Links
               </button>
             </div>
-            <textarea
-              ref={bodyTextareaRef}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Write your email content here..."
-              className="w-full flex-grow min-h-[200px] bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm resize-y placeholder-slate-400 leading-relaxed"
+            <div
+              ref={bodyEditorRef}
+              contentEditable
+              suppressContentEditableWarning
+              data-placeholder="Write your email content here..."
+              onInput={syncBodyFromEditor}
+              onBlur={syncBodyFromEditor}
+              onKeyDown={(e) => {
+                if (e.key === 'Tab') {
+                  e.preventDefault()
+                  document.execCommand('insertText', false, '  ')
+                  syncBodyFromEditor()
+                }
+              }}
+              className="w-full flex-grow min-h-[200px] bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm leading-relaxed empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400"
               aria-label="Email body"
             />
           </div>
