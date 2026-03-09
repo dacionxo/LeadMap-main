@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 interface Mailbox {
   id: string
@@ -23,6 +23,10 @@ interface ComposeEmailModalProps {
     subject: string
     html: string
     mailboxId?: string | null
+    cc?: string | string[]
+    bcc?: string | string[]
+    replyTo?: string | null
+    previewText?: string | null
   } | null
 }
 
@@ -53,6 +57,10 @@ export default function ComposeEmailModal({
   const [sending, setSending] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
   const [sendLaterOpen, setSendLaterOpen] = useState(false)
+  const [showCustomSchedule, setShowCustomSchedule] = useState(false)
+  const [customScheduleAt, setCustomScheduleAt] = useState('')
+  const sendLaterRef = useRef<HTMLDivElement>(null)
+  const bodyTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const fetchMailboxes = useCallback(async () => {
     try {
@@ -79,6 +87,18 @@ export default function ComposeEmailModal({
   }, [fetchMailboxes])
 
   useEffect(() => {
+    if (!sendLaterOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sendLaterRef.current && !sendLaterRef.current.contains(e.target as Node)) {
+        setSendLaterOpen(false)
+        setShowCustomSchedule(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [sendLaterOpen])
+
+  useEffect(() => {
     if (initialDraft) {
       const toStr = Array.isArray(initialDraft.to)
         ? initialDraft.to.join(', ')
@@ -87,6 +107,19 @@ export default function ComposeEmailModal({
       setSubject(initialDraft.subject || '')
       setBody(initialDraft.html || '')
       if (initialDraft.mailboxId) setMailboxId(initialDraft.mailboxId)
+      const ccStr = Array.isArray(initialDraft.cc)
+        ? initialDraft.cc.join(', ')
+        : (initialDraft.cc || '')
+      const bccStr = Array.isArray(initialDraft.bcc)
+        ? initialDraft.bcc.join(', ')
+        : (initialDraft.bcc || '')
+      setCc(ccStr)
+      setBcc(bccStr)
+      setReplyTo(initialDraft.replyTo || '')
+      setPreviewText(initialDraft.previewText || '')
+      if (ccStr.trim()) setShowCc(true)
+      if (bccStr.trim()) setShowBcc(true)
+      if (initialDraft.replyTo?.trim()) setShowReplyTo(true)
     }
   }, [initialDraft])
 
@@ -101,10 +134,18 @@ export default function ComposeEmailModal({
         .split(',')
         .map((e) => e.trim())
         .filter(Boolean)
+      const ccList = showCc && cc.trim()
+        ? cc.split(',').map((e) => e.trim()).filter(Boolean)
+        : []
+      const bccList = showBcc && bcc.trim()
+        ? bcc.split(',').map((e) => e.trim()).filter(Boolean)
+        : []
       const payload = {
         subject: subject || '(No Subject)',
         htmlContent: body.trim() || '',
         to: toList,
+        cc: ccList,
+        bcc: bccList,
         mailboxId: mailboxId || null,
         fromName: m?.display_name || null,
         fromEmail: m?.email || null,
@@ -146,41 +187,49 @@ export default function ComposeEmailModal({
 
   const handleDiscard = () => handleCloseOrDiscard()
 
-  const handleSendNow = async () => {
+  const buildSendPayload = (): Record<string, unknown> | null => {
     const toList = to
       .split(',')
       .map((e) => e.trim())
       .filter(Boolean)
     if (!mailboxId || toList.length === 0 || !subject.trim()) {
       alert('Please fill in Sender, To, and Subject.')
-      return
+      return null
     }
+    const payload: Record<string, unknown> = {
+      mailboxId,
+      to: toList,
+      subject: subject.trim(),
+      html: body.trim() || '<p></p>',
+    }
+    if (showCc && cc.trim()) {
+      payload.cc = cc.split(',').map((e) => e.trim()).filter(Boolean)
+    }
+    if (showBcc && bcc.trim()) {
+      payload.bcc = bcc.split(',').map((e) => e.trim()).filter(Boolean)
+    }
+    if (showReplyTo && replyTo.trim()) {
+      payload.replyTo = replyTo.trim()
+    }
+    if (previewText.trim()) {
+      payload.previewText = previewText.trim()
+    }
+    return payload
+  }
+
+  const sendEmail = async (scheduleAt?: string) => {
+    const payload = buildSendPayload()
+    if (!payload) return
+    if (scheduleAt) payload.scheduleAt = scheduleAt
 
     setSending(true)
     try {
-      const payload: Record<string, unknown> = {
-        mailboxId,
-        to: toList,
-        subject: subject.trim(),
-        html: body.trim() || '<p></p>',
-      }
-      if (showCc && cc.trim()) {
-        payload.cc = cc.split(',').map((e) => e.trim()).filter(Boolean)
-      }
-      if (showBcc && bcc.trim()) {
-        payload.bcc = bcc.split(',').map((e) => e.trim()).filter(Boolean)
-      }
-      if (showReplyTo && replyTo.trim()) {
-        payload.replyTo = replyTo.trim()
-      }
-
       const response = await fetch('/api/emails/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         credentials: 'include',
       })
-
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Failed to send email')
       onSent?.(initialDraft?.draftId)
@@ -192,11 +241,106 @@ export default function ComposeEmailModal({
     }
   }
 
+  const handleSendNow = () => sendEmail()
+
+  const handleSendLater = (scheduleAt: string) => {
+    setSendLaterOpen(false)
+    setShowCustomSchedule(false)
+    sendEmail(scheduleAt)
+  }
+
+  const handleCustomSchedule = () => {
+    const dt = customScheduleAt ? new Date(customScheduleAt) : null
+    if (!dt || dt <= new Date()) {
+      alert('Please select a future date and time.')
+      return
+    }
+    handleSendLater(dt.toISOString())
+  }
+
+  const getScheduleOptions = (): { label: string; value: string }[] => {
+    const now = new Date()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(9, 0, 0, 0)
+    const nextMonday = new Date(now)
+    let daysUntilMonday = (8 - now.getDay()) % 7
+    if (daysUntilMonday === 0) daysUntilMonday = 7
+    nextMonday.setDate(nextMonday.getDate() + daysUntilMonday)
+    nextMonday.setHours(9, 0, 0, 0)
+    const inOneHour = new Date(now.getTime() + 60 * 60 * 1000)
+    const nextWeek = new Date(now)
+    nextWeek.setDate(nextWeek.getDate() + 7)
+    nextWeek.setHours(9, 0, 0, 0)
+    return [
+      { label: 'In 1 hour', value: inOneHour.toISOString() },
+      { label: 'Tomorrow at 9:00 AM', value: tomorrow.toISOString() },
+      { label: 'Next Monday at 9:00 AM', value: nextMonday.toISOString() },
+      { label: 'Next week', value: nextWeek.toISOString() },
+    ]
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       e.preventDefault()
       handleCloseOrDiscard()
     }
+  }
+
+  const applyFormat = (before: string, after: string, placeholder = '') => {
+    const textarea = bodyTextareaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selected = body.slice(start, end)
+    const text = placeholder ? placeholder : selected
+    const beforeText = body.slice(0, start)
+    const afterText = body.slice(end)
+    const newValue = beforeText + before + text + after + afterText
+    setBody(newValue)
+    requestAnimationFrame(() => {
+      textarea.focus()
+      const newCursor = start + before.length + text.length
+      textarea.setSelectionRange(newCursor, newCursor)
+    })
+  }
+
+  const handleBold = () => {
+    applyFormat('<strong>', '</strong>')
+  }
+  const handleItalic = () => {
+    applyFormat('<em>', '</em>')
+  }
+  const handleLink = () => {
+    const textarea = bodyTextareaRef.current
+    if (!textarea) return
+    const selected = body.slice(textarea.selectionStart, textarea.selectionEnd)
+    const url = prompt('Enter URL:', selected.startsWith('http') ? selected : 'https://')
+    if (url == null) return
+    const href = url.trim() || 'https://'
+    const linkText = selected.trim() || href
+    applyFormat(`<a href="${href.replace(/"/g, '&quot;')}">`, '</a>', linkText)
+  }
+  const handleList = () => {
+    const textarea = bodyTextareaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selected = body.slice(start, end)
+    const lines = selected.split(/\r?\n/).filter(Boolean)
+    const listItems = lines.length > 0
+      ? lines.map((line) => `  <li>${line.trim()}</li>`).join('\n')
+      : '  <li></li>'
+    const wrapped = '<ul>\n' + listItems + '\n</ul>'
+    const beforeText = body.slice(0, start)
+    const afterText = body.slice(end)
+    const newValue = beforeText + (lines.length > 0 ? wrapped : wrapped + '\n') + afterText
+    setBody(newValue)
+    requestAnimationFrame(() => {
+      textarea.focus()
+      const newCursor = start + wrapped.length
+      textarea.setSelectionRange(newCursor, newCursor)
+    })
   }
 
   return (
@@ -262,11 +406,6 @@ export default function ComposeEmailModal({
                   <option value="">No mailbox available</option>
                 )}
               </select>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-slate-400 text-[18px]">
-                  expand_more
-                </span>
-              </div>
             </div>
           </div>
 
@@ -331,7 +470,7 @@ export default function ComposeEmailModal({
                   type="text"
                   value={cc}
                   onChange={(e) => setCc(e.target.value)}
-                  placeholder="Cc..."
+                  placeholder="Separate recipients with commas..."
                   className="mt-2 w-full bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   aria-label="Cc"
                 />
@@ -341,7 +480,7 @@ export default function ComposeEmailModal({
                   type="text"
                   value={bcc}
                   onChange={(e) => setBcc(e.target.value)}
-                  placeholder="Bcc..."
+                  placeholder="Separate recipients with commas..."
                   className="mt-2 w-full bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   aria-label="Bcc"
                 />
@@ -351,7 +490,7 @@ export default function ComposeEmailModal({
                   type="text"
                   value={replyTo}
                   onChange={(e) => setReplyTo(e.target.value)}
-                  placeholder="Reply-to..."
+                  placeholder="Email address for replies (e.g. support@example.com)"
                   className="mt-2 w-full bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   aria-label="Reply-to"
                 />
@@ -406,6 +545,8 @@ export default function ComposeEmailModal({
             <div className="flex items-center gap-2 mb-2 shrink-0">
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleBold}
                 className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 title="Bold"
                 aria-label="Bold"
@@ -416,6 +557,8 @@ export default function ComposeEmailModal({
               </button>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleItalic}
                 className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 title="Italic"
                 aria-label="Italic"
@@ -426,6 +569,8 @@ export default function ComposeEmailModal({
               </button>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleLink}
                 className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 title="Link"
                 aria-label="Insert link"
@@ -434,6 +579,8 @@ export default function ComposeEmailModal({
               </button>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleList}
                 className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 title="List"
                 aria-label="Insert list"
@@ -455,6 +602,7 @@ export default function ComposeEmailModal({
               </button>
             </div>
             <textarea
+              ref={bodyTextareaRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Write your email content here..."
@@ -491,21 +639,81 @@ export default function ComposeEmailModal({
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <div className="relative group">
+            <div className="relative" ref={sendLaterRef}>
               <button
                 type="button"
-                onClick={() => setSendLaterOpen(!sendLaterOpen)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-full hover:bg-slate-50 hover:border-slate-300 transition-all"
+                onClick={() => {
+                  setSendLaterOpen(!sendLaterOpen)
+                  if (sendLaterOpen) setShowCustomSchedule(false)
+                }}
+                disabled={sending}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-full hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Send later options"
+                aria-haspopup="menu"
               >
                 <span className="material-symbols-outlined text-[18px]">
                   schedule
                 </span>
                 <span>Send Later</span>
-                <span className="material-symbols-outlined text-[16px]">
+                <span className={`material-symbols-outlined text-[16px] transition-transform ${sendLaterOpen ? 'rotate-180' : ''}`}>
                   expand_more
                 </span>
               </button>
+              {sendLaterOpen && (
+                <div className="absolute right-0 bottom-full mb-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="px-3 py-2 border-b border-slate-100">
+                    <p className="text-xs font-medium text-slate-500">Schedule send time</p>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {getScheduleOptions().map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => handleSendLater(opt.value)}
+                        className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[18px] text-slate-400">
+                          schedule
+                        </span>
+                        {opt.label}
+                      </button>
+                    ))}
+                    {!showCustomSchedule ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomSchedule(true)}
+                        className="w-full px-4 py-2.5 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          event
+                        </span>
+                        Pick date & time
+                      </button>
+                    ) : (
+                      <div className="px-4 py-3 border-t border-slate-100 space-y-2">
+                        <label htmlFor="send-later-datetime" className="block text-xs font-medium text-slate-500">Custom date & time</label>
+                        <input
+                          id="send-later-datetime"
+                          type="datetime-local"
+                          value={customScheduleAt}
+                          onChange={(e) => setCustomScheduleAt(e.target.value)}
+                          min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                          aria-label="Custom date and time for scheduled send"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCustomSchedule}
+                          disabled={!customScheduleAt || sending}
+                          className="w-full py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Schedule
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex rounded-full shadow-lg shadow-blue-500/30 transition-transform active:scale-95">
               <button

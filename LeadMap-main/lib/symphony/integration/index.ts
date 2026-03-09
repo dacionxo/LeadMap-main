@@ -4,6 +4,7 @@
  */
 
 export * from './email-queue'
+export * from './email-message-handler'
 export * from './campaigns'
 export * from './sms-drip'
 

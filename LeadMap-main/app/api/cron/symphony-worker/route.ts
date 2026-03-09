@@ -22,7 +22,9 @@ import {
   createErrorResponse,
 } from '@/lib/cron/responses'
 import { Worker } from '@/lib/symphony/worker'
+import { globalHandlerRegistry } from '@/lib/symphony/handlers'
 import { SupabaseTransport } from '@/lib/symphony/transports'
+import { EmailMessageHandler } from '@/lib/symphony/integration/email-message-handler'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // 60 seconds max execution time for Vercel
@@ -31,9 +33,9 @@ export const maxDuration = 60 // 60 seconds max execution time for Vercel
  * Worker configuration from environment variables
  */
 const WORKER_CONFIG = {
-  batchSize: parseInt(process.env.SYMPHONY_WORKER_BATCH_SIZE || '10', 10),
+  batchSize: parseInt(process.env.SYMPHONY_WORKER_BATCH_SIZE || '100', 10),
   maxConcurrency: parseInt(
-    process.env.SYMPHONY_WORKER_MAX_CONCURRENCY || '5',
+    process.env.SYMPHONY_WORKER_MAX_CONCURRENCY || '15',
     10
   ),
   pollInterval: parseInt(
@@ -64,6 +66,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const authError = verifyCronRequestOrError(request)
     if (authError) {
       return authError
+    }
+
+    // Ensure EmailMessage handler is registered (sends scheduled emails via sendViaMailbox)
+    if (!globalHandlerRegistry.hasHandler('EmailMessage')) {
+      globalHandlerRegistry.register(new EmailMessageHandler())
     }
 
     // Create transport (SupabaseTransport uses getServiceRoleClient internally)

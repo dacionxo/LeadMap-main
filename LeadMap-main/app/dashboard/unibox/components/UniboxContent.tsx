@@ -86,6 +86,10 @@ export default function UniboxContent({
     subject: string;
     html: string;
     mailboxId?: string | null;
+    cc?: string | string[];
+    bcc?: string | string[];
+    replyTo?: string | null;
+    previewText?: string | null;
   } | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -642,24 +646,64 @@ export default function UniboxContent({
     }
   };
 
-  const handleEditDraft = () => {
+  const handleEditDraft = async () => {
     if (!selectedThread || !selectedThread.id.startsWith("draft-") || !threadDetails) return;
     const draftId = selectedThread.id.replace("draft-", "");
     const msg = threadDetails.messages?.[0];
     const toEmails = msg?.email_participants
       ?.filter((p: { type: string }) => p.type === "to")
       ?.map((p: { email: string }) => p.email) ?? [];
-    const subject = msg?.subject ?? threadDetails.subject ?? "";
-    const html = msg?.body_html ?? "";
-    const mailboxId = threadDetails.mailbox?.id && threadDetails.mailbox.id !== "draft"
+    const ccEmails = msg?.email_participants
+      ?.filter((p: { type: string }) => p.type === "cc")
+      ?.map((p: { email: string }) => p.email) ?? [];
+    const bccEmails = msg?.email_participants
+      ?.filter((p: { type: string }) => p.type === "bcc")
+      ?.map((p: { email: string }) => p.email) ?? [];
+    let subject = msg?.subject ?? threadDetails.subject ?? "";
+    let html = msg?.body_html ?? "";
+    let mailboxId = threadDetails.mailbox?.id && threadDetails.mailbox.id !== "draft"
       ? threadDetails.mailbox.id
       : selectedMailboxId;
+    let replyTo: string | null = null;
+    let previewText: string | null = null;
+    try {
+      const res = await fetch(`/api/emails/drafts/${draftId}`, { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        const d = data.draft;
+        if (d) {
+          if (Array.isArray(d.to_emails) && d.to_emails.length > 0) {
+            toEmails.length = 0;
+            toEmails.push(...d.to_emails);
+          }
+          subject = d.subject ?? subject;
+          html = d.html_content ?? html;
+          mailboxId = d.mailbox_id ?? mailboxId;
+          replyTo = d.reply_to ?? null;
+          previewText = d.preview_text ?? null;
+          if (Array.isArray(d.cc_emails) && d.cc_emails.length > 0) {
+            ccEmails.length = 0;
+            ccEmails.push(...d.cc_emails);
+          }
+          if (Array.isArray(d.bcc_emails) && d.bcc_emails.length > 0) {
+            bccEmails.length = 0;
+            bccEmails.push(...d.bcc_emails);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[handleEditDraft] Failed to fetch draft details, using thread data", e);
+    }
     setInitialDraftData({
       draftId,
       to: toEmails,
       subject,
       html,
       mailboxId: mailboxId ?? undefined,
+      cc: ccEmails.length > 0 ? ccEmails : undefined,
+      bcc: bccEmails.length > 0 ? bccEmails : undefined,
+      replyTo: replyTo ?? undefined,
+      previewText: previewText ?? undefined,
     });
     setShowComposeModal(true);
   };
@@ -674,6 +718,8 @@ export default function UniboxContent({
       const d = data.draft;
       if (!d) throw new Error("Draft not found");
       const toList = Array.isArray(d.to_emails) ? d.to_emails : [];
+      const ccList = Array.isArray(d.cc_emails) ? d.cc_emails : [];
+      const bccList = Array.isArray(d.bcc_emails) ? d.bcc_emails : [];
       const mailboxId = d.mailbox_id;
       const subject = d.subject || "(No Subject)";
       const html = d.html_content || "<p></p>";
@@ -681,11 +727,21 @@ export default function UniboxContent({
         alert("Draft is missing mailbox or recipients. Please edit and add them.");
         return;
       }
+      const payload: Record<string, unknown> = {
+        mailboxId,
+        to: toList,
+        subject,
+        html,
+      };
+      if (ccList.length > 0) payload.cc = ccList;
+      if (bccList.length > 0) payload.bcc = bccList;
+      if (d.reply_to?.trim()) payload.replyTo = d.reply_to.trim();
+      if (d.preview_text?.trim()) payload.previewText = d.preview_text.trim();
       const sendRes = await fetch("/api/emails/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ mailboxId, to: toList, subject, html }),
+        body: JSON.stringify(payload),
       });
       const sendData = await sendRes.json();
       if (!sendRes.ok) throw new Error(sendData.error || "Failed to send");

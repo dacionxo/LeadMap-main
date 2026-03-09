@@ -543,7 +543,7 @@ async function runCronJob(request: NextRequest) {
 
     // Validate environment variables
     const batchSize = parseInt(
-      process.env.EMAIL_QUEUE_BATCH_SIZE || '200',
+      process.env.EMAIL_QUEUE_BATCH_SIZE || '500',
       10
     )
     if (isNaN(batchSize) || batchSize <= 0) {

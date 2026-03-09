@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { sendViaMailbox, checkMailboxLimits } from '@/lib/email/sendViaMailbox'
 import { createClient } from '@supabase/supabase-js'
+import { shouldUseSymphonyForEmailQueue } from '@/lib/symphony/utils/feature-flags'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 
@@ -34,7 +35,11 @@ export async function POST(request: NextRequest) {
       to,
       subject,
       html,
-      scheduleAt
+      scheduleAt,
+      cc,
+      bcc,
+      replyTo,
+      previewText
     } = body
 
     // #region agent log
@@ -84,7 +89,51 @@ export async function POST(request: NextRequest) {
     const now = new Date()
 
     if (scheduleDate && scheduleDate > now) {
-      // Schedule for later - create email record with queued status
+      // Apply preview text preheader for scheduled emails (same as immediate send)
+      const previewStr = typeof previewText === 'string' && previewText.trim() ? previewText.trim() : undefined
+      const htmlForSchedule = previewStr
+        ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${previewStr.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;')}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>${html}`
+        : html
+
+      const toEmailStr = Array.isArray(to) ? to.join(', ') : (typeof to === 'string' ? to : '')
+      const fromName = mailbox.from_name || mailbox.display_name || null
+      const fromEmail = mailbox.from_email || mailbox.email
+
+      // When Symphony is enabled, use email_queue → process-email-queue → Symphony worker
+      if (shouldUseSymphonyForEmailQueue()) {
+        const { data: queueEntry, error: queueError } = await supabaseAdmin
+          .from('email_queue')
+          .insert({
+            user_id: user.id,
+            mailbox_id: mailboxId,
+            to_email: toEmailStr,
+            subject,
+            html: htmlForSchedule,
+            from_name: fromName,
+            from_email: fromEmail,
+            type: 'transactional',
+            priority: 7,
+            status: 'queued',
+            scheduled_at: scheduleAt,
+            retry_count: 0,
+            max_retries: 3
+          })
+          .select()
+          .single()
+
+        if (queueError) {
+          console.error('Email queue scheduling error:', queueError)
+          return NextResponse.json({ error: 'Failed to schedule email' }, { status: 500 })
+        }
+
+        return NextResponse.json({
+          success: true,
+          email: { id: queueEntry.id, status: 'queued', scheduled_at: queueEntry.scheduled_at },
+          message: 'Email scheduled successfully (Symphony queue)'
+        })
+      }
+
+      // Legacy: insert into emails table for process-emails cron
       const { data: emailRecord, error: emailError } = await supabase
         .from('emails')
         .insert({
@@ -92,7 +141,7 @@ export async function POST(request: NextRequest) {
           mailbox_id: mailboxId,
           to_email: to,
           subject,
-          html,
+          html: htmlForSchedule,
           status: 'queued',
           scheduled_at: scheduleAt,
           direction: 'sent' // Explicitly mark as sent email
@@ -179,12 +228,25 @@ export async function POST(request: NextRequest) {
       // #region agent log
       await fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/emails/send/route.ts:164',message:'calling sendViaMailbox',data:{provider:mailbox.provider,to,hasSubject:!!subject},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
       // #endregion
+      const ccStr = Array.isArray(cc) ? cc.join(', ') : (typeof cc === 'string' ? cc : undefined)
+      const bccStr = Array.isArray(bcc) ? bcc.join(', ') : (typeof bcc === 'string' ? bcc : undefined)
+      const replyToStr = typeof replyTo === 'string' && replyTo.trim() ? replyTo.trim() : undefined
+
+      // Prepublish preview text as hidden preheader so clients show it in inbox list view
+      const previewStr = typeof previewText === 'string' && previewText.trim() ? previewText.trim() : undefined
+      const finalHtml = previewStr
+        ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${previewStr.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;')}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>${html}`
+        : html
+
       sendResult = await sendViaMailbox(mailbox, {
         to,
         subject,
-        html,
+        html: finalHtml,
         fromName,
-        fromEmail
+        fromEmail,
+        ...(ccStr && { cc: ccStr }),
+        ...(bccStr && { bcc: bccStr }),
+        ...(replyToStr && { replyTo: replyToStr })
       }, supabaseAdmin)
       // #region agent log
       await fetch('http://127.0.0.1:7243/ingest/d7e73e2c-c25f-423b-9d15-575aae9bf5cc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/emails/send/route.ts:174',message:'sendViaMailbox result',data:{success:sendResult.success,error:sendResult.error,hasMessageId:!!sendResult.providerMessageId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});

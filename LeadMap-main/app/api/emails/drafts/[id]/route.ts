@@ -93,6 +93,8 @@ export async function PUT(
       subject,
       htmlContent,
       to,
+      cc,
+      bcc,
       mailboxId,
       fromName,
       fromEmail,
@@ -110,6 +112,8 @@ export async function PUT(
     if (subject !== undefined) updateData.subject = subject
     if (htmlContent !== undefined) updateData.html_content = htmlContent
     if (to !== undefined) updateData.to_emails = Array.isArray(to) ? to : (to ? [to] : [])
+    if (cc !== undefined) updateData.cc_emails = Array.isArray(cc) ? cc : (cc ? [cc] : [])
+    if (bcc !== undefined) updateData.bcc_emails = Array.isArray(bcc) ? bcc : (bcc ? [bcc] : [])
     if (mailboxId !== undefined) updateData.mailbox_id = mailboxId
     if (fromName !== undefined) updateData.from_name = fromName
     if (fromEmail !== undefined) updateData.from_email = fromEmail
