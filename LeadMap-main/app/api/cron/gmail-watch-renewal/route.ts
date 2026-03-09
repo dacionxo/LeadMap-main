@@ -28,6 +28,7 @@ import type { CronJobResult, BatchProcessingStats } from '@/lib/types/cron'
 import type { Mailbox as ProviderMailbox } from '@/lib/email/types'
 
 export const runtime = 'nodejs'
+export const maxDuration = 300 // 5 min for 1000 users
 
 /**
  * Gmail mailbox structure from database
@@ -109,20 +110,27 @@ function validateGmailMailbox(mailbox: unknown): GmailMailbox {
   return result.data
 }
 
+/** Batch size for watch renewal (1000-user scale: process up to 100 per run) */
+const WATCH_RENEWAL_BATCH_SIZE = parseInt(
+  process.env.GMAIL_WATCH_RENEWAL_BATCH_SIZE || '100',
+  10
+)
+
 /**
  * Fetches Gmail mailboxes that need watch renewal
- * Finds mailboxes with watch subscriptions expiring in the next 1 hour or already expired
- * Following Realtime-Gmail-Listener pattern: renew 1 hour before expiration
- * 
+ * Finds mailboxes with watch subscriptions expiring in the next 24 hours or already expired
+ * Expanded from 1h to 24h to ensure watches never lapse (critical for receiving emails)
+ * Prioritizes: already expired first, then expiring soonest
+ *
  * @param supabase - Supabase client
  * @param now - Current timestamp
- * @param oneHourFromNow - Timestamp 1 hour from now
+ * @param twentyFourHoursFromNow - Timestamp 24 hours from now
  * @returns Array of validated Gmail mailboxes
  */
 async function fetchMailboxesNeedingRenewal(
   supabase: ReturnType<typeof getCronSupabaseClient>,
   now: Date,
-  oneHourFromNow: Date
+  twentyFourHoursFromNow: Date
 ): Promise<GmailMailbox[]> {
   const result = await executeSelectOperation<GmailMailbox>(
     supabase,
@@ -132,7 +140,9 @@ async function fetchMailboxesNeedingRenewal(
       return (query as any)
         .eq('provider', 'gmail')
         .eq('active', true)
-        .or(`watch_expiration.is.null,watch_expiration.lte.${oneHourFromNow.toISOString()}`)
+        .or(`watch_expiration.is.null,watch_expiration.lte.${twentyFourHoursFromNow.toISOString()}`)
+        .order('watch_expiration', { ascending: true, nullsFirst: true })
+        .limit(WATCH_RENEWAL_BATCH_SIZE)
     },
     {
       operation: 'fetch_mailboxes_needing_renewal',
@@ -320,14 +330,13 @@ async function runCronJob(request: NextRequest) {
     const supabase = getCronSupabaseClient()
 
     // Calculate time windows
-    // CRITICAL FIX: Renew 1 hour before expiration (not 24 hours) following Realtime-Gmail-Listener pattern
-    // Reference: event-handlers.gs line 145: reinitAt = expiration - 60 * 60 * 1000
+    // Renew mailboxes expiring in next 24 hours or already expired (ensures no gaps in receiving)
     const now = new Date()
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000) // 1 hour from now
+    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
 
-    // Fetch mailboxes needing renewal (expiring within 1 hour or already expired)
-    console.log('[Gmail Watch Renewal] Fetching mailboxes needing watch renewal (expiring within 1 hour)...')
-    const mailboxes = await fetchMailboxesNeedingRenewal(supabase, now, oneHourFromNow)
+    // Fetch mailboxes needing renewal (expiring within 24h or already expired, batch-limited)
+    console.log('[Gmail Watch Renewal] Fetching mailboxes needing watch renewal (expiring within 24h or expired)...')
+    const mailboxes = await fetchMailboxesNeedingRenewal(supabase, now, twentyFourHoursFromNow)
 
     if (mailboxes.length === 0) {
       console.log('[Gmail Watch Renewal] No Gmail Watch subscriptions need renewal')

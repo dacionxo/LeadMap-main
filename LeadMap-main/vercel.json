@@ -19,11 +19,11 @@
     },
     {
       "path": "/api/cron/gmail-watch-renewal",
-      "schedule": "0 3 * * *"
+      "schedule": "0 */4 * * *"
     },
     {
       "path": "/api/cron/sync-mailboxes",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/2 * * * *"
     },
     {
       "path": "/api/calendar/cron/sync",

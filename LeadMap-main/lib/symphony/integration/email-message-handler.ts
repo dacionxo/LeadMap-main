@@ -33,17 +33,27 @@ export class EmailMessageHandler implements MessageHandler {
 
     const supabase = getServiceRoleClient()
 
-    // Idempotency: if this email_queue item is already sent, skip (prevents duplicate sends on retries)
     const queueId = payload.emailId
     if (queueId) {
+      // Idempotency: if already sent, skip
       const { data: existing } = await (supabase as any)
         .from('email_queue')
-        .select('status')
+        .select('status, processed_at')
         .eq('id', queueId)
         .single()
-      if (existing?.status === 'sent') {
-        return // Already sent, nothing to do
-      }
+      if (existing?.status === 'sent') return
+
+      // Atomic claim: only one handler can win (prevents triple-send race)
+      // UPDATE ... WHERE processed_at IS NULL - first handler sets it, others get 0 rows
+      const { data: claimed, error: claimError } = await (supabase as any)
+        .from('email_queue')
+        .update({ processed_at: new Date().toISOString() })
+        .eq('id', queueId)
+        .in('status', ['queued', 'processing'])
+        .is('processed_at', null)
+        .select('id')
+        .maybeSingle()
+      if (claimError || !claimed) return // Another handler already claimed or row not found
     }
 
     const { data: mailbox, error: mailboxError } = await supabase

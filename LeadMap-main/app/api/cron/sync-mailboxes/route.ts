@@ -34,6 +34,13 @@ import type { CronJobResult, BatchProcessingStats } from '@/lib/types/cron'
 import type { Mailbox as ProviderMailbox } from '@/lib/email/types'
 
 export const runtime = 'nodejs'
+export const maxDuration = 300 // 5 min for 1000 users
+
+/** Batch size per run (1000-user scale: 100 mailboxes per 5-min run = ~1200/hour capacity) */
+const SYNC_BATCH_SIZE = parseInt(
+  process.env.SYNC_MAILBOXES_BATCH_SIZE || '100',
+  10
+)
 
 /**
  * Mailbox structure from database
@@ -48,6 +55,8 @@ interface Mailbox {
   refresh_token?: string | null
   token_expires_at?: string | null
   last_synced_at?: string | null
+  watch_expiration?: string | null
+  watch_history_id?: string | null
   created_at: string
   updated_at?: string | null
 }
@@ -93,6 +102,8 @@ const mailboxSchema = z.object({
   refresh_token: z.string().nullable().optional(),
   token_expires_at: dbDatetimeNullable,
   last_synced_at: dbDatetimeNullable,
+  watch_expiration: dbDatetimeNullable,
+  watch_history_id: z.string().nullable().optional(),
   created_at: dbDatetimeRequired,
   updated_at: dbDatetimeNullable,
 })
@@ -118,15 +129,18 @@ function validateMailbox(mailbox: unknown): Mailbox {
 }
 
 /**
- * Fetches all active mailboxes that need syncing
- * Filters by provider (Gmail or Outlook)
- * 
+ * Fetches active mailboxes that need syncing (batch-limited, prioritized)
+ * Priority: 1) Gmail with expired watch, 2) oldest last_synced_at, 3) never synced
+ * Batch size supports 1000-user scale (~100 per run every 5 min = ~1200/hour)
+ *
  * @param supabase - Supabase client
  * @returns Array of validated mailboxes
  */
 async function fetchActiveMailboxes(
-  supabase: ReturnType<typeof getCronSupabaseClient>
+  supabase: ReturnType<typeof getCronSupabaseClient>,
+  now: Date
 ): Promise<Mailbox[]> {
+  // Fetch all active Gmail/Outlook mailboxes (we'll sort/limit in memory for complex priority)
   const result = await executeSelectOperation<Mailbox>(
     supabase,
     'mailboxes',
@@ -135,6 +149,7 @@ async function fetchActiveMailboxes(
       return (query as any)
         .eq('active', true)
         .in('provider', ['gmail', 'outlook'])
+        .limit(SYNC_BATCH_SIZE * 3) // Fetch more than batch size to allow prioritization
     },
     {
       operation: 'fetch_active_mailboxes',
@@ -148,13 +163,33 @@ async function fetchActiveMailboxes(
     )
   }
 
-  // Type guard: ensure result.data is an array
-  if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
-    return []
-  }
+  const dataArray = Array.isArray(result.data) ? result.data : (result.data ? [result.data] : [])
+  if (dataArray.length === 0) return []
 
-  // Validate each mailbox
-  return result.data.map(validateMailbox)
+  const nowIso = now.toISOString()
+  const mailboxes = dataArray
+    .filter((m): m is Mailbox => {
+      try {
+        validateMailbox(m)
+        return true
+      } catch {
+        return false
+      }
+    })
+    .map(validateMailbox)
+    // Prioritize: 1) Gmail with expired watch, 2) oldest last_synced_at, 3) never synced
+    .sort((a, b) => {
+      const aExpired = a.provider === 'gmail' && a.watch_expiration && a.watch_expiration < nowIso
+      const bExpired = b.provider === 'gmail' && b.watch_expiration && b.watch_expiration < nowIso
+      if (aExpired && !bExpired) return -1
+      if (!aExpired && bExpired) return 1
+      const aSync = a.last_synced_at || '1970-01-01'
+      const bSync = b.last_synced_at || '1970-01-01'
+      return new Date(aSync).getTime() - new Date(bSync).getTime()
+    })
+    .slice(0, SYNC_BATCH_SIZE)
+
+  return mailboxes
 }
 
 /**
@@ -515,9 +550,10 @@ async function runCronJob(request: NextRequest) {
     // Get Supabase client
     const supabase = getCronSupabaseClient()
 
-    // Fetch active mailboxes
-    console.log('[Sync Mailboxes] Fetching active mailboxes...')
-    const mailboxes = await fetchActiveMailboxes(supabase)
+    const now = new Date()
+    // Fetch active mailboxes (batch-limited, prioritized for stale/expired watches)
+    console.log(`[Sync Mailboxes] Fetching active mailboxes (batch size: ${SYNC_BATCH_SIZE})...`)
+    const mailboxes = await fetchActiveMailboxes(supabase, now)
 
     if (mailboxes.length === 0) {
       console.log('[Sync Mailboxes] No active mailboxes to sync')
@@ -526,7 +562,6 @@ async function runCronJob(request: NextRequest) {
 
     console.log(`[Sync Mailboxes] Found ${mailboxes.length} active mailboxes to sync`)
 
-    const now = new Date()
     const results: MailboxSyncResult[] = []
     
     // Process each mailbox
