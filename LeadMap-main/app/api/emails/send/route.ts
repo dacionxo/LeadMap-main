@@ -99,65 +99,39 @@ export async function POST(request: NextRequest) {
       const fromName = mailbox.from_name || mailbox.display_name || null
       const fromEmail = mailbox.from_email || mailbox.email
 
-      // When Symphony is enabled, use email_queue → process-email-queue → Symphony worker
-      if (shouldUseSymphonyForEmailQueue()) {
-        const { data: queueEntry, error: queueError } = await supabaseAdmin
-          .from('email_queue')
-          .insert({
-            user_id: user.id,
-            mailbox_id: mailboxId,
-            to_email: toEmailStr,
-            subject,
-            html: htmlForSchedule,
-            from_name: fromName,
-            from_email: fromEmail,
-            type: 'transactional',
-            priority: 7,
-            status: 'queued',
-            scheduled_at: scheduleAt,
-            retry_count: 0,
-            max_retries: 3
-          })
-          .select()
-          .single()
-
-        if (queueError) {
-          console.error('Email queue scheduling error:', queueError)
-          return NextResponse.json({ error: 'Failed to schedule email' }, { status: 500 })
-        }
-
-        return NextResponse.json({
-          success: true,
-          email: { id: queueEntry.id, status: 'queued', scheduled_at: queueEntry.scheduled_at },
-          message: 'Email scheduled successfully (Symphony queue)'
-        })
-      }
-
-      // Legacy: insert into emails table for process-emails cron
-      const { data: emailRecord, error: emailError } = await supabase
-        .from('emails')
+      // Always write scheduled emails to email_queue so they appear in the Scheduled tab
+      // and are processed by process-email-queue (which can dispatch to Symphony when enabled).
+      const { data: queueEntry, error: queueError } = await supabaseAdmin
+        .from('email_queue')
         .insert({
           user_id: user.id,
           mailbox_id: mailboxId,
-          to_email: to,
+          to_email: toEmailStr,
           subject,
           html: htmlForSchedule,
+          from_name: fromName,
+          from_email: fromEmail,
+          type: 'transactional',
+          priority: 7,
           status: 'queued',
           scheduled_at: scheduleAt,
-          direction: 'sent' // Explicitly mark as sent email
+          retry_count: 0,
+          max_retries: 3
         })
         .select()
         .single()
 
-      if (emailError) {
-        console.error('Email scheduling error:', emailError)
+      if (queueError) {
+        console.error('Email queue scheduling error:', queueError)
         return NextResponse.json({ error: 'Failed to schedule email' }, { status: 500 })
       }
 
       return NextResponse.json({
         success: true,
-        email: emailRecord,
-        message: 'Email scheduled successfully'
+        email: { id: queueEntry.id, status: 'queued', scheduled_at: queueEntry.scheduled_at },
+        message: shouldUseSymphonyForEmailQueue()
+          ? 'Email scheduled successfully (Symphony queue)'
+          : 'Email scheduled successfully'
       })
     }
 

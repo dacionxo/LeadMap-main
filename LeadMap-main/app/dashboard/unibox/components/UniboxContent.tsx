@@ -258,6 +258,9 @@ export default function UniboxContent({
             } else {
               setThreads(mapped);
             }
+          } else {
+            // Don't silently keep stale list if the API fails (e.g. env misconfig)
+            setThreads([]);
           }
         } finally {
           if (isFirstPage) setLoading(false);
