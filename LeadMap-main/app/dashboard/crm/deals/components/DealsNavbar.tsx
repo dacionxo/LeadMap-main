@@ -66,7 +66,7 @@ export default function DealsNavbar() {
         <Search />
       </div>
 
-      <div className="flex items-center justify-center gap-1 p-[3.6px] bg-slate-100/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-600 rounded-full shadow-sm">
+      <div className="flex items-center justify-center gap-1 p-[3.6px] bg-[#FFFFFF] dark:bg-[#FFFFFF] border border-slate-200 dark:border-slate-600 rounded-full shadow-sm">
         <AppLinks />
         <Link
           href="/dashboard/crm/calendar"

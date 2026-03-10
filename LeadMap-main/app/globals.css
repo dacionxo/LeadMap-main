@@ -1029,7 +1029,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 10px;
-  color: #0071E3;
+  color: #4f46e5;
 }
 .table-compact th,
 .table-compact td {
@@ -1328,13 +1328,6 @@
 }
 .unibox-ai-glow {
   animation: unibox-glowing 3s infinite;
-}
-
-/* Prospect enrich: nav bar solid #FFFFFF (no gradient) */
-[data-page="prospect-enrich"] .fixed.flex-col > nav:first-of-type,
-[data-page="prospect-enrich"] .flex-row > nav[aria-label="Prospect navigation"] {
-  background: #ffffff !important;
-  background-image: none !important;
 }
 
 /* Prospect enrich: use #FAFBFB for borders (nav, content card, sidebars) */
