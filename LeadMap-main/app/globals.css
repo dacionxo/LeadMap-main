@@ -1029,7 +1029,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 10px;
-  color: #4f46e5;
+  color: #0071E3;
 }
 .table-compact th,
 .table-compact td {
@@ -1330,16 +1330,23 @@
   animation: unibox-glowing 3s infinite;
 }
 
-/* Prospect enrich: use #CECECF for borders (nav, content card, sidebars) */
+/* Prospect enrich: nav bar solid #FFFFFF (no gradient) */
+[data-page="prospect-enrich"] .fixed.flex-col > nav:first-of-type,
+[data-page="prospect-enrich"] .flex-row > nav[aria-label="Prospect navigation"] {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Prospect enrich: use #FAFBFB for borders (nav, content card, sidebars) */
 [data-page="prospect-enrich"] nav,
 [data-page="prospect-enrich"] [class*="border-slate-200"],
 [data-page="prospect-enrich"] [class*="border-[#E8EAF3]"],
 [data-page="prospect-enrich"] [class*="divide-slate-200"] > * + * {
-  border-color: #cececf !important;
+  border-color: #fafbfb !important;
 }
 [data-page="prospect-enrich"] .sidebar-gradient-border::after,
 [data-page="prospect-enrich"] .find-deals-sidebar-gradient-border::after {
-  background: #cececf !important;
+  background: #fafbfb !important;
 }
 
 /* Elite Property Prospecting Dashboard - Prospect & Enrich (1:1 design parity) */

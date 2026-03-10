@@ -274,7 +274,7 @@ module.exports = {
         1: "0px 1px 2px 0px rgba(84, 87, 118, 0.12)",
         card: "0px 1px 2px 0px rgba(0, 0, 0, 0.12)",
         soft: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
-        glow: "0 0 15px rgba(79, 70, 229, 0.3)",
+        glow: "0 0 15px rgba(0, 113, 227, 0.3)",
         "sm-soft": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
         float: "0 10px 40px -10px rgba(0,0,0,0.08)",
         "action-btn": "0 2px 5px rgba(59, 130, 246, 0.3)",

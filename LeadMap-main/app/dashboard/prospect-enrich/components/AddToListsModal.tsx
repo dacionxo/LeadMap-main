@@ -533,7 +533,7 @@ export default function AddToListsModal({
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#4f46e5'
+              e.currentTarget.style.backgroundColor = '#0071E3'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = '#6366f1'

@@ -113,7 +113,7 @@ export default function ActionButton({
       hover: {
         background: isDark
           ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)'
-          : 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)'
+          : 'linear-gradient(135deg, #0071E3 0%, #7c3aed 100%)'
       }
     },
     outline: {

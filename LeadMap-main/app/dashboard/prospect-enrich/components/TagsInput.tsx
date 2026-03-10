@@ -125,7 +125,7 @@ export default function TagsInput({ supabase, initialTags = [], onChange }: Tags
                   transition: 'color 0.15s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#4f46e5'
+                  e.currentTarget.style.color = '#0071E3'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.color = '#6366f1'

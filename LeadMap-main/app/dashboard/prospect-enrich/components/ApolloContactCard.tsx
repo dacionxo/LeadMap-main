@@ -267,7 +267,7 @@ export default function ApolloContactCard({
                 marginTop: '4px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = isDark ? '#a5b4fc' : '#4f46e5'
+                e.currentTarget.style.color = isDark ? '#a5b4fc' : '#0071E3'
                 e.currentTarget.style.textDecoration = 'underline'
               }}
               onMouseLeave={(e) => {

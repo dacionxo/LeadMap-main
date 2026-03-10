@@ -194,8 +194,8 @@ function PriceRangeBar({
   return (
     <div className="relative h-1.5 bg-slate-100 dark:bg-slate-600 rounded-full w-full" ref={barRef}>
       <div className="absolute top-0 bottom-0 bg-indigo-500 rounded-full" style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }} />
-      <button type="button" aria-label="Min price" className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-indigo-600 rounded-full shadow-[0_2px_4px_rgba(79,70,229,0.3)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${leftPct}%` }} onMouseDown={() => setDragging('min')} />
-      <button type="button" aria-label="Max price" className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 bg-indigo-600 rounded-full shadow-[0_2px_4px_rgba(79,70,229,0.3)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${rightPct}%` }} onMouseDown={() => setDragging('max')} />
+      <button type="button" aria-label="Min price" className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-indigo-600 rounded-full shadow-[0_2px_4px_rgba(0,113,227,0.3)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${leftPct}%` }} onMouseDown={() => setDragging('min')} />
+      <button type="button" aria-label="Max price" className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 bg-indigo-600 rounded-full shadow-[0_2px_4px_rgba(0,113,227,0.3)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${rightPct}%` }} onMouseDown={() => setDragging('max')} />
     </div>
   )
 }
