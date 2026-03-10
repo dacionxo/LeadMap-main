@@ -1330,6 +1330,18 @@
   animation: unibox-glowing 3s infinite;
 }
 
+/* Prospect enrich: use #CECECF for borders (nav, content card, sidebars) */
+[data-page="prospect-enrich"] nav,
+[data-page="prospect-enrich"] [class*="border-slate-200"],
+[data-page="prospect-enrich"] [class*="border-[#E8EAF3]"],
+[data-page="prospect-enrich"] [class*="divide-slate-200"] > * + * {
+  border-color: #cececf !important;
+}
+[data-page="prospect-enrich"] .sidebar-gradient-border::after,
+[data-page="prospect-enrich"] .find-deals-sidebar-gradient-border::after {
+  background: #cececf !important;
+}
+
 /* Elite Property Prospecting Dashboard - Prospect & Enrich (1:1 design parity) */
 .prospect-enrich-page {
   font-family: "Inter", var(--font-inter), sans-serif;
@@ -1353,7 +1365,7 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-/* Find Deals sidebar gradient border (1:1 reference) */
+/* Find Deals sidebar border (gradient removed) */
 .find-deals-sidebar-gradient-border {
   position: relative;
 }
@@ -1364,16 +1376,10 @@
   right: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    #e8eaf3 15%,
-    #e8eaf3 85%,
-    transparent
-  );
+  background: #e8eaf3;
   pointer-events: none;
 }
-/* Dashboard main sidebar (1:1 reference) */
+/* Dashboard main sidebar - solid border (gradient removed) */
 .sidebar-gradient-border {
   position: relative;
 }
@@ -1384,13 +1390,7 @@
   right: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    #e8eaf3 15%,
-    #e8eaf3 85%,
-    transparent
-  );
+  background: #e8eaf3;
   pointer-events: none;
 }
 .no-scrollbar::-webkit-scrollbar {

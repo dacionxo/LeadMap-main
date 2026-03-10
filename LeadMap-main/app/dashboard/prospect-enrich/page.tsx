@@ -145,7 +145,7 @@ function ProspectContentWithSidebar(props: any) {
   return (
     <>
     {/* Same layout as Deals: fixed full-bleed, DealsNavbar, container with Dashboard border/shadow */}
-    <div className="-mt-[30px]">
+    <div className="-mt-[30px]" data-page="prospect-enrich">
       <div
         className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden"
       >
