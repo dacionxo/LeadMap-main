@@ -383,7 +383,7 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                           className="group relative flex flex-col justify-between rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/30 p-4 hover:border-primary/50 hover:shadow-md transition-all duration-200 text-left"
                         >
                           <div className="flex justify-between items-start w-full mb-2">
-                            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg text-amber-600 dark:text-amber-400">
+                            <div className="p-2 rounded-lg bg-[#fdf1a0] dark:bg-amber-900/30 text-[#b8871b] dark:text-[#b8871b]">
                               <Icon
                                 icon="solar:notes-linear"
                                 className="h-5 w-5"
@@ -462,16 +462,6 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
               </div>
             </div>
 
-            {/* Mobile Toggle Icon */}
-            <span
-              className="p-2 rounded-full text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-slate-700 xl:hidden flex justify-center items-center cursor-pointer transition-colors"
-              onClick={handleMobileMenu}
-            >
-              <Icon
-                icon="material-symbols:more-horiz-rounded"
-                className="w-5 h-5"
-              />
-            </span>
           </div>
         </nav>
 

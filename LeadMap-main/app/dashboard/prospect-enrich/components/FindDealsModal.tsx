@@ -264,7 +264,7 @@ export default function FindDealsModal({
                 <button
                   type="button"
                   onClick={onResearchWithAI}
-                  className="bg-purple-600 text-white rounded-lg px-4 py-2 flex items-center gap-2 font-medium text-sm hover:bg-purple-700 shadow-sm shadow-purple-200"
+                  className="bg-purple-600 text-white rounded-lg px-4 py-2 flex items-center gap-2 font-medium text-sm hover:bg-purple-700 shadow-sm shadow-[#b5ebff]"
                 >
                   <span className="material-symbols-outlined text-lg">auto_awesome</span>
                   Research with AI

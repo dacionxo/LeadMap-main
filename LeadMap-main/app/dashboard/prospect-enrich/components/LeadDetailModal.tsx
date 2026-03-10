@@ -755,11 +755,11 @@ export default function LeadDetailModal({
         className="bg-white w-full max-w-7xl h-[90vh] rounded-2xl border border-gray-100 flex overflow-hidden relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button - absolute top right */}
+        {/* Close button - absolute top right (nudged up and right to avoid overlap) */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-6 right-6 z-50 p-2 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-gray-900 transition-colors shadow-sm"
+          className="absolute top-2 right-2 z-50 p-2 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-gray-900 transition-colors shadow-sm"
           aria-label="Close"
           title="Close"
         >

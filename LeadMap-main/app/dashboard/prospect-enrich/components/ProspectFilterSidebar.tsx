@@ -615,7 +615,7 @@ export default function ProspectFilterSidebar({
                   {fg.type === 'range' && (
                     <div className="space-y-2">
                       <div>
-                        <label className="block text-xs text-slate-500 mb-0.5">Min{fg.id === 'price_range' ? ' ($)' : fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
+                        <label className="block text-xs mb-0.5" style={{ color: "#6B7B90" }}>Min{fg.id === 'price_range' ? ' ($)' : fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
                         <input
                           type="number"
                           value={filterValue?.min ?? ''}
@@ -624,11 +624,11 @@ export default function ProspectFilterSidebar({
                             updateFilter(fg.id, { ...filterValue, min: v ? (fg.id === 'year_built' ? parseInt(v) : parseFloat(v)) : undefined })
                           }}
                           placeholder={fg.id === 'price_range' ? 'e.g. 100000' : fg.id === 'year_built' ? 'e.g. 1950' : 'Min'}
-                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#0693ff]/25 focus:border-[#0693ff]"
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[#6B7B90] dark:text-[#6B7B90] placeholder-[#6B7B90] dark:placeholder-[#6B7B90] focus:ring-2 focus:ring-[#0693ff]/25 focus:border-[#0693ff]"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 mb-0.5">Max{fg.id === 'price_range' ? ' ($)' : fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
+                        <label className="block text-xs mb-0.5" style={{ color: "#6B7B90" }}>Max{fg.id === 'price_range' ? ' ($)' : fg.id === 'sqft' ? ' (sqft)' : fg.id === 'ai_score' ? ' (0-100)' : fg.id === 'year_built' ? ' (year)' : ''}</label>
                         <input
                           type="number"
                           value={filterValue?.max ?? ''}
@@ -637,7 +637,7 @@ export default function ProspectFilterSidebar({
                             updateFilter(fg.id, { ...filterValue, max: v ? (fg.id === 'year_built' ? parseInt(v) : parseFloat(v)) : undefined })
                           }}
                           placeholder={fg.id === 'price_range' ? 'e.g. 500000' : fg.id === 'year_built' ? 'e.g. 2024' : 'Max'}
-                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#0693ff]/25 focus:border-[#0693ff]"
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[#6B7B90] dark:text-[#6B7B90] placeholder-[#6B7B90] dark:placeholder-[#6B7B90] focus:ring-2 focus:ring-[#0693ff]/25 focus:border-[#0693ff]"
                         />
                       </div>
                     </div>
