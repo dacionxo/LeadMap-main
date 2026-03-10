@@ -1313,8 +1313,8 @@ export default function UniboxContent({
         folderCounts={folderCounts}
       />
 
-      {/* Thread list column - design 1:1 */}
-      <main className="w-[420px] flex flex-col bg-white/10 border-l border-[#F3F4F6] shrink-0">
+      {/* Thread list column - match Deals component background & border */}
+      <main className="w-[420px] flex flex-col bg-white dark:bg-dark/90 border-l border-slate-200 dark:border-slate-700 shrink-0">
         <header className="p-6 pb-4 border-b border-[#F3F4F6]">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -1484,8 +1484,8 @@ export default function UniboxContent({
         </div>
       </main>
 
-      {/* Reading pane - design 1:1 */}
-      <section className="flex-1 flex flex-col bg-white/40 border-l border-[#F3F4F6] relative overflow-hidden min-w-0">
+      {/* Reading pane - match Deals component background & border */}
+      <section className="flex-1 flex flex-col bg-white dark:bg-dark/90 border-l border-slate-200 dark:border-slate-700 relative overflow-hidden min-w-0">
         <ErrorBoundary
           key={selectedThread?.id ?? "none"}
           fallback={

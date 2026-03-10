@@ -176,7 +176,6 @@ export default function ApolloFilterSidebar({
   const [pinnedFilters, setPinnedFilters] = useState<Set<string>>(new Set(['price_range', 'location', 'ai_score', 'enriched']))
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['status', 'price_range', 'location']))
   const [filterSearch, setFilterSearch] = useState('')
-  const [showMoreFilters, setShowMoreFilters] = useState(false)
   const [locationSearch, setLocationSearch] = useState<Record<'city' | 'state' | 'zip_code', string>>({
     city: '',
     state: '',
@@ -313,10 +312,10 @@ export default function ApolloFilterSidebar({
 
     const pinned = filtered.filter(f => pinnedFilters.has(f.id))
     const unpinned = filtered.filter(f => !pinnedFilters.has(f.id))
-    const visibleUnpinned = showMoreFilters ? unpinned : unpinned.slice(0, 5)
 
-    return [...pinned, ...visibleUnpinned]
-  }, [filterType, filterSearch, pinnedFilters, showMoreFilters])
+    // Show all available filters (no 5-filter limit)
+    return [...pinned, ...unpinned]
+  }, [filterType, filterSearch, pinnedFilters])
 
   const togglePin = (filterId: string) => {
     setPinnedFilters(prev => {
@@ -1149,27 +1148,7 @@ export default function ApolloFilterSidebar({
           )
         })}
 
-        {!showMoreFilters && visibleFilters.length >= 5 && (
-          <button
-            onClick={() => setShowMoreFilters(true)}
-            style={{
-              width: '100%',
-              padding: 'var(--spacing-sm)',
-              marginTop: 'var(--spacing-sm)',
-              border: isDark ? DARK_THEME_COLORS.border : '1px solid var(--color-ui-border-default)',
-              borderRadius: 'var(--radius-sm)',
-              background: isDark ? DARK_THEME_COLORS.inputBg : 'var(--color-ui-background-primary)',
-              color: isDark ? DARK_THEME_COLORS.textPrimary : 'var(--color-ui-text-base-primary)',
-              cursor: 'pointer',
-              fontFamily: 'var(--family-base-body)',
-              fontSize: 'var(--type-size-step-2)',
-              fontWeight: 'var(--weight-medium)',
-              boxShadow: isDark ? DARK_THEME_COLORS.insetShadow : undefined
-            }}
-          >
-            More Filters ({FILTER_GROUPS.length - visibleFilters.length})
-          </button>
-        )}
+        {/* All filters are now always visible; "More Filters" button removed */}
       </div>
     </div>
   )

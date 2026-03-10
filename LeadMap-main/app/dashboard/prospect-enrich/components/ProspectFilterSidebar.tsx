@@ -83,8 +83,18 @@ interface ProspectFilterSidebarProps {
   activeCategory?: string
 }
 
-// Only these 8 appear in the main section; all others are under "More Filters"
-const MAIN_FILTER_IDS = ['price_range', 'location', 'ai_score', 'status', 'beds', 'baths', 'sqft', 'year_built'] as const
+// Default pinned filters (used when user has no saved preference yet).
+// These match the original MAIN_FILTER_IDS.
+const DEFAULT_PINNED_FILTER_IDS = [
+  'price_range',
+  'location',
+  'ai_score',
+  'status',
+  'beds',
+  'baths',
+  'sqft',
+  'year_built'
+] as const
 
 const FILTER_GROUPS: FilterGroup[] = [
   { id: 'price_range', title: 'Price Range', type: 'range', category: 'property', pinned: true },
@@ -117,10 +127,6 @@ const FILTER_GROUPS: FilterGroup[] = [
   { id: 'high_value', title: 'High Value ($500K+)', type: 'checkbox', category: 'property' },
   { id: 'price_drop', title: 'Price Reduction', type: 'checkbox', category: 'property' }
 ]
-
-const PINNED_IDS = new Set<string>(MAIN_FILTER_IDS)
-const MAIN_FILTERS = FILTER_GROUPS.filter((fg) => MAIN_FILTER_IDS.includes(fg.id as any))
-const MORE_FILTERS = FILTER_GROUPS.filter((fg) => !MAIN_FILTER_IDS.includes(fg.id as any))
 
 const PRICE_SLIDER_MIN = 0
 const PRICE_SLIDER_MAX = 10_000_000
@@ -216,13 +222,62 @@ export default function ProspectFilterSidebar({
 }: ProspectFilterSidebarProps) {
   // Start with all groups collapsed so pinned filters show as rows only (no auto dropdown)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
-  const [pinnedPriceRange, setPinnedPriceRange] = useState(false)
-  const [pinnedLocation, setPinnedLocation] = useState(true)
+  const [pinnedFilterIds, setPinnedFilterIds] = useState<Set<string>>(
+    () => new Set<string>(DEFAULT_PINNED_FILTER_IDS as readonly string[])
+  )
   const [showMoreFilters, setShowMoreFilters] = useState(false)
   const [locationSearch, setLocationSearch] = useState<Record<'city' | 'state' | 'zip_code', string>>({ city: '', state: '', zip_code: '' })
   const [activeLocationTab, setActiveLocationTab] = useState<'city' | 'state' | 'zip_code'>('city')
   const [fsboUniqueValues, setFsboUniqueValues] = useState<Record<string, string[]>>({})
   const [fsboOptionsLoading, setFsboOptionsLoading] = useState(false)
+
+  const persistPinnedFilters = useCallback((nextPinned: Set<string>) => {
+    const payload = { pinnedFilters: Array.from(nextPinned) }
+    // Fire-and-forget; UI state is already optimistic.
+    fetch('/api/prospects/pins', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => {
+      // Ignore network failures; user keeps local state.
+    })
+  }, [])
+
+  const togglePinnedFilter = useCallback(
+    (id: string) => {
+      setPinnedFilterIds(prev => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        persistPinnedFilters(next)
+        return next
+      })
+    },
+    [persistPinnedFilters]
+  )
+
+  // Load pinned filters for the current user on mount.
+  useEffect(() => {
+    let cancelled = false
+    const loadPins = async () => {
+      try {
+        const res = await fetch('/api/prospects/pins')
+        if (!res.ok) return
+        const json = await res.json()
+        const fromApi: string[] | undefined =
+          json?.pins?.pinnedFilters || json?.pins?.pinned_filters || json?.pinnedFilters
+        if (!cancelled && Array.isArray(fromApi) && fromApi.length > 0) {
+          setPinnedFilterIds(new Set(fromApi))
+        }
+      } catch {
+        // Fall back to defaults on error.
+      }
+    }
+    loadPins()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const cityOptions = useMemo(() => {
     const cities = new Map<string, number>()
@@ -318,16 +373,18 @@ export default function ProspectFilterSidebar({
   }
 
   const visibleFilters = useMemo(() => {
-    const main = MAIN_FILTERS
-    const more = MORE_FILTERS
+    const main = FILTER_GROUPS.filter((fg) => pinnedFilterIds.has(fg.id))
+    const more = FILTER_GROUPS.filter((fg) => !pinnedFilterIds.has(fg.id))
     const fsbo = activeCategory === 'fsbo' && fsboFilterGroups.length > 0 ? fsboFilterGroups : []
     if (showMoreFilters) {
       return [...main, ...more, ...fsbo]
     }
     return main
-  }, [showMoreFilters, activeCategory, fsboFilterGroups])
+  }, [showMoreFilters, activeCategory, fsboFilterGroups, pinnedFilterIds])
 
-  const moreFiltersCount = MORE_FILTERS.length + (activeCategory === 'fsbo' ? fsboFilterGroups.length : 0)
+  const moreFiltersCount =
+    FILTER_GROUPS.filter((fg) => !pinnedFilterIds.has(fg.id)).length +
+    (activeCategory === 'fsbo' ? fsboFilterGroups.length : 0)
 
   if (isCollapsed) {
     return (
@@ -370,11 +427,21 @@ export default function ProspectFilterSidebar({
             </div>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setPinnedPriceRange((p) => !p); }}
+              onClick={(e) => {
+                e.stopPropagation()
+                togglePinnedFilter('price_range')
+              }}
               className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              aria-label={pinnedPriceRange ? 'Unpin' : 'Pin'}
+              aria-label={pinnedFilterIds.has('price_range') ? 'Unpin' : 'Pin'}
             >
-              <Pin className={cn('w-[18px] h-[18px] transition-colors', pinnedPriceRange ? 'text-[#0693ff]' : 'text-slate-400 dark:text-slate-500 hover:text-[#0693ff]')} />
+              <Pin
+                className={cn(
+                  'w-[18px] h-[18px] transition-colors',
+                  pinnedFilterIds.has('price_range')
+                    ? 'text-[#0693ff]'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-[#0693ff]'
+                )}
+              />
             </button>
           </div>
           {expandedGroups.has('price_range') && (
@@ -445,11 +512,21 @@ export default function ProspectFilterSidebar({
             </div>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setPinnedLocation((p) => !p); }}
+              onClick={(e) => {
+                e.stopPropagation()
+                togglePinnedFilter('location')
+              }}
               className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              aria-label={pinnedLocation ? 'Unpin' : 'Pin'}
+              aria-label={pinnedFilterIds.has('location') ? 'Unpin' : 'Pin'}
             >
-              <Pin className={cn('w-[18px] h-[18px]', pinnedLocation ? 'text-[#0693ff]' : 'text-slate-400 dark:text-slate-500 hover:text-[#0693ff]')} />
+              <Pin
+                className={cn(
+                  'w-[18px] h-[18px]',
+                  pinnedFilterIds.has('location')
+                    ? 'text-[#0693ff]'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-[#0693ff]'
+                )}
+              />
             </button>
           </div>
           {expandedGroups.has('location') && (
@@ -526,7 +603,7 @@ export default function ProspectFilterSidebar({
         </div>
 
         {visibleFilters.filter((fg) => fg.id !== 'price_range' && fg.id !== 'location').map((fg) => {
-          const isPinned = PINNED_IDS.has(fg.id)
+          const isPinned = pinnedFilterIds.has(fg.id)
           const isExpanded = expandedGroups.has(fg.id)
           const filterValue = filters[fg.id]
 
@@ -545,6 +622,24 @@ export default function ProspectFilterSidebar({
                     {fg.title}
                   </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    togglePinnedFilter(fg.id)
+                  }}
+                  className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  aria-label={isPinned ? 'Unpin filter' : 'Pin filter'}
+                >
+                  <Pin
+                    className={cn(
+                      'w-[18px] h-[18px]',
+                      isPinned
+                        ? 'text-[#0693ff]'
+                        : 'text-slate-400 dark:text-slate-500 hover:text-[#0693ff]'
+                    )}
+                  />
+                </button>
               </div>
 
               {isExpanded && (
