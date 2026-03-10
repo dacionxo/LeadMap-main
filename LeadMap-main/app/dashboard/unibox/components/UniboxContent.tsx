@@ -53,7 +53,14 @@ type FilterStatus =
   | "waiting"
   | "closed"
   | "ignored";
-type FilterFolder = "inbox" | "archived" | "starred" | "drafts" | "scheduled" | "recycling_bin" | "sent";
+type FilterFolder =
+  | "inbox"
+  | "archived"
+  | "starred"
+  | "drafts"
+  | "scheduled"
+  | "recycling_bin"
+  | "sent";
 
 interface UniboxContentProps {
   /** When true, render only the three-pane layout (no Elite header/mesh). For use inside dashboard layout. */
@@ -102,7 +109,9 @@ export default function UniboxContent({
   const [statusByFolder, setStatusByFolder] = useState<
     Record<string, Record<FilterStatus, number>>
   >({});
-  const [mailboxCounts, setMailboxCounts] = useState<Record<string, number>>({});
+  const [mailboxCounts, setMailboxCounts] = useState<Record<string, number>>(
+    {}
+  );
   const [selectedThreadIds, setSelectedThreadIds] = useState<Set<string>>(
     new Set()
   );
@@ -224,16 +233,18 @@ export default function UniboxContent({
             const items: any[] = data.scheduled || [];
             const mapped: Thread[] = items.map((r: any) => {
               // Use scheduled send time (not created_at) for display
-              const scheduledAt = r.scheduled_at || r.created_at || new Date().toISOString();
+              const scheduledAt =
+                r.scheduled_at || r.created_at || new Date().toISOString();
               const rawHtml: string = r.html || "";
               const plainFromHtml = rawHtml
                 .replace(/<style[\s\S]*?<\/style>/gi, "")
                 .replace(/<[^>]+>/g, " ")
                 .replace(/\s+/g, " ")
                 .trim();
-              const snippet = plainFromHtml.length > 220
-                ? `${plainFromHtml.slice(0, 217)}...`
-                : plainFromHtml || `To: ${r.to_email || ""}`;
+              const snippet =
+                plainFromHtml.length > 220
+                  ? `${plainFromHtml.slice(0, 217)}...`
+                  : plainFromHtml || `To: ${r.to_email || ""}`;
 
               return {
                 id: `scheduled-${r.id}`,
@@ -314,7 +325,8 @@ export default function UniboxContent({
 
             const mapped: Thread[] = drafts.map((d: any) => {
               const fallbackDate = new Date().toISOString();
-              const lastMessageAt = d.updated_at || d.created_at || fallbackDate;
+              const lastMessageAt =
+                d.updated_at || d.created_at || fallbackDate;
               const rawHtml: string = d.html_content || "";
               const plainFromHtml = rawHtml
                 .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -381,7 +393,8 @@ export default function UniboxContent({
       if (selectedMailboxId) params.append("mailboxId", selectedMailboxId);
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (searchQuery) params.append("search", searchQuery);
-      if (folderFilter === "recycling_bin") params.append("folder", "recycling_bin");
+      if (folderFilter === "recycling_bin")
+        params.append("folder", "recycling_bin");
       else if (folderFilter === "archived") params.append("folder", "archived");
       else if (folderFilter === "starred") params.append("folder", "starred");
       else if (folderFilter === "sent") params.append("folder", "sent");
@@ -467,8 +480,16 @@ export default function UniboxContent({
                     sent_at: r.scheduled_at || r.created_at,
                     read: true,
                     email_participants: [
-                      { type: "from" as const, email: r.from_email || "", name: r.from_name || null },
-                      { type: "to" as const, email: r.to_email || "", name: null },
+                      {
+                        type: "from" as const,
+                        email: r.from_email || "",
+                        name: r.from_name || null,
+                      },
+                      {
+                        type: "to" as const,
+                        email: r.to_email || "",
+                        name: null,
+                      },
                     ],
                     email_attachments: [],
                   },
@@ -503,8 +524,7 @@ export default function UniboxContent({
           const d = data.draft;
           if (d) {
             const fallbackDate = new Date().toISOString();
-            const lastMessageAt =
-              d.updated_at || d.created_at || fallbackDate;
+            const lastMessageAt = d.updated_at || d.created_at || fallbackDate;
             const rawHtml: string = d.html_content || "";
             const plainFromHtml = rawHtml
               .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -579,14 +599,22 @@ export default function UniboxContent({
           const data = await response.json();
           const raw = data.thread;
           // Normalize to prevent crashes from malformed API response
-          const thread: any = raw ? {
-            ...raw,
-            messages: Array.isArray(raw.messages) ? raw.messages.map((m: any) => ({
-              ...m,
-              email_participants: Array.isArray(m?.email_participants) ? m.email_participants : [],
-              email_attachments: Array.isArray(m?.email_attachments) ? m.email_attachments : [],
-            })) : [],
-          } : null;
+          const thread: any = raw
+            ? {
+                ...raw,
+                messages: Array.isArray(raw.messages)
+                  ? raw.messages.map((m: any) => ({
+                      ...m,
+                      email_participants: Array.isArray(m?.email_participants)
+                        ? m.email_participants
+                        : [],
+                      email_attachments: Array.isArray(m?.email_attachments)
+                        ? m.email_attachments
+                        : [],
+                    }))
+                  : [],
+              }
+            : null;
           setThreadDetails(thread);
         } else {
           setThreadDetails(null);
@@ -660,7 +688,11 @@ export default function UniboxContent({
       fetchCounts();
     } catch (error) {
       console.error("[UniboxContent] Error moving to trash:", error);
-      alert(error instanceof Error ? error.message : "Failed to move to Recycling. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to move to Recycling. Please try again."
+      );
     }
   };
 
@@ -685,7 +717,10 @@ export default function UniboxContent({
         ...prev,
         archived: Math.max(0, (prev.archived ?? 0) + (shouldArchive ? 1 : -1)),
         inbox: Math.max(0, (prev.inbox ?? 0) + (shouldArchive ? -1 : 1)),
-        starred: shouldArchive && folderFilter === "starred" ? Math.max(0, (prev.starred ?? 0) - 1) : (prev.starred ?? 0),
+        starred:
+          shouldArchive && folderFilter === "starred"
+            ? Math.max(0, (prev.starred ?? 0) - 1)
+            : (prev.starred ?? 0),
       }));
       if (selectedThread?.id === target.id) {
         setSelectedThread(null);
@@ -695,7 +730,11 @@ export default function UniboxContent({
       fetchCounts();
     } catch (error) {
       console.error("[UniboxContent] Error archiving:", error);
-      alert(error instanceof Error ? error.message : "Failed to update. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to update. Please try again."
+      );
     }
   };
 
@@ -717,9 +756,7 @@ export default function UniboxContent({
         throw new Error((data && data.error) || "Failed to update");
       }
       setThreads((t) =>
-        t.map((x) =>
-          x.id === target.id ? { ...x, starred: newStarred } : x
-        )
+        t.map((x) => (x.id === target.id ? { ...x, starred: newStarred } : x))
       );
       setFolderCounts((prev) => ({
         ...prev,
@@ -731,13 +768,22 @@ export default function UniboxContent({
       fetchCounts();
     } catch (error) {
       console.error("[UniboxContent] Error starring:", error);
-      alert(error instanceof Error ? error.message : "Failed to update. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to update. Please try again."
+      );
     }
   };
 
   const handleRestoreFromRecycling = async (threadOrNull?: Thread | null) => {
     const target = threadOrNull ?? selectedThread;
-    if (!target || target.id.startsWith("draft-") || folderFilter !== "recycling_bin") return;
+    if (
+      !target ||
+      target.id.startsWith("draft-") ||
+      folderFilter !== "recycling_bin"
+    )
+      return;
 
     try {
       const response = await fetch(`/api/unibox/threads/${target.id}`, {
@@ -764,13 +810,22 @@ export default function UniboxContent({
       fetchCounts();
     } catch (error) {
       console.error("[UniboxContent] Error restoring from Recycling:", error);
-      alert(error instanceof Error ? error.message : "Failed to restore. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to restore. Please try again."
+      );
     }
   };
 
   const handlePermanentDeleteThread = async (threadOrNull?: Thread | null) => {
     const target = threadOrNull ?? selectedThread;
-    if (!target || target.id.startsWith("draft-") || folderFilter !== "recycling_bin") return;
+    if (
+      !target ||
+      target.id.startsWith("draft-") ||
+      folderFilter !== "recycling_bin"
+    )
+      return;
     const targetId = target.id;
 
     const prevThreads = threads;
@@ -799,7 +854,10 @@ export default function UniboxContent({
       fetchThreads();
       fetchCounts();
     } catch (error) {
-      console.error("[UniboxContent] Error permanently deleting thread:", error);
+      console.error(
+        "[UniboxContent] Error permanently deleting thread:",
+        error
+      );
       setThreads(prevThreads);
       setFolderCounts((prev) => ({
         ...prev,
@@ -807,32 +865,47 @@ export default function UniboxContent({
       }));
       setSelectedThread(prevSelected);
       setThreadDetails(prevDetails);
-      alert(error instanceof Error ? error.message : "Failed to delete. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete. Please try again."
+      );
     }
   };
 
   const handleEditDraft = async () => {
-    if (!selectedThread || !selectedThread.id.startsWith("draft-") || !threadDetails) return;
+    if (
+      !selectedThread ||
+      !selectedThread.id.startsWith("draft-") ||
+      !threadDetails
+    )
+      return;
     const draftId = selectedThread.id.replace("draft-", "");
     const msg = threadDetails.messages?.[0];
-    const toEmails = msg?.email_participants
-      ?.filter((p: { type: string }) => p.type === "to")
-      ?.map((p: { email: string }) => p.email) ?? [];
-    const ccEmails = msg?.email_participants
-      ?.filter((p: { type: string }) => p.type === "cc")
-      ?.map((p: { email: string }) => p.email) ?? [];
-    const bccEmails = msg?.email_participants
-      ?.filter((p: { type: string }) => p.type === "bcc")
-      ?.map((p: { email: string }) => p.email) ?? [];
+    const toEmails =
+      msg?.email_participants
+        ?.filter((p: { type: string }) => p.type === "to")
+        ?.map((p: { email: string }) => p.email) ?? [];
+    const ccEmails =
+      msg?.email_participants
+        ?.filter((p: { type: string }) => p.type === "cc")
+        ?.map((p: { email: string }) => p.email) ?? [];
+    const bccEmails =
+      msg?.email_participants
+        ?.filter((p: { type: string }) => p.type === "bcc")
+        ?.map((p: { email: string }) => p.email) ?? [];
     let subject = msg?.subject ?? threadDetails.subject ?? "";
     let html = msg?.body_html ?? "";
-    let mailboxId = threadDetails.mailbox?.id && threadDetails.mailbox.id !== "draft"
-      ? threadDetails.mailbox.id
-      : selectedMailboxId;
+    let mailboxId =
+      threadDetails.mailbox?.id && threadDetails.mailbox.id !== "draft"
+        ? threadDetails.mailbox.id
+        : selectedMailboxId;
     let replyTo: string | null = null;
     let previewText: string | null = null;
     try {
-      const res = await fetch(`/api/emails/drafts/${draftId}`, { credentials: "include" });
+      const res = await fetch(`/api/emails/drafts/${draftId}`, {
+        credentials: "include",
+      });
       if (res.ok) {
         const data = await res.json();
         const d = data.draft;
@@ -857,7 +930,10 @@ export default function UniboxContent({
         }
       }
     } catch (e) {
-      console.warn("[handleEditDraft] Failed to fetch draft details, using thread data", e);
+      console.warn(
+        "[handleEditDraft] Failed to fetch draft details, using thread data",
+        e
+      );
     }
     setInitialDraftData({
       draftId,
@@ -877,7 +953,9 @@ export default function UniboxContent({
     if (!selectedThread || !selectedThread.id.startsWith("draft-")) return;
     const draftId = selectedThread.id.replace("draft-", "");
     try {
-      const res = await fetch(`/api/emails/drafts/${draftId}`, { credentials: "include" });
+      const res = await fetch(`/api/emails/drafts/${draftId}`, {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to load draft");
       const data = await res.json();
       const d = data.draft;
@@ -889,7 +967,9 @@ export default function UniboxContent({
       const subject = d.subject || "(No Subject)";
       const html = d.html_content || "<p></p>";
       if (!mailboxId || toList.length === 0) {
-        alert("Draft is missing mailbox or recipients. Please edit and add them.");
+        alert(
+          "Draft is missing mailbox or recipients. Please edit and add them."
+        );
         return;
       }
       const payload: Record<string, unknown> = {
@@ -910,9 +990,15 @@ export default function UniboxContent({
       });
       const sendData = await sendRes.json();
       if (!sendRes.ok) throw new Error(sendData.error || "Failed to send");
-      await fetch(`/api/emails/drafts/${draftId}`, { method: "DELETE", credentials: "include" });
+      await fetch(`/api/emails/drafts/${draftId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       setThreads((t) => t.filter((x) => x.id !== selectedThread.id));
-      setFolderCounts((prev) => ({ ...prev, drafts: Math.max(0, (prev.drafts ?? 0) - 1) }));
+      setFolderCounts((prev) => ({
+        ...prev,
+        drafts: Math.max(0, (prev.drafts ?? 0) - 1),
+      }));
       setSelectedThread(null);
       setThreadDetails(null);
       fetchThreads();
@@ -935,7 +1021,9 @@ export default function UniboxContent({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error((data && data.error) || "Failed to cancel scheduled email");
+        throw new Error(
+          (data && data.error) || "Failed to cancel scheduled email"
+        );
       }
       setThreads((t) => t.filter((x) => x.id !== target.id));
       setFolderCounts((prev) => ({
@@ -949,7 +1037,11 @@ export default function UniboxContent({
       fetchCounts();
     } catch (error) {
       console.error("[UniboxContent] Error cancelling scheduled email:", error);
-      alert(error instanceof Error ? error.message : "Failed to cancel. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to cancel. Please try again."
+      );
     }
   };
 
@@ -993,7 +1085,11 @@ export default function UniboxContent({
       }));
       setSelectedThread(prevSelected);
       setThreadDetails(prevDetails);
-      alert(error instanceof Error ? error.message : "Failed to delete draft. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete draft. Please try again."
+      );
     }
   };
 
@@ -1040,7 +1136,11 @@ export default function UniboxContent({
         }
       } catch (error) {
         console.error("[UniboxContent] Bulk action error:", error);
-        alert(error instanceof Error ? error.message : "Bulk action failed. Please try again.");
+        alert(
+          error instanceof Error
+            ? error.message
+            : "Bulk action failed. Please try again."
+        );
       } finally {
         setBulkActionLoading(false);
       }
@@ -1084,7 +1184,11 @@ export default function UniboxContent({
       }
     } catch (error) {
       console.error("[UniboxContent] Bulk restore error:", error);
-      alert(error instanceof Error ? error.message : "Restore failed. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Restore failed. Please try again."
+      );
     } finally {
       setBulkActionLoading(false);
     }
@@ -1120,7 +1224,11 @@ export default function UniboxContent({
       }
     } catch (error) {
       console.error("[UniboxContent] Bulk permanent delete error:", error);
-      alert(error instanceof Error ? error.message : "Delete failed. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Delete failed. Please try again."
+      );
     } finally {
       setBulkActionLoading(false);
     }
@@ -1186,7 +1294,15 @@ export default function UniboxContent({
     if (hasMore && !loadingMore && !loading) setPage((p) => p + 1);
   }, [hasMore, loadingMore, loading]);
 
-  const FOLDER_LABELS: Record<string, string> = { inbox: "Inbox", starred: "Starred", sent: "Sent", drafts: "Drafts", scheduled: "Scheduled", archived: "Archive", recycling_bin: "Trash" };
+  const FOLDER_LABELS: Record<string, string> = {
+    inbox: "Inbox",
+    starred: "Starred",
+    sent: "Sent",
+    drafts: "Drafts",
+    scheduled: "Scheduled",
+    archived: "Archive",
+    recycling_bin: "Trash",
+  };
 
   const threePane = (
     <>
@@ -1200,49 +1316,64 @@ export default function UniboxContent({
       {/* Thread list column - design 1:1 */}
       <main className="w-[420px] flex flex-col bg-white/10 border-l border-[#F3F4F6] shrink-0">
         <header className="p-6 pb-4 border-b border-[#F3F4F6]">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">{FOLDER_LABELS[folderFilter] ?? "Inbox"}</h1>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSelectAllButtonClick}
-              className={`size-9 rounded-full flex items-center justify-center shadow-sm border transition-colors ${
-                selectionModeVisible
-                  ? selectedThreadIds.size >= threads.length && threads.length > 0
-                    ? "bg-[#137fec]/10 border-[#137fec]/30 text-[#137fec]"
-                    : "bg-[#137fec]/10 border-[#137fec]/30 text-[#137fec]"
-                  : "bg-white border-slate-100 text-slate-600 hover:text-[#137fec]"
-              }`}
-              aria-label={
-                !selectionModeVisible
-                  ? "Show selection checkboxes"
-                  : selectedThreadIds.size >= threads.length && threads.length > 0
-                    ? "Deselect all"
-                    : "Select all"
-              }
-              title={
-                !selectionModeVisible
-                  ? "Click 1: Show checkboxes · Click 2: Select all · Click 3: Deselect all"
-                  : selectedThreadIds.size >= threads.length && threads.length > 0
-                    ? "Deselect all"
-                    : "Select all"
-              }
-            >
-              <span className="material-symbols-outlined text-[20px]" aria-hidden>select_all</span>
-            </button>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {FOLDER_LABELS[folderFilter] ?? "Inbox"}
+            </h1>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSelectAllButtonClick}
+                className={`size-9 rounded-full flex items-center justify-center shadow-sm border transition-colors ${
+                  selectionModeVisible
+                    ? selectedThreadIds.size >= threads.length &&
+                      threads.length > 0
+                      ? "bg-[#137fec]/10 border-[#137fec]/30 text-[#137fec]"
+                      : "bg-[#137fec]/10 border-[#137fec]/30 text-[#137fec]"
+                    : "bg-white border-slate-100 text-slate-600 hover:text-[#137fec]"
+                }`}
+                aria-label={
+                  !selectionModeVisible
+                    ? "Show selection checkboxes"
+                    : selectedThreadIds.size >= threads.length &&
+                        threads.length > 0
+                      ? "Deselect all"
+                      : "Select all"
+                }
+                title={
+                  !selectionModeVisible
+                    ? "Click 1: Show checkboxes · Click 2: Select all · Click 3: Deselect all"
+                    : selectedThreadIds.size >= threads.length &&
+                        threads.length > 0
+                      ? "Deselect all"
+                      : "Select all"
+                }
+              >
+                <span
+                  className="material-symbols-outlined text-[20px]"
+                  aria-hidden
+                >
+                  select_all
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="relative pt-4 mt-4 border-t border-[#F3F4F6]">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]" aria-hidden>search</span>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search emails"
-            className="w-full bg-slate-100/50 border border-[#F3F4F6] rounded-lg py-2.5 pl-10 text-sm focus:ring-1 focus:ring-[#137fec]/20 placeholder:text-slate-400"
-            aria-label="Search emails"
-          />
-        </div>
+          <div className="relative pt-4 mt-4 border-t border-[#F3F4F6]">
+            <span
+              className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]"
+              aria-hidden
+            >
+              search
+            </span>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search emails"
+              className="w-full bg-slate-100/50 border border-[#F3F4F6] rounded-lg py-2.5 pl-10 text-sm focus:ring-1 focus:ring-[#137fec]/20 placeholder:text-slate-400"
+              aria-label="Search emails"
+            />
+          </div>
         </header>
         {selectedThreadIds.size > 0 && (
           <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-white/20 bg-[#137fec]/10 shrink-0">
@@ -1258,7 +1389,9 @@ export default function UniboxContent({
                 title="Star"
                 aria-label="Star selected emails"
               >
-                <span className="material-symbols-outlined text-lg" aria-hidden>star</span>
+                <span className="material-symbols-outlined text-lg" aria-hidden>
+                  star
+                </span>
               </button>
               <button
                 type="button"
@@ -1268,7 +1401,9 @@ export default function UniboxContent({
                 title="Archive"
                 aria-label="Archive selected emails"
               >
-                <span className="material-symbols-outlined text-lg" aria-hidden>archive</span>
+                <span className="material-symbols-outlined text-lg" aria-hidden>
+                  archive
+                </span>
               </button>
               {folderFilter === "recycling_bin" && (
                 <button
@@ -1279,18 +1414,37 @@ export default function UniboxContent({
                   title="Restore to Inbox"
                   aria-label="Restore selected emails to Inbox"
                 >
-                  <span className="material-symbols-outlined text-lg" aria-hidden>restore</span>
+                  <span
+                    className="material-symbols-outlined text-lg"
+                    aria-hidden
+                  >
+                    restore
+                  </span>
                 </button>
               )}
               <button
                 type="button"
-                onClick={folderFilter === "recycling_bin" ? handleBulkPermanentDelete : handleBulkTrash}
+                onClick={
+                  folderFilter === "recycling_bin"
+                    ? handleBulkPermanentDelete
+                    : handleBulkTrash
+                }
                 disabled={bulkActionLoading}
                 className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 disabled:opacity-50 transition-colors"
-                title={folderFilter === "recycling_bin" ? "Delete permanently" : "Move to Recycling"}
-                aria-label={folderFilter === "recycling_bin" ? "Delete selected emails permanently" : "Move selected emails to Recycling"}
+                title={
+                  folderFilter === "recycling_bin"
+                    ? "Delete permanently"
+                    : "Move to Recycling"
+                }
+                aria-label={
+                  folderFilter === "recycling_bin"
+                    ? "Delete selected emails permanently"
+                    : "Move selected emails to Recycling"
+                }
               >
-                <span className="material-symbols-outlined text-lg" aria-hidden>delete</span>
+                <span className="material-symbols-outlined text-lg" aria-hidden>
+                  delete
+                </span>
               </button>
             </div>
             <button
@@ -1313,8 +1467,16 @@ export default function UniboxContent({
             loadingMore={loadingMore}
             onLoadMore={handleLoadMore}
             showScheduledDates={folderFilter === "scheduled"}
-            onDeleteDraft={folderFilter === "drafts" ? (t) => handleDeleteDraft(t) : undefined}
-            onDeleteFromTrash={folderFilter === "recycling_bin" ? (t) => handlePermanentDeleteThread(t) : undefined}
+            onDeleteDraft={
+              folderFilter === "drafts"
+                ? (t) => handleDeleteDraft(t)
+                : undefined
+            }
+            onDeleteFromTrash={
+              folderFilter === "recycling_bin"
+                ? (t) => handlePermanentDeleteThread(t)
+                : undefined
+            }
             selectedIds={selectedThreadIds}
             onSelectionChange={setSelectedThreadIds}
             forceShowCheckboxes={selectionModeVisible}
@@ -1329,12 +1491,22 @@ export default function UniboxContent({
           fallback={
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-slate-500 dark:text-slate-400 p-6">
-                <span className="material-symbols-outlined text-6xl opacity-50 block mb-4" aria-hidden>error</span>
+                <span
+                  className="material-symbols-outlined text-6xl opacity-50 block mb-4"
+                  aria-hidden
+                >
+                  error
+                </span>
                 <p className="text-lg font-medium mb-2">Could not load email</p>
-                <p className="text-sm mb-4">Try selecting another email or refresh the page.</p>
+                <p className="text-sm mb-4">
+                  Try selecting another email or refresh the page.
+                </p>
                 <button
                   type="button"
-                  onClick={() => { setSelectedThread(null); setThreadDetails(null); }}
+                  onClick={() => {
+                    setSelectedThread(null);
+                    setThreadDetails(null);
+                  }}
                   className="px-4 py-2 bg-unibox-primary text-white rounded-lg hover:opacity-90 text-sm font-medium"
                 >
                   Clear selection
@@ -1351,21 +1523,42 @@ export default function UniboxContent({
               selectedCount={selectedThreadIds.size}
               actionTargetThread={
                 selectedThreadIds.size === 1
-                  ? threads.find((t) => selectedThreadIds.has(t.id)) ?? selectedThread
+                  ? (threads.find((t) => selectedThreadIds.has(t.id)) ??
+                    selectedThread)
                   : selectedThread
               }
               onReply={handleReply}
               onReplyAll={handleReplyAll}
               onForward={handleForward}
               onDeleteDraft={handleDeleteDraft}
-              onMoveToTrash={folderFilter !== "drafts" && folderFilter !== "recycling_bin" ? handleMoveToTrash : undefined}
-              onArchive={folderFilter !== "drafts" ? handleArchiveThread : undefined}
+              onMoveToTrash={
+                folderFilter !== "drafts" && folderFilter !== "recycling_bin"
+                  ? handleMoveToTrash
+                  : undefined
+              }
+              onArchive={
+                folderFilter !== "drafts" ? handleArchiveThread : undefined
+              }
               onStar={folderFilter !== "drafts" ? handleStarThread : undefined}
-              onRestore={folderFilter === "recycling_bin" ? handleRestoreFromRecycling : undefined}
-              onPermanentDelete={folderFilter === "recycling_bin" ? handlePermanentDeleteThread : undefined}
-              onEditDraft={folderFilter === "drafts" ? handleEditDraft : undefined}
-              onSendDraft={folderFilter === "drafts" ? handleSendDraft : undefined}
-              onCancelScheduled={folderFilter === "scheduled" ? handleCancelScheduled : undefined}
+              onRestore={
+                folderFilter === "recycling_bin"
+                  ? handleRestoreFromRecycling
+                  : undefined
+              }
+              onPermanentDelete={
+                folderFilter === "recycling_bin"
+                  ? handlePermanentDeleteThread
+                  : undefined
+              }
+              onEditDraft={
+                folderFilter === "drafts" ? handleEditDraft : undefined
+              }
+              onSendDraft={
+                folderFilter === "drafts" ? handleSendDraft : undefined
+              }
+              onCancelScheduled={
+                folderFilter === "scheduled" ? handleCancelScheduled : undefined
+              }
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
@@ -1391,7 +1584,9 @@ export default function UniboxContent({
   if (embedded) {
     return (
       <>
-        <div className="flex flex-1 min-h-0 overflow-hidden isolate min-w-0">{threePane}</div>
+        <div className="flex flex-1 min-h-0 overflow-hidden isolate min-w-0">
+          {threePane}
+        </div>
         {showComposer && selectedThread && threadDetails && (
           <ReplyComposer
             thread={threadDetails}
@@ -1417,8 +1612,13 @@ export default function UniboxContent({
                 } catch {
                   /* ignore */
                 }
-                setThreads((t) => t.filter((x) => x.id !== `draft-${deletedDraftId}`));
-                setFolderCounts((prev) => ({ ...prev, drafts: Math.max(0, (prev.drafts ?? 0) - 1) }));
+                setThreads((t) =>
+                  t.filter((x) => x.id !== `draft-${deletedDraftId}`)
+                );
+                setFolderCounts((prev) => ({
+                  ...prev,
+                  drafts: Math.max(0, (prev.drafts ?? 0) - 1),
+                }));
                 if (selectedThread?.id === `draft-${deletedDraftId}`) {
                   setSelectedThread(null);
                   setThreadDetails(null);
@@ -1428,7 +1628,8 @@ export default function UniboxContent({
               setInitialDraftData(null);
               fetchThreads();
               fetchCounts();
-              if (selectedThread && !deletedDraftId) fetchThreadDetails(selectedThread.id);
+              if (selectedThread && !deletedDraftId)
+                fetchThreadDetails(selectedThread.id);
             }}
             defaultMailboxId={selectedMailboxId}
             initialDraft={initialDraftData}
@@ -1473,16 +1674,7 @@ export default function UniboxContent({
             </span>
             Calendar
           </Link>
-          <Link
-            href="/dashboard/email/campaigns"
-            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white/60 dark:hover:bg-slate-700 rounded-full transition-all flex items-center gap-2"
-            aria-label="Campaigns"
-          >
-            <span className="material-icons-round text-base" aria-hidden>
-              campaign
-            </span>
-            Campaigns
-          </Link>
+          {/* TEMP HIDDEN: Email Campaigns - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
           <span
             className="px-4 py-2 text-sm font-bold text-unibox-primary bg-white dark:bg-slate-700 shadow-sm rounded-full transition-all flex items-center gap-2"
             aria-current="page"
@@ -1533,8 +1725,13 @@ export default function UniboxContent({
               } catch {
                 /* ignore */
               }
-              setThreads((t) => t.filter((x) => x.id !== `draft-${deletedDraftId}`));
-              setFolderCounts((prev) => ({ ...prev, drafts: Math.max(0, (prev.drafts ?? 0) - 1) }));
+              setThreads((t) =>
+                t.filter((x) => x.id !== `draft-${deletedDraftId}`)
+              );
+              setFolderCounts((prev) => ({
+                ...prev,
+                drafts: Math.max(0, (prev.drafts ?? 0) - 1),
+              }));
               if (selectedThread?.id === `draft-${deletedDraftId}`) {
                 setSelectedThread(null);
                 setThreadDetails(null);
@@ -1544,7 +1741,8 @@ export default function UniboxContent({
             setInitialDraftData(null);
             fetchThreads();
             fetchCounts();
-            if (selectedThread && !deletedDraftId) fetchThreadDetails(selectedThread.id);
+            if (selectedThread && !deletedDraftId)
+              fetchThreadDetails(selectedThread.id);
           }}
           defaultMailboxId={selectedMailboxId}
           initialDraft={initialDraftData}

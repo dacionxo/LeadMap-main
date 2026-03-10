@@ -89,16 +89,6 @@ const navSections: NavSection[] = [
         icon: "solar:letter-linear",
         href: "/dashboard/unibox",
       },
-      {
-        label: "Email Campaigns",
-        icon: "solar:letter-linear",
-        href: "/dashboard/email/campaigns",
-      },
-      {
-        label: "Email Analytics",
-        icon: "solar:chart-2-linear",
-        href: "/dashboard/marketing/analytics",
-      },
     ],
   },
 ];

@@ -1,25 +1,28 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useApp } from '@/app/providers'
-import { useTheme } from '@/components/ThemeProvider'
-import { useSidebar } from '../../../components/SidebarContext'
+import { useApp } from "@/app/providers";
+import { useTheme } from "@/components/ThemeProvider";
+import Link from "next/link";
+import { useSidebar } from "../../../components/SidebarContext";
 
 export default function CalendarNavbar() {
-  const { profile, user } = useApp()
-  const { theme, setTheme } = useTheme()
-  const { toggle: toggleSidebar } = useSidebar()
+  const { profile, user } = useApp();
+  const { theme, setTheme } = useTheme();
+  const { toggle: toggleSidebar } = useSidebar();
 
   const handleToggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light')
-  }
+    setTheme(theme === "light" ? "dark" : "light");
+  };
 
-  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
-  const userName = profile?.name || 'User'
-  const userInitial = userName.charAt(0).toUpperCase()
+  const avatarUrl =
+    profile?.avatar_url ??
+    (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ??
+    null;
+  const userName = profile?.name || "User";
+  const userInitial = userName.charAt(0).toUpperCase();
   const planLabel = profile?.plan_tier
-    ? `${(profile.plan_tier as string).toUpperCase().replace(/\s+/g, ' ')} PLAN`
-    : 'FREE PLAN'
+    ? `${(profile.plan_tier as string).toUpperCase().replace(/\s+/g, " ")} PLAN`
+    : "FREE PLAN";
 
   return (
     <nav className="shrink-0 px-6 py-4 flex items-center justify-between z-30">
@@ -54,16 +57,12 @@ export default function CalendarNavbar() {
           href="/dashboard/crm/calendar"
           className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium transition-colors shadow-sm ring-1 ring-blue-100 dark:ring-blue-900/40"
         >
-          <span className="material-symbols-outlined text-lg">calendar_month</span>
+          <span className="material-symbols-outlined text-lg">
+            calendar_month
+          </span>
           Calendar
         </Link>
-        <Link
-          href="/dashboard/email/campaigns"
-          className="flex items-center gap-2 px-4 py-1.5 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 rounded-full text-sm font-medium transition-colors"
-        >
-          <span className="material-symbols-outlined text-lg">campaign</span>
-          Campaigns
-        </Link>
+        {/* TEMP HIDDEN: Email Campaigns - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
         <Link
           href="/dashboard/unibox"
           className="flex items-center gap-2 px-4 py-1.5 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 rounded-full text-sm font-medium transition-colors"
@@ -81,7 +80,7 @@ export default function CalendarNavbar() {
           aria-label="Toggle theme"
         >
           <span className="material-symbols-outlined text-xl">
-            {theme === 'light' ? 'dark_mode' : 'light_mode'}
+            {theme === "light" ? "dark_mode" : "light_mode"}
           </span>
         </button>
         <button
@@ -89,7 +88,9 @@ export default function CalendarNavbar() {
           className="text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 relative transition-colors"
           aria-label="Notifications"
         >
-          <span className="material-symbols-outlined text-xl">notifications</span>
+          <span className="material-symbols-outlined text-xl">
+            notifications
+          </span>
           <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-900" />
         </button>
         <div className="flex items-center gap-2">
@@ -103,7 +104,11 @@ export default function CalendarNavbar() {
           </div>
           <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm shadow-md overflow-hidden">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img
+                src={avatarUrl}
+                alt=""
+                className="w-full h-full object-cover"
+              />
             ) : (
               userInitial
             )}
@@ -111,5 +116,5 @@ export default function CalendarNavbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

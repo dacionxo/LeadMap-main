@@ -26,10 +26,10 @@ export async function checkAndStopOnReply(
     })
   }
 
-  // Get recipient
+  // Get recipient (include current_step_number for step-level check)
   const { data: recipient, error } = await supabase
     .from('campaign_recipients')
-    .select('replied, replied_at')
+    .select('replied, replied_at, current_step_number')
     .eq('id', recipientId)
     .single()
 
@@ -38,15 +38,28 @@ export async function checkAndStopOnReply(
   }
 
   if (recipient.replied) {
-    // Check if current step has stop_on_reply enabled
+    // Campaign-level: if explicitly disabled, never stop regardless of step
+    const { data: campaign } = await supabase
+      .from('campaigns')
+      .select('stop_on_reply')
+      .eq('id', campaignId)
+      .single()
+
+    if (campaign?.stop_on_reply === false) {
+      return { hasReplied: true, shouldStop: false }
+    }
+
+    // Step-level: check if current step has stop_on_reply enabled
+    const stepNumber = recipient.current_step_number ?? 1
     const { data: currentStep } = await supabase
       .from('campaign_steps')
       .select('stop_on_reply')
       .eq('campaign_id', campaignId)
-      .eq('step_number', recipient.current_step_number || 1)
+      .eq('step_number', stepNumber)
       .single()
 
-    const shouldStop = currentStep?.stop_on_reply !== false // Default to true
+    const stepAllowsStop = currentStep?.stop_on_reply !== false
+    const shouldStop = stepAllowsStop
 
     return {
       hasReplied: true,

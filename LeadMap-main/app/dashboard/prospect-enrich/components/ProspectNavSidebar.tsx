@@ -55,8 +55,6 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Email Marketing',
     items: [
       { label: 'Unibox', icon: 'mail', href: '/dashboard/unibox' },
-      { label: 'Email Campaigns', icon: 'send', href: '/dashboard/email/campaigns' },
-      { label: 'Email Analytics', icon: 'analytics', href: '/dashboard/marketing/analytics' },
     ],
   },
 ]

@@ -6,11 +6,11 @@ import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
-import { useSidebar } from "./SidebarContext";
 import AppLinks from "./header/AppLinks";
 import MobileHeaderItems from "./header/MobileHeaderItems";
 import Search from "./header/Search";
 import NotificationsDropdown from "./NotificationsDropdown";
+import { useSidebar } from "./SidebarContext";
 
 type HeaderProps = {
   scrollContainerRef?: React.RefObject<HTMLElement | null>;
@@ -28,7 +28,10 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
-  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null;
+  const avatarUrl =
+    profile?.avatar_url ??
+    (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ??
+    null;
 
   useEffect(() => {
     const el = scrollContainerRef?.current;
@@ -173,7 +176,10 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                 onClick={toggleSidebar}
                 className="p-2 rounded-full text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-primary flex items-center justify-center cursor-pointer transition-colors"
               >
-                <Icon icon="material-symbols:menu-rounded" className="w-5 h-5" />
+                <Icon
+                  icon="material-symbols:menu-rounded"
+                  className="w-5 h-5"
+                />
               </span>
               <Search />
             </div>
@@ -185,21 +191,21 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                 href="/dashboard/crm/calendar"
                 className="flex items-center gap-2 px-5 py-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
               >
-                <Icon icon="material-symbols:calendar-month" className="text-[18px] group-hover:text-primary transition-colors" />
+                <Icon
+                  icon="material-symbols:calendar-month"
+                  className="text-[18px] group-hover:text-primary transition-colors"
+                />
                 <span className="text-sm font-medium">Calendar</span>
               </Link>
-              <Link
-                href="/dashboard/email/campaigns"
-                className="flex items-center gap-2 px-5 py-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
-              >
-                <Icon icon="material-symbols:campaign" className="text-[18px] group-hover:text-primary transition-colors" />
-                <span className="text-sm font-medium">Campaigns</span>
-              </Link>
+              {/* TEMP HIDDEN: Email Campaigns - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
               <Link
                 href="/dashboard/unibox"
                 className="flex items-center gap-2 px-5 py-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
               >
-                <Icon icon="material-symbols:mark-email-unread" className="text-[18px] group-hover:text-primary transition-colors" />
+                <Icon
+                  icon="material-symbols:mark-email-unread"
+                  className="text-[18px] group-hover:text-primary transition-colors"
+                />
                 <span className="text-sm font-medium">Unibox</span>
               </Link>
             </div>
@@ -228,9 +234,15 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                   aria-label="Toggle theme"
                 >
                   {theme === "light" ? (
-                    <Icon icon="material-symbols:dark-mode-rounded" className="text-[22px]" />
+                    <Icon
+                      icon="material-symbols:dark-mode-rounded"
+                      className="text-[22px]"
+                    />
                   ) : (
-                    <Icon icon="material-symbols:light-mode-rounded" className="text-[22px]" />
+                    <Icon
+                      icon="material-symbols:light-mode-rounded"
+                      className="text-[22px]"
+                    />
                   )}
                 </button>
 
@@ -264,7 +276,9 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                       </span>
                       <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 tracking-wider mt-1.5 uppercase">
                         {profile?.plan_tier
-                          ? (profile.plan_tier as string).toUpperCase().replace(/\s+/g, " ") + " PLAN"
+                          ? (profile.plan_tier as string)
+                              .toUpperCase()
+                              .replace(/\s+/g, " ") + " PLAN"
                           : "MEMBER"}
                       </span>
                     </div>
@@ -272,7 +286,11 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                       <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-purple-500 rounded-full opacity-0 group-hover:opacity-40 blur-[4px] transition-opacity duration-300" />
                       <div className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm overflow-hidden">
                         {avatarUrl ? (
-                          <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <img
+                            src={avatarUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           profile?.name?.charAt(0).toUpperCase() || "U"
                         )}
@@ -287,7 +305,11 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                           <div className="flex items-center gap-4">
                             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700 overflow-hidden">
                               {avatarUrl ? (
-                                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                                <img
+                                  src={avatarUrl}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                />
                               ) : (
                                 profile?.name?.charAt(0).toUpperCase() || "U"
                               )}
@@ -436,7 +458,10 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
               className="p-2 rounded-full text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-slate-700 xl:hidden flex justify-center items-center cursor-pointer transition-colors"
               onClick={handleMobileMenu}
             >
-              <Icon icon="material-symbols:more-horiz-rounded" className="w-5 h-5" />
+              <Icon
+                icon="material-symbols:more-horiz-rounded"
+                className="w-5 h-5"
+              />
             </span>
           </div>
         </nav>

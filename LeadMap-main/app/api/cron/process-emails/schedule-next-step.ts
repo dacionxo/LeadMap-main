@@ -106,13 +106,12 @@ export async function scheduleNextStep(
 
     // Check if recipient has replied
     if (recipient.replied) {
-      // Check if we should stop (campaign-level setting takes precedence, then step-level)
-      const campaignStopOnReply =
-        campaignData?.stop_on_reply !== false // Default to true if not set
-      const stepStopOnReply = currentStep.stop_on_reply !== false // Default to true if not set
+      // Campaign is master: if explicitly disabled, never stop
+      const campaignAllowsStop = campaignData?.stop_on_reply !== false
+      const stepAllowsStop = currentStep.stop_on_reply !== false
 
-      // If either campaign or step has stop_on_reply enabled, don't schedule next step
-      if (campaignStopOnReply || stepStopOnReply) {
+      // Only stop when both campaign and step allow it (campaign disabled = never stop)
+      if (campaignAllowsStop && stepAllowsStop) {
         await executeUpdateOperation(
           supabase,
           'campaign_recipients',

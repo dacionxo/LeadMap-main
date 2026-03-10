@@ -1,53 +1,56 @@
-'use client'
+"use client";
 
-import { Icon } from '@iconify/react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
-import { useApp } from '@/app/providers'
-import { useTheme } from '@/components/ThemeProvider'
-import { useSidebar } from '../../../components/SidebarContext'
-import AppLinks from '../../../components/header/AppLinks'
-import Search from '../../../components/header/Search'
-import NotificationsDropdown from '../../../components/NotificationsDropdown'
+import { useApp } from "@/app/providers";
+import { useTheme } from "@/components/ThemeProvider";
+import { Icon } from "@iconify/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import AppLinks from "../../../components/header/AppLinks";
+import Search from "../../../components/header/Search";
+import NotificationsDropdown from "../../../components/NotificationsDropdown";
+import { useSidebar } from "../../../components/SidebarContext";
 
 export default function DealsNavbar() {
-  const { profile, user, signOut } = useApp()
-  const { theme, setTheme } = useTheme()
-  const router = useRouter()
-  const { toggle: toggleSidebar } = useSidebar()
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const { profile, user, signOut } = useApp();
+  const { theme, setTheme } = useTheme();
+  const router = useRouter();
+  const { toggle: toggleSidebar } = useSidebar();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ?? null
+  const avatarUrl =
+    profile?.avatar_url ??
+    (user?.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ??
+    null;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowProfileMenu(false)
+        setShowProfileMenu(false);
       }
-    }
+    };
     if (showProfileMenu) {
-      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showProfileMenu])
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showProfileMenu]);
 
   const handleToggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light')
-  }
+    setTheme(theme === "light" ? "dark" : "light");
+  };
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push('/')
-  }
+    await signOut();
+    router.push("/");
+  };
 
-  const userName = profile?.name || 'User'
-  const userInitial = userName.charAt(0).toUpperCase()
+  const userName = profile?.name || "User";
+  const userInitial = userName.charAt(0).toUpperCase();
   const planLabel = profile?.plan_tier
-    ? `${(profile.plan_tier as string).toUpperCase().replace(/\s+/g, ' ')} PLAN`
-    : 'FREE PLAN'
+    ? `${(profile.plan_tier as string).toUpperCase().replace(/\s+/g, " ")} PLAN`
+    : "FREE PLAN";
 
   return (
     <nav className="shrink-0 px-6 py-[14.4px] flex items-center justify-between z-30 bg-transparent">
@@ -75,16 +78,7 @@ export default function DealsNavbar() {
           />
           <span className="text-sm font-medium">Calendar</span>
         </Link>
-        <Link
-          href="/dashboard/email/campaigns"
-          className="flex items-center gap-2 px-5 py-[5.4px] rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
-        >
-          <Icon
-            icon="material-symbols:campaign"
-            className="text-[18px] group-hover:text-primary transition-colors"
-          />
-          <span className="text-sm font-medium">Campaigns</span>
-        </Link>
+        {/* TEMP HIDDEN: Email Campaigns - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
         <Link
           href="/dashboard/unibox"
           className="flex items-center gap-2 px-5 py-[5.4px] rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
@@ -104,10 +98,16 @@ export default function DealsNavbar() {
           className="flex items-center justify-center w-9 h-9 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
           aria-label="Toggle theme"
         >
-          {theme === 'light' ? (
-            <Icon icon="material-symbols:dark-mode-rounded" className="text-[22px]" />
+          {theme === "light" ? (
+            <Icon
+              icon="material-symbols:dark-mode-rounded"
+              className="text-[22px]"
+            />
           ) : (
-            <Icon icon="material-symbols:light-mode-rounded" className="text-[22px]" />
+            <Icon
+              icon="material-symbols:light-mode-rounded"
+              className="text-[22px]"
+            />
           )}
         </button>
 
@@ -122,8 +122,8 @@ export default function DealsNavbar() {
           <button
             type="button"
             onClick={() => {
-              setShowProfileMenu(!showProfileMenu)
-              setShowNotifications(false)
+              setShowProfileMenu(!showProfileMenu);
+              setShowNotifications(false);
             }}
             aria-haspopup="true"
             aria-label="Open profile menu"
@@ -141,7 +141,11 @@ export default function DealsNavbar() {
               <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-purple-500 rounded-full opacity-0 group-hover:opacity-40 blur-[4px] transition-opacity duration-300" />
               <div className="relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm overflow-hidden">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   userInitial
                 )}
@@ -156,24 +160,28 @@ export default function DealsNavbar() {
                   <div className="flex items-center gap-4">
                     <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700 overflow-hidden">
                       {avatarUrl ? (
-                        <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                        <img
+                          src={avatarUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         userInitial
                       )}
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-gray-900 dark:text-slate-50 leading-tight">
-                        {profile?.name || 'User'}
+                        {profile?.name || "User"}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">
-                        {profile?.email || 'user@example.com'}
+                        {profile?.email || "user@example.com"}
                       </p>
                       <span className="inline-flex items-center rounded-full bg-primary/10 dark:bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
                         {profile?.plan_tier
                           ? profile.plan_tier.charAt(0).toUpperCase() +
                             profile.plan_tier.slice(1).toLowerCase() +
-                            ' Plan'
-                          : 'Member'}
+                            " Plan"
+                          : "Member"}
                       </span>
                     </div>
                   </div>
@@ -184,14 +192,17 @@ export default function DealsNavbar() {
                 <button
                   type="button"
                   onClick={() => {
-                    router.push('/dashboard/settings')
-                    setShowProfileMenu(false)
+                    router.push("/dashboard/settings");
+                    setShowProfileMenu(false);
                   }}
                   className="group relative flex flex-col justify-between rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/30 p-4 hover:border-primary/50 hover:shadow-md transition-all duration-200 text-left"
                 >
                   <div className="flex justify-between items-start w-full mb-2">
                     <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                      <Icon icon="solar:user-circle-linear" className="h-5 w-5" />
+                      <Icon
+                        icon="solar:user-circle-linear"
+                        className="h-5 w-5"
+                      />
                     </div>
                     <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
                       85%
@@ -212,8 +223,8 @@ export default function DealsNavbar() {
                 <button
                   type="button"
                   onClick={() => {
-                    router.push('/dashboard')
-                    setShowProfileMenu(false)
+                    router.push("/dashboard");
+                    setShowProfileMenu(false);
                   }}
                   className="group relative flex flex-col justify-between rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/30 p-4 hover:border-primary/50 hover:shadow-md transition-all duration-200 text-left"
                 >
@@ -293,5 +304,5 @@ export default function DealsNavbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

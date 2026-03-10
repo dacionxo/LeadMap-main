@@ -85,6 +85,7 @@ interface Campaign {
   allow_risky_emails?: boolean | null
   open_tracking_enabled?: boolean | null
   link_tracking_enabled?: boolean | null
+  stop_on_reply?: boolean | null
 }
 
 /**
@@ -98,6 +99,7 @@ interface CampaignRecipient {
   metadata?: Record<string, unknown> | null
   unsubscribed: boolean
   bounced: boolean
+  replied: boolean
 }
 
 /**
@@ -274,7 +276,7 @@ async function fetchCampaigns(
   const result = await executeSelectOperation<Campaign>(
     supabase,
     'campaigns',
-    'id, user_id, status, time_gap_min, time_gap_random, prioritize_new_leads, provider_matching_enabled, unsubscribe_link_header, allow_risky_emails, open_tracking_enabled, link_tracking_enabled',
+    'id, user_id, status, time_gap_min, time_gap_random, prioritize_new_leads, provider_matching_enabled, unsubscribe_link_header, allow_risky_emails, open_tracking_enabled, link_tracking_enabled, stop_on_reply',
     (query) => {
       return (query as any).in('id', campaignIds)
     },
@@ -548,7 +550,7 @@ async function fetchCampaignRecipient(
   const result = await executeSelectOperation<CampaignRecipient>(
     supabase,
     'campaign_recipients',
-    'id, email, first_name, last_name, metadata, unsubscribed, bounced',
+    'id, email, first_name, last_name, metadata, unsubscribed, bounced, replied',
     (query) => {
       return (query as any).eq('id', recipientId).single()
     },
@@ -712,6 +714,40 @@ async function processEmail(
             email_id: email.id,
             status: 'skipped',
             reason: 'Recipient email has hard bounced',
+          }
+        }
+
+        // Check if recipient has replied and campaign has stop_on_reply enabled
+        const campaign = email.campaign_id ? campaignsMap.get(email.campaign_id) : null
+        const stopOnReply = campaign?.stop_on_reply !== false
+        if (campaignRecipient.replied && stopOnReply) {
+          await executeUpdateOperation(
+            supabase,
+            'campaign_recipients',
+            { status: 'stopped' },
+            (query) => (query as any).eq('id', email.campaign_recipient_id!),
+            {
+              operation: 'stop_recipient_on_reply',
+              recipientId: email.campaign_recipient_id,
+            }
+          )
+          await executeUpdateOperation(
+            supabase,
+            'emails',
+            {
+              status: 'failed',
+              error: 'Recipient replied, sequence stopped',
+            },
+            (query) => (query as any).eq('id', email.id),
+            {
+              operation: 'skip_email_recipient_replied',
+              emailId: email.id,
+            }
+          )
+          return {
+            email_id: email.id,
+            status: 'skipped',
+            reason: 'Recipient replied, sequence stopped',
           }
         }
       }

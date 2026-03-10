@@ -400,7 +400,7 @@ export default function ComposePage() {
                 )}
               </button>
               <button
-                onClick={() => router.push('/dashboard/email/campaigns')}
+                onClick={() => router.push('/dashboard/unibox')}
                 className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel

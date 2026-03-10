@@ -94,7 +94,7 @@ interface EmailStats {
 function EmailMarketingContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'compose-email' | 'campaigns' | 'unibox' | 'templates' | 'analytics'>('campaigns')
+  const [activeTab, setActiveTab] = useState<'compose-email' | 'campaigns' | 'unibox' | 'templates' | 'analytics'>('compose-email')
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([])
   const [selectedMailbox, setSelectedMailbox] = useState<string | null>(null)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
@@ -491,13 +491,7 @@ function EmailMarketingContent() {
             Manage your email campaigns and track performance
           </p>
         </div>
-        <button
-          onClick={() => window.location.href = '/dashboard/email/campaigns/new'}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Create Campaign
-        </button>
+        {/* TEMP HIDDEN: Create Campaign - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
       </div>
 
       {/* Sample Data Banner - Only show if no mailboxes connected */}
@@ -528,10 +522,9 @@ function EmailMarketingContent() {
         <nav className="flex space-x-1">
           {[
             { id: 'compose-email', label: 'Compose Email' },
-            { id: 'campaigns', label: 'Campaigns' },
+            /* TEMP HIDDEN: campaigns, analytics tabs - see REINCORPORATE_EMAIL_CAMPAIGNS.md */
             { id: 'unibox', label: 'Unibox' },
             { id: 'templates', label: 'Templates' },
-            { id: 'analytics', label: 'Analytics' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -919,13 +912,7 @@ function EmailStatistics({ stats, emails }: { stats: EmailStats; emails: Email[]
         {/* Header with link to full analytics */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Performance</h2>
-          <Link
-            href="/dashboard/marketing/analytics"
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-          >
-            View full analytics
-            <BarChart3 className="w-4 h-4" />
-          </Link>
+          {/* TEMP HIDDEN: View full analytics link - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
         </div>
         {/* Legend */}
         <div className="mb-4 flex flex-wrap items-center gap-4">

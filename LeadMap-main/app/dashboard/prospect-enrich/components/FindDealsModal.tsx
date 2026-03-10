@@ -73,8 +73,7 @@ const NAV_SECTIONS = [
     title: 'Email Marketing',
     items: [
       { id: 'unibox', label: 'Unibox', icon: 'mail' },
-      { id: 'email-campaigns', label: 'Email Campaigns', icon: 'send' },
-      { id: 'email-analytics', label: 'Email Analytics', icon: 'analytics' },
+      /* TEMP HIDDEN: email-campaigns, email-analytics - see REINCORPORATE_EMAIL_CAMPAIGNS.md */
     ],
   },
   {
