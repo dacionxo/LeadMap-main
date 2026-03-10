@@ -302,6 +302,8 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       style: "mapbox://styles/mapbox/streets-v12",
       center: [-98.5795, 39.8283], // Geographic center of contiguous US [lng, lat]
       zoom: 4,
+      // Geolock behavior: prevent zooming out beyond national view, but allow zooming in
+      minZoom: 4,
       maxBounds: usBounds,
     });
 

@@ -769,13 +769,13 @@ export default function ProspectFilterSidebar({
           )
         })}
 
-        {!showMoreFilters && moreFiltersCount > 0 && (
+        {moreFiltersCount > 0 && (
           <div className="p-6 mt-auto">
             <button
-              onClick={() => setShowMoreFilters(true)}
+              onClick={() => setShowMoreFilters((prev) => !prev)}
               className="w-full py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-slate-200 transition-all shadow-sm"
             >
-              More Filters ({moreFiltersCount})
+              {showMoreFilters ? 'Hide Filters' : `More Filters (${moreFiltersCount})`}
             </button>
           </div>
         )}

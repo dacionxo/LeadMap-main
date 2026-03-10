@@ -265,7 +265,7 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
           className="w-full text-left text-sm text-slate-600 dark:text-slate-300"
           role="grid"
         >
-          <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/60 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-md z-10">
+          <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-[#E4E4E7] tracking-wider sticky top-0 backdrop-blur-md z-10">
             <tr>
               <th className="px-5 py-3 w-10 font-semibold" scope="col">
                 <input
@@ -299,7 +299,7 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100/80 dark:divide-slate-600/50">
+          <tbody className="divide-y divide-[#E4E4E7]">
             {lists.map((list) => {
               const listType = list.type || "properties";
               const isDeleting = deletingId === list.id;

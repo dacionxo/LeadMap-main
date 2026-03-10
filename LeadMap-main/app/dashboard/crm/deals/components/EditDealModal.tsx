@@ -310,7 +310,7 @@ export default function EditDealModal({
                     <select
                       value={formData.pipeline_id || ''}
                       onChange={(e) => setFormData({ ...formData, pipeline_id: e.target.value || null })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all appearance-none font-medium pr-9"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all font-medium pr-3.5"
                       aria-label="Pipeline"
                       required={!deal}
                     >
@@ -321,9 +321,6 @@ export default function EditDealModal({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-3.5 pointer-events-none text-gray-400 dark:text-slate-500">
-                      <span className="material-symbols-outlined text-lg">expand_more</span>
-                    </div>
                   </div>
                 </div>
                 <div>
@@ -335,7 +332,7 @@ export default function EditDealModal({
                     <select
                       value={formData.stage || 'new'}
                       onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all appearance-none font-medium pr-9"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all font-medium pr-3.5"
                       aria-label="Stage"
                     >
                       {STAGES.map((stage) => (
@@ -344,9 +341,6 @@ export default function EditDealModal({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-3.5 pointer-events-none text-gray-400 dark:text-slate-500">
-                      <span className="material-symbols-outlined text-lg">expand_more</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -442,7 +436,7 @@ export default function EditDealModal({
                     <select
                       value={formData.owner_id || ''}
                       onChange={(e) => setFormData({ ...formData, owner_id: e.target.value || null })}
-                      className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all appearance-none font-medium"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark text-gray-800 dark:text-slate-200 input-focus-glow focus:ring-0 bg-white dark:bg-slate-800 text-[13px] shadow-soft transition-all font-medium"
                       aria-label="Owner"
                     >
                       {users.map((u) => (
@@ -451,9 +445,6 @@ export default function EditDealModal({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-3.5 pointer-events-none text-gray-400 dark:text-slate-500">
-                      <span className="material-symbols-outlined text-lg">expand_more</span>
-                    </div>
                   </div>
                 </div>
               </div>

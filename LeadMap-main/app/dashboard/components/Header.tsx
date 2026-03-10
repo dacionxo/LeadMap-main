@@ -162,25 +162,8 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
       >
         <nav className="h-16 px-4 sm:px-6 lg:px-8 w-full">
           <div className="mx-auto flex flex-nowrap items-center justify-between h-full">
-            {/* Mobile Menu Toggle */}
-            <span
-              onClick={toggleSidebar}
-              className="p-2 rounded-full text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-primary transition-colors xl:hidden flex justify-center items-center cursor-pointer"
-            >
-              <Icon icon="material-symbols:menu-rounded" className="w-5 h-5" />
-            </span>
-
-            {/* Desktop: sidebar toggle + Search (left) */}
+            {/* Left: Search (no sidebar toggle button) */}
             <div className="xl:!flex !hidden items-center gap-0 relative shrink-0">
-              <span
-                onClick={toggleSidebar}
-                className="p-2 rounded-full text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-primary flex items-center justify-center cursor-pointer transition-colors"
-              >
-                <Icon
-                  icon="material-symbols:menu-rounded"
-                  className="w-5 h-5"
-                />
-              </span>
               <Search />
             </div>
 

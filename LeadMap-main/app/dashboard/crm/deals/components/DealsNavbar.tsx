@@ -55,14 +55,7 @@ export default function DealsNavbar() {
   return (
     <nav className="shrink-0 px-6 py-[14.4px] flex items-center justify-between z-30 bg-transparent">
       <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className="p-2 rounded-full text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-primary transition-colors flex justify-center items-center"
-          aria-label="Toggle sidebar"
-        >
-          <Icon icon="material-symbols:menu-rounded" className="w-5 h-5" />
-        </button>
+        {/* Sidebar toggle button removed per design; keep search only */}
         <Search />
       </div>
 

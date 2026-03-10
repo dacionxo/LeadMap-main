@@ -1313,8 +1313,8 @@ export default function UniboxContent({
         folderCounts={folderCounts}
       />
 
-      {/* Thread list column - match Deals component background & border */}
-      <main className="w-[420px] flex flex-col bg-white dark:bg-dark/90 border-l border-slate-200 dark:border-slate-700 shrink-0">
+      {/* Thread list column - match Deals component border, custom Unibox background */}
+      <main className="w-[420px] flex flex-col bg-[#F9FBFD] dark:bg-dark/90 border-l border-slate-200 dark:border-slate-700 shrink-0">
         <header className="p-6 pb-4 border-b border-[#F3F4F6]">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-semibold tracking-tight">

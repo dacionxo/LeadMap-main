@@ -377,6 +377,8 @@ const MapComponent: React.FC<{
       const mapInstance = new window.google.maps.Map(mapRef.current, {
         center: { lat: 39.8283, lng: -98.5795 }, // Geographic center of contiguous US
         zoom: 4,
+        // Geolock behavior: prevent zooming out beyond national view, but allow zooming in
+        minZoom: 4,
         restriction: {
           latLngBounds: usBounds,
           strictBounds: false, // Allow some flexibility at edges

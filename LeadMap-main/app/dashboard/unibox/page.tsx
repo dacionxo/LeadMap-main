@@ -21,7 +21,8 @@ function UniboxPageContent() {
                 aria-hidden
               />
               <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
-                <div className="unibox-glass flex-1 w-full min-h-0 rounded-xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] flex overflow-hidden border border-white/40">
+                {/* Use calendar-style borders for the main Unibox panel */}
+                <div className="unibox-glass flex-1 w-full min-h-0 rounded-xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] flex overflow-hidden border border-slate-200 dark:border-slate-700">
                   <Suspense
                     fallback={
                       <div className="flex-1 flex items-center justify-center text-slate-500">

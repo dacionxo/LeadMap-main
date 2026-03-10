@@ -62,7 +62,7 @@ function DashboardLayoutContent({
       {/* Global Sidebar (NextDeal nav) hidden from all pages; design kept in ./Sidebar.tsx */}
       <main
         ref={mainRef as any}
-        className="flex-1 overflow-y-auto relative z-10 bg-[#FEFEFE] dark:bg-dark h-full flex flex-col min-w-0"
+        className="flex-1 overflow-y-auto relative z-10 bg-[#FEFEFE] dark:bg-[#000409] h-full flex flex-col min-w-0"
       >
         {!hideHeader && <Header scrollContainerRef={mainRef} />}
         {/* Main Content */}
