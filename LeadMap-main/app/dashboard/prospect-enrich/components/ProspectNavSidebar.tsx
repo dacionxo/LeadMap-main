@@ -81,7 +81,7 @@ export default function ProspectNavSidebar() {
 
   return (
     <nav
-      className="w-64 flex flex-col shrink-0 overflow-y-auto no-scrollbar py-4 px-3 bg-[#F5F5F7] dark:bg-[#0f172a] sidebar-gradient-border rounded-l-[24px] relative z-20 font-display"
+      className="w-64 flex flex-col shrink-0 overflow-y-auto no-scrollbar py-4 px-3 bg-[#FFFFFF] dark:bg-[#0f172a] sidebar-gradient-border rounded-l-[24px] relative z-20 font-display"
       aria-label="Prospect navigation"
     >
       {NAV_SECTIONS.map((section) => (

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * AppNavSidebar — Shared inline nav sidebar for all dashboard pages.
@@ -8,79 +8,107 @@
  * Sits inline with the content card, forming a cohesive surface pair.
  */
 
-import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { cn } from '@/app/lib/utils'
+import { cn } from "@/app/lib/utils";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 
 interface NavItem {
-  label: string
-  icon: string
-  href: string
-  filled?: boolean
+  label: string;
+  icon: string;
+  href: string;
+  filled?: boolean;
 }
 
 interface NavSection {
-  title: string
-  items: NavItem[]
+  title: string;
+  items: NavItem[];
 }
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Home',
+    title: "Home",
     items: [
-      { label: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
-      { label: 'Maps', icon: 'map', href: '/dashboard/map' },
+      { label: "Dashboard", icon: "dashboard", href: "/dashboard" },
+      { label: "Maps", icon: "map", href: "/dashboard/map" },
     ],
   },
   {
-    title: 'Prospect & Enrich',
+    title: "Prospect & Enrich",
     items: [
-      { label: 'All Prospects', icon: 'group', href: '/dashboard/prospect-enrich' },
-      { label: 'For Sale', icon: 'sell', href: '/dashboard/prospect-enrich?filter=fsbo' },
-      { label: 'For Rent', icon: 'key', href: '/dashboard/prospect-enrich?filter=frbo' },
-      { label: 'Foreclosures', icon: 'gavel', href: '/dashboard/prospect-enrich?filter=foreclosure' },
-      { label: 'Imports', icon: 'cloud_upload', href: '/dashboard/prospect-enrich?filter=imports' },
+      {
+        label: "All Prospects",
+        icon: "group",
+        href: "/dashboard/prospect-enrich",
+      },
+      {
+        label: "For Sale",
+        icon: "sell",
+        href: "/dashboard/prospect-enrich?filter=fsbo",
+      },
+      {
+        label: "For Rent",
+        icon: "key",
+        href: "/dashboard/prospect-enrich?filter=frbo",
+      },
+      {
+        label: "Foreclosures",
+        icon: "gavel",
+        href: "/dashboard/prospect-enrich?filter=foreclosure",
+      },
+      {
+        label: "Imports",
+        icon: "cloud_upload",
+        href: "/dashboard/prospect-enrich?filter=imports",
+      },
     ],
   },
   {
-    title: 'Customer Relationship',
+    title: "Customer Relationship",
     items: [
-      { label: 'Lists', icon: 'list_alt', href: '/dashboard/lists' },
-      { label: 'Deals', icon: 'handshake', href: '/dashboard/crm/deals' },
-      { label: 'Calendar', icon: 'calendar_month', href: '/dashboard/crm/calendar' },
+      { label: "Lists", icon: "list_alt", href: "/dashboard/lists" },
+      { label: "Deals", icon: "handshake", href: "/dashboard/crm/deals" },
+      {
+        label: "Calendar",
+        icon: "calendar_month",
+        href: "/dashboard/crm/calendar",
+      },
     ],
   },
   {
-    title: 'Email Marketing',
-    items: [
-      { label: 'Unibox', icon: 'mail', href: '/dashboard/unibox' },
-    ],
+    title: "Email Marketing",
+    items: [{ label: "Unibox", icon: "mail", href: "/dashboard/unibox" }],
   },
-]
+];
 
-const isActiveHref = (href: string, pathname: string, searchParams: ReturnType<typeof useSearchParams>) => {
-  if (href === '/dashboard') {
-    return pathname === '/dashboard' || pathname === '/dashboard/'
+const isActiveHref = (
+  href: string,
+  pathname: string,
+  searchParams: ReturnType<typeof useSearchParams>
+) => {
+  if (href === "/dashboard") {
+    return pathname === "/dashboard" || pathname === "/dashboard/";
   }
-  const hrefPath = href.split('?')[0]
-  const hrefParams = new URLSearchParams(href.includes('?') ? href.split('?')[1] : '')
-  if (!pathname.startsWith(hrefPath)) return false
-  if (hrefPath === '/dashboard/prospect-enrich') {
-    const currentFilter = searchParams.get('filter')
-    const hrefFilter = hrefParams.get('filter')
-    if (!hrefFilter) return !currentFilter
-    return currentFilter === hrefFilter
+  const hrefPath = href.split("?")[0];
+  const hrefParams = new URLSearchParams(
+    href.includes("?") ? href.split("?")[1] : ""
+  );
+  if (!pathname.startsWith(hrefPath)) return false;
+  if (hrefPath === "/dashboard/prospect-enrich") {
+    const currentFilter = searchParams.get("filter");
+    const hrefFilter = hrefParams.get("filter");
+    if (!hrefFilter) return !currentFilter;
+    return currentFilter === hrefFilter;
   }
-  return true
-}
+  return true;
+};
 
 export default function AppNavSidebar() {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   return (
     <nav
-      className="w-64 flex flex-col shrink-0 py-4 px-3 bg-[#F5F5F7] dark:bg-[#0f172a] border border-[#E8EAF3] dark:border-slate-600/80 rounded-l-[24px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_12px_24px_rgba(16,24,40,0.06)] relative z-20 font-display overflow-hidden"
+      className="w-64 flex flex-col shrink-0 py-4 px-3 bg-[#FFFFFF] dark:bg-[#0f172a] border border-[#E8EAF3] dark:border-slate-600/80 rounded-l-[24px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_12px_24px_rgba(16,24,40,0.06)] relative z-20 font-display overflow-hidden"
       aria-label="Prospect navigation"
     >
       {NAV_SECTIONS.map((section) => (
@@ -92,35 +120,37 @@ export default function AppNavSidebar() {
           </div>
           <div className="space-y-0.5">
             {section.items.map((item) => {
-              const active = isActiveHref(item.href, pathname, searchParams)
+              const active = isActiveHref(item.href, pathname, searchParams);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group',
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group",
                     active
-                      ? 'text-[#5A8CFF] bg-white shadow-sm ring-1 ring-black/5'
-                      : 'text-[#64748B] hover:bg-white/80 hover:text-[#5A8CFF]'
+                      ? "text-[#5A8CFF] bg-white shadow-sm ring-1 ring-black/5"
+                      : "text-[#64748B] hover:bg-white/80 hover:text-[#5A8CFF]"
                   )}
                   tabIndex={0}
-                  aria-current={active ? 'page' : undefined}
+                  aria-current={active ? "page" : undefined}
                 >
                   <span
                     className={cn(
-                      'material-symbols-outlined text-[18px]',
-                      active && 'fill-1'
+                      "material-symbols-outlined text-[18px]",
+                      active && "fill-1"
                     )}
                   >
                     {item.icon}
                   </span>
-                  <span className="text-[12.6px] font-medium">{item.label}</span>
+                  <span className="text-[12.6px] font-medium">
+                    {item.label}
+                  </span>
                 </Link>
-              )
+              );
             })}
           </div>
         </div>
       ))}
     </nav>
-  )
+  );
 }
