@@ -193,9 +193,9 @@ function PriceRangeBar({
   }, [dragging, min, max, valueFromX, onMinChange, onMaxChange])
   return (
     <div className="relative h-1.5 bg-slate-100 dark:bg-slate-600 rounded-full w-full" ref={barRef}>
-      <div className="absolute top-0 bottom-0 bg-indigo-500 rounded-full" style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }} />
-      <button type="button" aria-label="Min price" className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-indigo-600 rounded-full shadow-[0_2px_4px_rgba(131,225,255,0.4)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${leftPct}%` }} onMouseDown={() => setDragging('min')} />
-      <button type="button" aria-label="Max price" className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 bg-indigo-600 rounded-full shadow-[0_2px_4px_rgba(131,225,255,0.4)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${rightPct}%` }} onMouseDown={() => setDragging('max')} />
+      <div className="absolute top-0 bottom-0 bg-[#0693ff] rounded-full" style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }} />
+      <button type="button" aria-label="Min price" className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-[#0693ff] rounded-full shadow-[0_2px_4px_rgba(131,225,255,0.4)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${leftPct}%` }} onMouseDown={() => setDragging('min')} />
+      <button type="button" aria-label="Max price" className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 bg-[#0693ff] rounded-full shadow-[0_2px_4px_rgba(131,225,255,0.4)] cursor-col-resize hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center ring-2 ring-white dark:ring-slate-800" style={{ left: `${rightPct}%` }} onMouseDown={() => setDragging('max')} />
     </div>
   )
 }
@@ -351,7 +351,7 @@ export default function ProspectFilterSidebar({
         <h2 className="font-semibold text-slate-800 dark:text-slate-200">Filters</h2>
         <button
           onClick={resetAll}
-          className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+          className="text-xs font-medium text-[#0693ff] hover:text-[#0693ff] dark:text-[#0693ff] dark:hover:text-[#0693ff]"
         >
           Reset All
         </button>
@@ -374,7 +374,7 @@ export default function ProspectFilterSidebar({
               className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               aria-label={pinnedPriceRange ? 'Unpin' : 'Pin'}
             >
-              <Pin className={cn('w-[18px] h-[18px] transition-colors', pinnedPriceRange ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500')} />
+              <Pin className={cn('w-[18px] h-[18px] transition-colors', pinnedPriceRange ? 'text-[#0693ff]' : 'text-slate-400 dark:text-slate-500 hover:text-[#0693ff]')} />
             </button>
           </div>
           {expandedGroups.has('price_range') && (
@@ -393,7 +393,7 @@ export default function ProspectFilterSidebar({
                         const n = parsePriceInput(e.target.value)
                         updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), min: n })
                       }}
-                      className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
+                      className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-[#0693ff] focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
                     />
                   </div>
                 </div>
@@ -410,7 +410,7 @@ export default function ProspectFilterSidebar({
                         const n = parsePriceInput(e.target.value)
                         updateFilter('price_range', { ...(filters.price_range as { min?: number; max?: number }), max: n })
                       }}
-                      className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
+                      className="w-full text-sm font-semibold text-slate-700 dark:text-slate-200 pl-6 pr-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-[#0693ff] focus:ring-0 outline-none transition-all placeholder-slate-300 dark:placeholder-slate-500 shadow-sm"
                     />
                   </div>
                 </div>
@@ -449,36 +449,36 @@ export default function ProspectFilterSidebar({
               className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               aria-label={pinnedLocation ? 'Unpin' : 'Pin'}
             >
-              <Pin className={cn('w-[18px] h-[18px]', pinnedLocation ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500')} />
+              <Pin className={cn('w-[18px] h-[18px]', pinnedLocation ? 'text-[#0693ff]' : 'text-slate-400 dark:text-slate-500 hover:text-[#0693ff]')} />
             </button>
           </div>
           {expandedGroups.has('location') && (
             <div className="px-6 pb-4 pt-0 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex p-1 bg-slate-100 dark:bg-slate-700/60 rounded-lg mb-5">
+                    <div className="flex p-1 bg-slate-100 dark:bg-slate-700/60 rounded-lg mb-5">
               {(['city', 'state', 'zip_code'] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveLocationTab(tab)}
-                  className={cn(
-                    'flex-1 py-1.5 text-xs font-medium rounded transition-colors',
-                    activeLocationTab === tab
-                      ? 'text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-700 shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-500/30 font-semibold'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-600/50'
-                  )}
+                    className={cn(
+                      'flex-1 py-1.5 text-xs font-medium rounded transition-colors',
+                      activeLocationTab === tab
+                        ? 'text-[#0693ff] bg-white dark:bg-slate-700 shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-500/30 font-semibold'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-600/50'
+                    )}
                 >
                   {tab === 'zip_code' ? 'Zip' : tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </div>
             <div className="relative mb-5 group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500 group-focus-within:text-[#0693ff] pointer-events-none" />
               <input
                 type="text"
                 value={locationSearch[activeLocationTab]}
                 onChange={(e) => setLocationSearch((s) => ({ ...s, [activeLocationTab]: e.target.value }))}
                 placeholder={activeLocationTab === 'city' ? 'Search city...' : activeLocationTab === 'state' ? 'Search state...' : 'Search zip...'}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg py-2.5 pl-10 pr-3 text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-sm text-slate-800 dark:text-slate-200"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg py-2.5 pl-10 pr-3 text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#0693ff] focus:ring-1 focus:ring-[#0693ff] outline-none transition-all shadow-sm text-slate-800 dark:text-slate-200"
               />
             </div>
             <div className="space-y-1 max-h-[220px] overflow-y-auto">
@@ -503,7 +503,7 @@ export default function ProspectFilterSidebar({
                               const arr = current.includes(o.value) ? current.filter((v) => v !== o.value) : [...current, o.value]
                               updateFilter(activeLocationTab, arr.length ? arr : undefined)
                             }}
-                            className="peer appearance-none w-4 h-4 border border-slate-300 dark:border-slate-500 rounded bg-white dark:bg-slate-800 checked:bg-indigo-600 checked:border-indigo-600 focus:ring-offset-0 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 transition-all cursor-pointer"
+                            className="peer appearance-none w-4 h-4 border border-slate-300 dark:border-slate-500 rounded bg-white dark:bg-slate-800 checked:bg-[#0693ff] checked:border-[#0693ff] focus:ring-offset-0 focus:ring-2 focus:ring-[#0693ff]/15 dark:focus:ring-[#0693ff]/30 transition-all cursor-pointer"
                           />
                           <Check className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" strokeWidth={3} />
                         </div>
@@ -559,8 +559,8 @@ export default function ProspectFilterSidebar({
                             className={cn(
                               "flex-1 px-2 py-1 text-xs font-medium border-b-2 transition-colors",
                               activeLocationTab === tab
-                                ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
-                                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-indigo-600"
+                                ? "border-[#0693ff] text-[#0693ff]"
+                                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-[#0693ff]"
                             )}
                           >
                             {tab === 'zip_code' ? 'Zip Code' : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -624,7 +624,7 @@ export default function ProspectFilterSidebar({
                             updateFilter(fg.id, { ...filterValue, min: v ? (fg.id === 'year_built' ? parseInt(v) : parseFloat(v)) : undefined })
                           }}
                           placeholder={fg.id === 'price_range' ? 'e.g. 100000' : fg.id === 'year_built' ? 'e.g. 1950' : 'Min'}
-                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#0693ff]/25 focus:border-[#0693ff]"
                         />
                       </div>
                       <div>
@@ -637,7 +637,7 @@ export default function ProspectFilterSidebar({
                             updateFilter(fg.id, { ...filterValue, max: v ? (fg.id === 'year_built' ? parseInt(v) : parseFloat(v)) : undefined })
                           }}
                           placeholder={fg.id === 'price_range' ? 'e.g. 500000' : fg.id === 'year_built' ? 'e.g. 2024' : 'Max'}
-                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#0693ff]/25 focus:border-[#0693ff]"
                         />
                       </div>
                     </div>
@@ -656,14 +656,14 @@ export default function ProspectFilterSidebar({
                       value={filterValue || ''}
                       onChange={(e) => updateFilter(fg.id, e.target.value.trim() || undefined)}
                       placeholder={`Enter ${fg.title.toLowerCase()}...`}
-                      className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#0693ff]/25 focus:border-[#0693ff]"
                     />
                   )}
 
                   {filterValue && (fg.id !== 'location' || filters.city?.length || filters.state?.length || filters.zip_code?.length) && (
                     <button
                       onClick={() => clearFilter(fg.id)}
-                      className="mt-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
+                      className="mt-2 text-xs font-medium text-[#0693ff] hover:text-[#0693ff]"
                     >
                       Clear
                     </button>

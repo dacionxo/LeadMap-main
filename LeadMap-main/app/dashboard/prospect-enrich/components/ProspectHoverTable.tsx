@@ -737,7 +737,7 @@ export default function ProspectHoverTable({
             <button
               type="button"
               onClick={onClearAllFilters}
-              className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 ml-1"
+              className="text-xs font-medium text-[#0693ff] hover:text-[#0693ff] dark:text-[#0693ff] dark:hover:text-[#0693ff] ml-1"
             >
               Clear all
             </button>
