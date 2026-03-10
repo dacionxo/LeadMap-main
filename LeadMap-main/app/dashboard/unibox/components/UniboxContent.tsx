@@ -1674,7 +1674,16 @@ export default function UniboxContent({
             </span>
             Calendar
           </Link>
-          {/* TEMP HIDDEN: Email Campaigns - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
+          <Link
+            href="/dashboard/crm/deals"
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white/60 dark:hover:bg-slate-700 rounded-full transition-all flex items-center gap-2"
+            aria-label="Deals"
+          >
+            <span className="material-icons-round text-base" aria-hidden>
+              handshake
+            </span>
+            Deals
+          </Link>
           <span
             className="px-4 py-2 text-sm font-bold text-unibox-primary bg-white dark:bg-slate-700 shadow-sm rounded-full transition-all flex items-center gap-2"
             aria-current="page"

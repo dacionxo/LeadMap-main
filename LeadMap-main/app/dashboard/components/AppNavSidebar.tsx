@@ -80,7 +80,7 @@ export default function AppNavSidebar() {
 
   return (
     <nav
-      className="w-64 flex flex-col shrink-0 py-4 px-3 bg-[#FEFEFE] dark:bg-[#0f172a] border border-[#E8EAF3] dark:border-slate-600/80 rounded-l-[24px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_12px_24px_rgba(16,24,40,0.06)] relative z-20 font-display overflow-hidden"
+      className="w-64 flex flex-col shrink-0 py-4 px-3 bg-[#F5F5F7] dark:bg-[#0f172a] border border-[#E8EAF3] dark:border-slate-600/80 rounded-l-[24px] shadow-[0_1px_2px_rgba(16,24,40,0.06),0_12px_24px_rgba(16,24,40,0.06)] relative z-20 font-display overflow-hidden"
       aria-label="Prospect navigation"
     >
       {NAV_SECTIONS.map((section) => (

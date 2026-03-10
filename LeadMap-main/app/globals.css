@@ -1066,12 +1066,7 @@
 
 /* Deals Pipeline - Dashboard-aligned CRM design */
 .bg-mesh {
-  background-color: #FEFEFE;
-  background-image:
-    radial-gradient(at 80% 0%, hsla(220, 100%, 96%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(210, 100%, 97%, 1) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(230, 100%, 98%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(220, 100%, 98%, 1) 0px, transparent 50%);
+  background-color: #F5F5F7;
 }
 
 /* Calendar Week View - full 24h (12am–11:59pm), 24 rows × 60px = 1440px */

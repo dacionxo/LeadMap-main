@@ -160,7 +160,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col border-r border-[#e5e5e5] bg-white dark:bg-dark shadow-sm transition-[width] duration-200 ease-in group ${
+      className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col border-r border-[#e5e5e5] bg-[#F5F5F7] dark:bg-dark shadow-sm transition-[width] duration-200 ease-in group ${
         isOpen
           ? "w-[270px]"
           : "w-[75px] xl:hover:w-[270px] overflow-hidden xl:hover:overflow-visible"

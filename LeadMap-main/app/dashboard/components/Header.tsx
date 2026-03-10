@@ -184,7 +184,7 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
               <Search />
             </div>
 
-            {/* Desktop: Apps, Calendar, Campaigns, Unibox (centered) - compact pill container */}
+            {/* Desktop: Apps, Calendar, Deals, Unibox (centered) - compact pill container */}
             <div className="xl:!flex !hidden items-center justify-center gap-1 p-1 bg-slate-100/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-600 rounded-full shadow-sm flex-1 max-w-fit mx-auto relative">
               <AppLinks />
               <Link
@@ -197,7 +197,16 @@ export default function Header({ scrollContainerRef }: HeaderProps) {
                 />
                 <span className="text-sm font-medium">Calendar</span>
               </Link>
-              {/* TEMP HIDDEN: Email Campaigns - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
+              <Link
+                href="/dashboard/crm/deals"
+                className="flex items-center gap-2 px-5 py-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
+              >
+                <Icon
+                  icon="material-symbols:handshake"
+                  className="text-[18px] group-hover:text-primary transition-colors"
+                />
+                <span className="text-sm font-medium">Deals</span>
+              </Link>
               <Link
                 href="/dashboard/unibox"
                 className="flex items-center gap-2 px-5 py-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"

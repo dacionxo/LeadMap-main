@@ -62,7 +62,13 @@ export default function CalendarNavbar() {
           </span>
           Calendar
         </Link>
-        {/* TEMP HIDDEN: Email Campaigns - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
+        <Link
+          href="/dashboard/crm/deals"
+          className="flex items-center gap-2 px-4 py-1.5 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 rounded-full text-sm font-medium transition-colors"
+        >
+          <span className="material-symbols-outlined text-lg">handshake</span>
+          Deals
+        </Link>
         <Link
           href="/dashboard/unibox"
           className="flex items-center gap-2 px-4 py-1.5 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 rounded-full text-sm font-medium transition-colors"

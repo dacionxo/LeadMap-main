@@ -78,7 +78,16 @@ export default function DealsNavbar() {
           />
           <span className="text-sm font-medium">Calendar</span>
         </Link>
-        {/* TEMP HIDDEN: Email Campaigns - see REINCORPORATE_EMAIL_CAMPAIGNS.md */}
+        <Link
+          href="/dashboard/crm/deals"
+          className="flex items-center gap-2 px-5 py-[5.4px] rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
+        >
+          <Icon
+            icon="material-symbols:handshake"
+            className="text-[18px] group-hover:text-primary transition-colors"
+          />
+          <span className="text-sm font-medium">Deals</span>
+        </Link>
         <Link
           href="/dashboard/unibox"
           className="flex items-center gap-2 px-5 py-[5.4px] rounded-full text-[#64748B] dark:text-slate-400 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/50 transition-all duration-200 group border border-transparent"
