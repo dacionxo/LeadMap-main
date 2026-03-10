@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * ProspectHoverTable Component
@@ -9,151 +9,167 @@
  * Actions.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Checkbox } from "@/app/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/app/components/ui/dropdown-menu'
-import { Checkbox } from '@/app/components/ui/checkbox'
-import { MoreVertical, Mail, Phone, Bookmark, BookmarkCheck, X, Pin } from 'lucide-react'
-import TailwindAdminPagination from './TailwindAdminPagination'
-import { logToServer } from '@/lib/client-log'
-import { cn } from '@/app/lib/utils'
+} from "@/app/components/ui/dropdown-menu";
+import { cn } from "@/app/lib/utils";
+import { logToServer } from "@/lib/client-log";
+import {
+  Bookmark,
+  BookmarkCheck,
+  Mail,
+  MoreVertical,
+  Phone,
+  Pin,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import TailwindAdminPagination from "./TailwindAdminPagination";
 
 // ============================================================================
 // Type Definitions (PRESERVED FROM ProspectCheckboxTable)
 // ============================================================================
 
 interface Listing {
-  listing_id: string
-  property_url?: string | null
-  street?: string | null
-  city?: string | null
-  state?: string | null
-  zip_code?: string | null
-  list_price?: number | null
-  beds?: number | null
-  full_baths?: number | null
-  bathrooms?: string | null
-  sqft?: number | null
-  status?: string | null
-  agent_name?: string | null
-  agent_email?: string | null
-  agent_phone?: string | null
-  agent_phone_2?: string | null
-  listing_agent_phone_2?: string | null
-  listing_agent_phone_5?: string | null
-  text?: string | null
-  other?: any
-  year_built?: number | null
-  last_sale_price?: number | null
-  last_sale_date?: string | null
-  ai_investment_score?: number | null
-  created_at?: string
-  lat?: number | null
-  lng?: number | null
-  active?: boolean
-  price_per_sqft?: number | null
-  in_crm?: boolean
+  listing_id: string;
+  property_url?: string | null;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+  list_price?: number | null;
+  beds?: number | null;
+  full_baths?: number | null;
+  bathrooms?: string | null;
+  sqft?: number | null;
+  status?: string | null;
+  agent_name?: string | null;
+  agent_email?: string | null;
+  agent_phone?: string | null;
+  agent_phone_2?: string | null;
+  listing_agent_phone_2?: string | null;
+  listing_agent_phone_5?: string | null;
+  text?: string | null;
+  other?: any;
+  year_built?: number | null;
+  last_sale_price?: number | null;
+  last_sale_date?: string | null;
+  ai_investment_score?: number | null;
+  created_at?: string;
+  lat?: number | null;
+  lng?: number | null;
+  active?: boolean;
+  price_per_sqft?: number | null;
+  in_crm?: boolean;
 }
 
 interface TableFilters {
-  search?: string
-  city?: string
-  state?: string
-  minPrice?: string
-  maxPrice?: string
-  status?: string
+  search?: string;
+  city?: string;
+  state?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  status?: string;
 }
 
 interface PaginationControls {
-  currentPage: number
-  pageSize: number
-  onPageChange: (page: number) => void
-  onPageSizeChange: (size: number) => void
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 interface PaginationStats {
-  totalCount: number
-  totalPages: number
-  currentPage: number
-  pageSize: number
-  loading: boolean
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  loading: boolean;
 }
 
 interface ProspectHoverTableProps {
-  tableName?: string
-  listings?: Listing[]
-  columns?: string[]
-  filters?: TableFilters
-  sortBy?: string
-  sortOrder?: 'asc' | 'desc'
-  onListingClick?: (listing: Listing) => void
-  isDark?: boolean
-  selectedIds?: Set<string>
-  onSelect?: (listingId: string, selected: boolean) => void
-  crmContactIds?: Set<string>
-  onSave?: (listing: Listing, saved: boolean) => void
-  onAction?: (action: string, listing: Listing) => void
-  pagination?: PaginationControls
-  onStatsChange?: (stats: PaginationStats) => void
-  showSummary?: boolean
-  showPagination?: boolean
-  category?: string
+  tableName?: string;
+  listings?: Listing[];
+  columns?: string[];
+  filters?: TableFilters;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  onListingClick?: (listing: Listing) => void;
+  isDark?: boolean;
+  selectedIds?: Set<string>;
+  onSelect?: (listingId: string, selected: boolean) => void;
+  crmContactIds?: Set<string>;
+  onSave?: (listing: Listing, saved: boolean) => void;
+  onAction?: (action: string, listing: Listing) => void;
+  pagination?: PaginationControls;
+  onStatsChange?: (stats: PaginationStats) => void;
+  showSummary?: boolean;
+  showPagination?: boolean;
+  category?: string;
   /** Clear a single filter by key (e.g. 'city', 'minPrice'). Enables pinned filters bar. */
-  onClearFilter?: (key: keyof TableFilters) => void
+  onClearFilter?: (key: keyof TableFilters) => void;
   /** Clear all filters. Shown as "Clear all" in pinned filters bar when provided. */
-  onClearAllFilters?: () => void
+  onClearAllFilters?: () => void;
 }
 
 const VALID_TABLE_NAMES = [
-  'listings',
-  'expired_listings',
-  'fsbo_leads',
-  'frbo_leads',
-  'imports',
-  'trash',
-  'foreclosure_listings',
-  'probate_leads'
-] as const
+  "listings",
+  "expired_listings",
+  "fsbo_leads",
+  "frbo_leads",
+  "imports",
+  "trash",
+  "foreclosure_listings",
+  "probate_leads",
+] as const;
 
 const DEFAULT_COLUMNS = [
-  'address',
-  'price',
-  'status',
-  'score',
-  'beds',
-  'full_baths',
-  'sqft',
-  'description',
-  'agent_name',
-  'agent_email',
-  'agent_phone',
-  'agent_phone_2',
-  'listing_agent_phone_2',
-  'listing_agent_phone_5',
-  'year_built',
-  'last_sale_price',
-  'last_sale_date',
-  'actions'
-]
+  "address",
+  "price",
+  "status",
+  "score",
+  "beds",
+  "full_baths",
+  "sqft",
+  "description",
+  "agent_name",
+  "agent_email",
+  "agent_phone",
+  "agent_phone_2",
+  "listing_agent_phone_2",
+  "listing_agent_phone_5",
+  "year_built",
+  "last_sale_price",
+  "last_sale_date",
+  "actions",
+];
 
 function isValidTableName(tableName: string): boolean {
-  return VALID_TABLE_NAMES.includes(tableName as any)
+  return VALID_TABLE_NAMES.includes(tableName as any);
 }
 
 /** Log ProspectHoverTable load failures; sends to Vercel logs via /api/internal/log */
 function logProspectHoverTableFailure(
   source: string,
-  operation: 'fetch' | 'config',
-  details: { tableName?: string; category?: string; page?: number; error?: unknown }
+  operation: "fetch" | "config",
+  details: {
+    tableName?: string;
+    category?: string;
+    page?: number;
+    error?: unknown;
+  }
 ) {
-  const msg = details.error instanceof Error ? details.error.message : String(details.error ?? 'Unknown')
+  const msg =
+    details.error instanceof Error
+      ? details.error.message
+      : String(details.error ?? "Unknown");
   logToServer({
     source,
-    level: 'warn',
+    level: "warn",
     message: `Load fail: ${operation}`,
     data: {
       operation,
@@ -163,84 +179,113 @@ function logProspectHoverTableFailure(
       error: msg,
       timestamp: new Date().toISOString(),
     },
-  })
+  });
 }
 
-function getStatusLabel(listing: Listing, tableName?: string, category?: string): string {
+function getStatusLabel(
+  listing: Listing,
+  tableName?: string,
+  category?: string
+): string {
   // Map FilterType category to table names for "all prospects" view
   const categoryToTable: Record<string, string> = {
-    'fsbo': 'fsbo_leads',
-    'frbo': 'frbo_leads',
-    'foreclosure': 'foreclosure_listings',
-    'imports': 'imports',
-  }
-  
+    fsbo: "fsbo_leads",
+    frbo: "frbo_leads",
+    foreclosure: "foreclosure_listings",
+    imports: "imports",
+  };
+
   // Use category to infer table name when tableName is undefined (e.g., "all prospects" view)
-  const effectiveTableName = tableName || (category ? categoryToTable[category] : undefined)
-  
+  const effectiveTableName =
+    tableName || (category ? categoryToTable[category] : undefined);
+
   // Normalize status based on primary source table/category first so that
   // FSBO/FRBO/Foreclosure/Imports always show the desired labels, even if the
   // raw backend status is different (e.g. "FSBO", "FRBO", etc.).
   switch (effectiveTableName) {
-    case 'fsbo_leads':
-      return 'For Sale'
-    case 'frbo_leads':
-      return 'For Rent'
-    case 'foreclosure_listings':
-      return 'Foreclosure'
-    case 'imports':
-      return 'Imported'
+    case "fsbo_leads":
+      return "For Sale";
+    case "frbo_leads":
+      return "For Rent";
+    case "foreclosure_listings":
+      return "Foreclosure";
+    case "imports":
+      return "Imported";
   }
 
   // Check listing.status for category indicators (for "all prospects" view)
   if (listing.status) {
-    const statusLower = listing.status.toLowerCase()
-    if (statusLower.includes('fsbo') || statusLower.includes('for sale')) return 'For Sale'
-    if (statusLower.includes('frbo') || statusLower.includes('for rent')) return 'For Rent'
-    if (statusLower.includes('foreclosure')) return 'Foreclosure'
-    if (statusLower.includes('imported') || statusLower.includes('import')) return 'Imported'
+    const statusLower = listing.status.toLowerCase();
+    if (statusLower.includes("fsbo") || statusLower.includes("for sale"))
+      return "For Sale";
+    if (statusLower.includes("frbo") || statusLower.includes("for rent"))
+      return "For Rent";
+    if (statusLower.includes("foreclosure")) return "Foreclosure";
+    if (statusLower.includes("imported") || statusLower.includes("import"))
+      return "Imported";
   }
 
   // Otherwise fall back to explicit status from backend when present
   if (listing.status && listing.status.trim().length > 0) {
-    return listing.status
+    return listing.status;
   }
 
   // Generic fallback for other tables
-  return listing.active ? 'Active' : 'Foreclosure'
+  return listing.active ? "Active" : "Foreclosure";
 }
 
-function getStatusBadgeClasses(status: string, tableName?: string, category?: string): string {
+function getStatusBadgeClasses(
+  status: string,
+  tableName?: string,
+  category?: string
+): string {
   // Normalize status to lowercase for comparison
-  const normalizedStatus = status.toLowerCase()
-  
+  const normalizedStatus = status.toLowerCase();
+
   // Map FilterType category to table names for "all prospects" view
   const categoryToTable: Record<string, string> = {
-    'fsbo': 'fsbo_leads',
-    'frbo': 'frbo_leads',
-    'foreclosure': 'foreclosure_listings',
-    'imports': 'imports',
-  }
-  
+    fsbo: "fsbo_leads",
+    frbo: "frbo_leads",
+    foreclosure: "foreclosure_listings",
+    imports: "imports",
+  };
+
   // Use category to infer table name when tableName is undefined
-  const effectiveTableName = tableName || (category ? categoryToTable[category] : undefined)
-  
+  const effectiveTableName =
+    tableName || (category ? categoryToTable[category] : undefined);
+
   // Determine status based on label or table name
-  if (normalizedStatus.includes('for sale') || effectiveTableName === 'fsbo_leads' || category === 'fsbo') {
-    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800 whitespace-nowrap'
+  if (
+    normalizedStatus.includes("for sale") ||
+    effectiveTableName === "fsbo_leads" ||
+    category === "fsbo"
+  ) {
+    return "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800 whitespace-nowrap";
   }
-  if (normalizedStatus.includes('for rent') || effectiveTableName === 'frbo_leads' || category === 'frbo') {
-    return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800 whitespace-nowrap'
+  if (
+    normalizedStatus.includes("for rent") ||
+    effectiveTableName === "frbo_leads" ||
+    category === "frbo"
+  ) {
+    return "bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800 whitespace-nowrap";
   }
-  if (normalizedStatus.includes('foreclosure') || effectiveTableName === 'foreclosure_listings' || category === 'foreclosure') {
+  if (
+    normalizedStatus.includes("foreclosure") ||
+    effectiveTableName === "foreclosure_listings" ||
+    category === "foreclosure"
+  ) {
     // Foreclosure: green color
-    return 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800 whitespace-nowrap'
+    return "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800 whitespace-nowrap";
   }
-  if (normalizedStatus.includes('imported') || effectiveTableName === 'imports' || category === 'imports') {
-    return 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800 whitespace-nowrap'
+  if (
+    normalizedStatus.includes("imported") ||
+    effectiveTableName === "imports" ||
+    category === "imports"
+  ) {
+    return "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800 whitespace-nowrap";
   }
   // Default: emerald for active/generic status
-  return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 whitespace-nowrap'
+  return "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 whitespace-nowrap";
 }
 
 // ============================================================================
@@ -252,8 +297,8 @@ export default function ProspectHoverTable({
   listings: providedListings,
   columns: providedColumns,
   filters = {},
-  sortBy = 'created_at',
-  sortOrder = 'desc',
+  sortBy = "created_at",
+  sortOrder = "desc",
   onListingClick,
   isDark = false,
   selectedIds = new Set(),
@@ -267,329 +312,401 @@ export default function ProspectHoverTable({
   showPagination = true,
   category,
   onClearFilter,
-  onClearAllFilters
+  onClearAllFilters,
 }: ProspectHoverTableProps) {
-  const columns = providedColumns || [...DEFAULT_COLUMNS]
+  const columns = providedColumns || [...DEFAULT_COLUMNS];
   const headerTitle = category
     ? `${category.charAt(0).toUpperCase()}${category.slice(1)} Prospects`
-    : 'Prospects'
-  
-  const [listings, setListings] = useState<Listing[]>([])
-  const [loading, setLoading] = useState(true)
-  const [totalCount, setTotalCount] = useState(0)
-  const [internalCurrentPage, setInternalCurrentPage] = useState(1)
-  const [internalPageSize, setInternalPageSize] = useState(30)
+    : "Prospects";
 
-  const currentPage = pagination?.currentPage ?? internalCurrentPage
-  const pageSize = pagination?.pageSize ?? internalPageSize
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+  const [internalPageSize, setInternalPageSize] = useState(30);
 
-  const showSelectionColumn = Boolean(onSelect)
-  const getListingKey = (listing: Listing) => listing.listing_id || listing.property_url || ''
-  const listingKeysOnPage = Array.from(new Set(listings.map(getListingKey))).filter(Boolean) as string[]
-  const hasPageListings = listingKeysOnPage.length > 0
+  const currentPage = pagination?.currentPage ?? internalCurrentPage;
+  const pageSize = pagination?.pageSize ?? internalPageSize;
+
+  const showSelectionColumn = Boolean(onSelect);
+  const getListingKey = (listing: Listing) =>
+    listing.listing_id || listing.property_url || "";
+  const listingKeysOnPage = Array.from(
+    new Set(listings.map(getListingKey))
+  ).filter(Boolean) as string[];
+  const hasPageListings = listingKeysOnPage.length > 0;
   const allPageSelected =
     showSelectionColumn &&
     hasPageListings &&
-    listingKeysOnPage.every((key) => selectedIds.has(key))
+    listingKeysOnPage.every((key) => selectedIds.has(key));
   const somePageSelected =
     showSelectionColumn &&
     hasPageListings &&
     listingKeysOnPage.some((key) => selectedIds.has(key)) &&
-    !allPageSelected
+    !allPageSelected;
 
   const handleSelectAll = () => {
-    if (!showSelectionColumn || !onSelect || !hasPageListings) return
+    if (!showSelectionColumn || !onSelect || !hasPageListings) return;
     listingKeysOnPage.forEach((key) => {
-      onSelect(key, !allPageSelected)
-    })
-  }
+      onSelect(key, !allPageSelected);
+    });
+  };
 
   const handleRowSelectionChange = (listing: Listing) => {
-    if (!showSelectionColumn || !onSelect) return
-    const key = getListingKey(listing)
-    if (!key) return
-    const alreadySelected = selectedIds.has(key)
-    onSelect(key, !alreadySelected)
-  }
+    if (!showSelectionColumn || !onSelect) return;
+    const key = getListingKey(listing);
+    if (!key) return;
+    const alreadySelected = selectedIds.has(key);
+    onSelect(key, !alreadySelected);
+  };
 
   const isRowSelected = (listing: Listing) => {
-    const key = getListingKey(listing)
-    return Boolean(key && selectedIds.has(key))
-  }
+    const key = getListingKey(listing);
+    return Boolean(key && selectedIds.has(key));
+  };
 
   // Fetch listings - PRESERVED API ROUTES (/api/listings/paginated)
-  const fetchListings = useCallback(async (page: number) => {
-    if (providedListings !== undefined) {
-      let filtered = [...providedListings]
-      
-      if (filters.search) {
-        const query = filters.search.toLowerCase()
-        filtered = filtered.filter(listing => {
-          const address = `${listing.street || ''} ${listing.city || ''} ${listing.state || ''}`.toLowerCase()
-          const agentName = (listing.agent_name || '').toLowerCase()
-          const agentEmail = (listing.agent_email || '').toLowerCase()
-          const listingId = (listing.listing_id || '').toLowerCase()
-          return address.includes(query) || agentName.includes(query) || agentEmail.includes(query) || listingId.includes(query)
-        })
-      }
-      
-      if (filters.city) {
-        filtered = filtered.filter(l => l.city?.toLowerCase() === filters.city?.toLowerCase())
-      }
-      
-      if (filters.state) {
-        filtered = filtered.filter(l => l.state?.toLowerCase() === filters.state?.toLowerCase())
-      }
-      
-      if (filters.minPrice) {
-        const min = parseInt(filters.minPrice)
-        filtered = filtered.filter(l => l.list_price && l.list_price >= min)
-      }
-      
-      if (filters.maxPrice) {
-        const max = parseInt(filters.maxPrice)
-        filtered = filtered.filter(l => l.list_price && l.list_price <= max)
-      }
-      
-      if (filters.status) {
-        filtered = filtered.filter(l => l.status?.toLowerCase().includes(filters.status?.toLowerCase() || ''))
-      }
-      
-      filtered.sort((a, b) => {
-        let aVal: any, bVal: any
-        
-        switch (sortBy) {
-          case 'price':
-          case 'list_price':
-            aVal = a.list_price || 0
-            bVal = b.list_price || 0
-            break
-          case 'date':
-          case 'created_at':
-            aVal = new Date(a.created_at || 0).getTime()
-            bVal = new Date(b.created_at || 0).getTime()
-            break
-          case 'score':
-          case 'ai_investment_score':
-            aVal = a.ai_investment_score || 0
-            bVal = b.ai_investment_score || 0
-            break
-          default:
-            aVal = new Date(a.created_at || 0).getTime()
-            bVal = new Date(b.created_at || 0).getTime()
+  const fetchListings = useCallback(
+    async (page: number) => {
+      if (providedListings !== undefined) {
+        let filtered = [...providedListings];
+
+        if (filters.search) {
+          const query = filters.search.toLowerCase();
+          filtered = filtered.filter((listing) => {
+            const address =
+              `${listing.street || ""} ${listing.city || ""} ${listing.state || ""}`.toLowerCase();
+            const agentName = (listing.agent_name || "").toLowerCase();
+            const agentEmail = (listing.agent_email || "").toLowerCase();
+            const listingId = (listing.listing_id || "").toLowerCase();
+            return (
+              address.includes(query) ||
+              agentName.includes(query) ||
+              agentEmail.includes(query) ||
+              listingId.includes(query)
+            );
+          });
         }
-        
-        if (sortOrder === 'asc') {
-          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
-        } else {
-          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
+
+        if (filters.city) {
+          filtered = filtered.filter(
+            (l) => l.city?.toLowerCase() === filters.city?.toLowerCase()
+          );
         }
-      })
-      
-      const start = (page - 1) * pageSize
-      const end = start + pageSize
-      const paginated = filtered.slice(start, end)
-      
-      setListings(paginated)
-      setTotalCount(filtered.length)
-      setLoading(false)
-      return
-    }
-    
-    if (!tableName || !isValidTableName(tableName)) {
-      logProspectHoverTableFailure('ProspectHoverTable', 'config', {
-        tableName: tableName ?? undefined,
-        category,
-        error: !tableName ? 'No tableName provided' : `Invalid tableName: ${tableName}`,
-      })
-      setLoading(false)
-      setListings([])
-      setTotalCount(0)
-      return
-    }
-    
-    try {
-      setLoading(true)
-      
-      // PRESERVED API ROUTE: /api/listings/paginated
-      const params = new URLSearchParams({
-        table: tableName,
-        page: page.toString(),
-        pageSize: pageSize.toString(),
-        sortBy,
-        sortOrder
-      })
-      
-      if (filters.search) params.append('search', filters.search)
-      if (filters.city) params.append('city', filters.city)
-      if (filters.state) params.append('state', filters.state)
-      if (filters.minPrice) params.append('minPrice', filters.minPrice)
-      if (filters.maxPrice) params.append('maxPrice', filters.maxPrice)
-      if (filters.status) params.append('status', filters.status)
-      
-      const response = await fetch(`/api/listings/paginated?${params.toString()}`)
-      
-      if (!response.ok) {
-        const err = new Error(`Failed to fetch listings: ${response.statusText}`)
-        logProspectHoverTableFailure('ProspectHoverTable', 'fetch', {
-          tableName,
-          category,
-          page,
-          error: err,
-        })
-        throw err
-      }
-      
-      const result = await response.json()
-      const { data, count, error } = result
-      
-      if (error) {
-        const err = new Error(typeof error === 'string' ? error : String(error))
-        logProspectHoverTableFailure('ProspectHoverTable', 'fetch', {
-          tableName,
-          category,
-          page,
-          error: err,
-        })
-        throw err
-      }
-      
-      const listingsWithOther = (data || []).map((listing: any) => {
-        let parsedOther = listing.other
-        if (listing.other && typeof listing.other === 'string') {
-          try {
-            parsedOther = JSON.parse(listing.other)
-          } catch (parseError) {
-            parsedOther = null
+
+        if (filters.state) {
+          filtered = filtered.filter(
+            (l) => l.state?.toLowerCase() === filters.state?.toLowerCase()
+          );
+        }
+
+        if (filters.minPrice) {
+          const min = parseInt(filters.minPrice);
+          filtered = filtered.filter(
+            (l) => l.list_price && l.list_price >= min
+          );
+        }
+
+        if (filters.maxPrice) {
+          const max = parseInt(filters.maxPrice);
+          filtered = filtered.filter(
+            (l) => l.list_price && l.list_price <= max
+          );
+        }
+
+        if (filters.status) {
+          filtered = filtered.filter((l) =>
+            l.status
+              ?.toLowerCase()
+              .includes(filters.status?.toLowerCase() || "")
+          );
+        }
+
+        filtered.sort((a, b) => {
+          let aVal: any, bVal: any;
+
+          switch (sortBy) {
+            case "price":
+            case "list_price":
+              aVal = a.list_price || 0;
+              bVal = b.list_price || 0;
+              break;
+            case "date":
+            case "created_at":
+              aVal = new Date(a.created_at || 0).getTime();
+              bVal = new Date(b.created_at || 0).getTime();
+              break;
+            case "score":
+            case "ai_investment_score":
+              aVal = a.ai_investment_score || 0;
+              bVal = b.ai_investment_score || 0;
+              break;
+            default:
+              aVal = new Date(a.created_at || 0).getTime();
+              bVal = new Date(b.created_at || 0).getTime();
           }
-        }
-        
-        return {
-          ...listing,
-          other: parsedOther
-        }
-      })
-      
-      setListings(listingsWithOther)
-      setTotalCount(count || 0)
-      
-      if (onStatsChange) {
-        onStatsChange({
-          totalCount: count || 0,
-          totalPages: Math.ceil((count || 0) / pageSize),
-          currentPage: page,
-          pageSize,
-          loading: false
-        })
+
+          if (sortOrder === "asc") {
+            return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+          } else {
+            return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+          }
+        });
+
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        const paginated = filtered.slice(start, end);
+
+        setListings(paginated);
+        setTotalCount(filtered.length);
+        setLoading(false);
+        return;
       }
-      
-    } catch (error: any) {
-      logProspectHoverTableFailure('ProspectHoverTable', 'fetch', {
-        tableName: tableName ?? undefined,
-        category,
-        page,
-        error,
-      })
-      console.error('Error fetching listings:', error)
-      setListings([])
-      setTotalCount(0)
-    } finally {
-      setLoading(false)
-    }
-  }, [providedListings, tableName, filters, sortBy, sortOrder, pageSize, onStatsChange])
+
+      if (!tableName || !isValidTableName(tableName)) {
+        logProspectHoverTableFailure("ProspectHoverTable", "config", {
+          tableName: tableName ?? undefined,
+          category,
+          error: !tableName
+            ? "No tableName provided"
+            : `Invalid tableName: ${tableName}`,
+        });
+        setLoading(false);
+        setListings([]);
+        setTotalCount(0);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // PRESERVED API ROUTE: /api/listings/paginated
+        const params = new URLSearchParams({
+          table: tableName,
+          page: page.toString(),
+          pageSize: pageSize.toString(),
+          sortBy,
+          sortOrder,
+        });
+
+        if (filters.search) params.append("search", filters.search);
+        if (filters.city) params.append("city", filters.city);
+        if (filters.state) params.append("state", filters.state);
+        if (filters.minPrice) params.append("minPrice", filters.minPrice);
+        if (filters.maxPrice) params.append("maxPrice", filters.maxPrice);
+        if (filters.status) params.append("status", filters.status);
+
+        const response = await fetch(
+          `/api/listings/paginated?${params.toString()}`
+        );
+
+        if (!response.ok) {
+          const err = new Error(
+            `Failed to fetch listings: ${response.statusText}`
+          );
+          logProspectHoverTableFailure("ProspectHoverTable", "fetch", {
+            tableName,
+            category,
+            page,
+            error: err,
+          });
+          throw err;
+        }
+
+        const result = await response.json();
+        const { data, count, error } = result;
+
+        if (error) {
+          const err = new Error(
+            typeof error === "string" ? error : String(error)
+          );
+          logProspectHoverTableFailure("ProspectHoverTable", "fetch", {
+            tableName,
+            category,
+            page,
+            error: err,
+          });
+          throw err;
+        }
+
+        const listingsWithOther = (data || []).map((listing: any) => {
+          let parsedOther = listing.other;
+          if (listing.other && typeof listing.other === "string") {
+            try {
+              parsedOther = JSON.parse(listing.other);
+            } catch (parseError) {
+              parsedOther = null;
+            }
+          }
+
+          return {
+            ...listing,
+            other: parsedOther,
+          };
+        });
+
+        setListings(listingsWithOther);
+        setTotalCount(count || 0);
+
+        if (onStatsChange) {
+          onStatsChange({
+            totalCount: count || 0,
+            totalPages: Math.ceil((count || 0) / pageSize),
+            currentPage: page,
+            pageSize,
+            loading: false,
+          });
+        }
+      } catch (error: any) {
+        logProspectHoverTableFailure("ProspectHoverTable", "fetch", {
+          tableName: tableName ?? undefined,
+          category,
+          page,
+          error,
+        });
+        console.error("Error fetching listings:", error);
+        setListings([]);
+        setTotalCount(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      providedListings,
+      tableName,
+      filters,
+      sortBy,
+      sortOrder,
+      pageSize,
+      onStatsChange,
+    ]
+  );
 
   useEffect(() => {
-    fetchListings(currentPage)
-  }, [fetchListings, currentPage])
+    fetchListings(currentPage);
+  }, [fetchListings, currentPage]);
 
-  const totalPages = Math.ceil(totalCount / pageSize)
-  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
-  const endItem = totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount)
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem =
+    totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount);
 
   const formatAddress = (listing: Listing) => {
-    const street = listing.street || 'N/A'
-    const cityStateZip = [listing.city, listing.state, listing.zip_code]
-      .filter(Boolean)
-      .join(', ') || ''
-    return { street, cityStateZip }
-  }
+    const street = listing.street || "N/A";
+    const cityStateZip =
+      [listing.city, listing.state, listing.zip_code]
+        .filter(Boolean)
+        .join(", ") || "";
+    return { street, cityStateZip };
+  };
 
   const formatPrice = (price: number | null | undefined) => {
-    if (!price) return '-'
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    if (!price) return "-";
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(price)
-  }
+    }).format(price);
+  };
 
   const formatBaths = (baths: number | string | null | undefined) => {
-    if (baths == null || baths === '') return '-'
-    return String(baths).trim()
-  }
+    if (baths == null || baths === "") return "-";
+    return String(baths).trim();
+  };
 
   const getBathsValue = (listing: Listing) =>
-    listing.bathrooms != null && listing.bathrooms !== ''
+    listing.bathrooms != null && listing.bathrooms !== ""
       ? listing.bathrooms
-      : listing.full_baths
+      : listing.full_baths;
 
   const getDescription = (listing: Listing) => {
-    if (listing.text) return listing.text
-    if (listing.other?.description) return listing.other.description
-    if (listing.other?.text) return listing.other.text
-    return '-'
-  }
+    if (listing.text) return listing.text;
+    if (listing.other?.description) return listing.other.description;
+    if (listing.other?.text) return listing.other.text;
+    return "-";
+  };
 
   if (loading && listings.length === 0) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="text-sm text-gray-500 dark:text-gray-400">Loading listings...</div>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          Loading listings...
+        </div>
       </div>
-    )
+    );
   }
 
-  const colSpan = columns.length + (showSelectionColumn ? 1 : 0)
+  const colSpan = columns.length + (showSelectionColumn ? 1 : 0);
 
   // Build pinned/active filter chips for the bar (only when clear callbacks provided)
-  const pinnedFilterChips: { label: string; value: string; clearKeys: (keyof TableFilters)[] }[] = (() => {
-    if (!onClearFilter && !onClearAllFilters) return []
-    const f = filters ?? {}
-    const entries: { label: string; value: string; clearKeys: (keyof TableFilters)[] }[] = []
+  const pinnedFilterChips: {
+    label: string;
+    value: string;
+    clearKeys: (keyof TableFilters)[];
+  }[] = (() => {
+    if (!onClearFilter && !onClearAllFilters) return [];
+    const f = filters ?? {};
+    const entries: {
+      label: string;
+      value: string;
+      clearKeys: (keyof TableFilters)[];
+    }[] = [];
     if (f.search && f.search.trim()) {
-      entries.push({ label: 'Search', value: f.search.trim(), clearKeys: ['search'] })
+      entries.push({
+        label: "Search",
+        value: f.search.trim(),
+        clearKeys: ["search"],
+      });
     }
     if (f.city && f.city.trim()) {
-      entries.push({ label: 'City', value: f.city.trim(), clearKeys: ['city'] })
+      entries.push({
+        label: "City",
+        value: f.city.trim(),
+        clearKeys: ["city"],
+      });
     }
     if (f.state && f.state.trim()) {
-      entries.push({ label: 'State', value: f.state.trim(), clearKeys: ['state'] })
-    }
-    const hasMin = f.minPrice != null && String(f.minPrice).trim() !== ''
-    const hasMax = f.maxPrice != null && String(f.maxPrice).trim() !== ''
-    if (hasMin || hasMax) {
-      const minStr = hasMin ? `$${Number(f.minPrice).toLocaleString()}` : 'Any'
-      const maxStr = hasMax ? `$${Number(f.maxPrice).toLocaleString()}` : 'Any'
       entries.push({
-        label: 'Price',
+        label: "State",
+        value: f.state.trim(),
+        clearKeys: ["state"],
+      });
+    }
+    const hasMin = f.minPrice != null && String(f.minPrice).trim() !== "";
+    const hasMax = f.maxPrice != null && String(f.maxPrice).trim() !== "";
+    if (hasMin || hasMax) {
+      const minStr = hasMin ? `$${Number(f.minPrice).toLocaleString()}` : "Any";
+      const maxStr = hasMax ? `$${Number(f.maxPrice).toLocaleString()}` : "Any";
+      entries.push({
+        label: "Price",
         value: `${minStr} – ${maxStr}`,
-        clearKeys: hasMin && hasMax ? ['minPrice', 'maxPrice'] : hasMin ? ['minPrice'] : ['maxPrice'],
-      })
+        clearKeys:
+          hasMin && hasMax
+            ? ["minPrice", "maxPrice"]
+            : hasMin
+              ? ["minPrice"]
+              : ["maxPrice"],
+      });
     }
     if (f.status && f.status.trim()) {
-      entries.push({ label: 'Status', value: f.status.trim(), clearKeys: ['status'] })
+      entries.push({
+        label: "Status",
+        value: f.status.trim(),
+        clearKeys: ["status"],
+      });
     }
-    return entries
-  })()
+    return entries;
+  })();
 
-  const hasPinnedFilters = pinnedFilterChips.length > 0
+  const hasPinnedFilters = pinnedFilterChips.length > 0;
 
   return (
     <div className="h-full flex flex-col bg-white/50 dark:bg-slate-900/50 overflow-hidden">
       {hasPinnedFilters && (onClearFilter || onClearAllFilters) && (
         <div className="flex-shrink-0 px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 flex items-center gap-2 flex-wrap">
           <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mr-1">
-            <Pin className="w-3.5 h-3.5" />
+            <Pin className="w-3.5 h-3.5 text-[var(--prospect-pin-color)]" />
             Active filters
           </span>
           {pinnedFilterChips.map((chip) => (
@@ -597,14 +714,16 @@ export default function ProspectHoverTable({
               key={chip.label + chip.value}
               className="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 pl-2.5 pr-1 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-sm"
             >
-              <span className="text-slate-500 dark:text-slate-400">{chip.label}:</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {chip.label}:
+              </span>
               <span>{chip.value}</span>
               {onClearFilter && (
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    chip.clearKeys.forEach((k) => onClearFilter(k))
+                    e.stopPropagation();
+                    chip.clearKeys.forEach((k) => onClearFilter(k));
                   }}
                   className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   aria-label={`Clear ${chip.label} filter`}
@@ -636,17 +755,17 @@ export default function ProspectHoverTable({
                     tabIndex={0}
                     onClick={handleSelectAll}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        handleSelectAll()
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectAll();
                       }
                     }}
                     aria-label={
                       somePageSelected
-                        ? 'Some listings selected. Toggle to select or clear all listings on this page'
+                        ? "Some listings selected. Toggle to select or clear all listings on this page"
                         : allPageSelected
-                        ? 'Deselect all listings on this page'
-                        : 'Select all listings on this page'
+                          ? "Deselect all listings on this page"
+                          : "Select all listings on this page"
                     }
                     className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
                   >
@@ -657,28 +776,56 @@ export default function ProspectHoverTable({
                   </div>
                 </th>
               )}
-              {columns.includes('address') && (
+              {columns.includes("address") && (
                 <th className="px-4 py-4 min-w-[260px] max-w-[360px]">
                   Address
                 </th>
               )}
-              {columns.includes('price') && <th className="px-4 py-4">Price</th>}
-              {columns.includes('status') && <th className="px-4 py-4 min-w-[100px]">Status</th>}
-              {columns.includes('score') && <th className="px-4 py-4">AI Score</th>}
-              {columns.includes('beds') && <th className="px-4 py-4">Beds</th>}
-              {columns.includes('full_baths') && <th className="px-4 py-4">Baths</th>}
-              {columns.includes('sqft') && <th className="px-4 py-4">Sqft</th>}
-              {columns.includes('description') && <th className="px-4 py-4">Description</th>}
-              {columns.includes('agent_name') && <th className="px-4 py-4">Agent Name</th>}
-              {columns.includes('agent_email') && <th className="px-4 py-4">Agent Email</th>}
-              {columns.includes('agent_phone') && <th className="px-4 py-4">Agent Phone</th>}
-              {columns.includes('agent_phone_2') && <th className="px-4 py-4">Agent Phone 2</th>}
-              {columns.includes('listing_agent_phone_2') && <th className="px-4 py-4">Agent Phone 3</th>}
-              {columns.includes('listing_agent_phone_5') && <th className="px-4 py-4">Agent Phone 4</th>}
-              {columns.includes('year_built') && <th className="px-4 py-4">Year Built</th>}
-              {columns.includes('last_sale_price') && <th className="px-4 py-4">Last Sale Price</th>}
-              {columns.includes('last_sale_date') && <th className="px-4 py-4">Last Sale Date</th>}
-              {columns.includes('actions') && <th className="px-4 py-4" />}
+              {columns.includes("price") && (
+                <th className="px-4 py-4">Price</th>
+              )}
+              {columns.includes("status") && (
+                <th className="px-4 py-4 min-w-[100px]">Status</th>
+              )}
+              {columns.includes("score") && (
+                <th className="px-4 py-4">AI Score</th>
+              )}
+              {columns.includes("beds") && <th className="px-4 py-4">Beds</th>}
+              {columns.includes("full_baths") && (
+                <th className="px-4 py-4">Baths</th>
+              )}
+              {columns.includes("sqft") && <th className="px-4 py-4">Sqft</th>}
+              {columns.includes("description") && (
+                <th className="px-4 py-4">Description</th>
+              )}
+              {columns.includes("agent_name") && (
+                <th className="px-4 py-4">Agent Name</th>
+              )}
+              {columns.includes("agent_email") && (
+                <th className="px-4 py-4">Agent Email</th>
+              )}
+              {columns.includes("agent_phone") && (
+                <th className="px-4 py-4">Agent Phone</th>
+              )}
+              {columns.includes("agent_phone_2") && (
+                <th className="px-4 py-4">Agent Phone 2</th>
+              )}
+              {columns.includes("listing_agent_phone_2") && (
+                <th className="px-4 py-4">Agent Phone 3</th>
+              )}
+              {columns.includes("listing_agent_phone_5") && (
+                <th className="px-4 py-4">Agent Phone 4</th>
+              )}
+              {columns.includes("year_built") && (
+                <th className="px-4 py-4">Year Built</th>
+              )}
+              {columns.includes("last_sale_price") && (
+                <th className="px-4 py-4">Last Sale Price</th>
+              )}
+              {columns.includes("last_sale_date") && (
+                <th className="px-4 py-4">Last Sale Date</th>
+              )}
+              {columns.includes("actions") && <th className="px-4 py-4" />}
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
@@ -693,10 +840,12 @@ export default function ProspectHoverTable({
               </tr>
             ) : (
               listings.map((listing) => {
-                const { street, cityStateZip } = formatAddress(listing)
+                const { street, cityStateZip } = formatAddress(listing);
                 const isSaved =
                   crmContactIds.has(listing.listing_id) ||
-                  (listing.property_url ? crmContactIds.has(listing.property_url) : false)
+                  (listing.property_url
+                    ? crmContactIds.has(listing.property_url)
+                    : false);
 
                 return (
                   <tr
@@ -711,14 +860,14 @@ export default function ProspectHoverTable({
                           tabIndex={0}
                           className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent hover:border-slate-300 focus:outline-none cursor-pointer"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            handleRowSelectionChange(listing)
+                            e.stopPropagation();
+                            handleRowSelectionChange(listing);
                           }}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              handleRowSelectionChange(listing)
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleRowSelectionChange(listing);
                             }
                           }}
                           aria-label={`Select listing ${listing.street || listing.listing_id}`}
@@ -730,11 +879,13 @@ export default function ProspectHoverTable({
                         </div>
                       </td>
                     )}
-                    {columns.includes('address') && (
+                    {columns.includes("address") && (
                       <td className="px-4 py-4 min-w-[260px] max-w-[360px]">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 text-slate-400 dark:text-slate-500">
-                            <span className="material-symbols-outlined text-[18px]">location_on</span>
+                            <span className="material-symbols-outlined text-[18px]">
+                              location_on
+                            </span>
                           </div>
                           <div className="min-w-0">
                             <div className="font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap truncate">
@@ -747,19 +898,21 @@ export default function ProspectHoverTable({
                         </div>
                       </td>
                     )}
-                    {columns.includes('price') && (
+                    {columns.includes("price") && (
                       <td className="px-4 py-4 font-semibold text-slate-700 dark:text-slate-300">
                         {formatPrice(listing.list_price)}
                       </td>
                     )}
-                    {columns.includes('status') && (
+                    {columns.includes("status") && (
                       <td className="px-4 py-4 min-w-[100px]">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, tableName, category), tableName, category)}`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(getStatusLabel(listing, tableName, category), tableName, category)}`}
+                        >
                           {getStatusLabel(listing, tableName, category)}
                         </span>
                       </td>
                     )}
-                    {columns.includes('score') && (
+                    {columns.includes("score") && (
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           {listing.ai_investment_score != null ? (
@@ -767,77 +920,95 @@ export default function ProspectHoverTable({
                               {Math.round(listing.ai_investment_score)}
                             </div>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500 text-lg">-</span>
+                            <span className="text-slate-400 dark:text-slate-500 text-lg">
+                              -
+                            </span>
                           )}
                         </div>
                       </td>
                     )}
-                    {columns.includes('beds') && (
-                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.beds ?? '-'}</td>
-                    )}
-                    {columns.includes('full_baths') && (
-                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{formatBaths(getBathsValue(listing))}</td>
-                    )}
-                    {columns.includes('sqft') && (
+                    {columns.includes("beds") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
-                        {listing.sqft ? listing.sqft.toLocaleString() : '-'}
+                        {listing.beds ?? "-"}
                       </td>
                     )}
-                    {columns.includes('description') && (
-                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={getDescription(listing)}>
+                    {columns.includes("full_baths") && (
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
+                        {formatBaths(getBathsValue(listing))}
+                      </td>
+                    )}
+                    {columns.includes("sqft") && (
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
+                        {listing.sqft ? listing.sqft.toLocaleString() : "-"}
+                      </td>
+                    )}
+                    {columns.includes("description") && (
+                      <td
+                        className="px-4 py-4 text-slate-600 dark:text-slate-400 max-w-[200px] truncate"
+                        title={getDescription(listing)}
+                      >
                         {getDescription(listing)}
                       </td>
                     )}
-                    {columns.includes('agent_name') && (
+                    {columns.includes("agent_name") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.agent_name || '-'}
+                        {listing.agent_name || "-"}
                       </td>
                     )}
-                    {columns.includes('agent_email') && (
+                    {columns.includes("agent_email") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.agent_email || '-'}
+                        {listing.agent_email || "-"}
                       </td>
                     )}
-                    {columns.includes('agent_phone') && (
+                    {columns.includes("agent_phone") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.agent_phone || '-'}
+                        {listing.agent_phone || "-"}
                       </td>
                     )}
-                    {columns.includes('agent_phone_2') && (
+                    {columns.includes("agent_phone_2") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.agent_phone_2 || 'n/a'}
+                        {listing.agent_phone_2 || "n/a"}
                       </td>
                     )}
-                    {columns.includes('listing_agent_phone_2') && (
+                    {columns.includes("listing_agent_phone_2") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.listing_agent_phone_2 || 'n/a'}
+                        {listing.listing_agent_phone_2 || "n/a"}
                       </td>
                     )}
-                    {columns.includes('listing_agent_phone_5') && (
+                    {columns.includes("listing_agent_phone_5") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.listing_agent_phone_5 || 'n/a'}
+                        {listing.listing_agent_phone_5 || "n/a"}
                       </td>
                     )}
-                    {columns.includes('year_built') && (
-                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{listing.year_built ?? '-'}</td>
+                    {columns.includes("year_built") && (
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
+                        {listing.year_built ?? "-"}
+                      </td>
                     )}
-                    {columns.includes('last_sale_price') && (
+                    {columns.includes("last_sale_price") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 font-medium">
                         {formatPrice(listing.last_sale_price)}
                       </td>
                     )}
-                    {columns.includes('last_sale_date') && (
+                    {columns.includes("last_sale_date") && (
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {listing.last_sale_date ? new Date(listing.last_sale_date).toLocaleDateString() : '-'}
+                        {listing.last_sale_date
+                          ? new Date(
+                              listing.last_sale_date
+                            ).toLocaleDateString()
+                          : "-"}
                       </td>
                     )}
-                    {columns.includes('actions') && (
-                      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                    {columns.includes("actions") && (
+                      <td
+                        className="px-4 py-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex items-center gap-1">
                           {listing.agent_email && (
                             <button
                               type="button"
-                              onClick={() => onAction?.('email', listing)}
+                              onClick={() => onAction?.("email", listing)}
                               className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
                               title="Send Email"
                             >
@@ -847,7 +1018,7 @@ export default function ProspectHoverTable({
                           {listing.agent_phone && (
                             <button
                               type="button"
-                              onClick={() => onAction?.('call', listing)}
+                              onClick={() => onAction?.("call", listing)}
                               className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
                               title="Call"
                             >
@@ -859,12 +1030,20 @@ export default function ProspectHoverTable({
                               type="button"
                               onClick={() => onSave(listing, !isSaved)}
                               className={cn(
-                                'p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors',
-                                isSaved ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'
+                                "p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors",
+                                isSaved
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-slate-600 dark:text-slate-400"
                               )}
-                              title={isSaved ? 'Unsave prospect' : 'Save prospect'}
+                              title={
+                                isSaved ? "Unsave prospect" : "Save prospect"
+                              }
                             >
-                              {isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                              {isSaved ? (
+                                <BookmarkCheck className="h-4 w-4" />
+                              ) : (
+                                <Bookmark className="h-4 w-4" />
+                              )}
                             </button>
                           )}
                           <DropdownMenu>
@@ -878,7 +1057,9 @@ export default function ProspectHoverTable({
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => onListingClick?.(listing)}>
+                              <DropdownMenuItem
+                                onClick={() => onListingClick?.(listing)}
+                              >
                                 View Details
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -887,7 +1068,7 @@ export default function ProspectHoverTable({
                       </td>
                     )}
                   </tr>
-                )
+                );
               })
             )}
           </tbody>
@@ -899,10 +1080,12 @@ export default function ProspectHoverTable({
           totalPages={totalPages}
           pageSize={pageSize}
           totalItems={totalCount}
-          onPageChange={(page) => pagination?.onPageChange(page) ?? setInternalCurrentPage(page)}
+          onPageChange={(page) =>
+            pagination?.onPageChange(page) ?? setInternalCurrentPage(page)
+          }
           isDark={isDark}
         />
       )}
     </div>
-  )
+  );
 }

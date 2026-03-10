@@ -247,7 +247,7 @@ export default function DashboardOverviewModern({
       <div className="dashboard-welcome-card relative overflow-hidden rounded-[2rem] border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] p-10 sm:p-14 lg:p-16 transition-all duration-500">
         <div className="organic-wave" aria-hidden="true" />
         <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-blue-100/30 dark:bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute -left-20 -bottom-20 w-80 h-80 dashboard-glow-orb rounded-full blur-[80px] pointer-events-none" />
         <div className="relative z-10 flex flex-col items-start gap-10">
           <div className="space-y-6 max-w-3xl">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-[1.1]">

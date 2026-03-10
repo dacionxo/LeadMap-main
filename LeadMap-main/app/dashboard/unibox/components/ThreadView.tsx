@@ -157,7 +157,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
       <header className="h-20 flex items-center justify-between px-10 border-b border-[#F3F4F6] flex-shrink-0">
         <div className="flex items-center gap-4">
           {onArchive && !onPermanentDelete && (
-            <button type="button" onClick={() => onArchive?.()} className="text-slate-500 hover:text-[#0693ff] transition-colors" aria-label="Add to Archive" title="Add to Archive">
+            <button type="button" onClick={() => onArchive?.()} className="text-slate-500 hover:text-[#0071e3] transition-colors" aria-label="Add to Archive" title="Add to Archive">
               <span className="material-symbols-outlined" aria-hidden>archive</span>
             </button>
           )}
@@ -165,7 +165,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
             <button
               type="button"
               onClick={() => onStar?.()}
-              className={`transition-colors ${thread?.starred ? 'text-amber-500' : 'text-slate-500 hover:text-[#0693ff]'}`}
+              className={`transition-colors ${thread?.starred ? 'text-amber-500' : 'text-slate-500 hover:text-[#0071e3]'}`}
               aria-label="Add to Starred"
               title="Add to Starred"
             >
@@ -173,7 +173,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
             </button>
           )}
           {(onMoveToTrash || onPermanentDelete) && (
-            <button type="button" onClick={() => (onPermanentDelete ? onPermanentDelete() : onMoveToTrash?.())} className="text-slate-500 hover:text-[#0693ff] transition-colors" aria-label="Move to Recycling bin" title="Move to Recycling bin">
+            <button type="button" onClick={() => (onPermanentDelete ? onPermanentDelete() : onMoveToTrash?.())} className="text-slate-500 hover:text-[#0071e3] transition-colors" aria-label="Move to Recycling bin" title="Move to Recycling bin">
               <span className="material-symbols-outlined" aria-hidden>delete</span>
             </button>
           )}
@@ -384,7 +384,7 @@ export default function ThreadView({ thread, loading, folderFilter = 'inbox', se
             <h1 className="text-3xl font-semibold text-slate-900 pb-6 mb-6 border-b border-[#F3F4F6] tracking-tight">{thread.subject || '(No Subject)'}</h1>
             <div className="flex items-center justify-between pb-6 border-b border-[#F3F4F6]">
               <div className="flex items-center gap-4">
-                <div className="size-12 rounded-full bg-[#0693ff]/10 flex items-center justify-center text-[#0693ff] font-bold overflow-hidden">
+                <div className="size-12 rounded-full bg-[#0071e3]/10 flex items-center justify-center text-[#0071e3] font-bold overflow-hidden">
                   {getInitial(fromParticipant?.name ?? null, fromParticipant?.email ?? '')}
                 </div>
                 <div>

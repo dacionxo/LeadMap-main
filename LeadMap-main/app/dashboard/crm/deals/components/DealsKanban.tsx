@@ -386,7 +386,12 @@ function getDealSortValue(deal: Deal, sortBy: string): number | string {
     case "probability":
       return deal.probability ?? -1;
     case "value":
-      return deal.value ?? (deal as any).property_value ?? (deal as any).forecast_value ?? -1;
+      return (
+        deal.value ??
+        (deal as any).property_value ??
+        (deal as any).forecast_value ??
+        -1
+      );
     case "created_at":
     default:
       return deal.created_at || "";
@@ -752,6 +757,54 @@ export default function DealsKanban({
           );
           const avgValue = list.length > 0 ? totalValue / list.length : 0;
 
+          // Column header theming per stage (gradient background + dark text color)
+          let headerBgStyle: React.CSSProperties | undefined;
+          let headerTextColor: string | undefined;
+          switch (stageKey) {
+            case "new": // Lead
+              headerBgStyle = {
+                background: "linear-gradient(135deg, #ffffff 0%, #d6f3ff 100%)",
+              };
+              headerTextColor = "#0071e3";
+              break;
+            case "contacted":
+              headerBgStyle = {
+                background: "linear-gradient(135deg, #ffffff 0%, #b6a7ca 100%)",
+              };
+              headerTextColor = "#110b18";
+              break;
+            case "qualified":
+              headerBgStyle = {
+                background: "linear-gradient(135deg, #ffffff 0%, #d3f6ff 100%)",
+              };
+              headerTextColor = "#001116";
+              break;
+            case "proposal": // Proposed
+              headerBgStyle = {
+                background: "linear-gradient(135deg, #ffffff 0%, #f4c0b5 100%)",
+              };
+              headerTextColor = "#1e0502";
+              break;
+            case "negotiation":
+              headerBgStyle = {
+                background: "linear-gradient(135deg, #ffffff 0%, #ffedc1 100%)",
+              };
+              headerTextColor = "#130d00";
+              break;
+            case "closed_won":
+              headerBgStyle = {
+                background: "linear-gradient(135deg, #ffffff 0%, #d3fcca 100%)",
+              };
+              headerTextColor = "#041202";
+              break;
+            case "closed_lost":
+              headerBgStyle = {
+                background: "linear-gradient(135deg, #ffffff 0%, #ecefed 100%)",
+              };
+              headerTextColor = "#0a0b0b";
+              break;
+          }
+
           return (
             <div
               key={stageKey}
@@ -761,6 +814,7 @@ export default function DealsKanban({
             >
               <div
                 className={`${cfg.headerBg} rounded-[1.25rem] p-3 flex items-center justify-between mb-4 border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] backdrop-blur-sm shrink-0`}
+                style={headerBgStyle}
               >
                 <div className="flex items-center gap-3 w-full">
                   <div
@@ -771,11 +825,15 @@ export default function DealsKanban({
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-gray-800 font-bold text-sm leading-tight">
+                    <h3
+                      className="font-bold text-sm leading-tight"
+                      style={headerTextColor ? { color: headerTextColor } : undefined}
+                    >
                       {cfg.label}
                     </h3>
                     <p
                       className={`text-[10px] font-semibold ${cfg.headerCount}`}
+                      style={headerTextColor ? { color: headerTextColor } : undefined}
                     >
                       {list.length} deal{list.length !== 1 ? "s" : ""} •{" "}
                       {list.length > 0 ? `${fmtCurrency(avgValue)} avg` : "—"}

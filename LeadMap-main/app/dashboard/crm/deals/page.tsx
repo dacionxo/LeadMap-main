@@ -128,7 +128,7 @@ function DealsPageContent() {
   }, [])
 
   return (
-    <div className="-mt-[30px]">
+    <div className="-mt-[30px]" data-page="dashboard-deals">
       <div className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden">
         <DealsNavbar />
         <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
@@ -136,7 +136,7 @@ function DealsPageContent() {
             <AppNavSidebar />
             <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative">
             <div
-              className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+              className="absolute top-0 right-0 w-[500px] h-[500px] dashboard-glow-orb rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
               aria-hidden
             />
 
@@ -161,7 +161,7 @@ function DealsPageContent() {
                       setEditingDeal(null)
                       setIsEditModalOpen(true)
                     }}
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                    className="bg-[#0861c5] hover:bg-[#074fa0] text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-[#0861c5]/20 transition-colors flex items-center gap-2"
                   >
                     Add New Deal
                     <span className="material-symbols-outlined text-sm">arrow_forward</span>

@@ -36,7 +36,8 @@
 [data-settings="input-glass"]:focus,
 .settings-input-glass:focus {
   background: #ffffff;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  outline: 2px solid rgb(var(--dashboard-glow-rgb) / 0.35);
+  outline-offset: 0;
 }
 
 .dark [data-settings="input-glass"]:focus,

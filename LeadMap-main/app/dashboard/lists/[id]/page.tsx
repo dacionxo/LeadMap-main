@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { Manrope } from "next/font/google";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -8,10 +9,9 @@ import AppNavSidebar from "../../components/AppNavSidebar";
 import DashboardLayout from "../../components/DashboardLayout";
 import DealsNavbar from "../../crm/deals/components/DealsNavbar";
 import LeadDetailModal from "../../prospect-enrich/components/LeadDetailModal";
-import ImportListModal from "../components/ImportListModal";
-import AddRecordsModal from "../components/AddRecordsModal";
 import { exportListingsToCsv } from "../../prospect-enrich/utils/exportListings";
-import { Manrope } from "next/font/google";
+import AddRecordsModal from "../components/AddRecordsModal";
+import ImportListModal from "../components/ImportListModal";
 
 interface List {
   id: string;
@@ -59,7 +59,12 @@ function getCategoryLabel(listing: Listing): string {
   const s = String(source).toLowerCase();
   if (s === "fsbo_leads" || s === "fsbo") return "For Sale";
   if (s === "frbo_leads" || s === "frbo") return "For Rent";
-  if (s === "foreclosure_listings" || s === "foreclosure" || s === "foreclosures") return "Foreclosures";
+  if (
+    s === "foreclosure_listings" ||
+    s === "foreclosure" ||
+    s === "foreclosures"
+  )
+    return "Foreclosures";
   if (s === "imports" || s === "import" || s === "csv_import") return "Imports";
   return "Imports";
 }
@@ -456,7 +461,10 @@ function ListDetailContent() {
         return;
       }
       const filenamePrefix = (list?.name || "list").replace(/[^a-z0-9]/gi, "_");
-      exportListingsToCsv(rows as Parameters<typeof exportListingsToCsv>[0], filenamePrefix);
+      exportListingsToCsv(
+        rows as Parameters<typeof exportListingsToCsv>[0],
+        filenamePrefix
+      );
     } catch {
       alert("Failed to export");
     }
@@ -527,7 +535,7 @@ function ListDetailContent() {
             <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-col h-full min-h-0 overflow-hidden relative font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-100 selection:text-blue-700">
               {/* Decorative blue glow - matches deals page */}
               <div
-                className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+                className="absolute top-0 right-0 w-[500px] h-[500px] dashboard-glow-orb rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
                 aria-hidden
               />
 
@@ -623,18 +631,13 @@ function ListDetailContent() {
                   <div className="h-6 w-px bg-gray-200 dark:bg-gray-600 mx-2 shrink-0" />
                   <div className="flex items-center gap-2 shrink-0">
                     {list?.type === "properties" && (
-                      <div
-                        className="relative"
-                        ref={statusDropdownRef}
-                      >
+                      <div className="relative" ref={statusDropdownRef}>
                         <button
                           type="button"
-                          onClick={() =>
-                            setStatusDropdownOpen((open) => !open)
-                          }
+                          onClick={() => setStatusDropdownOpen((open) => !open)}
                           className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                           aria-label="Status filter"
-                          aria-expanded={statusDropdownOpen ? "true" : "false"}
+                          aria-expanded={statusDropdownOpen}
                           aria-haspopup="listbox"
                         >
                           Status:{" "}
@@ -669,7 +672,7 @@ function ListDetailContent() {
                                 key={value}
                                 type="button"
                                 role="option"
-                                aria-selected={statusFilter === value ? "true" : "false"}
+                                aria-selected={statusFilter === value}
                                 onClick={() => {
                                   setStatusFilter(value);
                                   setStatusDropdownOpen(false);
@@ -688,18 +691,13 @@ function ListDetailContent() {
                       </div>
                     )}
                     {list?.type === "properties" && (
-                      <div
-                        className="relative"
-                        ref={priceDropdownRef}
-                      >
+                      <div className="relative" ref={priceDropdownRef}>
                         <button
                           type="button"
-                          onClick={() =>
-                            setPriceDropdownOpen((open) => !open)
-                          }
+                          onClick={() => setPriceDropdownOpen((open) => !open)}
                           className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-sm rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                           aria-label="Price range filter"
-                          aria-expanded={priceDropdownOpen ? "true" : "false"}
+                          aria-expanded={priceDropdownOpen}
                           aria-haspopup="listbox"
                         >
                           Price:{" "}
@@ -723,21 +721,28 @@ function ListDetailContent() {
                             className="absolute left-0 top-full mt-1 min-w-[180px] py-1 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50"
                             role="listbox"
                           >
-                            {(
-                              [
-                                { value: "any" as const, label: "Any" },
-                                { value: "0-100" as const, label: "Under $100k" },
-                                { value: "100-250" as const, label: "$100k – $250k" },
-                                { value: "250-500" as const, label: "$250k – $500k" },
-                                { value: "500-1000" as const, label: "$500k – $1M" },
-                                { value: "1000+" as const, label: "$1M+" },
-                              ]
-                            ).map(({ value, label }) => (
+                            {[
+                              { value: "any" as const, label: "Any" },
+                              { value: "0-100" as const, label: "Under $100k" },
+                              {
+                                value: "100-250" as const,
+                                label: "$100k – $250k",
+                              },
+                              {
+                                value: "250-500" as const,
+                                label: "$250k – $500k",
+                              },
+                              {
+                                value: "500-1000" as const,
+                                label: "$500k – $1M",
+                              },
+                              { value: "1000+" as const, label: "$1M+" },
+                            ].map(({ value, label }) => (
                               <button
                                 key={value}
                                 type="button"
                                 role="option"
-                                aria-selected={priceRangeFilter === value ? "true" : "false"}
+                                aria-selected={priceRangeFilter === value}
                                 onClick={() => {
                                   setPriceRangeFilter(value);
                                   setPriceDropdownOpen(false);
@@ -889,7 +894,8 @@ function ListDetailContent() {
                               const isSelected =
                                 (selectedListing != null &&
                                   getListingId(selectedListing) === id) ||
-                                (modalListingId != null && id === modalListingId);
+                                (modalListingId != null &&
+                                  id === modalListingId);
 
                               // Prefer internal property identifier (listing_id), fall back to property_url
                               const prospectIdentifier =
@@ -937,7 +943,9 @@ function ListDetailContent() {
                                           className="text-[10px] font-semibold text-blue-600 hover:underline ml-5 mt-1 inline-flex items-center gap-0.5"
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            setModalListingId(String(prospectIdentifier));
+                                            setModalListingId(
+                                              String(prospectIdentifier)
+                                            );
                                           }}
                                         >
                                           View Property
@@ -1348,267 +1356,271 @@ function ListDetailContent() {
                         {/* Hero / photo header with carousel — 90% size, same ratios */}
                         <div className="relative h-[14.4rem] md:h-[16.2rem] w-full overflow-hidden">
                           <div className="absolute inset-0 w-[111.11%] h-[111.11%] scale-90 origin-top-left">
-                          <PropertyPhotoCarousel listing={selectedListing} />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          <div className="absolute top-4 left-4">
-                            <span className="px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-primary text-[10px] font-semibold uppercase tracking-[0.18em] rounded-xl shadow-lg">
-                              {getCategoryLabel(selectedListing)}
-                            </span>
-                          </div>
-                          <div className="absolute top-4 right-4 flex items-center gap-2">
-                            <button
-                              type="button"
-                              className="size-9 rounded-full bg-white/20 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white/40 transition-all hover:scale-110 shadow-xl"
-                              aria-label="Favorite property"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                            >
-                              <span className="material-symbols-outlined fill-1 text-[20px]">
-                                favorite
+                            <PropertyPhotoCarousel listing={selectedListing} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                            <div className="absolute top-4 left-4">
+                              <span className="px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-primary text-[10px] font-semibold uppercase tracking-[0.18em] rounded-xl shadow-lg">
+                                {getCategoryLabel(selectedListing)}
                               </span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedListing(null)}
-                              className="size-9 rounded-full bg-black/30 backdrop-blur-xl text-white flex items-center justify-center hover:bg-black/50 transition-all hover:scale-110 shadow-xl"
-                              aria-label="Close panel"
-                            >
-                              <span className="material-symbols-outlined text-[20px]">
-                                close
+                            </div>
+                            <div className="absolute top-4 right-4 flex items-center gap-2">
+                              <button
+                                type="button"
+                                className="size-9 rounded-full bg-white/20 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white/40 transition-all hover:scale-110 shadow-xl"
+                                aria-label="Favorite property"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                              >
+                                <span className="material-symbols-outlined fill-1 text-[20px]">
+                                  favorite
+                                </span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedListing(null)}
+                                className="size-9 rounded-full bg-black/30 backdrop-blur-xl text-white flex items-center justify-center hover:bg-black/50 transition-all hover:scale-110 shadow-xl"
+                                aria-label="Close panel"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">
+                                  close
+                                </span>
+                              </button>
+                            </div>
+                            <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
+                              <span className="px-3 py-1 bg-primary text-white text-[10px] font-semibold uppercase tracking-[0.18em] w-fit rounded-md">
+                                Available now
                               </span>
-                            </button>
-                          </div>
-                          <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
-                            <span className="px-3 py-1 bg-primary text-white text-[10px] font-semibold uppercase tracking-[0.18em] w-fit rounded-md">
-                              Available now
-                            </span>
-                            <h2 className="text-white text-2xl md:text-3xl font-semibold tracking-tight">
-                              {selectedListing.list_price != null
-                                ? `$${Number(selectedListing.list_price).toLocaleString()}`
-                                : "Price not available"}
-                            </h2>
-                          </div>
+                              <h2 className="text-white text-2xl md:text-3xl font-semibold tracking-tight">
+                                {selectedListing.list_price != null
+                                  ? `$${Number(selectedListing.list_price).toLocaleString()}`
+                                  : "Price not available"}
+                              </h2>
+                            </div>
                           </div>
                         </div>
 
                         {/* Content — scaled to 90% so section is 10% smaller with same ratios */}
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                           <div className="scale-90 origin-top w-full p-6 md:p-8 space-y-8">
-                          {/* Listing Agent: name, email, phone */}
-                          <div className="space-y-3">
-                            <p className="text-[12px] font-medium text-slate-400 uppercase tracking-[0.18em]">
-                              Agent Information
-                            </p>
-                            <div className="flex items-start gap-3">
-                              <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
-                                <span className="material-symbols-outlined text-primary text-3xl">
-                                  person
-                                </span>
-                              </div>
-                              <div className="min-w-0 space-y-1.5">
-                                <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                                  {selectedListing.agent_name || "—"}
-                                </p>
-                                {selectedListing.agent_email ? (
-                                  <a
-                                    href={`mailto:${selectedListing.agent_email}`}
-                                    className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary truncate"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      mail
-                                    </span>
-                                    <span className="truncate">
-                                      {selectedListing.agent_email}
-                                    </span>
-                                  </a>
-                                ) : (
-                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      mail
-                                    </span>
-                                    —
+                            {/* Listing Agent: name, email, phone */}
+                            <div className="space-y-3">
+                              <p className="text-[12px] font-medium text-slate-400 uppercase tracking-[0.18em]">
+                                Agent Information
+                              </p>
+                              <div className="flex items-start gap-3">
+                                <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
+                                  <span className="material-symbols-outlined text-primary text-3xl">
+                                    person
+                                  </span>
+                                </div>
+                                <div className="min-w-0 space-y-1.5">
+                                  <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                                    {selectedListing.agent_name || "—"}
                                   </p>
-                                )}
-                                {selectedListing.agent_phone ? (
-                                  <a
-                                    href={`tel:${selectedListing.agent_phone}`}
-                                    className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      call
-                                    </span>
-                                    {selectedListing.agent_phone}
-                                  </a>
-                                ) : (
-                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      call
-                                    </span>
-                                    —
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Owner Information — Current Residents (resident name, phone, previous addresses) */}
-                          <div className="space-y-3">
-                            <p className="text-[12px] font-medium text-slate-400 uppercase tracking-[0.18em]">
-                              Owner Information
-                            </p>
-                            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                              Current Residents
-                            </p>
-                            <div className="flex items-start gap-3">
-                              <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
-                                <span className="material-symbols-outlined text-primary text-3xl">
-                                  home_person
-                                </span>
-                              </div>
-                              <div className="min-w-0 space-y-1.5">
-                                <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                                  {((selectedListing as any).resident_name ??
-                                    [
-                                      selectedListing.first_name,
-                                      selectedListing.last_name,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(" ")
-                                      .trim()) || "—"}
-                                </p>
-                                {((selectedListing as any).resident_phone ??
-                                  selectedListing.phone) ? (
-                                  <a
-                                    href={`tel:${(selectedListing as any).resident_phone ?? selectedListing.phone ?? ""}`}
-                                    className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      call
-                                    </span>
-                                    {(selectedListing as any).resident_phone ??
-                                      selectedListing.phone}
-                                  </a>
-                                ) : (
-                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      call
-                                    </span>
-                                    —
-                                  </p>
-                                )}
-                                {(() => {
-                                  const prev =
-                                    (selectedListing as any).previous_addresses;
-                                  const hasPrev =
-                                    prev != null &&
-                                    prev !== "" &&
-                                    (Array.isArray(prev) ? prev.length > 0 : true);
-                                  return hasPrev ? (
-                                    <div className="flex items-start gap-1.5 text-sm text-slate-600 dark:text-slate-300">
-                                      <span className="material-symbols-outlined text-[16px] shrink-0 mt-0.5">
-                                        history_edu
+                                  {selectedListing.agent_email ? (
+                                    <a
+                                      href={`mailto:${selectedListing.agent_email}`}
+                                      className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary truncate"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px] shrink-0">
+                                        mail
                                       </span>
-                                      <span className="text-slate-600 dark:text-slate-300">
-                                        {Array.isArray(prev)
-                                          ? (prev as string[]).join("; ")
-                                          : String(prev)}
+                                      <span className="truncate">
+                                        {selectedListing.agent_email}
                                       </span>
-                                    </div>
+                                    </a>
                                   ) : (
-                                  <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
-                                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                                      history_edu
-                                    </span>
-                                    —
+                                    <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                      <span className="material-symbols-outlined text-[16px] shrink-0">
+                                        mail
+                                      </span>
+                                      —
+                                    </p>
+                                  )}
+                                  {selectedListing.agent_phone ? (
+                                    <a
+                                      href={`tel:${selectedListing.agent_phone}`}
+                                      className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px] shrink-0">
+                                        call
+                                      </span>
+                                      {selectedListing.agent_phone}
+                                    </a>
+                                  ) : (
+                                    <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                      <span className="material-symbols-outlined text-[16px] shrink-0">
+                                        call
+                                      </span>
+                                      —
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Owner Information — Current Residents (resident name, phone, previous addresses) */}
+                            <div className="space-y-3">
+                              <p className="text-[12px] font-medium text-slate-400 uppercase tracking-[0.18em]">
+                                Owner Information
+                              </p>
+                              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                Current Residents
+                              </p>
+                              <div className="flex items-start gap-3">
+                                <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
+                                  <span className="material-symbols-outlined text-primary text-3xl">
+                                    home_person
+                                  </span>
+                                </div>
+                                <div className="min-w-0 space-y-1.5">
+                                  <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                                    {((selectedListing as any).resident_name ??
+                                      [
+                                        selectedListing.first_name,
+                                        selectedListing.last_name,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(" ")
+                                        .trim()) ||
+                                      "—"}
                                   </p>
+                                  {((selectedListing as any).resident_phone ??
+                                  selectedListing.phone) ? (
+                                    <a
+                                      href={`tel:${(selectedListing as any).resident_phone ?? selectedListing.phone ?? ""}`}
+                                      className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-primary"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px] shrink-0">
+                                        call
+                                      </span>
+                                      {(selectedListing as any)
+                                        .resident_phone ??
+                                        selectedListing.phone}
+                                    </a>
+                                  ) : (
+                                    <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                      <span className="material-symbols-outlined text-[16px] shrink-0">
+                                        call
+                                      </span>
+                                      —
+                                    </p>
+                                  )}
+                                  {(() => {
+                                    const prev = (selectedListing as any)
+                                      .previous_addresses;
+                                    const hasPrev =
+                                      prev != null &&
+                                      prev !== "" &&
+                                      (Array.isArray(prev)
+                                        ? prev.length > 0
+                                        : true);
+                                    return hasPrev ? (
+                                      <div className="flex items-start gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+                                        <span className="material-symbols-outlined text-[16px] shrink-0 mt-0.5">
+                                          history_edu
+                                        </span>
+                                        <span className="text-slate-600 dark:text-slate-300">
+                                          {Array.isArray(prev)
+                                            ? (prev as string[]).join("; ")
+                                            : String(prev)}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <p className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                                        <span className="material-symbols-outlined text-[16px] shrink-0">
+                                          history_edu
+                                        </span>
+                                        —
+                                      </p>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Property details grid */}
+                            <div className="space-y-4">
+                              <p className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                                Property Details
+                              </p>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
+                                  <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
+                                    <span className="material-symbols-outlined text-primary text-2xl">
+                                      bed
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                      {selectedListing.beds ?? "—"}
+                                    </span>
+                                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
+                                      Bedrooms
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
+                                  <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
+                                    <span className="material-symbols-outlined text-primary text-2xl">
+                                      bathtub
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                      {selectedListing.full_baths ?? "—"}
+                                    </span>
+                                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
+                                      Bathrooms
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
+                                  <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
+                                    <span className="material-symbols-outlined text-primary text-2xl">
+                                      square_foot
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                      {selectedListing.sqft != null
+                                        ? Number(
+                                            selectedListing.sqft
+                                          ).toLocaleString()
+                                        : "—"}
+                                    </span>
+                                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
+                                      Total Sqft
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                              <button
+                                type="button"
+                                className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-primary text-white text-sm font-semibold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
+                                onClick={() => {
+                                  const identifier =
+                                    selectedListing.listing_id ||
+                                    (selectedListing as any).property_url;
+                                  if (!identifier) return;
+                                  router.push(
+                                    `/dashboard/map?listingId=${encodeURIComponent(
+                                      String(identifier)
+                                    )}`
                                   );
-                                })()}
-                              </div>
+                                }}
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  map
+                                </span>
+                                View On Map
+                              </button>
                             </div>
-                          </div>
-
-                          {/* Property details grid */}
-                          <div className="space-y-4">
-                            <p className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.18em]">
-                              Property Details
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
-                                  <span className="material-symbols-outlined text-primary text-2xl">
-                                    bed
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                    {selectedListing.beds ?? "—"}
-                                  </span>
-                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
-                                    Bedrooms
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
-                                  <span className="material-symbols-outlined text-primary text-2xl">
-                                    bathtub
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                    {selectedListing.full_baths ?? "—"}
-                                  </span>
-                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
-                                    Bathrooms
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-xl flex items-center gap-4 border border-gray-100 dark:border-gray-700/50">
-                                <div className="size-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
-                                  <span className="material-symbols-outlined text-primary text-2xl">
-                                    square_foot
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="block text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                    {selectedListing.sqft != null
-                                      ? Number(
-                                          selectedListing.sqft
-                                        ).toLocaleString()
-                                      : "—"}
-                                  </span>
-                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-tight">
-                                    Total Sqft
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                            <button
-                              type="button"
-                              className="flex-1 min-h-[52px] flex items-center justify-center gap-2 bg-primary text-white text-sm font-semibold py-3 px-5 rounded-2xl shadow-2xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all"
-                              onClick={() => {
-                                const identifier =
-                                  selectedListing.listing_id ||
-                                  (selectedListing as any).property_url;
-                                if (!identifier) return;
-                                router.push(
-                                  `/dashboard/map?listingId=${encodeURIComponent(
-                                    String(identifier)
-                                  )}`
-                                );
-                              }}
-                            >
-                              <span className="material-symbols-outlined text-[18px]">
-                                map
-                              </span>
-                              View On Map
-                            </button>
-                          </div>
                           </div>
                         </div>
                       </div>

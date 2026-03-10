@@ -101,7 +101,7 @@ export default function CalendarViewNew({ onEventClick, onDateSelect, calendarTy
       showing: '#f59e0b',
       content: '#9d2398',
       meeting: '#ec4899',
-      follow_up: '#9d2398',
+      follow_up: '#6366f1',
       other: '#6b7280',
     }
     return colors[eventType || 'other'] || colors.other

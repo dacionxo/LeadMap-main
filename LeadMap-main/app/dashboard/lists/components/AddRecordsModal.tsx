@@ -101,7 +101,7 @@ export default function AddRecordsModal({
         aria-hidden
       />
       <div
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] z-[10001] flex flex-col max-h-[90vh] overflow-hidden"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-[0_20px_50px_-12px_rgba(131,225,255,0.25)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] z-[10001] flex flex-col max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">

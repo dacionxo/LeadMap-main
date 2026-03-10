@@ -1,237 +1,251 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/app/components/ui/dropdown-menu'
+} from "@/app/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface List {
-  id: string
-  name: string
-  type?: 'people' | 'properties'
-  item_count?: number
-  created_at?: string
-  updated_at?: string
-  user_id?: string
+  id: string;
+  name: string;
+  type?: "people" | "properties";
+  item_count?: number;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
 }
 
 interface ListsTableProps {
-  lists: List[]
-  onRefresh: () => void
+  lists: List[];
+  onRefresh: () => void;
 }
 
 export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
-  const router = useRouter()
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [allSelected, setAllSelected] = useState(false)
+  const router = useRouter();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [allSelected, setAllSelected] = useState(false);
 
   const handleDelete = async (listId: string, listName: string) => {
-    if (!confirm(`Are you sure you want to delete "${listName}"? This action cannot be undone.`)) {
-      return
+    if (
+      !confirm(
+        `Are you sure you want to delete "${listName}"? This action cannot be undone.`
+      )
+    ) {
+      return;
     }
 
     try {
-      setDeletingId(listId)
+      setDeletingId(listId);
       const response = await fetch(`/api/lists/${listId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      })
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok) {
-        onRefresh()
+        onRefresh();
       } else {
-        alert(data.error || 'Failed to delete list')
+        alert(data.error || "Failed to delete list");
       }
     } catch (err) {
-      console.error('Error:', err)
-      alert('Failed to delete list')
+      console.error("Error:", err);
+      alert("Failed to delete list");
     } finally {
-      setDeletingId(null)
+      setDeletingId(null);
     }
-  }
+  };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Never'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
+    if (!dateString) return "Never";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
-  const handleExportCSV = async (listId: string, listName: string, list: List) => {
+  const handleExportCSV = async (
+    listId: string,
+    listName: string,
+    list: List
+  ) => {
     try {
       const response = await fetch(
         `/api/lists/${listId}/paginated?page=1&pageSize=1000`,
         {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
         }
-      )
+      );
 
       if (!response.ok) {
-        alert('Failed to fetch list items for export')
-        return
+        alert("Failed to fetch list items for export");
+        return;
       }
 
-      const data = await response.json()
-      const items = data.data || []
+      const data = await response.json();
+      const items = data.data || [];
 
       if (items.length === 0) {
-        alert('No items to export')
-        return
+        alert("No items to export");
+        return;
       }
 
-      const isPropertiesList = list.type === 'properties'
+      const isPropertiesList = list.type === "properties";
 
-      let headers: string[]
-      let rows: string[][]
+      let headers: string[];
+      let rows: string[][];
 
       if (isPropertiesList) {
         headers = [
-          'Listing ID',
-          'Address',
-          'City',
-          'State',
-          'Zip Code',
-          'Price',
-          'Beds',
-          'Baths',
-          'Sqft',
-          'Status',
-          'Agent Name',
-          'Agent Email',
-          'Agent Phone',
-          'Score',
-          'Year Built',
-          'Last Sale Price',
-          'Last Sale Date',
-          'Property URL',
-        ]
+          "Listing ID",
+          "Address",
+          "City",
+          "State",
+          "Zip Code",
+          "Price",
+          "Beds",
+          "Baths",
+          "Sqft",
+          "Status",
+          "Agent Name",
+          "Agent Email",
+          "Agent Phone",
+          "Score",
+          "Year Built",
+          "Last Sale Price",
+          "Last Sale Date",
+          "Property URL",
+        ];
         rows = items.map((item: Record<string, unknown>) => [
-          String(item.listing_id || ''),
-          String(item.street || ''),
-          String(item.city || ''),
-          String(item.state || ''),
-          String(item.zip_code || ''),
-          String(item.list_price ?? ''),
-          String(item.beds ?? ''),
-          String(item.full_baths ?? ''),
-          String(item.sqft ?? ''),
-          String(item.status || ''),
-          String(item.agent_name || ''),
-          String(item.agent_email || ''),
-          String(item.agent_phone || ''),
-          String(item.ai_investment_score ?? ''),
-          String(item.year_built ?? ''),
-          String(item.last_sale_price ?? ''),
-          String(item.last_sale_date || ''),
-          String(item.property_url || ''),
-        ])
+          String(item.listing_id || ""),
+          String(item.street || ""),
+          String(item.city || ""),
+          String(item.state || ""),
+          String(item.zip_code || ""),
+          String(item.list_price ?? ""),
+          String(item.beds ?? ""),
+          String(item.full_baths ?? ""),
+          String(item.sqft ?? ""),
+          String(item.status || ""),
+          String(item.agent_name || ""),
+          String(item.agent_email || ""),
+          String(item.agent_phone || ""),
+          String(item.ai_investment_score ?? ""),
+          String(item.year_built ?? ""),
+          String(item.last_sale_price ?? ""),
+          String(item.last_sale_date || ""),
+          String(item.property_url || ""),
+        ]);
       } else {
         headers = [
-          'Name',
-          'Email',
-          'Phone',
-          'Company',
-          'Job Title',
-          'Address',
-          'City',
-          'State',
-          'Zip Code',
-          'Source',
-        ]
+          "Name",
+          "Email",
+          "Phone",
+          "Company",
+          "Job Title",
+          "Address",
+          "City",
+          "State",
+          "Zip Code",
+          "Source",
+        ];
         rows = items.map((item: Record<string, unknown>) => [
-          `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
-            String(item.agent_name || ''),
-          String(item.email || item.agent_email || ''),
-          String(item.phone || item.agent_phone || ''),
-          String(item.company || ''),
-          String(item.job_title || ''),
-          String(item.address || item.street || ''),
-          String(item.city || ''),
-          String(item.state || ''),
-          String(item.zip_code || ''),
-          String(item.source || ''),
-        ])
+          `${item.first_name || ""} ${item.last_name || ""}`.trim() ||
+            String(item.agent_name || ""),
+          String(item.email || item.agent_email || ""),
+          String(item.phone || item.agent_phone || ""),
+          String(item.company || ""),
+          String(item.job_title || ""),
+          String(item.address || item.street || ""),
+          String(item.city || ""),
+          String(item.state || ""),
+          String(item.zip_code || ""),
+          String(item.source || ""),
+        ]);
       }
 
       const csvContent = [
-        headers.join(','),
+        headers.join(","),
         ...rows.map((row) =>
-          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
         ),
-      ].join('\n')
+      ].join("\n");
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${listName.replace(/[^a-z0-9]/gi, '_')}.csv`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${listName.replace(/[^a-z0-9]/gi, "_")}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error exporting CSV:', err)
-      alert('Failed to export list')
+      console.error("Error exporting CSV:", err);
+      alert("Failed to export list");
     }
-  }
+  };
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const handleToggleSelectAll = () => {
     if (allSelected) {
-      setSelectedIds(new Set())
-      setAllSelected(false)
+      setSelectedIds(new Set());
+      setAllSelected(false);
     } else {
-      setSelectedIds(new Set(lists.map((l) => l.id)))
-      setAllSelected(true)
+      setSelectedIds(new Set(lists.map((l) => l.id)));
+      setAllSelected(true);
     }
-  }
+  };
 
   const tableCardClass =
-    'border border-gray-200 dark:border-gray-700 rounded-2xl shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-800/80'
+    "border border-gray-200 dark:border-gray-700 rounded-2xl shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-800/80";
 
   if (lists.length === 0) {
     return (
       <div className={tableCardClass}>
         <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/80 shrink-0">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200">All Lists</h2>
+            <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+              All Lists
+            </h2>
             <span className="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600">
               0
             </span>
           </div>
         </div>
         <div className="flex-1 flex items-center justify-center py-16">
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No lists match your criteria</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+            No lists match your criteria
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className={tableCardClass}>
       <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/80 shrink-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200">All Lists</h2>
+          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+            All Lists
+          </h2>
           <span className="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600">
             {lists.length}
           </span>
@@ -239,7 +253,7 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
         <button
           type="button"
           className="text-blue-600 text-xs font-semibold hover:underline"
-          onClick={() => router.push('/dashboard/lists')}
+          onClick={() => router.push("/dashboard/lists")}
           aria-label="View all lists"
         >
           View All
@@ -247,7 +261,10 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
       </div>
 
       <div className="overflow-auto custom-scrollbar flex-1 min-h-0">
-        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300" role="grid">
+        <table
+          className="w-full text-left text-sm text-slate-600 dark:text-slate-300"
+          role="grid"
+        >
           <thead className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/60 dark:border-slate-600 tracking-wider sticky top-0 backdrop-blur-md z-10">
             <tr>
               <th className="px-5 py-3 w-10 font-semibold" scope="col">
@@ -262,7 +279,10 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
               <th className="px-4 py-3 font-semibold" scope="col">
                 List Name
               </th>
-              <th className="px-4 py-3 text-center font-semibold w-24" scope="col">
+              <th
+                className="px-4 py-3 text-center font-semibold w-24"
+                scope="col"
+              >
                 Records
               </th>
               <th className="px-4 py-3 font-semibold" scope="col">
@@ -281,9 +301,9 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
           </thead>
           <tbody className="divide-y divide-slate-100/80 dark:divide-slate-600/50">
             {lists.map((list) => {
-              const listType = list.type || 'properties'
-              const isDeleting = deletingId === list.id
-              const initials = 'Y'
+              const listType = list.type || "properties";
+              const isDeleting = deletingId === list.id;
+              const initials = "Y";
 
               return (
                 <tr
@@ -291,9 +311,9 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
                   className="bg-white dark:bg-slate-800/40 hover:bg-blue-50/40 dark:hover:bg-slate-700/40 transition-colors duration-150 group cursor-pointer"
                   onClick={() => router.push(`/dashboard/lists/${list.id}`)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      router.push(`/dashboard/lists/${list.id}`)
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(`/dashboard/lists/${list.id}`);
                     }
                   }}
                   tabIndex={0}
@@ -335,9 +355,9 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
                         className="material-symbols-outlined text-[14px] text-blue-500"
                         aria-hidden
                       >
-                        {listType === 'properties' ? 'apartment' : 'group'}
+                        {listType === "properties" ? "apartment" : "group"}
                       </span>
-                      {listType === 'properties' ? 'Properties' : 'Prospects'}
+                      {listType === "properties" ? "Properties" : "Prospects"}
                     </span>
                   </td>
                   <td className="px-4 py-2.5">
@@ -362,14 +382,16 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
                       <button
                         type="button"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          handleExportCSV(list.id, list.name, list)
+                          e.stopPropagation();
+                          handleExportCSV(list.id, list.name, list);
                         }}
                         className="w-7 h-7 flex items-center justify-center hover:text-blue-600 hover:bg-blue-50/80 rounded-md transition-colors"
                         title="Export"
                         aria-label={`Export ${list.name}`}
                       >
-                        <span className="material-symbols-outlined text-[18px]">download</span>
+                        <span className="material-symbols-outlined text-[18px]">
+                          download
+                        </span>
                       </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -388,23 +410,23 @@ export default function ListsTable({ lists, onRefresh }: ListsTableProps) {
                           <DropdownMenuItem
                             className="flex gap-2 items-center cursor-pointer text-red-600 focus:text-red-600"
                             onClick={(e) => {
-                              e.stopPropagation()
-                              handleDelete(list.id, list.name)
+                              e.stopPropagation();
+                              handleDelete(list.id, list.name);
                             }}
                             disabled={isDeleting}
                           >
-                            {isDeleting ? 'Deleting...' : 'Delete'}
+                            {isDeleting ? "Deleting..." : "Delete"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
       </div>
     </div>
-  )
+  );
 }

@@ -252,13 +252,13 @@ const MapComponent: React.FC<{
   // Property price marker: pill with dynamic price and pointed bottom (default + active styles)
   const getMarkerIcon = (lead: Lead, isActive = false, scale = 1) => {
     const priceLabel = formatPrice(lead.price);
-    const primary = '#0F62FE';
+    const primary = '#0861c5';
     const surfaceLight = '#FFFFFF';
     const borderSlate = '#e2e8f0';
     const textSlate = '#1e293b';
     const bg = isActive ? primary : surfaceLight;
     const textColor = isActive ? '#ffffff' : textSlate;
-    const borderColor = isActive ? '#3b82f6' : borderSlate;
+    const borderColor = isActive ? '#0861c5' : borderSlate;
     // Pill width scales with label length; min width for short labels
     const pillW = Math.max(56, priceLabel.length * 10);
     const pillH = 24;
@@ -309,7 +309,7 @@ const MapComponent: React.FC<{
 
   // Nationwide marker: blue dot, 20% smaller (26px), black shadow outline, ratios retained
   const getNationwideMarkerIcon = () => {
-    const primary = '#0F62FE';
+    const primary = '#0861c5';
     const size = 26; // 32 * 0.8
     const cx = size / 2;
     const stroke = 2.4; // 3 * 0.8

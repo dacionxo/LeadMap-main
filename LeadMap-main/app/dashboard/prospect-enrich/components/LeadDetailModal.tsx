@@ -803,7 +803,7 @@ export default function LeadDetailModal({
                         onClick={() => setLeftPanelView("photos")}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                           leftPanelView === "photos"
-                            ? "bg-[#3b82f6] text-white shadow-sm"
+                            ? "bg-[#0071e3] text-white shadow-sm"
                             : "text-slate-600 hover:text-slate-900"
                         }`}
                       >
@@ -815,7 +815,7 @@ export default function LeadDetailModal({
                         onClick={() => setLeftPanelView("google_earth")}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                           leftPanelView === "google_earth"
-                            ? "bg-[#3b82f6] text-white shadow-sm"
+                            ? "bg-[#0071e3] text-white shadow-sm"
                             : "text-slate-600 hover:text-slate-900"
                         }`}
                       >
@@ -1267,7 +1267,7 @@ function StreetViewPanorama({
                 width: "40px",
                 height: "40px",
                 border: "3px solid #e5e7eb",
-                borderTop: "3px solid #3b82f6",
+                borderTop: "3px solid #0071e3",
                 borderRadius: "50%",
                 margin: "0 auto 12px",
                 animation: "spin 1s linear infinite",

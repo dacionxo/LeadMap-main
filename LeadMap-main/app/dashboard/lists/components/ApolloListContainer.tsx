@@ -76,7 +76,11 @@ export default function ApolloListContainer({ children }: ApolloListContainerPro
         .apollo-particle {
           position: absolute;
           border-radius: 50%;
-          background: linear-gradient(135deg, rgba(237, 250, 255, 0.6), rgba(237, 250, 255, 0.4));
+          background: linear-gradient(
+            135deg,
+            rgb(var(--dashboard-glow-rgb) / 0.6),
+            rgb(var(--dashboard-glow-rgb) / 0.4)
+          );
           animation: apollo-float linear infinite;
           pointer-events: none;
         }
@@ -86,7 +90,11 @@ export default function ApolloListContainer({ children }: ApolloListContainerPro
           width: 200px;
           height: 200px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(237, 250, 255, 0.5), transparent);
+          background: radial-gradient(
+            circle,
+            rgb(var(--dashboard-glow-rgb) / 0.5),
+            transparent
+          );
           filter: blur(40px);
           pointer-events: none;
           transition: all 0.3s ease;

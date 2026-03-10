@@ -1,184 +1,229 @@
-'use client'
+"use client";
 
-import { Icon } from '@iconify/react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useApp } from '@/app/providers'
-import { formatTimeAgo } from '@/lib/format-time-ago'
+import { useApp } from "@/app/providers";
+import { formatTimeAgo } from "@/lib/format-time-ago";
+import { Icon } from "@iconify/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-export type NotificationType = 'comment' | 'system' | 'file' | 'warning'
+export type NotificationType = "comment" | "system" | "file" | "warning";
 
 export type NotificationCode =
-  | 'sequence_alert'
-  | 'trial_reminder'
-  | 'plan_overdue'
-  | 'account_overdue'
-  | 'autopay_failed'
-  | 'subscription_upgrade'
+  | "sequence_alert"
+  | "trial_reminder"
+  | "plan_overdue"
+  | "account_overdue"
+  | "autopay_failed"
+  | "subscription_upgrade";
 
 export interface Notification {
-  id: string
-  type: NotificationType
-  title: string
-  message: string
-  link?: string | null
-  attachment?: string | null
-  read: boolean
-  created_at: string
-  notification_code?: string | null
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  link?: string | null;
+  attachment?: string | null;
+  read: boolean;
+  created_at: string;
+  notification_code?: string | null;
 }
 
 interface NotificationsDropdownProps {
   /** Controlled: open state */
-  open?: boolean
+  open?: boolean;
   /** Controlled: callback when open changes */
-  onOpenChange?: (open: boolean) => void
+  onOpenChange?: (open: boolean) => void;
   /** Callback when dropdown opens (e.g. close profile menu) */
-  onOpen?: () => void
+  onOpen?: () => void;
   /** Additional className for the trigger button */
-  buttonClassName?: string
+  buttonClassName?: string;
   /** Variant: 'header' (default), 'deals', 'map' - different button styles */
-  variant?: 'header' | 'deals' | 'map'
+  variant?: "header" | "deals" | "map";
 }
 
 export default function NotificationsDropdown({
   open: controlledOpen,
   onOpenChange,
   onOpen,
-  buttonClassName = '',
-  variant = 'header',
+  buttonClassName = "",
+  variant = "header",
 }: NotificationsDropdownProps) {
-  const router = useRouter()
-  const { profile, supabase } = useApp()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(false)
-  const [internalOpen, setInternalOpen] = useState(false)
+  const router = useRouter();
+  const { profile, supabase } = useApp();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
 
-  const isControlled = controlledOpen !== undefined
-  const open = isControlled ? controlledOpen : internalOpen
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = useCallback(
     (value: boolean) => {
-      if (!isControlled) setInternalOpen(value)
-      onOpenChange?.(value)
+      if (!isControlled) setInternalOpen(value);
+      onOpenChange?.(value);
     },
     [isControlled, onOpenChange]
-  )
+  );
 
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = useCallback(async (silent = false) => {
-    if (!profile?.id) return
-    if (!silent) setLoading(true)
-    try {
-      const res = await fetch('/api/notifications?limit=20', { credentials: 'include' })
-      if (res.ok) {
-        const data = await res.json()
-        setNotifications(data.notifications || [])
+  const fetchNotifications = useCallback(
+    async (silent = false) => {
+      if (!profile?.id) return;
+      if (!silent) setLoading(true);
+      try {
+        const res = await fetch("/api/notifications?limit=20", {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data.notifications || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      } finally {
+        if (!silent) setLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to fetch notifications:', err)
-    } finally {
-      if (!silent) setLoading(false)
-    }
-  }, [profile?.id])
+    },
+    [profile?.id]
+  );
 
   useEffect(() => {
     if (open) {
-      fetchNotifications()
-      onOpen?.()
+      fetchNotifications();
+      onOpen?.();
     }
-  }, [open, fetchNotifications, onOpen])
+  }, [open, fetchNotifications, onOpen]);
 
   // Real-time: refetch when notifications change (new insert or update e.g. read state)
   useEffect(() => {
-    if (!profile?.id || !supabase) return
+    if (!profile?.id || !supabase) return;
     const channel = supabase
-      .channel('notifications-dropdown-realtime')
+      .channel("notifications-dropdown-realtime")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
+          event: "*",
+          schema: "public",
+          table: "notifications",
           filter: `user_id=eq.${profile.id}`,
         },
         () => {
-          fetchNotifications(true)
+          fetchNotifications(true);
         }
       )
-      .subscribe()
+      .subscribe();
     return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [profile?.id, supabase, fetchNotifications])
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, supabase, fetchNotifications]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
       }
-    }
-    if (open) document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [open])
+    };
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   const handleMarkRead = async (id: string, link?: string | null) => {
-    const n = notifications.find((x) => x.id === id)
+    const n = notifications.find((x) => x.id === id);
     if (!n || n.read) {
-      if (link) router.push(link)
-      setOpen(false)
-      return
+      if (link) router.push(link);
+      setOpen(false);
+      return;
     }
     try {
       await fetch(`/api/notifications/${id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-      })
+        method: "PATCH",
+        credentials: "include",
+      });
       setNotifications((prev) =>
         prev.map((x) => (x.id === id ? { ...x, read: true } : x))
-      )
+      );
     } catch {
       // ignore
     }
-    if (link) router.push(link)
-    setOpen(false)
-  }
+    if (link) router.push(link);
+    setOpen(false);
+  };
 
   const handleMarkAllRead = async () => {
     try {
-      await fetch('/api/notifications/mark-all-read', {
-        method: 'PATCH',
-        credentials: 'include',
-      })
-      setNotifications((prev) => prev.map((x) => ({ ...x, read: true })))
+      await fetch("/api/notifications/mark-all-read", {
+        method: "PATCH",
+        credentials: "include",
+      });
+      setNotifications((prev) => prev.map((x) => ({ ...x, read: true })));
     } catch {
       // ignore
     }
-  }
+  };
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   /** Icon + wrapper for a notification by notification_code or type */
   function NotificationIcon({ item }: { item: Notification }) {
-    const code = item.notification_code as NotificationCode | undefined
+    const code = item.notification_code as NotificationCode | undefined;
     const wrapper = (icon: string, bg: string, iconClass: string) => (
-      <div className={`h-10 w-10 rounded-full flex items-center justify-center border ${bg}`}>
+      <div
+        className={`h-10 w-10 rounded-full flex items-center justify-center border ${bg}`}
+      >
         <Icon icon={icon} className={iconClass} />
       </div>
-    )
-    if (code === 'sequence_alert') return wrapper('solar:plain-2-linear', 'bg-violet-50 dark:bg-violet-900/30 border-violet-100 dark:border-violet-800', 'h-5 w-5 text-violet-600 dark:text-violet-400')
-    if (code === 'trial_reminder') return wrapper('solar:clock-circle-linear', 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50', 'h-5 w-5 text-amber-500 dark:text-amber-400')
-    if (code === 'plan_overdue' || code === 'account_overdue') return wrapper('solar:calendar-mark-linear', 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/50', 'h-5 w-5 text-red-500 dark:text-red-400')
-    if (code === 'autopay_failed') return wrapper('solar:card-withdraw-linear', 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800/50', 'h-5 w-5 text-orange-500 dark:text-orange-400')
-    if (code === 'subscription_upgrade') return wrapper('solar:star-linear', 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-100 dark:border-emerald-800', 'h-5 w-5 text-emerald-600 dark:text-emerald-400')
-    if (item.type === 'comment' || item.type === 'file') return (
-      <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold shadow-sm border border-gray-100 dark:border-gray-600">
-        {item.title.charAt(0)}
-      </div>
-    )
-    if (item.type === 'system') return wrapper('solar:shield-check-linear', 'bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-800', 'h-5 w-5 text-blue-600 dark:text-blue-400')
-    return wrapper('solar:danger-triangle-linear', 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50', 'h-5 w-5 text-amber-500 dark:text-amber-400')
+    );
+    if (code === "sequence_alert")
+      return wrapper(
+        "solar:plain-2-linear",
+        "bg-violet-50 dark:bg-violet-900/30 border-violet-100 dark:border-violet-800",
+        "h-5 w-5 text-violet-600 dark:text-violet-400"
+      );
+    if (code === "trial_reminder")
+      return wrapper(
+        "solar:clock-circle-linear",
+        "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50",
+        "h-5 w-5 text-amber-500 dark:text-amber-400"
+      );
+    if (code === "plan_overdue" || code === "account_overdue")
+      return wrapper(
+        "solar:calendar-mark-linear",
+        "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/50",
+        "h-5 w-5 text-red-500 dark:text-red-400"
+      );
+    if (code === "autopay_failed")
+      return wrapper(
+        "solar:card-withdraw-linear",
+        "bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800/50",
+        "h-5 w-5 text-orange-500 dark:text-orange-400"
+      );
+    if (code === "subscription_upgrade")
+      return wrapper(
+        "solar:star-linear",
+        "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-100 dark:border-emerald-800",
+        "h-5 w-5 text-emerald-600 dark:text-emerald-400"
+      );
+    if (item.type === "comment" || item.type === "file")
+      return (
+        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold shadow-sm border border-gray-100 dark:border-gray-600">
+          {item.title.charAt(0)}
+        </div>
+      );
+    if (item.type === "system")
+      return wrapper(
+        "solar:shield-check-linear",
+        "bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-800",
+        "h-5 w-5 text-blue-600 dark:text-blue-400"
+      );
+    return wrapper(
+      "solar:danger-triangle-linear",
+      "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50",
+      "h-5 w-5 text-amber-500 dark:text-amber-400"
+    );
   }
 
   const triggerButton = (
@@ -186,16 +231,16 @@ export default function NotificationsDropdown({
       type="button"
       onClick={() => setOpen(!open)}
       aria-label="Notifications"
-      aria-expanded={open ? 'true' : 'false'}
+      aria-expanded={open ? "true" : "false"}
       className={
-        variant === 'header'
+        variant === "header"
           ? `relative flex items-center justify-center w-10 h-10 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 ${buttonClassName}`
-          : variant === 'deals'
-          ? `relative flex items-center justify-center w-9 h-9 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 ${buttonClassName}`
-          : `group relative w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:border-primary/30 dark:hover:border-primary/30 hover:bg-slate-50 dark:hover:bg-slate-700/50 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_20px_50px_-12px_rgba(93,135,255,0.18)] dark:hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.4)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${buttonClassName}`
+          : variant === "deals"
+            ? `relative flex items-center justify-center w-9 h-9 rounded-full text-charcoal dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 ${buttonClassName}`
+            : `group relative w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:border-primary/30 dark:hover:border-primary/30 hover:bg-slate-50 dark:hover:bg-slate-700/50 shadow-[0_20px_50px_-12px_rgba(93,135,255,0.12)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_20px_50px_-12px_rgba(93,135,255,0.18)] dark:hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.4)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${buttonClassName}`
       }
     >
-      {variant === 'map' ? (
+      {variant === "map" ? (
         <Icon
           icon="material-symbols:notifications"
           className="w-6 h-6 transform group-hover:rotate-12 transition-transform duration-300"
@@ -204,24 +249,24 @@ export default function NotificationsDropdown({
       ) : (
         <Icon icon="material-symbols:notifications" className="text-[22px]" />
       )}
-      {unreadCount > 0 && variant === 'map' && (
+      {unreadCount > 0 && variant === "map" && (
         <span className="absolute top-3 right-3.5 flex h-2.5 w-2.5" aria-hidden>
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white dark:border-slate-800" />
         </span>
       )}
-      {unreadCount > 0 && variant !== 'map' && (
+      {unreadCount > 0 && variant !== "map" && (
         <span
           className={
-            variant === 'header'
-              ? 'absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-primary rounded-full shadow-[0_0_8px_rgba(93,135,255,0.4)] border-2 border-white dark:border-slate-800'
-              : 'absolute top-2.25 right-2.25 w-2.25 h-2.25 bg-primary rounded-full shadow-[0_0_8px_rgba(93,135,255,0.4)] border-2 border-white dark:border-slate-800'
+            variant === "header"
+              ? "absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-primary rounded-full shadow-[0_0_8px_rgba(93,135,255,0.4)] border-2 border-white dark:border-slate-800"
+              : "absolute top-2.25 right-2.25 w-2.25 h-2.25 bg-primary rounded-full shadow-[0_0_8px_rgba(93,135,255,0.4)] border-2 border-white dark:border-slate-800"
           }
           aria-hidden
         />
       )}
     </button>
-  )
+  );
 
   return (
     <div className="relative group/menu" ref={dropdownRef}>
@@ -323,5 +368,5 @@ export default function NotificationsDropdown({
         </div>
       )}
     </div>
-  )
+  );
 }

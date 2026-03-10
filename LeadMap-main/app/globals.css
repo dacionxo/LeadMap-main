@@ -21,6 +21,11 @@
 @layer base {
   /* Tailwindadmin CSS Variables - Adapted from @theme inline for Tailwind v3 */
   :root {
+    /* Dashboard glow + prospect pin */
+    --dashboard-glow: #83e1ff;
+    --dashboard-glow-rgb: 131 225 255;
+    --prospect-pin-color: #0d539b;
+
     /* Color mappings */
     --color-background: var(--background);
     --color-foreground: var(--foreground);
@@ -649,6 +654,14 @@
   }
 }
 
+/* Dashboard glow orb utility (colored glow, not box-shadow) */
+.dashboard-glow-orb {
+  background: rgb(var(--dashboard-glow-rgb) / 0.3);
+}
+.dark .dashboard-glow-orb {
+  background: rgb(var(--dashboard-glow-rgb) / 0.12);
+}
+
 /* Sticky table header for ProspectHoverTable - High specificity to override any conflicting styles */
 .prospect-hover-table thead {
   position: sticky !important;
@@ -1235,11 +1248,13 @@
   background-color: #4b5563;
 }
 .input-focus-glow:focus {
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  outline: 4px solid rgb(var(--dashboard-glow-rgb) / 0.22);
+  outline-offset: 0;
   border-color: #3b82f6;
 }
 .dark .input-focus-glow:focus {
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  outline: 4px solid rgb(var(--dashboard-glow-rgb) / 0.28);
+  outline-offset: 0;
   border-color: #3b82f6;
 }
 
@@ -1315,15 +1330,15 @@
 }
 @keyframes unibox-glowing {
   0% {
-    box-shadow: 0 0 5px #2b6cee;
+    filter: drop-shadow(0 0 6px rgb(var(--dashboard-glow-rgb) / 0.35));
   }
   50% {
-    box-shadow:
-      0 0 20px #2b6cee,
-      0 0 10px #5a8dee;
+    filter:
+      drop-shadow(0 0 18px rgb(var(--dashboard-glow-rgb) / 0.65))
+      drop-shadow(0 0 10px rgb(var(--dashboard-glow-rgb) / 0.45));
   }
   100% {
-    box-shadow: 0 0 5px #2b6cee;
+    filter: drop-shadow(0 0 6px rgb(var(--dashboard-glow-rgb) / 0.35));
   }
 }
 .unibox-ai-glow {
@@ -1343,15 +1358,146 @@
 }
 
 /* Dashboard buttons: #0693ff default, #0577d9 hover */
+[data-dashboard] .bg-blue-500,
+[data-dashboard] .bg-blue-600,
 [data-dashboard] .bg-indigo-500,
 [data-dashboard] .bg-indigo-600 {
   background-color: #0693ff !important;
 }
+[data-dashboard] .text-blue-600,
+[data-dashboard] .text-blue-500 {
+  color: #0693ff !important;
+}
+[data-dashboard] .border-blue-600,
+[data-dashboard] .border-blue-500 {
+  border-color: #0693ff !important;
+}
+
+/* Flatten gradient buttons to solid brand blue */
+[data-dashboard] :is(button, a, [role="button"])[class*="bg-gradient-to-"] {
+  background-image: none !important;
+  background-color: #0693ff !important;
+}
+
+[data-dashboard] .bg-blue-500:hover,
+[data-dashboard] .bg-blue-600:hover,
 [data-dashboard] .bg-indigo-500:hover,
 [data-dashboard] .bg-indigo-600:hover,
+[data-dashboard] .hover\:bg-blue-600:hover,
+[data-dashboard] .hover\:bg-blue-700:hover,
 [data-dashboard] .hover\:bg-indigo-600:hover,
 [data-dashboard] .hover\:bg-indigo-700:hover {
   background-color: #0577d9 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Global green accent / status color normalization                           */
+/* -------------------------------------------------------------------------- */
+:where([data-dashboard])
+  :is(
+    .text-green-500,
+    .text-green-600,
+    .text-green-700,
+    .dark\:text-green-400,
+    .dark\:text-green-300
+  ) {
+  color: #76ed7e !important;
+}
+
+:where([data-dashboard])
+  :is(
+    .bg-green-50,
+    .bg-green-100,
+    .bg-green-400,
+    .bg-green-500,
+    .bg-green-600,
+    .dark\:bg-green-900\/20,
+    .dark\:bg-green-900\/30
+  ) {
+  background-color: color-mix(in srgb, #76ed7e 12%, transparent) !important;
+}
+
+:where([data-dashboard])
+  :is(
+    .border-green-100,
+    .border-green-200,
+    .border-green-300,
+    .border-green-400,
+    .border-green-500,
+    .dark\:border-green-800
+  ) {
+  border-color: #76ed7e !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Page-specific blue overrides (#0071e3)                                      */
+/* -------------------------------------------------------------------------- */
+:where(
+    [data-dashboard] [data-page="dashboard-lists"],
+    [data-dashboard] [data-page="dashboard-deals"],
+    [data-dashboard] [data-page="dashboard-calendar"],
+    [data-dashboard] [data-page="dashboard-unibox"]
+  )
+  :is(
+    .text-blue-500,
+    .text-blue-600,
+    .text-blue-700,
+    .hover\:text-blue-500:hover,
+    .hover\:text-blue-600:hover,
+    .group-hover\:text-blue-500:hover,
+    .group-hover\:text-blue-600:hover,
+    .group-focus-within\:text-blue-600,
+    .dark\:text-blue-400,
+    .dark\:text-blue-300
+  ) {
+  color: #0071e3 !important;
+}
+
+:where(
+    [data-dashboard] [data-page="dashboard-lists"],
+    [data-dashboard] [data-page="dashboard-deals"],
+    [data-dashboard] [data-page="dashboard-calendar"],
+    [data-dashboard] [data-page="dashboard-unibox"]
+  )
+  :is(
+    .bg-blue-500,
+    .bg-blue-600,
+    .bg-blue-700,
+    .hover\:bg-blue-600:hover,
+    .hover\:bg-blue-700:hover,
+    .dark\:bg-blue-900\/30,
+    .dark\:bg-blue-900\/40,
+    .dark\:bg-blue-900\/20
+  ) {
+  background-color: #0071e3 !important;
+}
+
+:where(
+    [data-dashboard] [data-page="dashboard-lists"],
+    [data-dashboard] [data-page="dashboard-deals"],
+    [data-dashboard] [data-page="dashboard-calendar"],
+    [data-dashboard] [data-page="dashboard-unibox"]
+  )
+  :is(
+    .border-blue-100,
+    .border-blue-200,
+    .border-blue-300,
+    .border-blue-400,
+    .border-blue-500,
+    .border-blue-600
+  ) {
+  border-color: #0071e3 !important;
+}
+
+:where(
+    [data-dashboard] [data-page="dashboard-lists"],
+    [data-dashboard] [data-page="dashboard-deals"],
+    [data-dashboard] [data-page="dashboard-calendar"],
+    [data-dashboard] [data-page="dashboard-unibox"]
+  )
+  :is(button, a, [role="button"])[class*="bg-gradient-to-"] {
+  background-image: none !important;
+  background-color: #0071e3 !important;
 }
 
 /* Elite Property Prospecting Dashboard - Prospect & Enrich (1:1 design parity) */

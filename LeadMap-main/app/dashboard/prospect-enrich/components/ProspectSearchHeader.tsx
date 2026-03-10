@@ -149,13 +149,13 @@ export default function ProspectSearchHeader({
           className={cn(
             "px-6 py-3 border-b-2 text-sm flex flex-col items-center min-w-[120px] transition-colors",
             viewType === 'total'
-              ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold"
+              ? "bg-[#d6f3ff] dark:bg-[#0e335d] border-[#0693ff] text-slate-800 dark:text-slate-200 font-semibold"
               : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium"
           )}
         >
           <span className={cn(
             "text-xs uppercase font-bold tracking-wider mb-0.5",
-            viewType === 'total' ? "text-indigo-400 dark:text-indigo-500" : "text-slate-400 dark:text-slate-500"
+            viewType === 'total' ? "text-[#0693ff] dark:text-[#48ceff]" : "text-slate-400 dark:text-slate-500"
           )}>Total</span>
           {totalCount.toLocaleString()}
         </button>
@@ -164,13 +164,13 @@ export default function ProspectSearchHeader({
           className={cn(
             "px-6 py-3 border-b-2 text-sm flex flex-col items-center min-w-[120px] transition-colors",
             viewType === 'net_new'
-              ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold"
+              ? "bg-[#d6f3ff] dark:bg-[#0e335d] border-[#0693ff] text-slate-800 dark:text-slate-200 font-semibold"
               : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium"
           )}
         >
           <span className={cn(
             "text-xs uppercase font-bold tracking-wider mb-0.5",
-            viewType === 'net_new' ? "text-indigo-400 dark:text-indigo-500" : "text-slate-400 dark:text-slate-500"
+            viewType === 'net_new' ? "text-[#0693ff] dark:text-[#48ceff]" : "text-slate-400 dark:text-slate-500"
           )}>Net New</span>
           {netNewCount.toLocaleString()}
         </button>
@@ -179,13 +179,13 @@ export default function ProspectSearchHeader({
           className={cn(
             "px-6 py-3 border-b-2 text-sm flex flex-col items-center min-w-[120px] transition-colors",
             viewType === 'saved'
-              ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-400 font-semibold"
+              ? "bg-[#d6f3ff] dark:bg-[#0e335d] border-[#0693ff] text-slate-800 dark:text-slate-200 font-semibold"
               : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium"
           )}
         >
           <span className={cn(
             "text-xs uppercase font-bold tracking-wider mb-0.5",
-            viewType === 'saved' ? "text-indigo-400 dark:text-indigo-500" : "text-slate-400 dark:text-slate-500"
+            viewType === 'saved' ? "text-[#0693ff] dark:text-[#48ceff]" : "text-slate-400 dark:text-slate-500"
           )}>Saved</span>
           {savedCount.toLocaleString()}
         </button>

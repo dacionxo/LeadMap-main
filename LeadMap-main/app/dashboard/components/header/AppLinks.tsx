@@ -65,10 +65,7 @@ export default function AppLinks() {
         aria-label="Open apps menu"
         aria-haspopup="true"
       >
-        <Icon
-          icon="material-symbols:grid-view"
-          className="text-[18px]"
-        />
+        <Icon icon="material-symbols:grid-view" className="text-[18px]" />
         <span className="text-sm font-bold">Apps</span>
         <Icon
           icon="material-symbols:expand-more-rounded"

@@ -259,7 +259,7 @@ export default function SettingsPage() {
               <AppNavSidebar />
               <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-gray-200 dark:border-gray-700 flex flex-col h-full min-h-0 overflow-hidden relative">
                 <div
-                  className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+                  className="absolute top-0 right-0 w-[500px] h-[500px] dashboard-glow-orb rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
                   aria-hidden
                 />
                 <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
@@ -610,7 +610,7 @@ export default function SettingsPage() {
                             ? 'border-[#3B82F6] bg-[#3B82F6]/10 text-[#3B82F6]'
                             : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
-                        aria-pressed={theme === 'light' ? 'true' : 'false'}
+                        aria-pressed={theme === 'light'}
                       >
                         <Sun className="w-5 h-5" aria-hidden />
                         <span className="font-medium">Light</span>
@@ -623,7 +623,7 @@ export default function SettingsPage() {
                             ? 'border-[#3B82F6] bg-[#3B82F6]/10 text-[#3B82F6]'
                             : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
-                        aria-pressed={theme === 'dark' ? 'true' : 'false'}
+                        aria-pressed={theme === 'dark'}
                       >
                         <Moon className="w-5 h-5" aria-hidden />
                         <span className="font-medium">Dark</span>
@@ -636,7 +636,7 @@ export default function SettingsPage() {
                             ? 'border-[#3B82F6] bg-[#3B82F6]/10 text-[#3B82F6]'
                             : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
-                        aria-pressed={theme === 'system' ? 'true' : 'false'}
+                        aria-pressed={theme === 'system'}
                       >
                         <Monitor className="w-5 h-5" aria-hidden />
                         <span className="font-medium">System</span>

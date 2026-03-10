@@ -314,7 +314,7 @@ export default function FindDealsModal({
                 className={cn(
                   'pb-3 px-2 border-b-2 text-xs uppercase tracking-wide flex flex-col items-center gap-1 transition-colors',
                   viewType === 'total'
-                    ? 'border-purple-600 text-purple-700 font-semibold'
+                    ? 'bg-[#d6f3ff] dark:bg-[#0e335d] border-[#0693ff] text-slate-800 dark:text-slate-200 font-semibold'
                     : 'border-transparent text-gray-500 font-medium hover:text-gray-700'
                 )}
               >
@@ -327,7 +327,7 @@ export default function FindDealsModal({
                 className={cn(
                   'pb-3 px-2 border-b-2 text-xs uppercase tracking-wide flex flex-col items-center gap-1 transition-colors',
                   viewType === 'net_new'
-                    ? 'border-purple-600 text-purple-700 font-semibold'
+                    ? 'bg-[#d6f3ff] dark:bg-[#0e335d] border-[#0693ff] text-slate-800 dark:text-slate-200 font-semibold'
                     : 'border-transparent text-gray-500 font-medium hover:text-gray-700'
                 )}
               >
@@ -340,7 +340,7 @@ export default function FindDealsModal({
                 className={cn(
                   'pb-3 px-2 border-b-2 text-xs uppercase tracking-wide flex flex-col items-center gap-1 transition-colors',
                   viewType === 'saved'
-                    ? 'border-purple-600 text-purple-700 font-semibold'
+                    ? 'bg-[#d6f3ff] dark:bg-[#0e335d] border-[#0693ff] text-slate-800 dark:text-slate-200 font-semibold'
                     : 'border-transparent text-gray-500 font-medium hover:text-gray-700'
                 )}
               >

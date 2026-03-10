@@ -1,24 +1,24 @@
-'use client'
+"use client";
 
-import { Icon } from '@iconify/react'
+import { Icon } from "@iconify/react";
 
 interface MapSearchBarProps {
   /** Controlled search value */
-  searchValue?: string
+  searchValue?: string;
   /** Called when search input changes */
-  onSearchChange?: (value: string) => void
+  onSearchChange?: (value: string) => void;
   /** Called when user submits search (Enter or search button) – use to geocode and fly map */
-  onSearchSubmit?: (query: string) => void
+  onSearchSubmit?: (query: string) => void;
   /** Placeholder for the search input */
-  placeholder?: string
+  placeholder?: string;
   /** Called when Price filter is clicked */
-  onPriceClick?: () => void
+  onPriceClick?: () => void;
   /** Called when Type filter is clicked */
-  onTypeClick?: () => void
+  onTypeClick?: () => void;
   /** Called when Beds & Baths filter is clicked */
-  onBedsBathsClick?: () => void
+  onBedsBathsClick?: () => void;
   /** Called when the tune/advanced filter button is clicked */
-  onTuneClick?: () => void
+  onTuneClick?: () => void;
 }
 
 /**
@@ -27,24 +27,24 @@ interface MapSearchBarProps {
  * Uses Tailwind-Admin–compatible classes and supports dark mode.
  */
 export default function MapSearchBar({
-  searchValue = '',
+  searchValue = "",
   onSearchChange,
   onSearchSubmit,
-  placeholder = 'Search by City, Zip, or Address',
+  placeholder = "Search by City, Zip, or Address",
   onPriceClick,
   onTypeClick,
   onBedsBathsClick,
   onTuneClick,
 }: MapSearchBarProps) {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSearchChange?.(e.target.value)
-  }
+    onSearchChange?.(e.target.value);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const query = (searchValue ?? '').trim()
-    if (query) onSearchSubmit?.(query)
-  }
+    e.preventDefault();
+    const query = (searchValue ?? "").trim();
+    if (query) onSearchSubmit?.(query);
+  };
 
   return (
     <form
@@ -71,7 +71,10 @@ export default function MapSearchBar({
       </div>
 
       {/* Divider */}
-      <div className="h-7 w-px bg-slate-200 dark:bg-slate-600 mx-1.5 shrink-0" aria-hidden />
+      <div
+        className="h-7 w-px bg-slate-200 dark:bg-slate-600 mx-1.5 shrink-0"
+        aria-hidden
+      />
 
       {/* Filter buttons */}
       <div className="flex items-center space-x-1 shrink-0">
@@ -90,7 +93,10 @@ export default function MapSearchBar({
           />
         </button>
 
-        <div className="h-5 w-px bg-slate-200 dark:bg-slate-600 mx-1" aria-hidden />
+        <div
+          className="h-5 w-px bg-slate-200 dark:bg-slate-600 mx-1"
+          aria-hidden
+        />
 
         <button
           type="button"
@@ -107,7 +113,10 @@ export default function MapSearchBar({
           />
         </button>
 
-        <div className="h-5 w-px bg-slate-200 dark:bg-slate-600 mx-1" aria-hidden />
+        <div
+          className="h-5 w-px bg-slate-200 dark:bg-slate-600 mx-1"
+          aria-hidden
+        />
 
         <button
           type="button"
@@ -124,16 +133,16 @@ export default function MapSearchBar({
           />
         </button>
 
-        {/* Primary tune / advanced filter button - design 1:1 (#0F62FE) */}
+        {/* Primary tune / advanced filter button - updated to #0861c5 */}
         <button
           type="button"
           onClick={onTuneClick}
-          className="ml-2.5 bg-[#0F62FE] hover:bg-[#0353E9] text-white rounded-full shadow-md flex items-center justify-center w-9 h-9 transition-colors flex-shrink-0"
+          className="ml-2.5 bg-[#0861c5] hover:bg-[#074fa0] text-white rounded-full shadow-md flex items-center justify-center w-9 h-9 transition-colors flex-shrink-0"
           aria-label="Open advanced filters"
         >
           <Icon icon="material-symbols:tune" className="w-4 h-4" aria-hidden />
         </button>
       </div>
     </form>
-  )
+  );
 }

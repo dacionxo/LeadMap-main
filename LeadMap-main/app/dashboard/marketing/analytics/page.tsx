@@ -48,7 +48,7 @@ function EmailAnalyticsPageContent() {
               data-email-analytics-card
             >
               <div
-                className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
+                className="absolute top-0 right-0 w-[500px] h-[500px] dashboard-glow-orb rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"
                 aria-hidden
               />
               <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
