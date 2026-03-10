@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageCircle } from 'lucide-react'
-
 export default function NewCampaignPage() {
   const router = useRouter()
   const [campaignName, setCampaignName] = useState('My Campaign')
@@ -47,14 +45,6 @@ export default function NewCampaignPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center relative">
-      {/* Chat Help Icon - Bottom Right */}
-      <button
-        className="fixed bottom-6 right-6 w-12 h-12 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
-        aria-label="Help"
-      >
-        <MessageCircle className="w-6 h-6 text-white" />
-      </button>
-
       {/* Main Content - Centered */}
       <div className="w-full max-w-md px-6">
         {/* Heading */}

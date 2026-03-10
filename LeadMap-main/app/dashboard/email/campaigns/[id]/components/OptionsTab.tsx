@@ -163,7 +163,8 @@ export default function OptionsTab({
       fetchUsers()
     }
     setLoading(false)
-  }, [campaignId, initialOptions, mailboxId, canModify, currentUserId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- campaignId is the trigger; initialOptions causes infinite loop due to inline object reference
+  }, [campaignId, canModify])
 
   const fetchCampaignMailboxes = async () => {
     try {
@@ -221,10 +222,10 @@ export default function OptionsTab({
       setUsers([userData])
       setCurrentUserId(user.id)
       
-      // If owner_id is not set, default to current user
+      // If owner_id is not set, default to current user (skipOnUpdate prevents infinite loop)
       if (!options.owner_id) {
         setOptions(prev => ({ ...prev, owner_id: user.id }))
-        handleImmediateSave({ owner_id: user.id })
+        handleImmediateSave({ owner_id: user.id }, { skipOnUpdate: true })
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -335,7 +336,7 @@ export default function OptionsTab({
   }
 
   // Generic handler for immediate save to Supabase
-  const handleImmediateSave = async (updates: Record<string, any>) => {
+  const handleImmediateSave = async (updates: Record<string, any>, options?: { skipOnUpdate?: boolean }) => {
     if (!canModify || !campaignId) return
     
     // Save to Supabase immediately
@@ -351,8 +352,8 @@ export default function OptionsTab({
         throw new Error(data.error || 'Failed to update setting')
       }
       
-      // Refresh campaign data
-      if (onUpdate) {
+      // Refresh campaign data (skip during initial load to prevent infinite loop)
+      if (onUpdate && !options?.skipOnUpdate) {
         onUpdate()
       }
     } catch (err: any) {

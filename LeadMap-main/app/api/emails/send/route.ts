@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import { shouldUseSymphonyForEmailQueue } from '@/lib/symphony/utils/feature-flags'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { buildHiddenPreheader } from '@/lib/email/sanitize-preview'
 
 /**
  * Send Email API
@@ -90,10 +91,9 @@ export async function POST(request: NextRequest) {
 
     if (scheduleDate && scheduleDate > now) {
       // Apply preview text preheader for scheduled emails (same as immediate send)
-      const previewStr = typeof previewText === 'string' && previewText.trim() ? previewText.trim() : undefined
-      const htmlForSchedule = previewStr
-        ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${previewStr.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;')}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>${html}`
-        : html
+      const previewStr = typeof previewText === 'string' ? previewText : ''
+      const preheader = buildHiddenPreheader(previewStr)
+      const htmlForSchedule = preheader ? `${preheader}${html}` : html
 
       const toEmailStr = Array.isArray(to) ? to.join(', ') : (typeof to === 'string' ? to : '')
       const fromName = mailbox.from_name || mailbox.display_name || null
@@ -207,10 +207,9 @@ export async function POST(request: NextRequest) {
       const replyToStr = typeof replyTo === 'string' && replyTo.trim() ? replyTo.trim() : undefined
 
       // Prepublish preview text as hidden preheader so clients show it in inbox list view
-      const previewStr = typeof previewText === 'string' && previewText.trim() ? previewText.trim() : undefined
-      const finalHtml = previewStr
-        ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${previewStr.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;')}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>${html}`
-        : html
+      const previewStr = typeof previewText === 'string' ? previewText : ''
+      const preheader = buildHiddenPreheader(previewStr)
+      const finalHtml = preheader ? `${preheader}${html}` : html
 
       sendResult = await sendViaMailbox(mailbox, {
         to,

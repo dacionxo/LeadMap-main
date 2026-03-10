@@ -10,6 +10,7 @@ import { sendViaMailbox } from '@/lib/email/sendViaMailbox'
 import { recordSentEmailToUnibox } from '@/lib/email/unibox/record-sent-email'
 import { HandlerError } from '../errors'
 import { getServiceRoleClient } from '@/lib/supabase-singleton'
+import { stripArtifactsFromHtml } from '@/lib/email/sanitize-preview'
 
 /**
  * EmailMessage handler - sends scheduled/queued emails via mailbox
@@ -81,7 +82,7 @@ export class EmailMessageHandler implements MessageHandler {
     const emailPayload: EmailPayload = {
       to: payload.toEmail,
       subject: payload.subject,
-      html: payload.html,
+      html: stripArtifactsFromHtml(payload.html),
       fromName: payload.fromName,
       fromEmail: payload.fromEmail,
     }

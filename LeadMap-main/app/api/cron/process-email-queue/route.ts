@@ -25,6 +25,7 @@ import type { Mailbox, EmailPayload, SendResult } from '@/lib/email/types'
 import type { CronJobResult, BatchProcessingStats } from '@/lib/types/cron'
 import { dispatchEmailQueueBatch, type EmailQueueItem as SymphonyEmailQueueItem } from '@/lib/symphony/integration/email-queue'
 import { shouldUseSymphonyForEmailQueue } from '@/lib/symphony/utils/feature-flags'
+import { stripArtifactsFromHtml } from '@/lib/email/sanitize-preview'
 
 export const runtime = 'nodejs'
 
@@ -507,7 +508,7 @@ async function processEmail(
     const emailPayload: EmailPayload = {
       to: email.to_email,
       subject: email.subject,
-      html: email.html,
+      html: stripArtifactsFromHtml(email.html),
       fromName: email.from_name || undefined,
       fromEmail: email.from_email || undefined,
     }

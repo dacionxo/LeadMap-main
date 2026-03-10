@@ -2,7 +2,7 @@
  * Sync Mailboxes Cron Job
  * 
  * Syncs all active mailboxes to ingest new emails from Gmail and Outlook.
- * Runs every 5 minutes
+ * Runs every 2 minutes (Vercel Cron)
  * 
  * This cron job:
  * - Fetches all active mailboxes (Gmail and Outlook)
@@ -36,11 +36,26 @@ import type { Mailbox as ProviderMailbox } from '@/lib/email/types'
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 min for 1000 users
 
-/** Batch size per run (1000-user scale: 100 mailboxes per 5-min run = ~1200/hour capacity) */
+/** Batch size per run (keeps work bounded per invocation) */
 const SYNC_BATCH_SIZE = parseInt(
   process.env.SYNC_MAILBOXES_BATCH_SIZE || '100',
   10
 )
+
+/** Max concurrent mailbox syncs per run */
+const SYNC_MAX_CONCURRENCY = parseInt(
+  process.env.SYNC_MAILBOXES_MAX_CONCURRENCY || '5',
+  10
+)
+
+/** Fallback lookback when incremental sync isn't available */
+const SYNC_FALLBACK_LOOKBACK_HOURS = parseInt(
+  process.env.SYNC_MAILBOXES_FALLBACK_LOOKBACK_HOURS || '24',
+  10
+)
+
+const MAILBOX_SELECT =
+  'id, user_id, email, provider, active, access_token, refresh_token, token_expires_at, last_synced_at, watch_expiration, watch_history_id, created_at, updated_at'
 
 /**
  * Mailbox structure from database
@@ -140,56 +155,96 @@ async function fetchActiveMailboxes(
   supabase: ReturnType<typeof getCronSupabaseClient>,
   now: Date
 ): Promise<Mailbox[]> {
-  // Fetch all active Gmail/Outlook mailboxes (we'll sort/limit in memory for complex priority)
-  const result = await executeSelectOperation<Mailbox>(
+  const nowIso = now.toISOString()
+
+  // 1) Urgent Gmail: expired/missing watch (push ingest likely broken) → prioritize
+  const urgentResult = await executeSelectOperation<Mailbox>(
     supabase,
     'mailboxes',
-    '*',
+    MAILBOX_SELECT,
     (query) => {
       return (query as any)
         .eq('active', true)
-        .in('provider', ['gmail', 'outlook'])
-        .limit(SYNC_BATCH_SIZE * 3) // Fetch more than batch size to allow prioritization
+        .eq('provider', 'gmail')
+        .or(`watch_expiration.is.null,watch_expiration.lt.${nowIso}`)
+        .order('watch_expiration', { ascending: true, nullsFirst: true })
+        .limit(SYNC_BATCH_SIZE)
     },
-    {
-      operation: 'fetch_active_mailboxes',
-    }
+    { operation: 'fetch_urgent_gmail_mailboxes' }
   )
 
-  if (!result.success) {
-    throw new DatabaseError(
-      'Failed to fetch active mailboxes',
-      result.error
-    )
+  if (!urgentResult.success) {
+    throw new DatabaseError('Failed to fetch urgent Gmail mailboxes', urgentResult.error)
   }
 
-  const dataArray = Array.isArray(result.data) ? result.data : (result.data ? [result.data] : [])
-  if (dataArray.length === 0) return []
+  const urgentRaw = Array.isArray(urgentResult.data)
+    ? urgentResult.data
+    : urgentResult.data
+      ? [urgentResult.data]
+      : []
+  const urgent = urgentRaw.map(validateMailbox)
+  const urgentIds = new Set(urgent.map((m) => m.id))
 
-  const nowIso = now.toISOString()
-  const mailboxes = dataArray
-    .filter((m): m is Mailbox => {
-      try {
-        validateMailbox(m)
-        return true
-      } catch {
-        return false
+  const remaining = Math.max(0, SYNC_BATCH_SIZE - urgent.length)
+  if (remaining === 0) return urgent
+
+  // 2) Fill remainder: oldest last_synced_at across Gmail/Outlook
+  const fillResult = await executeSelectOperation<Mailbox>(
+    supabase,
+    'mailboxes',
+    MAILBOX_SELECT,
+    (query) => {
+      let q = (query as any)
+        .eq('active', true)
+        .in('provider', ['gmail', 'outlook'])
+        .order('last_synced_at', { ascending: true, nullsFirst: true })
+        .limit(remaining)
+
+      if (urgentIds.size > 0) {
+        const ids = Array.from(urgentIds)
+          .map((id) => `"${id}"`)
+          .join(',')
+        q = q.not('id', 'in', `(${ids})`)
       }
-    })
-    .map(validateMailbox)
-    // Prioritize: 1) Gmail with expired watch, 2) oldest last_synced_at, 3) never synced
-    .sort((a, b) => {
-      const aExpired = a.provider === 'gmail' && a.watch_expiration && a.watch_expiration < nowIso
-      const bExpired = b.provider === 'gmail' && b.watch_expiration && b.watch_expiration < nowIso
-      if (aExpired && !bExpired) return -1
-      if (!aExpired && bExpired) return 1
-      const aSync = a.last_synced_at || '1970-01-01'
-      const bSync = b.last_synced_at || '1970-01-01'
-      return new Date(aSync).getTime() - new Date(bSync).getTime()
-    })
-    .slice(0, SYNC_BATCH_SIZE)
 
-  return mailboxes
+      return q
+    },
+    { operation: 'fetch_oldest_mailboxes' }
+  )
+
+  if (!fillResult.success) {
+    throw new DatabaseError('Failed to fetch oldest mailboxes', fillResult.error)
+  }
+
+  const fillRaw = Array.isArray(fillResult.data)
+    ? fillResult.data
+    : fillResult.data
+      ? [fillResult.data]
+      : []
+  const fill = fillRaw.map(validateMailbox)
+
+  return [...urgent, ...fill]
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const n = Math.max(1, Math.min(concurrency, items.length || 1))
+  const results: R[] = new Array(items.length)
+  let idx = 0
+
+  const workers = Array.from({ length: n }, async () => {
+    while (true) {
+      const current = idx++
+      if (current >= items.length) return
+      results[current] = await fn(items[current])
+    }
+  })
+
+  await Promise.all(workers)
+  return results
 }
 
 /**
@@ -376,10 +431,10 @@ async function syncGmailMailbox(
   // Prefer historyId from stored watch_history_id, fallback to date-based query
   const historyId = (mailbox as any).watch_history_id || undefined
   
-  // Calculate since date as fallback (last sync or 7 days ago)
+  // Calculate since date as fallback (last sync or configured lookback)
   const since = mailbox.last_synced_at 
     ? new Date(mailbox.last_synced_at).toISOString()
-    : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    : new Date(Date.now() - SYNC_FALLBACK_LOOKBACK_HOURS * 60 * 60 * 1000).toISOString()
 
   console.log(`[Sync Mailboxes] Syncing Gmail mailbox ${mailbox.id} with historyId: ${historyId || 'none (using date-based query)'}, since: ${since}`)
 
@@ -468,10 +523,10 @@ async function syncOutlookMailbox(
   accessToken: string,
   supabase: ReturnType<typeof getCronSupabaseClient>
 ): Promise<MailboxSyncResult> {
-  // Calculate since date (last sync or 7 days ago)
+  // Calculate since date (last sync or configured lookback)
   const since = mailbox.last_synced_at 
     ? new Date(mailbox.last_synced_at).toISOString()
-    : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    : new Date(Date.now() - SYNC_FALLBACK_LOOKBACK_HOURS * 60 * 60 * 1000).toISOString()
 
   const syncResult: OutlookSyncResult = await syncOutlookMessages(
     mailbox.id,
@@ -552,7 +607,7 @@ async function runCronJob(request: NextRequest) {
 
     const now = new Date()
     // Fetch active mailboxes (batch-limited, prioritized for stale/expired watches)
-    console.log(`[Sync Mailboxes] Fetching active mailboxes (batch size: ${SYNC_BATCH_SIZE})...`)
+    console.log(`[Sync Mailboxes] Fetching mailboxes (batch=${SYNC_BATCH_SIZE}, concurrency=${SYNC_MAX_CONCURRENCY})...`)
     const mailboxes = await fetchActiveMailboxes(supabase, now)
 
     if (mailboxes.length === 0) {
@@ -562,61 +617,53 @@ async function runCronJob(request: NextRequest) {
 
     console.log(`[Sync Mailboxes] Found ${mailboxes.length} active mailboxes to sync`)
 
-    const results: MailboxSyncResult[] = []
-    
-    // Process each mailbox
-    for (const mailbox of mailboxes) {
-      try {
-        // Refresh token if needed (unified function handles both Gmail and Outlook)
-        // CRITICAL: This function now decrypts tokens before returning them
-        const accessToken = await refreshTokenIfNeeded(mailbox, supabase, now)
+    const results = await mapWithConcurrency(
+      mailboxes,
+      SYNC_MAX_CONCURRENCY,
+      async (mailbox): Promise<MailboxSyncResult> => {
+        try {
+          const accessToken = await refreshTokenIfNeeded(mailbox, supabase, now)
 
-        if (!accessToken) {
-          // Access token refresh already failed in refreshTokenIfNeeded
-          // The error message was already logged and mailbox was marked with last_error
-          results.push({
+          if (!accessToken) {
+            return {
+              mailboxId: mailbox.id,
+              email: mailbox.email,
+              provider: mailbox.provider,
+              status: 'failed',
+              error: 'Access token is missing and could not be refreshed. Check mailbox last_error for details.',
+            }
+          }
+
+          const syncResult =
+            mailbox.provider === 'gmail'
+              ? await syncGmailMailbox(mailbox, accessToken, supabase)
+              : await syncOutlookMailbox(mailbox, accessToken, supabase)
+
+          if (syncResult.status === 'success') {
+            console.log(
+              `[Sync Mailboxes] Synced ${mailbox.provider} mailbox ${mailbox.id} (${mailbox.email}): ` +
+              `${syncResult.messagesProcessed} messages, ${syncResult.threadsCreated} threads created, ${syncResult.threadsUpdated} threads updated`
+            )
+          } else {
+            console.error(
+              `[Sync Mailboxes] Failed to sync ${mailbox.provider} mailbox ${mailbox.id} (${mailbox.email}):`,
+              syncResult.error
+            )
+          }
+
+          return syncResult
+        } catch (error) {
+          console.error(`[Sync Mailboxes] Error processing mailbox ${mailbox.id}:`, error)
+          return {
             mailboxId: mailbox.id,
             email: mailbox.email,
             provider: mailbox.provider,
             status: 'failed',
-            error: 'Access token is missing and could not be refreshed. Check mailbox last_error for details.',
-          })
-          continue
+            error: error instanceof Error ? error.message : 'Unknown error occurred',
+          }
         }
-
-        // Sync based on provider
-        let syncResult: MailboxSyncResult
-
-        if (mailbox.provider === 'gmail') {
-          syncResult = await syncGmailMailbox(mailbox, accessToken, supabase)
-        } else {
-          syncResult = await syncOutlookMailbox(mailbox, accessToken, supabase)
-        }
-
-        results.push(syncResult)
-
-        if (syncResult.status === 'success') {
-          console.log(
-            `[Sync Mailboxes] Successfully synced ${mailbox.provider} mailbox ${mailbox.id} (${mailbox.email}): ` +
-            `${syncResult.messagesProcessed} messages, ${syncResult.threadsCreated} threads created, ${syncResult.threadsUpdated} threads updated`
-          )
-        } else {
-          console.error(
-            `[Sync Mailboxes] Failed to sync ${mailbox.provider} mailbox ${mailbox.id} (${mailbox.email}):`,
-            syncResult.error
-          )
-        }
-      } catch (error) {
-        console.error(`[Sync Mailboxes] Error processing mailbox ${mailbox.id}:`, error)
-        results.push({
-          mailboxId: mailbox.id,
-          email: mailbox.email,
-          provider: mailbox.provider,
-          status: 'failed',
-          error: error instanceof Error ? error.message : 'Unknown error occurred',
-        })
       }
-    }
+    )
 
     // Calculate statistics
     const synced = results.filter(r => r.status === 'success').length
