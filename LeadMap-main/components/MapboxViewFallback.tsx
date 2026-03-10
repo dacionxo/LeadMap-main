@@ -196,9 +196,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     const bedsStr = lead.beds
       ? `${lead.beds} Bed${lead.beds !== 1 ? "s" : ""}`
       : "—";
-    const sqftStr = lead.sqft
-      ? `${lead.sqft.toLocaleString()} sqft`
-      : "—";
+    const sqftStr = lead.sqft ? `${lead.sqft.toLocaleString()} sqft` : "—";
     const viewUrl = lead.url || "#";
     const safeAddress = address.replace(/</g, "&lt;");
     const safeCity = cityStateZip.replace(/</g, "&lt;");
@@ -358,7 +356,14 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     }
     const lat = Number(target.lat);
     const lng = Number(target.lng);
-    if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    if (
+      Number.isNaN(lat) ||
+      Number.isNaN(lng) ||
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180
+    ) {
       onFlyToDone?.();
       return;
     }
@@ -631,10 +636,9 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
 
     let visibleLeadsWithCoords: Lead[];
     if (isZoomedOut) {
-      visibleLeadsWithCoords = sampleLeadsForNationwideView(leadsWithCoords).slice(
-        0,
-        maxZoomedOutPins
-      );
+      visibleLeadsWithCoords = sampleLeadsForNationwideView(
+        leadsWithCoords
+      ).slice(0, maxZoomedOutPins);
     } else {
       const mapBounds = map.current.getBounds();
       const inView = mapBounds
@@ -672,14 +676,15 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       (el as unknown as { __lead?: Lead }).__lead = lead;
       el.style.cursor = "pointer";
 
-              const marker = new mapboxgl.Marker(el)
-                .setLngLat([lead.longitude!, lead.latitude!])
-                .setPopup(
-                  new mapboxgl.Popup({ offset: 25, className: "map-property-popup" }).setDOMContent(
-                    createPopupDOM(lead)
-                  )
-                )
-                .addTo(map.current!);
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([lead.longitude!, lead.latitude!])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 25,
+            className: "map-property-popup",
+          }).setDOMContent(createPopupDOM(lead))
+        )
+        .addTo(map.current!);
 
       markers.current.push(marker);
       bounds.extend([lead.longitude!, lead.latitude!]);
@@ -728,16 +733,20 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
           results.forEach(({ lead, coords }) => {
             if (coords && map.current) {
               const el = document.createElement("div");
-              el.innerHTML = getMarkerHTMLForZoom(lead, map.current?.getZoom() ?? null);
+              el.innerHTML = getMarkerHTMLForZoom(
+                lead,
+                map.current?.getZoom() ?? null
+              );
               (el as unknown as { __lead?: Lead }).__lead = lead;
               el.style.cursor = "pointer";
 
               const marker = new mapboxgl.Marker(el)
                 .setLngLat([coords.lng, coords.lat])
                 .setPopup(
-                  new mapboxgl.Popup({ offset: 25, className: "map-property-popup" }).setDOMContent(
-                    createPopupDOM(lead)
-                  )
+                  new mapboxgl.Popup({
+                    offset: 25,
+                    className: "map-property-popup",
+                  }).setDOMContent(createPopupDOM(lead))
                 )
                 .addTo(map.current!);
 
@@ -759,7 +768,13 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
           setGeocodingCount(0);
         });
     }
-  }, [mapLoaded, listings, zoomLevel, onViewDetailsClick, shouldSuppressAutoFit]);
+  }, [
+    mapLoaded,
+    listings,
+    zoomLevel,
+    onViewDetailsClick,
+    shouldSuppressAutoFit,
+  ]);
 
   if (!isActive) {
     return (
@@ -810,10 +825,13 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
       {!fullScreen && (
         <>
           <div className="mb-4 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900">Property Map</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Property Map
+            </h2>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">
-                {listings.length} propert{listings.length !== 1 ? "ies" : "y"} found
+                {listings.length} propert{listings.length !== 1 ? "ies" : "y"}{" "}
+                found
                 {geocodingCount > 0 && (
                   <span className="ml-2 text-blue-600">
                     (Geocoding {geocodingCount} address

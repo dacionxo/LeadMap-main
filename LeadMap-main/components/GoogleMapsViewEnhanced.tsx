@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Wrapper, Status } from '@googlemaps/react-wrapper';
+import { Status, Wrapper } from "@googlemaps/react-wrapper";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 // Extend window type for Google Maps
 declare global {
@@ -53,8 +53,8 @@ interface GoogleMapsViewEnhancedProps {
   onFlyToDone?: () => void;
 }
 
-const MapComponent: React.FC<{ 
-  leads: Lead[]; 
+const MapComponent: React.FC<{
+  leads: Lead[];
   onStreetViewClick: (lead: Lead) => void;
   onViewDetailsClick?: (leadId: string) => void;
   onMapReady: (map: google.maps.Map) => void;
@@ -62,22 +62,34 @@ const MapComponent: React.FC<{
   fullHeight?: boolean;
   suppressAutoFit?: boolean;
   flyToCenter?: { lat: number; lng: number } | null;
-}> = ({ leads, onStreetViewClick, onViewDetailsClick, onMapReady, onError, fullHeight, suppressAutoFit = false, flyToCenter = null }) => {
+}> = ({
+  leads,
+  onStreetViewClick,
+  onViewDetailsClick,
+  onMapReady,
+  onError,
+  fullHeight,
+  suppressAutoFit = false,
+  flyToCenter = null,
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const markerLeadMapRef = useRef<Map<google.maps.Marker, Lead>>(new Map());
-  const [infoWindow, setInfoWindow] = useState<google.maps.InfoWindow | null>(null);
+  const [infoWindow, setInfoWindow] = useState<google.maps.InfoWindow | null>(
+    null
+  );
   const streetViewMarkerRef = useRef<google.maps.Marker | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number | null>(null);
   const lastZoomRef = useRef<number | null>(null);
+  const userInteractedRef = useRef(false);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInitializedRef = useRef(false);
   // Store callbacks in refs to avoid dependency issues
   const onMapReadyRef = useRef(onMapReady);
   const onErrorRef = useRef(onError);
-  
+
   // Update refs when callbacks change
   useEffect(() => {
     onMapReadyRef.current = onMapReady;
@@ -85,121 +97,132 @@ const MapComponent: React.FC<{
   }, [onMapReady, onError]);
 
   // Function to immediately open Street View on the map
-  const openStreetViewImmediately = useCallback((lat: number, lng: number, mapInstance: google.maps.Map, lead?: Lead) => {
-    try {
-      if (!mapInstance || typeof window === 'undefined' || !window.google?.maps) {
-        console.error('Map instance or Google Maps API not available');
-        // Fallback to modal if available
-        if (lead) {
-          onStreetViewClick(lead);
+  const openStreetViewImmediately = useCallback(
+    (lat: number, lng: number, mapInstance: google.maps.Map, lead?: Lead) => {
+      try {
+        if (
+          !mapInstance ||
+          typeof window === "undefined" ||
+          !window.google?.maps
+        ) {
+          console.error("Map instance or Google Maps API not available");
+          // Fallback to modal if available
+          if (lead) {
+            onStreetViewClick(lead);
+          }
+          return;
         }
-        return;
-      }
 
-      // Get the Street View service
-      const streetViewService = new window.google.maps.StreetViewService();
-      const panorama = mapInstance.getStreetView();
+        // Get the Street View service
+        const streetViewService = new window.google.maps.StreetViewService();
+        const panorama = mapInstance.getStreetView();
 
-      // Check if Street View is available at this location
-      streetViewService.getPanorama(
-        { location: { lat, lng }, radius: 50 },
-        (data, status) => {
-          if (status === 'OK' && data) {
-            // Street View is available - activate it immediately
-            panorama.setPosition({ lat, lng });
-            panorama.setPov({
-              heading: 270, // Default heading (west)
-              pitch: 0
-            });
-            panorama.setVisible(true);
-            mapInstance.setStreetView(panorama);
-            
-            // Center the map on the location and zoom in
-            mapInstance.setCenter({ lat, lng });
-            mapInstance.setZoom(18);
-
-            const resolvedLead =
-              lead ||
-              leads.find(l => l.latitude === lat && l.longitude === lng) ||
-              null;
-            if (streetViewMarkerRef.current) {
-              streetViewMarkerRef.current.setMap(null);
-              streetViewMarkerRef.current = null;
-            }
-            if (resolvedLead) {
-              streetViewMarkerRef.current = new window.google.maps.Marker({
-                position: { lat, lng },
-                map: panorama,
-                icon: getMarkerIcon(resolvedLead, false, 1.56),
-                zIndex: 9999,
-                title: `${resolvedLead.address}, ${resolvedLead.city}, ${resolvedLead.state}`,
+        // Check if Street View is available at this location
+        streetViewService.getPanorama(
+          { location: { lat, lng }, radius: 50 },
+          (data, status) => {
+            if (status === "OK" && data) {
+              // Street View is available - activate it immediately
+              panorama.setPosition({ lat, lng });
+              panorama.setPov({
+                heading: 270, // Default heading (west)
+                pitch: 0,
               });
-            }
+              panorama.setVisible(true);
+              mapInstance.setStreetView(panorama);
 
-            panorama.addListener('visible_changed', () => {
-              if (!panorama.getVisible() && streetViewMarkerRef.current) {
+              // Center the map on the location and zoom in
+              mapInstance.setCenter({ lat, lng });
+              mapInstance.setZoom(18);
+
+              const resolvedLead =
+                lead ||
+                leads.find((l) => l.latitude === lat && l.longitude === lng) ||
+                null;
+              if (streetViewMarkerRef.current) {
                 streetViewMarkerRef.current.setMap(null);
                 streetViewMarkerRef.current = null;
               }
-            });
-            
-            console.log('Street View opened successfully at', lat, lng);
-          } else {
-            // Street View not available - open modal as fallback
-            console.warn('Street View not available at this location, opening modal instead');
-            if (lead) {
-              onStreetViewClick(lead);
+              if (resolvedLead) {
+                streetViewMarkerRef.current = new window.google.maps.Marker({
+                  position: { lat, lng },
+                  map: panorama,
+                  icon: getMarkerIcon(resolvedLead, false, 1.56),
+                  zIndex: 9999,
+                  title: `${resolvedLead.address}, ${resolvedLead.city}, ${resolvedLead.state}`,
+                });
+              }
+
+              panorama.addListener("visible_changed", () => {
+                if (!panorama.getVisible() && streetViewMarkerRef.current) {
+                  streetViewMarkerRef.current.setMap(null);
+                  streetViewMarkerRef.current = null;
+                }
+              });
+
+              console.log("Street View opened successfully at", lat, lng);
             } else {
-              // Try to find lead by coordinates
-              const foundLead = leads.find(l => 
-                l.latitude === lat && l.longitude === lng
+              // Street View not available - open modal as fallback
+              console.warn(
+                "Street View not available at this location, opening modal instead"
               );
-              if (foundLead) {
-                onStreetViewClick(foundLead);
+              if (lead) {
+                onStreetViewClick(lead);
+              } else {
+                // Try to find lead by coordinates
+                const foundLead = leads.find(
+                  (l) => l.latitude === lat && l.longitude === lng
+                );
+                if (foundLead) {
+                  onStreetViewClick(foundLead);
+                }
               }
             }
           }
-        }
-      );
-    } catch (err) {
-      console.error('Error opening Street View:', err);
-      // Fallback: try to open modal
-      if (lead) {
-        onStreetViewClick(lead);
-      } else {
-        const foundLead = leads.find(l => 
-          l.latitude === lat && l.longitude === lng
         );
-        if (foundLead) {
-          onStreetViewClick(foundLead);
+      } catch (err) {
+        console.error("Error opening Street View:", err);
+        // Fallback: try to open modal
+        if (lead) {
+          onStreetViewClick(lead);
+        } else {
+          const foundLead = leads.find(
+            (l) => l.latitude === lat && l.longitude === lng
+          );
+          if (foundLead) {
+            onStreetViewClick(foundLead);
+          }
         }
       }
-    }
-  }, [leads, onStreetViewClick]);
+    },
+    [leads, onStreetViewClick]
+  );
 
   // Build property details popup HTML (1:1 card: image, For Sale, price, address, Material Symbols, marker tip). Single card only; no scroll.
   const buildPropertyPopupHTML = (
     lead: Lead,
-    opts: { streetViewBtnId: string; closeBtnId: string; viewDetailsBtnId: string }
+    opts: {
+      streetViewBtnId: string;
+      closeBtnId: string;
+      viewDetailsBtnId: string;
+    }
   ): string => {
-    const primary = '#6366f1';
+    const primary = "#6366f1";
     const imgSrc =
       lead.primary_photo ||
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAHx1cX5YzK46YGrGO1wOmFsj9vY1F5FShgxiUm7ngkY9NjUN4QMRoG1P7qgn8LR-cJQVi3rR5hpxU3XqOipYwRIdzfw0uHgvaZyAz89vHlZJgb-PxQmYwEfqci-niVXH3xvw7hs-VjFZx9FziiPFg-SoF4F7K4-lqGSSEdwjqosG1PI1rbg8RMUh-qSa4gs5wC7YQvJK02f6Zgb8wJKaUwwuOKAV_IPE0-snAXIcS-B3SPawMf_OjpTl9RVeo6KX4JeBSL2n1UJnC1';
-    const priceStr = lead.price
-      ? `$${lead.price.toLocaleString()}`
-      : '—';
-    const address = lead.address || 'Address not available';
-    const cityStateZip = [lead.city, lead.state, lead.zip].filter(Boolean).join(', ');
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAHx1cX5YzK46YGrGO1wOmFsj9vY1F5FShgxiUm7ngkY9NjUN4QMRoG1P7qgn8LR-cJQVi3rR5hpxU3XqOipYwRIdzfw0uHgvaZyAz89vHlZJgb-PxQmYwEfqci-niVXH3xvw7hs-VjFZx9FziiPFg-SoF4F7K4-lqGSSEdwjqosG1PI1rbg8RMUh-qSa4gs5wC7YQvJK02f6Zgb8wJKaUwwuOKAV_IPE0-snAXIcS-B3SPawMf_OjpTl9RVeo6KX4JeBSL2n1UJnC1";
+    const priceStr = lead.price ? `$${lead.price.toLocaleString()}` : "—";
+    const address = lead.address || "Address not available";
+    const cityStateZip = [lead.city, lead.state, lead.zip]
+      .filter(Boolean)
+      .join(", ");
     const bedsStr = lead.beds
-      ? `${lead.beds} Bed${lead.beds !== 1 ? 's' : ''}`
-      : '—';
-    const sqftStr = lead.sqft
-      ? `${lead.sqft.toLocaleString()} sqft`
-      : '—';
-    const viewUrl = lead.url || '#';
-    const safeAddress = address.replace(/</g, '&lt;');
-    const safeCity = cityStateZip.replace(/</g, '&lt;');
+      ? `${lead.beds} Bed${lead.beds !== 1 ? "s" : ""}`
+      : "—";
+    const sqftStr = lead.sqft ? `${lead.sqft.toLocaleString()} sqft` : "—";
+    const viewUrl = lead.url || "#";
+    const safeAddress = address.replace(/</g, "&lt;");
+    const safeCity = cityStateZip.replace(/</g, "&lt;");
     return `
     <div class="property-details-popup-root" style="position:relative;width:100%;max-width:173px;font-family:Inter,system-ui,sans-serif;overflow:hidden;">
       <div style="position:relative;background:#fff;border-radius:8px;box-shadow:0 18px 36px -8px rgba(0,0,0,0.25);overflow:hidden;border:1px solid rgba(226,232,240,0.6);">
@@ -243,8 +266,9 @@ const MapComponent: React.FC<{
 
   // Format price for marker label: $1.2M, $850k, $675k
   const formatPrice = (price: number): string => {
-    if (!price || price <= 0) return '—';
-    if (price >= 1e6) return `$${(price / 1e6).toFixed(1).replace(/\.0$/, '')}M`;
+    if (!price || price <= 0) return "—";
+    if (price >= 1e6)
+      return `$${(price / 1e6).toFixed(1).replace(/\.0$/, "")}M`;
     if (price >= 1e3) return `$${Math.round(price / 1e3)}k`;
     return `$${price}`;
   };
@@ -252,13 +276,13 @@ const MapComponent: React.FC<{
   // Property price marker: pill with dynamic price and pointed bottom (default + active styles)
   const getMarkerIcon = (lead: Lead, isActive = false, scale = 1) => {
     const priceLabel = formatPrice(lead.price);
-    const primary = '#0861c5';
-    const surfaceLight = '#FFFFFF';
-    const borderSlate = '#e2e8f0';
-    const textSlate = '#1e293b';
+    const primary = "#0861c5";
+    const surfaceLight = "#FFFFFF";
+    const borderSlate = "#e2e8f0";
+    const textSlate = "#1e293b";
     const bg = isActive ? primary : surfaceLight;
-    const textColor = isActive ? '#ffffff' : textSlate;
-    const borderColor = isActive ? '#0861c5' : borderSlate;
+    const textColor = isActive ? "#ffffff" : textSlate;
+    const borderColor = isActive ? "#0861c5" : borderSlate;
     // Pill width scales with label length; min width for short labels
     const pillW = Math.max(56, priceLabel.length * 10);
     const pillH = 24;
@@ -279,11 +303,11 @@ const MapComponent: React.FC<{
         <!-- Pin point (diamond) -->
         <path d="M${cx} ${totalH} L${cx - pointSize} ${pillH} L${cx} ${pillH + pointSize * 0.6} L${cx + pointSize} ${pillH} Z" fill="${bg}" stroke="${borderColor}" stroke-width="1" filter="url(#markerShadow)"/>
         <!-- Price text -->
-        <text x="${cx}" y="${pillH / 2 + 4}" text-anchor="middle" fill="${textColor}" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="${isActive ? '700' : '600'}">${priceLabel}</text>
+        <text x="${cx}" y="${pillH / 2 + 4}" text-anchor="middle" fill="${textColor}" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="${isActive ? "700" : "600"}">${priceLabel}</text>
       </svg>
     `;
     return {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+      url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
       scaledSize: new google.maps.Size(totalW * scale, totalH * scale),
       anchor: new google.maps.Point(cx * scale, totalH * scale),
     };
@@ -309,7 +333,7 @@ const MapComponent: React.FC<{
 
   // Nationwide marker: blue dot, 20% smaller (26px), black shadow outline, ratios retained
   const getNationwideMarkerIcon = () => {
-    const primary = '#0861c5';
+    const primary = "#0861c5";
     const size = 26; // 32 * 0.8
     const cx = size / 2;
     const stroke = 2.4; // 3 * 0.8
@@ -325,14 +349,18 @@ const MapComponent: React.FC<{
       </svg>
     `;
     return {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+      url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
       scaledSize: new google.maps.Size(size, size),
       anchor: new google.maps.Point(cx, cx),
     };
   };
 
-  const getMarkerIconForZoom = (lead: Lead, zoomLevel: number | null | undefined) => {
-    if (!zoomLevel || zoomLevel < markerZoomThreshold) return getNationwideMarkerIcon();
+  const getMarkerIconForZoom = (
+    lead: Lead,
+    zoomLevel: number | null | undefined
+  ) => {
+    if (!zoomLevel || zoomLevel < markerZoomThreshold)
+      return getNationwideMarkerIcon();
     return getMarkerIcon(lead);
   };
 
@@ -342,15 +370,22 @@ const MapComponent: React.FC<{
 
   useEffect(() => {
     if (!mapRef.current || isInitializedRef.current || map) return;
-    
+
     // ✅ Safety: only proceed once Maps JS is loaded
-    if (typeof window === 'undefined' || !window.google || !window.google.maps) {
+    if (
+      typeof window === "undefined" ||
+      !window.google ||
+      !window.google.maps
+    ) {
       // Try again in 100ms (faster retry), but cap the number of attempts (30 attempts = 3 seconds max)
       if (mapInitAttempt < 30) {
-        const id = window.setTimeout(() => setMapInitAttempt(a => a + 1), 100);
+        const id = window.setTimeout(
+          () => setMapInitAttempt((a) => a + 1),
+          100
+        );
         return () => window.clearTimeout(id);
       }
-      console.error('Google Maps API not available after waiting');
+      console.error("Google Maps API not available after waiting");
       if (onErrorRef.current) {
         setTimeout(() => onErrorRef.current?.(), 100);
       }
@@ -362,7 +397,7 @@ const MapComponent: React.FC<{
       // Give Google Maps more time to load before timing out
       initTimeoutRef.current = setTimeout(() => {
         if (!map) {
-          console.error('Google Maps failed to initialize within timeout');
+          console.error("Google Maps failed to initialize within timeout");
           if (onErrorRef.current) onErrorRef.current();
         }
       }, 15000); // 15 second timeout - give more time for API to load
@@ -383,7 +418,7 @@ const MapComponent: React.FC<{
           latLngBounds: usBounds,
           strictBounds: false, // Allow some flexibility at edges
         },
-        gestureHandling: 'greedy', // Allow scroll and zoom without modifier for instant zoom
+        gestureHandling: "greedy", // Allow scroll and zoom without modifier for instant zoom
         streetViewControl: true,
         mapTypeControl: true,
         fullscreenControl: true,
@@ -392,71 +427,76 @@ const MapComponent: React.FC<{
         scaleControl: true,
         styles: [
           {
-            featureType: 'poi',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }]
-          }
-        ]
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }],
+          },
+        ],
       });
 
       // Handle map resize when container becomes visible
       const handleResize = () => {
         if (mapInstance) {
-          window.google.maps.event.trigger(mapInstance, 'resize')
+          window.google.maps.event.trigger(mapInstance, "resize");
         }
-      }
+      };
 
       // Use ResizeObserver to detect when container becomes visible
       if (mapRef.current) {
         const resizeObserver = new ResizeObserver(() => {
-          handleResize()
-        })
-        resizeObserver.observe(mapRef.current)
-        
+          handleResize();
+        });
+        resizeObserver.observe(mapRef.current);
+
         // Also listen for window resize
-        window.addEventListener('resize', handleResize)
+        window.addEventListener("resize", handleResize);
       }
 
       // Check if map instance is valid
       if (!mapInstance) {
-        throw new Error('Failed to create map instance');
+        throw new Error("Failed to create map instance");
       }
 
       setMap(mapInstance);
       const z = mapInstance.getZoom();
-      setZoomLevel(typeof z === 'number' ? z : null);
+      setZoomLevel(typeof z === "number" ? z : null);
       onMapReadyRef.current(mapInstance);
       isInitializedRef.current = true;
-      
+
       // Clear timeout on success
       if (initTimeoutRef.current) {
         clearTimeout(initTimeoutRef.current);
         initTimeoutRef.current = null;
       }
-      
+
       const infoWindowInstance = new window.google.maps.InfoWindow();
       setInfoWindow(infoWindowInstance);
-      
-      mapInstance.addListener('click', () => {
+
+      mapInstance.addListener("click", () => {
         infoWindowInstance.close();
       });
-      mapInstance.addListener('zoom_changed', () => {
+      mapInstance.addListener("zoom_changed", () => {
+        // Mark that the user has manually interacted with the map.
+        userInteractedRef.current = true;
         const z = mapInstance.getZoom();
-        setZoomLevel(typeof z === 'number' ? z : null);
+        setZoomLevel(typeof z === "number" ? z : null);
         markersRef.current.forEach((marker) => {
           const lead = markerLeadMapRef.current.get(marker);
           if (!lead) return;
           marker.setIcon(getMarkerIconForZoom(lead, z));
         });
       });
+      mapInstance.addListener("dragstart", () => {
+        userInteractedRef.current = true;
+      });
 
       // Listen for map errors
-      mapInstance.addListener('error', (error: any) => {
-        console.error('Google Maps error event:', error);
+      mapInstance.addListener("error", (error: any) => {
+        console.error("Google Maps error event:", error);
         if (onErrorRef.current) onErrorRef.current();
       });
     } catch (error) {
-      console.error('Error initializing Google Maps:', error);
+      console.error("Error initializing Google Maps:", error);
       if (initTimeoutRef.current) {
         clearTimeout(initTimeoutRef.current);
         initTimeoutRef.current = null;
@@ -476,12 +516,12 @@ const MapComponent: React.FC<{
   useEffect(() => {
     if (!map || !leads.length) return;
 
-    markers.forEach(marker => marker.setMap(null));
+    markers.forEach((marker) => marker.setMap(null));
     markersRef.current = [];
     markerLeadMapRef.current.clear();
 
     const newMarkers: google.maps.Marker[] = [];
-    const currentZoom = zoomLevel ?? map.getZoom();
+    const currentZoom = map.getZoom();
 
     // Separate leads with coordinates from those needing geocoding
     const leadsWithCoords: Lead[] = [];
@@ -498,15 +538,15 @@ const MapComponent: React.FC<{
 
     // Lazy-load: when zoomed out (whole US) show up to 50 sampled pins; when zoom passes threshold show all,
     // but only for leads that are actually inside the current viewport when zoomed in.
-    const isZoomedOut = typeof currentZoom === 'number' && currentZoom < minMarkerRenderZoom;
+    const isZoomedOut =
+      typeof currentZoom === "number" && currentZoom < minMarkerRenderZoom;
 
     let visibleLeadsWithCoords: Lead[];
     if (isZoomedOut) {
       // Nationwide view: sample across all leads, capped to ~50 pins.
-      visibleLeadsWithCoords = sampleLeadsForNationwideView(leadsWithCoords).slice(
-        0,
-        maxZoomedOutPins
-      );
+      visibleLeadsWithCoords = sampleLeadsForNationwideView(
+        leadsWithCoords
+      ).slice(0, maxZoomedOutPins);
     } else {
       // Zoomed-in view: only render leads that are currently inside the viewport, and cap to a reasonable max.
       const bounds = map.getBounds();
@@ -517,7 +557,8 @@ const MapComponent: React.FC<{
           })
         : leadsWithCoords;
       const maxInViewPins = 2500;
-      visibleLeadsWithCoords = inView.length > maxInViewPins ? inView.slice(0, maxInViewPins) : inView;
+      visibleLeadsWithCoords =
+        inView.length > maxInViewPins ? inView.slice(0, maxInViewPins) : inView;
     }
 
     // Create markers for visible leads with coordinates (use dot icon when zoomed out, price pill when zoomed in)
@@ -525,38 +566,43 @@ const MapComponent: React.FC<{
     visibleLeadsWithCoords.forEach((lead) => {
       const marker = new window.google.maps.Marker({
         position: { lat: lead.latitude!, lng: lead.longitude! },
-          map: map,
-          title: `${lead.address}, ${lead.city}, ${lead.state}`,
-          icon: useNationwideIcon ? getNationwideMarkerIcon() : getMarkerIconForZoom(lead, map.getZoom())
-        });
-        markerLeadMapRef.current.set(marker, lead);
+        map: map,
+        title: `${lead.address}, ${lead.city}, ${lead.state}`,
+        icon: useNationwideIcon
+          ? getNationwideMarkerIcon()
+          : getMarkerIconForZoom(lead, map.getZoom()),
+      });
+      markerLeadMapRef.current.set(marker, lead);
 
-        marker.addListener('click', () => {
-          if (infoWindow) {
-            infoWindow.close();
-          }
-          const streetViewBtnId = `street-view-btn-${lead.id}`;
-          const closeBtnId = `close-btn-${lead.id}`;
-          const viewDetailsBtnId = `view-details-btn-${lead.id}`;
-          const contentDiv = document.createElement('div');
-          contentDiv.innerHTML = buildPropertyPopupHTML(lead, {
-            streetViewBtnId,
-            closeBtnId,
-            viewDetailsBtnId,
-          });
-          if (infoWindow) {
-            infoWindow.setContent(contentDiv);
-            infoWindow.open(map, marker);
-            window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+      marker.addListener("click", () => {
+        if (infoWindow) {
+          infoWindow.close();
+        }
+        const streetViewBtnId = `street-view-btn-${lead.id}`;
+        const closeBtnId = `close-btn-${lead.id}`;
+        const viewDetailsBtnId = `view-details-btn-${lead.id}`;
+        const contentDiv = document.createElement("div");
+        contentDiv.innerHTML = buildPropertyPopupHTML(lead, {
+          streetViewBtnId,
+          closeBtnId,
+          viewDetailsBtnId,
+        });
+        if (infoWindow) {
+          infoWindow.setContent(contentDiv);
+          infoWindow.open(map, marker);
+          window.google.maps.event.addListenerOnce(
+            infoWindow,
+            "domready",
+            () => {
               const closeBtn = document.getElementById(closeBtnId);
               if (closeBtn) {
-                closeBtn.addEventListener('click', () => {
+                closeBtn.addEventListener("click", () => {
                   if (infoWindow) infoWindow.close();
                 });
               }
               const viewDetailsBtn = document.getElementById(viewDetailsBtnId);
               if (viewDetailsBtn && onViewDetailsClick) {
-                viewDetailsBtn.addEventListener('click', (e) => {
+                viewDetailsBtn.addEventListener("click", (e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (infoWindow) infoWindow.close();
@@ -565,22 +611,28 @@ const MapComponent: React.FC<{
               }
               const streetViewBtn = document.getElementById(streetViewBtnId);
               if (streetViewBtn) {
-                streetViewBtn.addEventListener('click', (e) => {
+                streetViewBtn.addEventListener("click", (e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (infoWindow) infoWindow.close();
                   if (lead.latitude && lead.longitude && map) {
-                    openStreetViewImmediately(lead.latitude, lead.longitude, map, lead);
+                    openStreetViewImmediately(
+                      lead.latitude,
+                      lead.longitude,
+                      map,
+                      lead
+                    );
                   } else {
                     onStreetViewClick(lead);
                   }
                 });
               }
-            });
-          }
-        });
+            }
+          );
+        }
+      });
 
-        newMarkers.push(marker);
+      newMarkers.push(marker);
     });
 
     // Geocode leads without coordinates only when zoomed in (state level+) to avoid loading many markers at nationwide
@@ -589,7 +641,7 @@ const MapComponent: React.FC<{
     if (
       leadsNeedingGeocode.length > 0 &&
       shouldGeocode &&
-      typeof window !== 'undefined' &&
+      typeof window !== "undefined" &&
       window.google?.maps
     ) {
       // Use a small batch to avoid overwhelming the geocoding API
@@ -600,28 +652,28 @@ const MapComponent: React.FC<{
         try {
           const address = [lead.address, lead.city, lead.state, lead.zip]
             .filter(Boolean)
-            .join(', ');
+            .join(", ");
 
           if (!address) return;
 
           const geocoder = new window.google.maps.Geocoder();
           geocoder.geocode({ address }, (results, status) => {
-            if (status === 'OK' && results && results[0]) {
+            if (status === "OK" && results && results[0]) {
               const location = results[0].geometry.location;
               const marker = new window.google.maps.Marker({
                 position: { lat: location.lat(), lng: location.lng() },
                 map: map,
                 title: `${lead.address}, ${lead.city}, ${lead.state}`,
-                icon: getMarkerIconForZoom(lead, map.getZoom())
+                icon: getMarkerIconForZoom(lead, map.getZoom()),
               });
               markerLeadMapRef.current.set(marker, lead);
 
-              marker.addListener('click', () => {
+              marker.addListener("click", () => {
                 if (infoWindow) infoWindow.close();
                 const streetViewBtnId = `street-view-btn-geocode-${lead.id}`;
                 const closeBtnId = `close-btn-geocode-${lead.id}`;
                 const viewDetailsBtnId = `view-details-btn-geocode-${lead.id}`;
-                const contentDiv = document.createElement('div');
+                const contentDiv = document.createElement("div");
                 contentDiv.innerHTML = buildPropertyPopupHTML(lead, {
                   streetViewBtnId,
                   closeBtnId,
@@ -630,37 +682,48 @@ const MapComponent: React.FC<{
                 if (infoWindow) {
                   infoWindow.setContent(contentDiv);
                   infoWindow.open(map, marker);
-                  window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
-                    const closeBtn = document.getElementById(closeBtnId);
-                    if (closeBtn) {
-                      closeBtn.addEventListener('click', () => {
-                        if (infoWindow) infoWindow.close();
-                      });
+                  window.google.maps.event.addListenerOnce(
+                    infoWindow,
+                    "domready",
+                    () => {
+                      const closeBtn = document.getElementById(closeBtnId);
+                      if (closeBtn) {
+                        closeBtn.addEventListener("click", () => {
+                          if (infoWindow) infoWindow.close();
+                        });
+                      }
+                      const viewDetailsBtn =
+                        document.getElementById(viewDetailsBtnId);
+                      if (viewDetailsBtn && onViewDetailsClick) {
+                        viewDetailsBtn.addEventListener("click", (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (infoWindow) infoWindow.close();
+                          onViewDetailsClick(lead.id);
+                        });
+                      }
+                      const streetViewBtn =
+                        document.getElementById(streetViewBtnId);
+                      if (streetViewBtn) {
+                        streetViewBtn.addEventListener("click", (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (infoWindow) infoWindow.close();
+                          const position = marker.getPosition();
+                          if (position && map) {
+                            openStreetViewImmediately(
+                              position.lat(),
+                              position.lng(),
+                              map,
+                              lead
+                            );
+                          } else {
+                            onStreetViewClick(lead);
+                          }
+                        });
+                      }
                     }
-                    const viewDetailsBtn = document.getElementById(viewDetailsBtnId);
-                    if (viewDetailsBtn && onViewDetailsClick) {
-                      viewDetailsBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (infoWindow) infoWindow.close();
-                        onViewDetailsClick(lead.id);
-                      });
-                    }
-                    const streetViewBtn = document.getElementById(streetViewBtnId);
-                    if (streetViewBtn) {
-                      streetViewBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (infoWindow) infoWindow.close();
-                        const position = marker.getPosition();
-                        if (position && map) {
-                          openStreetViewImmediately(position.lat(), position.lng(), map, lead);
-                        } else {
-                          onStreetViewClick(lead);
-                        }
-                      });
-                    }
-                  });
+                  );
                 }
               });
 
@@ -671,7 +734,7 @@ const MapComponent: React.FC<{
               // Update bounds when new marker is added
               if (newMarkers.length > 0 && map && !shouldSuppressAutoFit) {
                 const bounds = new window.google.maps.LatLngBounds();
-                newMarkers.forEach(m => {
+                newMarkers.forEach((m) => {
                   const pos = m.getPosition();
                   if (pos) bounds.extend(pos);
                 });
@@ -688,13 +751,15 @@ const MapComponent: React.FC<{
     setMarkers(newMarkers);
     markersRef.current = [...newMarkers];
 
-    // Only fit bounds when leads/map changed — not when user zoomed (so zoom is not overridden)
-    const zoomTriggeredRun =
-      lastZoomRef.current !== null && lastZoomRef.current !== (zoomLevel ?? map.getZoom());
-    lastZoomRef.current = zoomLevel ?? map.getZoom() ?? null;
-    if (newMarkers.length > 0 && !zoomTriggeredRun && !shouldSuppressAutoFit && !isZoomedOut) {
+    // Only fit bounds when leads/map changed and the user hasn't manually panned/zoomed.
+    if (
+      newMarkers.length > 0 &&
+      !userInteractedRef.current &&
+      !shouldSuppressAutoFit &&
+      !isZoomedOut
+    ) {
       const bounds = new google.maps.LatLngBounds();
-      newMarkers.forEach(marker => {
+      newMarkers.forEach((marker) => {
         const position = marker.getPosition();
         if (position) bounds.extend(position);
       });
@@ -704,7 +769,6 @@ const MapComponent: React.FC<{
     map,
     leads,
     infoWindow,
-    zoomLevel,
     onStreetViewClick,
     openStreetViewImmediately,
     shouldSuppressAutoFit,
@@ -713,8 +777,8 @@ const MapComponent: React.FC<{
   return (
     <div
       ref={mapRef}
-      className={fullHeight ? 'h-full' : undefined}
-      style={{ width: '100%', height: fullHeight ? '100%' : '600px' }}
+      className={fullHeight ? "h-full" : undefined}
+      style={{ width: "100%", height: fullHeight ? "100%" : "600px" }}
     />
   );
 };
@@ -734,7 +798,9 @@ const render = (status: Status, onError?: () => void): React.ReactElement => {
       // Trigger fallback to Mapbox with a longer delay to avoid premature switching
       if (onError) {
         setTimeout(() => {
-          console.log('Google Maps wrapper reported failure, triggering fallback');
+          console.log(
+            "Google Maps wrapper reported failure, triggering fallback"
+          );
           onError();
         }, 2000); // Wait 2 seconds before switching to ensure it's a real failure
       }
@@ -751,8 +817,18 @@ const render = (status: Status, onError?: () => void): React.ReactElement => {
   }
 };
 
-const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActive, listings, loading, onError, onStreetViewListingClick, fullScreen, flyToCenter, flyToZoom = 14, onFlyToDone }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({
+  isActive,
+  listings,
+  loading,
+  onError,
+  onStreetViewListingClick,
+  fullScreen,
+  flyToCenter,
+  flyToZoom = 14,
+  onFlyToDone,
+}) => {
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -767,64 +843,78 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
     pendingFlyToRef.current = flyToCenter ?? null;
   }, [flyToCenter]);
 
-  const applyFlyTo = useCallback((map: google.maps.Map, target: { lat: number; lng: number } | null) => {
-    if (!target) return;
-    const lat = Number(target.lat);
-    const lng = Number(target.lng);
-    if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
-    const key = `${lat},${lng}`;
-    if (lastAppliedRef.current === key) return;
-    lastAppliedRef.current = key;
-    const latLng = { lat, lng };
-    const zoom = typeof flyToZoom === 'number' ? flyToZoom : 16;
-    setSuppressAutoFit(true);
-    // Apply camera in one pass, then reinforce once from the next frame.
-    // This avoids occasional "stuck at nationwide zoom" behavior after heavy marker updates.
-    map.panTo(latLng);
-    map.setZoom(zoom);
-    const reinforce = () => {
-      if (!mapInstanceRef.current || mapInstanceRef.current !== map) return;
-      const center = map.getCenter();
-      const currentZoom = map.getZoom() ?? 0;
-      const centerLat = center?.lat() ?? 0;
-      const centerLng = center?.lng() ?? 0;
-      const centerDrifted =
-        Math.abs(centerLat - latLng.lat) > 0.02 ||
-        Math.abs(centerLng - latLng.lng) > 0.02;
-      if (centerDrifted || currentZoom < zoom - 0.25) {
-        map.panTo(latLng);
-        map.setZoom(zoom);
+  const applyFlyTo = useCallback(
+    (map: google.maps.Map, target: { lat: number; lng: number } | null) => {
+      if (!target) return;
+      const lat = Number(target.lat);
+      const lng = Number(target.lng);
+      if (
+        Number.isNaN(lat) ||
+        Number.isNaN(lng) ||
+        lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180
+      )
+        return;
+      const key = `${lat},${lng}`;
+      if (lastAppliedRef.current === key) return;
+      lastAppliedRef.current = key;
+      const latLng = { lat, lng };
+      const zoom = typeof flyToZoom === "number" ? flyToZoom : 16;
+      setSuppressAutoFit(true);
+      // Apply camera in one pass, then reinforce once from the next frame.
+      // This avoids occasional "stuck at nationwide zoom" behavior after heavy marker updates.
+      map.panTo(latLng);
+      map.setZoom(zoom);
+      const reinforce = () => {
+        if (!mapInstanceRef.current || mapInstanceRef.current !== map) return;
+        const center = map.getCenter();
+        const currentZoom = map.getZoom() ?? 0;
+        const centerLat = center?.lat() ?? 0;
+        const centerLng = center?.lng() ?? 0;
+        const centerDrifted =
+          Math.abs(centerLat - latLng.lat) > 0.02 ||
+          Math.abs(centerLng - latLng.lng) > 0.02;
+        if (centerDrifted || currentZoom < zoom - 0.25) {
+          map.panTo(latLng);
+          map.setZoom(zoom);
+        }
+      };
+      requestAnimationFrame(reinforce);
+      if (searchMarkerRef.current) {
+        searchMarkerRef.current.setMap(null);
       }
-    };
-    requestAnimationFrame(reinforce);
-    if (searchMarkerRef.current) {
-      searchMarkerRef.current.setMap(null);
-    }
-    if (typeof window !== 'undefined' && window.google?.maps) {
-      searchMarkerRef.current = new window.google.maps.Marker({
-        position: latLng,
-        map,
-        title: 'Searched location',
-        icon: { url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' }
-      });
-    }
-    const done = onFlyToDone;
-    if (done && typeof window !== 'undefined' && window.google?.maps?.event) {
-      window.google.maps.event.addListenerOnce(map, 'idle', () => {
+      if (typeof window !== "undefined" && window.google?.maps) {
+        searchMarkerRef.current = new window.google.maps.Marker({
+          position: latLng,
+          map,
+          title: "Searched location",
+          icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" },
+        });
+      }
+      const done = onFlyToDone;
+      if (done && typeof window !== "undefined" && window.google?.maps?.event) {
+        window.google.maps.event.addListenerOnce(map, "idle", () => {
+          lastAppliedRef.current = null;
+          done();
+        });
+      } else if (done) {
         lastAppliedRef.current = null;
         done();
-      });
-    } else if (done) {
-      lastAppliedRef.current = null;
-      done();
-    }
-  }, [flyToZoom, onFlyToDone]);
+      }
+    },
+    [flyToZoom, onFlyToDone]
+  );
 
-  const handleMapReady = useCallback((map: google.maps.Map) => {
-    mapInstanceRef.current = map;
-    const pending = pendingFlyToRef.current;
-    if (pending) applyFlyTo(map, pending);
-  }, [applyFlyTo]);
+  const handleMapReady = useCallback(
+    (map: google.maps.Map) => {
+      mapInstanceRef.current = map;
+      const pending = pendingFlyToRef.current;
+      if (pending) applyFlyTo(map, pending);
+    },
+    [applyFlyTo]
+  );
 
   // Defer flyTo to next frame so it runs after markers effect (fixes search when zoomed out)
   useEffect(() => {
@@ -852,7 +942,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
       panorama.setVisible(true);
       mapInstanceRef.current.setStreetView(panorama);
     } catch (err) {
-      console.error('Error opening inline Street View', err);
+      console.error("Error opening inline Street View", err);
     }
   }, []);
 
@@ -865,17 +955,26 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
         try {
           const streetViewService = new google.maps.StreetViewService();
           const panorama = mapInstanceRef.current.getStreetView();
-          
+
           streetViewService.getPanorama(
-            { location: { lat: lead.latitude, lng: lead.longitude }, radius: 50 },
+            {
+              location: { lat: lead.latitude, lng: lead.longitude },
+              radius: 50,
+            },
             (data, status) => {
-              if (status === 'OK' && data) {
+              if (status === "OK" && data) {
                 // Street View available - open it on map
-                panorama.setPosition({ lat: lead.latitude!, lng: lead.longitude! });
+                panorama.setPosition({
+                  lat: lead.latitude!,
+                  lng: lead.longitude!,
+                });
                 panorama.setPov({ heading: 270, pitch: 0 });
                 panorama.setVisible(true);
                 mapInstanceRef.current?.setStreetView(panorama);
-                mapInstanceRef.current?.setCenter({ lat: lead.latitude!, lng: lead.longitude! });
+                mapInstanceRef.current?.setCenter({
+                  lat: lead.latitude!,
+                  lng: lead.longitude!,
+                });
                 mapInstanceRef.current?.setZoom(18);
               } else {
                 // Street View not available - open modal as fallback
@@ -886,7 +985,7 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
             }
           );
         } catch (err) {
-          console.error('Error opening Street View:', err);
+          console.error("Error opening Street View:", err);
           // Fallback to modal
           if (onStreetViewListingClick) {
             onStreetViewListingClick(lead.id);
@@ -910,7 +1009,9 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
       return;
     }
 
-    const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M';
+    const GOOGLE_MAPS_API_KEY =
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+      "AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M";
     if (!GOOGLE_MAPS_API_KEY) return;
 
     setIsSearching(true);
@@ -922,14 +1023,14 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
       );
 
       if (!response.ok) {
-        throw new Error('Search failed');
+        throw new Error("Search failed");
       }
 
       const data = await response.json();
       setSearchResults(data.predictions || []);
       setShowSearchResults(true);
     } catch (error) {
-      console.error('Search error:', error);
+      console.error("Search error:", error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -938,41 +1039,46 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
 
   // Handle search result selection
   const handleSearchResultClick = async (prediction: any) => {
-    const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M';
-    
+    const GOOGLE_MAPS_API_KEY =
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+      "AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M";
+
     try {
       const detailsResponse = await fetch(
         `https://maps.googleapis.com/maps/api/place/details/json?place_id=${prediction.place_id}&key=${GOOGLE_MAPS_API_KEY}`
       );
-      
+
       if (!detailsResponse.ok) return;
-      
+
       const detailsData = await detailsResponse.json();
       const location = detailsData.result.geometry.location;
-      
+
       // Navigate map to location
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.setCenter({ lat: location.lat, lng: location.lng });
+        mapInstanceRef.current.setCenter({
+          lat: location.lat,
+          lng: location.lng,
+        });
         mapInstanceRef.current.setZoom(15);
-        
+
         if (searchMarkerRef.current) {
           searchMarkerRef.current.setMap(null);
         }
-        
+
         searchMarkerRef.current = new google.maps.Marker({
           position: { lat: location.lat, lng: location.lng },
           map: mapInstanceRef.current,
           title: prediction.description,
           icon: {
-            url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
-          }
+            url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+          },
         });
       }
-      
+
       setShowSearchResults(false);
       setSearchQuery(prediction.description);
     } catch (error) {
-      console.error('Error getting place details:', error);
+      console.error("Error getting place details:", error);
     }
   };
 
@@ -996,14 +1102,18 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
     );
   }
 
-  const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M';
+  const GOOGLE_MAPS_API_KEY =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    "AIzaSyCZ0i53LQCnvju3gZYXW5ZQe_IfgWBDM9M";
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
       <div className="flex items-center justify-center h-96 bg-yellow-50 rounded-lg">
         <div className="text-center">
           <div className="text-yellow-600 text-6xl mb-4">🔑</div>
-          <h3 className="text-lg font-semibold text-yellow-800 mb-2">Google Maps API Key Required</h3>
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+            Google Maps API Key Required
+          </h3>
           <p className="text-yellow-600 mb-4">
             Please add your Google Maps API key to the environment variables.
           </p>
@@ -1013,14 +1123,17 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
   }
 
   return (
-    <div className={fullScreen ? 'w-full h-full min-h-0' : 'w-full'}>
+    <div className={fullScreen ? "w-full h-full min-h-0" : "w-full"}>
       {!fullScreen && (
         <>
           <div className="mb-4 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900">Property Map</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Property Map
+            </h2>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">
-                {listings.length} propert{listings.length !== 1 ? 'ies' : 'y'} found
+                {listings.length} propert{listings.length !== 1 ? "ies" : "y"}{" "}
+                found
               </span>
               <div className="flex items-center gap-2 text-xs">
                 <div className="flex items-center gap-1">
@@ -1065,7 +1178,14 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
                 className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <circle cx="11" cy="11" r="8"></circle>
                   <path d="m21 21-4.35-4.35"></path>
                 </svg>
@@ -1094,19 +1214,25 @@ const GoogleMapsViewEnhanced: React.FC<GoogleMapsViewEnhancedProps> = ({ isActiv
               </div>
             )}
 
-            {showSearchResults && searchResults.length === 0 && searchQuery.length >= 3 && !isSearching && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
-                No results found
-              </div>
-            )}
+            {showSearchResults &&
+              searchResults.length === 0 &&
+              searchQuery.length >= 3 &&
+              !isSearching && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+                  No results found
+                </div>
+              )}
           </div>
         </>
       )}
 
-      <div className={fullScreen ? 'h-full min-h-0' : undefined}>
-        <Wrapper apiKey={GOOGLE_MAPS_API_KEY} render={(status) => render(status, onError)}>
-          <MapComponent 
-            leads={listings} 
+      <div className={fullScreen ? "h-full min-h-0" : undefined}>
+        <Wrapper
+          apiKey={GOOGLE_MAPS_API_KEY}
+          render={(status) => render(status, onError)}
+        >
+          <MapComponent
+            leads={listings}
             onStreetViewClick={handleStreetViewClickFromMap}
             onViewDetailsClick={onStreetViewListingClick}
             onMapReady={handleMapReady}
