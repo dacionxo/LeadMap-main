@@ -48,7 +48,7 @@ export default function UniboxSidebar({
           <button
             type="button"
             onClick={onCompose}
-            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg transition-all duration-200 border-b border-[#F3F4F6] text-[#137fec] hover:bg-[#137fec]/10 font-medium"
+            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg transition-all duration-200 border-b border-[#F3F4F6] text-[#1eb0ff] hover:bg-[#1eb0ff]/10 font-medium"
           >
             <span className="material-symbols-outlined text-[22px]" aria-hidden>edit_note</span>
             <span className="text-sm">Compose</span>
@@ -82,7 +82,7 @@ export default function UniboxSidebar({
                           ? 'bg-green-500 text-white'
                           : value === 'scheduled'
                             ? 'bg-amber-500 text-white'
-                            : 'bg-[#137fec] text-white'
+                            : 'bg-[#1eb0ff] text-white'
                       : value === 'recycling_bin'
                         ? 'bg-red-100 text-red-700'
                         : value === 'sent'

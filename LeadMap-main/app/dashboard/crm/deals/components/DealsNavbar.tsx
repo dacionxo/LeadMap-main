@@ -147,7 +147,7 @@ export default function DealsNavbar() {
               </span>
             </div>
             <div className="relative group-hover:scale-105 transition-transform duration-300">
-              <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-purple-500 rounded-full opacity-0 group-hover:opacity-40 blur-[4px] transition-opacity duration-300" />
+              <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-[#edfaff] rounded-full opacity-0 group-hover:opacity-40 blur-[4px] transition-opacity duration-300" />
               <div className="relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-100 dark:border-slate-700 bg-primary text-sm font-bold text-white shadow-sm overflow-hidden">
                 {avatarUrl ? (
                   <img
@@ -164,7 +164,7 @@ export default function DealsNavbar() {
 
           {showProfileMenu && (
             <div className="absolute right-0 mt-3 w-[321px] origin-top-right rounded-2xl bg-card-light dark:bg-card-dark shadow-2xl ring-1 ring-black/5 border border-border-light dark:border-border-dark overflow-hidden z-50">
-              <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-gray-50 to-white dark:from-slate-800 dark:to-slate-800/50">
+              <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-[#edfaff] to-white dark:from-slate-800 dark:to-slate-800/50">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white shadow-md ring-4 ring-white dark:ring-slate-700 overflow-hidden">

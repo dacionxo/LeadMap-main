@@ -30,16 +30,16 @@ module.exports = {
       },
       colors: {
         primary: {
-          DEFAULT: "#135BEC", // Dashboard primary (replaces #5D87FF)
-          hover: "#0f4fc4",
+          DEFAULT: "#1eb0ff", // Dashboard primary button color
+          hover: "#0071e3", // Dashboard button hover
           soft: "#e3ebff",
           50: "#eef2ff",
           100: "#e3ebff",
           200: "#c7d7ff",
           300: "#6b9ef5",
           400: "#3d7aed",
-          500: "#135BEC",
-          600: "#0f4fc4",
+          500: "#1eb0ff",
+          600: "#0071e3",
           700: "#3d5fd9",
           800: "#354cc6",
           900: "#3242a0",
@@ -168,11 +168,11 @@ module.exports = {
         },
         // Tailwindadmin colors
         link: {
-          DEFAULT: "#2a3547",
-          dark: "#7c8fac",
+          DEFAULT: "#48ceff",
+          dark: "#48ceff",
         },
-        darklink: "#7c8fac",
-        lightprimary: "rgba(19, 91, 236, 0.12)", // 12% opacity of dashboard primary (#135BEC)
+        darklink: "#48ceff",
+        lightprimary: "rgba(30, 176, 255, 0.12)", // 12% opacity of dashboard primary (#1eb0ff)
         lightsecondary: "rgba(73, 190, 255, 0.12)", // 12% opacity of Tailwindadmin secondary
         lightsuccess: "rgba(19, 222, 185, 0.12)",
         lightinfo: "rgba(135, 84, 236, 0.12)",
@@ -211,9 +211,9 @@ module.exports = {
         "grid-border": "#F1F5F9", // Slate-100
         /* Elite CRM Unibox design tokens (1:1 reference HTML) */
         unibox: {
-          primary: "#137fec",
+          primary: "#1eb0ff",
           "primary-light": "#5a8dee",
-          "primary-dark": "#0f6bd4",
+          "primary-dark": "#0071e3",
           "background-light": "#fbfbfd",
           "background-dark": "#101922",
           "surface-light": "#ffffff",
@@ -221,8 +221,9 @@ module.exports = {
         },
         /* Find Deals Dashboard (1:1 reference HTML) */
         fd: {
-          primary: "#5A8CFF",
+          primary: "#1eb0ff",
           "primary-bg": "#EFF4FF",
+          "gradient-base": "#edfaff",
           "background-light": "#F3F6FC",
           "surface-light": "#FFFFFF",
           "text-primary": "#1E293B",
@@ -274,7 +275,7 @@ module.exports = {
         1: "0px 1px 2px 0px rgba(84, 87, 118, 0.12)",
         card: "0px 1px 2px 0px rgba(0, 0, 0, 0.12)",
         soft: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
-        glow: "0 0 15px rgba(0, 113, 227, 0.3)",
+        glow: "0 0 15px rgba(79, 70, 229, 0.3)",
         "sm-soft": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
         float: "0 10px 40px -10px rgba(0,0,0,0.08)",
         "action-btn": "0 2px 5px rgba(59, 130, 246, 0.3)",

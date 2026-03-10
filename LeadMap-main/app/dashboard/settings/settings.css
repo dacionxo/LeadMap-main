@@ -6,12 +6,12 @@
 }
 
 [data-settings="page-wrap"].settings-mesh-gradient {
-  background-color: #EEF2FF;
+  background-color: #edfaff;
   background-image:
-    radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(220, 100%, 77%, 0.08) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(260, 100%, 70%, 0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(200, 100%, 70%, 0.08) 0px, transparent 50%);
+    radial-gradient(at 80% 0%, rgba(237, 250, 255, 0.8) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(237, 250, 255, 0.7) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(237, 250, 255, 0.75) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(237, 250, 255, 0.7) 0px, transparent 50%);
 }
 
 /* Main panel – dashboard card: shadow-sm, border-gray-200 */

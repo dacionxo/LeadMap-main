@@ -43,7 +43,7 @@ export function KpiCompactCard({
     : '+0%'
 
   // Determine ring color based on context (default to primary)
-  const finalRingColor = ringColor || '#135BEC'
+  const finalRingColor = ringColor || '#1eb0ff'
 
   return (
     <div

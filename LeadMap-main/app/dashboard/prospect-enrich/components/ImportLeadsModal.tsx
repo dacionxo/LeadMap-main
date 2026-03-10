@@ -629,7 +629,7 @@ listing-2,https://example.com/property/2,456 Oak Ave,San Francisco,CA,94102,7500
               }}
               onMouseEnter={(e) => {
                 if (!uploading && file) {
-                  e.currentTarget.style.background = '#0071E3'
+                  e.currentTarget.style.background = '#4f46e5'
                 }
               }}
               onMouseLeave={(e) => {

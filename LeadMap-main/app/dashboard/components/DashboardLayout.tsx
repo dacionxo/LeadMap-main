@@ -58,11 +58,11 @@ function DashboardLayoutContent({
   }, []);
 
   return (
-    <div className="flex h-screen relative overflow-x-hidden">
+    <div className="flex h-screen relative overflow-x-hidden" data-dashboard>
       {/* Global Sidebar (NextDeal nav) hidden from all pages; design kept in ./Sidebar.tsx */}
       <main
         ref={mainRef as any}
-        className="flex-1 overflow-y-auto relative z-10 bg-[#F5F5F7] dark:bg-dark h-full flex flex-col min-w-0"
+        className="flex-1 overflow-y-auto relative z-10 bg-[#edfaff] dark:bg-dark h-full flex flex-col min-w-0"
       >
         {!hideHeader && <Header scrollContainerRef={mainRef} />}
         {/* Main Content */}

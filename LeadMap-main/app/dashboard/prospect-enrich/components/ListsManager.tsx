@@ -231,7 +231,7 @@ export default function ListsManager({ supabase, listing, onChange }: ListsManag
               transition: 'background-color 0.15s ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#0071E3'
+              e.currentTarget.style.background = '#4f46e5'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = '#6366f1'

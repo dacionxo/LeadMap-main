@@ -1328,9 +1328,9 @@ export default function UniboxContent({
                   selectionModeVisible
                     ? selectedThreadIds.size >= threads.length &&
                       threads.length > 0
-                      ? "bg-[#137fec]/10 border-[#137fec]/30 text-[#137fec]"
-                      : "bg-[#137fec]/10 border-[#137fec]/30 text-[#137fec]"
-                    : "bg-white border-slate-100 text-slate-600 hover:text-[#137fec]"
+                      ? "bg-[#1eb0ff]/10 border-[#1eb0ff]/30 text-[#1eb0ff]"
+                      : "bg-[#1eb0ff]/10 border-[#1eb0ff]/30 text-[#1eb0ff]"
+                    : "bg-white border-slate-100 text-slate-600 hover:text-[#1eb0ff]"
                 }`}
                 aria-label={
                   !selectionModeVisible
@@ -1370,13 +1370,13 @@ export default function UniboxContent({
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search emails"
-              className="w-full bg-slate-100/50 border border-[#F3F4F6] rounded-lg py-2.5 pl-10 text-sm focus:ring-1 focus:ring-[#137fec]/20 placeholder:text-slate-400"
+              className="w-full bg-slate-100/50 border border-[#F3F4F6] rounded-lg py-2.5 pl-10 text-sm focus:ring-1 focus:ring-[#1eb0ff]/20 placeholder:text-slate-400"
               aria-label="Search emails"
             />
           </div>
         </header>
         {selectedThreadIds.size > 0 && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-white/20 bg-[#137fec]/10 shrink-0">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-white/20 bg-[#1eb0ff]/10 shrink-0">
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
               {selectedThreadIds.size} selected
             </span>

@@ -106,24 +106,24 @@ export default function ActionButton({
   const variantStyles = {
     default: {
       background: isDark 
-        ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)'
-        : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+        ? 'rgba(30, 176, 255, 0.2)'
+        : '#1eb0ff',
       color: '#ffffff',
       border: 'none',
       hover: {
         background: isDark
-          ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)'
-          : 'linear-gradient(135deg, #0071E3 0%, #7c3aed 100%)'
+          ? 'rgba(0, 113, 227, 0.3)'
+          : '#0071e3'
       }
     },
     outline: {
       background: 'transparent',
-      color: isDark ? '#e2e8f0' : '#6366f1',
-      border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid #6366f1',
+      color: isDark ? '#e2e8f0' : '#1eb0ff',
+      border: isDark ? '1px solid rgba(30, 176, 255, 0.3)' : '1px solid #1eb0ff',
       hover: {
         background: isDark 
-          ? 'rgba(99, 102, 241, 0.1)'
-          : 'rgba(99, 102, 241, 0.05)'
+          ? 'rgba(30, 176, 255, 0.1)'
+          : 'rgba(30, 176, 255, 0.05)'
       }
     },
     ghost: {
@@ -132,8 +132,8 @@ export default function ActionButton({
       border: 'none',
       hover: {
         background: isDark 
-          ? 'rgba(99, 102, 241, 0.1)'
-          : 'rgba(99, 102, 241, 0.05)'
+          ? 'rgba(30, 176, 255, 0.1)'
+          : 'rgba(30, 176, 255, 0.05)'
       }
     }
   }

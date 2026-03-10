@@ -142,7 +142,7 @@ export default function ThreadList({
             }`}
           >
             {isSelected && (
-              <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#137fec] rounded-full" aria-hidden />
+              <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#1eb0ff] rounded-full" aria-hidden />
             )}
             <div className="flex items-center pt-1" onClick={(e) => e.stopPropagation()}>
               {selectionMode ? (
@@ -164,7 +164,7 @@ export default function ThreadList({
                 </span>
                 <span className="text-[11px] text-slate-400 shrink-0 ml-2">{formatDate(thread.lastMessageAt, showScheduledDates || thread.id.startsWith('scheduled-'))}</span>
               </div>
-              <h4 className={`text-sm truncate mb-1 ${isSelected ? 'font-medium text-[#137fec]' : 'font-normal text-slate-900'}`}>
+              <h4 className={`text-sm truncate mb-1 ${isSelected ? 'font-medium text-[#1eb0ff]' : 'font-normal text-slate-900'}`}>
                 {thread.subject || '(No Subject)'}
               </h4>
               <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{snippet}</p>

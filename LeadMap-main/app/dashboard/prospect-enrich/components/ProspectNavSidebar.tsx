@@ -101,8 +101,8 @@ export default function ProspectNavSidebar() {
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group',
                     active
-                      ? 'text-[#5A8CFF] bg-white shadow-sm ring-1 ring-black/5'
-                      : 'text-[#64748B] hover:bg-white/80 hover:text-[#5A8CFF]'
+                      ? 'text-[#1eb0ff] bg-white shadow-sm ring-1 ring-black/5'
+                      : 'text-[#64748B] hover:bg-white/80 hover:text-[#1eb0ff]'
                   )}
                   tabIndex={0}
                   aria-current={active ? 'page' : undefined}

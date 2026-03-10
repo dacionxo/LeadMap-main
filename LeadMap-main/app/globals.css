@@ -145,26 +145,21 @@
     --darkgray: #465670;
     --bodytext: #5a6a85;
     --lightmuted: #5d7287;
-    --link: #2a3547;
+    --link: #48ceff;
     --light-emphasis: #dfe5ef;
     --destructive-foreground: var(--color-white);
     --bordergray: var(--border);
 
     /* Lighter/opacity-like versions (using rgba fallback for color-mix) */
-    --lightprimary: rgba(
-      19,
-      91,
-      236,
-      0.12
-    ); /* Fallback: color-mix(in oklab, var(--color-primary) 12%, transparent) — #135BEC */
+    --lightprimary: rgba(30, 176, 255, 0.12); /* 12% opacity of #1eb0ff */
     --lightsecondary: rgba(73, 190, 255, 0.12);
     --lightsuccess: rgba(19, 222, 185, 0.12);
     --lightinfo: rgba(135, 84, 236, 0.12);
     --lightwarning: rgba(246, 181, 30, 0.12);
     --lighterror: rgba(239, 68, 68, 0.12);
 
-    /* Darker versions (emphasis) - using rgba approximation */
-    --primary-emphasis: rgba(19, 91, 236, 0.8);
+    /* Darker versions (emphasis) - button hover #0071e3 */
+    --primary-emphasis: #0071e3;
     --secondary-emphasis: rgba(73, 190, 255, 0.8);
     --success-emphasis: rgba(19, 222, 185, 0.8);
     --info-emphasis: rgba(135, 84, 236, 0.8);
@@ -268,20 +263,20 @@
     --dark: #1c2536;
     --darkinfo: #223662;
     --lightgray: #f6f9fc;
-    --link: #7c8fac;
+    --link: #48ceff;
     --bgmuted: #eff4fa;
     --darkgray: #465670;
     --bodytext: #5a6a85;
     --lightmuted: #5d7287;
     --light-emphasis: #dfe5ef;
     --destructive-foreground: var(--color-white);
-    --lightprimary: rgba(19, 91, 236, 0.12);
+    --lightprimary: rgba(30, 176, 255, 0.12);
     --lightsecondary: rgba(73, 190, 255, 0.12);
     --lightsuccess: rgba(19, 222, 185, 0.12);
     --lightinfo: rgba(135, 84, 236, 0.12);
     --lightwarning: rgba(246, 181, 30, 0.12);
     --lighterror: rgba(239, 68, 68, 0.12);
-    --primary-emphasis: rgba(19, 91, 236, 0.8);
+    --primary-emphasis: #0071e3;
     --secondary-emphasis: rgba(73, 190, 255, 0.8);
     --success-emphasis: rgba(19, 222, 185, 0.8);
     --info-emphasis: rgba(135, 84, 236, 0.8);
@@ -297,21 +292,26 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+  /* Links use #48ceff */
+  a {
+    color: #48ceff;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
 /* Calendar Help Modal mesh background (1:1 with provided HTML)                */
 /* -------------------------------------------------------------------------- */
 .mesh-bg {
-  background-color: #f3f4f6;
+  background-color: #edfaff;
   background-image:
-    radial-gradient(at 40% 20%, hsla(28,100%,74%,1) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsla(189,100%,56%,1) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(355,100%,93%,1) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(340,100%,76%,1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(22,100%,77%,1) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsla(242,100%,70%,1) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsla(343,100%,76%,1) 0px, transparent 50%);
+    radial-gradient(at 40% 20%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(237, 250, 255, 0.8) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(237, 250, 255, 0.95) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(237, 250, 255, 0.85) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(237, 250, 255, 0.85) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgba(237, 250, 255, 0.95) 0px, transparent 50%);
 }
 
 .dark .mesh-bg {
@@ -738,15 +738,15 @@
   }
 }
 
-/* Dashboard Welcome Card - SaaS style */
+/* Dashboard Welcome Card - SaaS style (gradient based on #edfaff) */
 .dashboard-welcome-card {
   position: relative;
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    rgba(19, 91, 236, 0.04) 0%,
-    #ffffff 50%,
-    #f8fafc 100%
+    rgba(237, 250, 255, 0.6) 0%,
+    #edfaff 50%,
+    rgba(237, 250, 255, 0.95) 100%
   );
   transition: all 0.5s ease;
 }
@@ -764,12 +764,12 @@
   background-image:
     radial-gradient(
       circle at 100% 0%,
-      rgba(19, 91, 236, 0.08) 0%,
+      rgba(237, 250, 255, 0.5) 0%,
       transparent 60%
     ),
     radial-gradient(
       circle at 0% 100%,
-      rgba(241, 245, 249, 0.8) 0%,
+      rgba(237, 250, 255, 0.6) 0%,
       transparent 60%
     );
 }
@@ -787,9 +787,9 @@
     );
 }
 
-/* Prospecting Overview bento card */
+/* Prospecting Overview bento card (gradient based on #edfaff) */
 .bento-gradient {
-  background: linear-gradient(135deg, #fdfeff 0%, #ffffff 60%, #f8fafc 100%);
+  background: linear-gradient(135deg, #edfaff 0%, rgba(237, 250, 255, 0.98) 60%, #edfaff 100%);
 }
 .dark .bento-gradient {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -805,12 +805,12 @@
   background-image:
     radial-gradient(
       circle at 100% 0%,
-      rgba(59, 130, 246, 0.08) 0%,
+      rgba(237, 250, 255, 0.6) 0%,
       transparent 50%
     ),
     radial-gradient(
       circle at 0% 100%,
-      rgba(219, 234, 254, 0.3) 0%,
+      rgba(237, 250, 255, 0.5) 0%,
       transparent 40%
     );
 }
@@ -927,18 +927,18 @@
 
 /* Active Campaigns Activity Volume chart */
 .bar-gradient {
-  background: linear-gradient(180deg, #3b82f6 0%, #93c5fd 100%);
+  background: linear-gradient(180deg, #1eb0ff 0%, #edfaff 100%);
 }
 .bar-gradient-muted {
-  background: linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 100%);
+  background: linear-gradient(180deg, rgba(237, 250, 255, 0.6) 0%, #edfaff 100%);
 }
 
-/* Active Campaigns Activity Volume - highlight bar gradient */
+/* Active Campaigns Activity Volume - highlight bar gradient (#edfaff based) */
 .bar-gradient-campaign {
-  background: linear-gradient(180deg, #3b82f6 0%, #93c5fd 100%);
+  background: linear-gradient(180deg, #1eb0ff 0%, #edfaff 100%);
 }
 .dark .bar-gradient-campaign {
-  background: linear-gradient(180deg, #3b82f6 0%, #60a5fa 100%);
+  background: linear-gradient(180deg, #1eb0ff 0%, rgba(237, 250, 255, 0.3) 100%);
 }
 
 /* Material Symbols in map property popups */
@@ -1014,7 +1014,7 @@
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
 .ai-score-ring {
-  background: conic-gradient(from 180deg, #6366f1 0%, #a855f7 70%, #e2e8f0 70%);
+  background: conic-gradient(from 180deg, #1eb0ff 0%, #48ceff 70%, #edfaff 70%);
   border-radius: 50%;
   padding: 2px;
   display: inline-flex;
@@ -1053,20 +1053,21 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Unibox radial gradient background */
+/* Unibox radial gradient background (#edfaff based) */
 .unibox-bg-gradient {
-  background-color: #fbfbfd;
+  background-color: #edfaff;
   background-image:
-    radial-gradient(at 0% 0%, rgba(19, 127, 236, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(19, 127, 236, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(19, 127, 236, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(19, 127, 236, 0.02) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(237, 250, 255, 0.85) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(237, 250, 255, 0.85) 0px, transparent 50%);
   background-attachment: fixed;
 }
 
-/* Deals Pipeline - Dashboard-aligned CRM design */
+/* Deals Pipeline - Dashboard-aligned CRM design (gradient based on #edfaff) */
 .bg-mesh {
-  background-color: #F5F5F7;
+  background-color: #edfaff;
+  background-image: linear-gradient(180deg, #edfaff 0%, rgba(237, 250, 255, 0.98) 100%);
 }
 
 /* Calendar Week View - full 24h (12am–11:59pm), 24 rows × 60px = 1440px */
@@ -1291,11 +1292,11 @@
   background-color: rgba(255, 255, 255, 0.1);
 }
 .unibox-mesh {
-  background-color: #f6f6f8;
+  background-color: #edfaff;
   background-image:
-    radial-gradient(at 0% 0%, hsla(220, 85%, 93%, 1) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(210, 90%, 95%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(220, 85%, 93%, 1) 0, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(237, 250, 255, 0.9) 0, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(237, 250, 255, 0.95) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(237, 250, 255, 0.9) 0, transparent 50%);
 }
 .dark .unibox-mesh {
   background-color: #101622;
@@ -1330,16 +1331,28 @@
   animation: unibox-glowing 3s infinite;
 }
 
-/* Prospect enrich: use #FAFBFB for borders (nav, content card, sidebars) */
+/* Prospect enrich: use #E4E4E7 for borders (nav, content card, sidebars) */
 [data-page="prospect-enrich"] nav,
 [data-page="prospect-enrich"] [class*="border-slate-200"],
 [data-page="prospect-enrich"] [class*="border-[#E8EAF3]"],
 [data-page="prospect-enrich"] [class*="divide-slate-200"] > * + * {
-  border-color: #fafbfb !important;
+  border-color: #e4e4e7 !important;
 }
 [data-page="prospect-enrich"] .sidebar-gradient-border::after,
 [data-page="prospect-enrich"] .find-deals-sidebar-gradient-border::after {
-  background: #fafbfb !important;
+  background: #e4e4e7 !important;
+}
+
+/* Dashboard buttons: #1eb0ff default, #0071e3 hover */
+[data-dashboard] .bg-indigo-500,
+[data-dashboard] .bg-indigo-600 {
+  background-color: #1eb0ff !important;
+}
+[data-dashboard] .bg-indigo-500:hover,
+[data-dashboard] .bg-indigo-600:hover,
+[data-dashboard] .hover\:bg-indigo-600:hover,
+[data-dashboard] .hover\:bg-indigo-700:hover {
+  background-color: #0071e3 !important;
 }
 
 /* Elite Property Prospecting Dashboard - Prospect & Enrich (1:1 design parity) */
@@ -1447,15 +1460,15 @@
   font-variation-settings: "FILL" 1;
 }
 .prospect-enrich-mesh {
-  background-color: #f8fafc;
+  background-color: #edfaff;
   background-image:
-    radial-gradient(at 40% 20%, hsla(210, 100%, 96%, 1) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsla(189, 100%, 96%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(341, 100%, 96%, 1) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(240, 100%, 96%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(220, 100%, 96%, 1) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsla(242, 100%, 96%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsla(343, 100%, 96%, 1) 0px, transparent 50%);
+    radial-gradient(at 40% 20%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(237, 250, 255, 0.95) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(237, 250, 255, 0.9) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgba(237, 250, 255, 0.95) 0px, transparent 50%);
 }
 .dark .prospect-enrich-mesh {
   background-color: #0f172a;
@@ -1466,43 +1479,43 @@
     radial-gradient(at 80% 50%, hsla(220, 40%, 18%, 1) 0px, transparent 50%);
 }
 
-/* Elite CRM Compose Modal overlay (1:1 reference mesh gradient) */
+/* Elite CRM Compose Modal overlay (gradient based on #edfaff) */
 .compose-modal-mesh {
-  background-color: #f3f4f6;
+  background-color: #edfaff;
   background-image:
     radial-gradient(
       at 0% 0%,
-      hsla(253, 16%, 7%, 0) 0,
-      hsla(253, 16%, 7%, 0) 50%
+      rgba(237, 250, 255, 0.5) 0,
+      transparent 50%
     ),
     radial-gradient(
       at 50% 0%,
-      hsla(225, 39%, 30%, 0) 0,
-      hsla(225, 39%, 30%, 0) 50%
+      rgba(237, 250, 255, 0.6) 0,
+      transparent 50%
     ),
     radial-gradient(
       at 100% 0%,
-      hsla(339, 49%, 30%, 0) 0,
-      hsla(339, 49%, 30%, 0) 50%
+      rgba(237, 250, 255, 0.5) 0,
+      transparent 50%
     ),
     radial-gradient(
       at 0% 50%,
-      hsla(220, 100%, 96%, 1) 0,
-      hsla(220, 100%, 96%, 0) 50%
+      rgba(237, 250, 255, 0.9) 0,
+      transparent 50%
     ),
     radial-gradient(
       at 100% 50%,
-      hsla(210, 100%, 93%, 1) 0,
-      hsla(210, 100%, 93%, 0) 50%
+      rgba(237, 250, 255, 0.85) 0,
+      transparent 50%
     ),
     radial-gradient(
       at 0% 100%,
-      hsla(220, 100%, 96%, 1) 0,
-      hsla(220, 100%, 96%, 0) 50%
+      rgba(237, 250, 255, 0.9) 0,
+      transparent 50%
     ),
     radial-gradient(
       at 50% 100%,
-      hsla(222, 100%, 96%, 1) 0,
-      hsla(222, 100%, 96%, 0) 50%
+      rgba(237, 250, 255, 0.9) 0,
+      transparent 50%
     );
 }
