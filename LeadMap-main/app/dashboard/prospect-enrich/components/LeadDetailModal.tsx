@@ -1900,7 +1900,7 @@ function CompsTab() {
         style={{
           marginTop: "24px",
           padding: "10px 20px",
-          background: "#6366f1",
+          background: "#9d2398",
           color: "#ffffff",
           border: "none",
           borderRadius: "6px",

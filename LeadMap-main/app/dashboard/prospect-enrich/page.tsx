@@ -1830,7 +1830,7 @@ function ProspectEnrichContent() {
               width: '48px',
               height: '48px',
               border: '3px solid #e5e7eb',
-              borderTop: '3px solid #6366f1',
+              borderTop: '3px solid #9d2398',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 16px'

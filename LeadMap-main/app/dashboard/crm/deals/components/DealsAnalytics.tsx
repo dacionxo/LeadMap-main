@@ -94,9 +94,9 @@ const COLORS = {
   primary: '#3b82f6',
   success: '#10b981',
   warning: '#f59e0b',
-  danger: '#ef4444',
+  danger: '#e82c2c',
   gray: '#6b7280',
-  purple: '#9333ea'
+  purple: '#9d2398'
 }
 
 // Compact week formatter for Revenue Trends
@@ -203,7 +203,7 @@ export default function DealsAnalytics({ timeframe = '30d', onTimeframeChange }:
   }) => {
     const isPositive = trend >= 0
     const TrendIcon = isPositive ? TrendingUp : TrendingDown
-    const trendColor = isPositive ? '#10b981' : '#ef4444'
+    const trendColor = isPositive ? '#10b981' : '#e82c2c'
 
     return (
       <div className="group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600">

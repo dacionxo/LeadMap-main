@@ -73,7 +73,7 @@ export default function AnalyticsPage() {
     { name: 'Alex Thompson', value: 45, color: '#3b82f6' },
     { name: 'Tolga Ozkan', value: 38, color: '#1e40af' },
     { name: 'James Wilson', value: 42, color: '#10b981' },
-    { name: 'Jeph Francois', value: 35, color: '#8b5cf6' },
+    { name: 'Jeph Francois', value: 35, color: '#9d2398' },
     { name: 'Michael O\'Connor', value: 30, color: '#14b8a6' },
     { name: 'Emma Parker', value: 28, color: '#6b7280' },
     { name: 'Sarah Chen', value: 25, color: '#9ca3af' },

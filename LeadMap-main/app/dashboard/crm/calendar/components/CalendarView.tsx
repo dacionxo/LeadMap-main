@@ -170,9 +170,9 @@ export default function CalendarView({ onEventClick, onDateSelect, onCreateEvent
       call: '#3b82f6',
       visit: '#10b981',
       showing: '#f59e0b',
-      content: '#8b5cf6',
+      content: '#9d2398',
       meeting: '#ec4899',
-      follow_up: '#6366f1',
+      follow_up: '#9d2398',
       other: '#6b7280',
       email_campaign: '#3b82f6',
     }

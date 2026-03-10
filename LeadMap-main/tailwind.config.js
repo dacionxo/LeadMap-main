@@ -30,16 +30,16 @@ module.exports = {
       },
       colors: {
         primary: {
-          DEFAULT: "#1eb0ff", // Dashboard primary button color
-          hover: "#0071e3", // Dashboard button hover
+          DEFAULT: "#0693ff", // Dashboard primary button color
+          hover: "#0577d9", // Dashboard button hover
           soft: "#e3ebff",
           50: "#eef2ff",
           100: "#e3ebff",
           200: "#c7d7ff",
           300: "#6b9ef5",
           400: "#3d7aed",
-          500: "#1eb0ff",
-          600: "#0071e3",
+          500: "#0693ff",
+          600: "#0577d9",
           700: "#3d5fd9",
           800: "#354cc6",
           900: "#3242a0",
@@ -112,8 +112,18 @@ module.exports = {
           dark: "#1A8245",
         },
         red: {
-          DEFAULT: "#F23030",
-          dark: "#E10E0E",
+          DEFAULT: "#e82c2c",
+          dark: "#c42525",
+          50: "#fef2f2",
+          100: "#fee2e2",
+          200: "#fecaca",
+          300: "#fca5a5",
+          400: "#f87171",
+          500: "#e82c2c",
+          600: "#c42525",
+          700: "#a01e1e",
+          800: "#7c1818",
+          900: "#581212",
         },
         warning: {
           DEFAULT: "#f59e0b",
@@ -129,17 +139,17 @@ module.exports = {
           900: "#78350f",
         },
         danger: {
-          DEFAULT: "#ef4444",
+          DEFAULT: "#e82c2c",
           50: "#fef2f2",
           100: "#fee2e2",
           200: "#fecaca",
           300: "#fca5a5",
           400: "#f87171",
-          500: "#ef4444",
-          600: "#dc2626",
-          700: "#b91c1c",
-          800: "#991b1b",
-          900: "#7f1d1d",
+          500: "#e82c2c",
+          600: "#c42525",
+          700: "#a01e1e",
+          800: "#7c1818",
+          900: "#581212",
         },
         gray: {
           DEFAULT: "#EFF4FB",
@@ -172,7 +182,7 @@ module.exports = {
           dark: "#48ceff",
         },
         darklink: "#48ceff",
-        lightprimary: "rgba(30, 176, 255, 0.12)", // 12% opacity of dashboard primary (#1eb0ff)
+        lightprimary: "rgba(6, 147, 255, 0.12)", // 12% opacity of dashboard primary (#0693ff)
         lightsecondary: "rgba(73, 190, 255, 0.12)", // 12% opacity of Tailwindadmin secondary
         lightsuccess: "rgba(19, 222, 185, 0.12)",
         lightinfo: "rgba(135, 84, 236, 0.12)",
@@ -182,7 +192,7 @@ module.exports = {
         info: "#8754ec",
         success: "#13deb9",
         warning: "#f6b51e",
-        error: "#ef4444",
+        error: "#e82c2c",
         bodytext: "#5a6a85",
         lightmuted: "#5d7287",
         darkinfo: "#223662",
@@ -211,17 +221,30 @@ module.exports = {
         "grid-border": "#F1F5F9", // Slate-100
         /* Elite CRM Unibox design tokens (1:1 reference HTML) */
         unibox: {
-          primary: "#1eb0ff",
+          primary: "#0693ff",
           "primary-light": "#5a8dee",
-          "primary-dark": "#0071e3",
+          "primary-dark": "#0577d9",
           "background-light": "#fbfbfd",
           "background-dark": "#101922",
           "surface-light": "#ffffff",
           "surface-dark": "#1e293b",
         },
+        /* Dashboard purple - overrides default purple */
+        purple: {
+          50: "#fdf5fc",
+          100: "#f9e5f8",
+          200: "#f3cbf1",
+          300: "#e9a3e5",
+          400: "#d966d1",
+          500: "#9d2398",
+          600: "#851f80",
+          700: "#6d1a68",
+          800: "#551550",
+          900: "#3d1038",
+        },
         /* Find Deals Dashboard (1:1 reference HTML) */
         fd: {
-          primary: "#1eb0ff",
+          primary: "#0693ff",
           "primary-bg": "#EFF4FF",
           "gradient-base": "#edfaff",
           "background-light": "#F3F6FC",
@@ -231,7 +254,7 @@ module.exports = {
           "border-light": "#E2E8F0",
           "badge-bg": "#DBEAFE",
           "badge-text": "#3B82F6",
-          "purple-btn": "#8B5CF6",
+          "purple-btn": "#9d2398",
           "sidebar-lavender": "#F7FAFF",
           "sidebar-border": "#E8EAF3",
         },

@@ -27,7 +27,7 @@
 }
 
 .bg-lighterror {
-  background-color: color-mix(in oklab, var(--color-error, #ef4444) 12%, transparent);
+  background-color: color-mix(in oklab, var(--color-error, #e82c2c) 12%, transparent);
 }
 
 .bg-darkinfo {
@@ -51,7 +51,7 @@
 }
 
 .text-error {
-  color: var(--color-error, #ef4444);
+  color: var(--color-error, #e82c2c);
 }
 
 .border-border {
@@ -76,7 +76,7 @@
 }
 
 .rbc-event.event-red {
-  background-color: var(--color-error, #ef4444);
+  background-color: var(--color-error, #e82c2c);
 }
 
 .rbc-event.event-green {

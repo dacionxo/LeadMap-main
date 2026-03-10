@@ -54,7 +54,7 @@ interface LocationData {
   }
 }
 
-const CHART_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899']
+const CHART_COLORS = ['#3b82f6', '#10b981', '#9d2398', '#f59e0b', '#e82c2c', '#06b6d4', '#ec4899']
 
 /**
  * Location Analytics Component
@@ -206,7 +206,7 @@ export default function LocationAnalytics({ mailboxId = 'all', period = '30d' }:
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="opens" fill="#10b981" name="Opens" />
-                  <Bar dataKey="clicks" fill="#8b5cf6" name="Clicks" />
+                  <Bar dataKey="clicks" fill="#9d2398" name="Clicks" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -295,7 +295,7 @@ export default function LocationAnalytics({ mailboxId = 'all', period = '30d' }:
               <Tooltip />
               <Legend />
               <Bar dataKey="opens" fill="#10b981" name="Opens" />
-              <Bar dataKey="clicks" fill="#8b5cf6" name="Clicks" />
+              <Bar dataKey="clicks" fill="#9d2398" name="Clicks" />
             </BarChart>
           </ResponsiveContainer>
         </div>

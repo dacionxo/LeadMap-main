@@ -1102,7 +1102,7 @@ function EmailStatistics({ stats, emails }: { stats: EmailStats; emails: Email[]
             <Tooltip />
             <Legend />
             <Bar dataKey="emailCampaign" stackId="a" fill="#3b82f6" name="Email Campaign" />
-            <Bar dataKey="workflowCampaign" stackId="a" fill="#8b5cf6" name="Workflow Campaign" />
+            <Bar dataKey="workflowCampaign" stackId="a" fill="#9d2398" name="Workflow Campaign" />
             <Bar dataKey="bulkActionCampaign" stackId="a" fill="#06b6d4" name="Bulk Action Campaign" />
           </BarChart>
         </ResponsiveContainer>
@@ -1180,7 +1180,7 @@ function EmailStatistics({ stats, emails }: { stats: EmailStats; emails: Email[]
             <Legend />
             <Line type="monotone" dataKey="all" stroke="#1e40af" name="All Campaigns" />
             <Line type="monotone" dataKey="email" stroke="#3b82f6" name="Email Campaign" />
-            <Line type="monotone" dataKey="workflow" stroke="#8b5cf6" name="Workflow Campaign" />
+            <Line type="monotone" dataKey="workflow" stroke="#9d2398" name="Workflow Campaign" />
             <Line type="monotone" dataKey="bulk" stroke="#06b6d4" name="Bulk Action Campaign" />
           </LineChart>
         </ResponsiveContainer>

@@ -196,8 +196,8 @@ export default function HealthMonitoring({ mailboxId = 'all', hours = 24 }: Heal
             <AreaChart data={trend}>
               <defs>
                 <linearGradient id="colorBounceRate" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#e82c2c" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#e82c2c" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorComplaintRate" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
@@ -226,7 +226,7 @@ export default function HealthMonitoring({ mailboxId = 'all', hours = 24 }: Heal
               <Area
                 type="monotone"
                 dataKey="bounceRate"
-                stroke="#ef4444"
+                stroke="#e82c2c"
                 fillOpacity={1}
                 fill="url(#colorBounceRate)"
                 name="Bounce Rate"
@@ -242,7 +242,7 @@ export default function HealthMonitoring({ mailboxId = 'all', hours = 24 }: Heal
               <Line
                 type="monotone"
                 dataKey="failures"
-                stroke="#8b5cf6"
+                stroke="#9d2398"
                 strokeWidth={2}
                 name="Failures"
               />

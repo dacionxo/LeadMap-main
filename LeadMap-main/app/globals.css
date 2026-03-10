@@ -136,7 +136,7 @@
     --info: #8754ec;
     --success: #13deb9;
     --warning: #f6b51e;
-    --error: #ef4444;
+    --error: #e82c2c;
     --white: #fff;
     --dark: #1c2536;
     --darkinfo: #223662;
@@ -151,7 +151,7 @@
     --bordergray: var(--border);
 
     /* Lighter/opacity-like versions (using rgba fallback for color-mix) */
-    --lightprimary: rgba(30, 176, 255, 0.12); /* 12% opacity of #1eb0ff */
+    --lightprimary: rgba(6, 147, 255, 0.12); /* 12% opacity of #0693ff */
     --lightsecondary: rgba(73, 190, 255, 0.12);
     --lightsuccess: rgba(19, 222, 185, 0.12);
     --lightinfo: rgba(135, 84, 236, 0.12);
@@ -159,7 +159,7 @@
     --lighterror: rgba(239, 68, 68, 0.12);
 
     /* Darker versions (emphasis) - button hover #0071e3 */
-    --primary-emphasis: #0071e3;
+    --primary-emphasis: #0577d9;
     --secondary-emphasis: rgba(73, 190, 255, 0.8);
     --success-emphasis: rgba(19, 222, 185, 0.8);
     --info-emphasis: rgba(135, 84, 236, 0.8);
@@ -258,7 +258,7 @@
     --info: #8754ec;
     --success: #13deb9;
     --warning: #f6b51e;
-    --error: #ef4444;
+    --error: #e82c2c;
     --white: #fff;
     --dark: #1c2536;
     --darkinfo: #223662;
@@ -270,13 +270,13 @@
     --lightmuted: #5d7287;
     --light-emphasis: #dfe5ef;
     --destructive-foreground: var(--color-white);
-    --lightprimary: rgba(30, 176, 255, 0.12);
+    --lightprimary: rgba(6, 147, 255, 0.12);
     --lightsecondary: rgba(73, 190, 255, 0.12);
     --lightsuccess: rgba(19, 222, 185, 0.12);
     --lightinfo: rgba(135, 84, 236, 0.12);
     --lightwarning: rgba(246, 181, 30, 0.12);
     --lighterror: rgba(239, 68, 68, 0.12);
-    --primary-emphasis: #0071e3;
+    --primary-emphasis: #0577d9;
     --secondary-emphasis: rgba(73, 190, 255, 0.8);
     --success-emphasis: rgba(19, 222, 185, 0.8);
     --info-emphasis: rgba(135, 84, 236, 0.8);
@@ -927,7 +927,7 @@
 
 /* Active Campaigns Activity Volume chart */
 .bar-gradient {
-  background: linear-gradient(180deg, #1eb0ff 0%, #edfaff 100%);
+  background: linear-gradient(180deg, #0693ff 0%, #edfaff 100%);
 }
 .bar-gradient-muted {
   background: linear-gradient(180deg, rgba(237, 250, 255, 0.6) 0%, #edfaff 100%);
@@ -935,10 +935,10 @@
 
 /* Active Campaigns Activity Volume - highlight bar gradient (#edfaff based) */
 .bar-gradient-campaign {
-  background: linear-gradient(180deg, #1eb0ff 0%, #edfaff 100%);
+  background: linear-gradient(180deg, #0693ff 0%, #edfaff 100%);
 }
 .dark .bar-gradient-campaign {
-  background: linear-gradient(180deg, #1eb0ff 0%, rgba(237, 250, 255, 0.3) 100%);
+  background: linear-gradient(180deg, #0693ff 0%, rgba(237, 250, 255, 0.3) 100%);
 }
 
 /* Material Symbols in map property popups */
@@ -1014,7 +1014,7 @@
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
 .ai-score-ring {
-  background: conic-gradient(from 180deg, #1eb0ff 0%, #48ceff 70%, #edfaff 70%);
+  background: conic-gradient(from 180deg, #0693ff 0%, #48ceff 70%, #edfaff 70%);
   border-radius: 50%;
   padding: 2px;
   display: inline-flex;
@@ -1064,10 +1064,9 @@
   background-attachment: fixed;
 }
 
-/* Deals Pipeline - Dashboard-aligned CRM design (gradient based on #edfaff) */
+/* Deals Pipeline - Dashboard-aligned CRM design */
 .bg-mesh {
-  background-color: #edfaff;
-  background-image: linear-gradient(180deg, #edfaff 0%, rgba(237, 250, 255, 0.98) 100%);
+  background-color: #FEFEFE;
 }
 
 /* Calendar Week View - full 24h (12am–11:59pm), 24 rows × 60px = 1440px */
@@ -1343,16 +1342,16 @@
   background: #e4e4e7 !important;
 }
 
-/* Dashboard buttons: #1eb0ff default, #0071e3 hover */
+/* Dashboard buttons: #0693ff default, #0577d9 hover */
 [data-dashboard] .bg-indigo-500,
 [data-dashboard] .bg-indigo-600 {
-  background-color: #1eb0ff !important;
+  background-color: #0693ff !important;
 }
 [data-dashboard] .bg-indigo-500:hover,
 [data-dashboard] .bg-indigo-600:hover,
 [data-dashboard] .hover\:bg-indigo-600:hover,
 [data-dashboard] .hover\:bg-indigo-700:hover {
-  background-color: #0071e3 !important;
+  background-color: #0577d9 !important;
 }
 
 /* Elite Property Prospecting Dashboard - Prospect & Enrich (1:1 design parity) */

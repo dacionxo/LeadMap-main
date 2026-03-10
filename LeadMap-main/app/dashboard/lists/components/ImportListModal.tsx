@@ -293,7 +293,7 @@ export default function ImportListModal({
                     cursor: 'pointer'
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#6366f1'
+                    e.currentTarget.style.borderColor = '#9d2398'
                     e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
                   }}
                   onBlur={(e) => {
@@ -337,12 +337,12 @@ export default function ImportListModal({
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               background: file ? '#f0f9ff' : '#fafafa',
-              borderColor: file ? '#6366f1' : '#d1d5db'
+              borderColor: file ? '#9d2398' : '#d1d5db'
             }}
             onClick={() => fileInputRef.current?.click()}
             onMouseEnter={(e) => {
               if (!file) {
-                e.currentTarget.style.borderColor = '#6366f1'
+                e.currentTarget.style.borderColor = '#9d2398'
                 e.currentTarget.style.background = '#f9fafb'
               }
             }}
@@ -362,7 +362,7 @@ export default function ImportListModal({
             />
             {file ? (
               <div>
-                <FileText size={48} color="#6366f1" style={{ marginBottom: '12px' }} />
+                <FileText size={48} color="#9d2398" style={{ marginBottom: '12px' }} />
                 <div style={{
                   fontSize: '16px',
                   fontWeight: 500,
@@ -418,7 +418,7 @@ export default function ImportListModal({
               color: uploadStatus === 'success'
                 ? '#166534'
                 : uploadStatus === 'error'
-                ? '#991b1b'
+                ? '#c42525'
                 : '#374151',
               border: `1px solid ${
                 uploadStatus === 'success'
@@ -496,7 +496,7 @@ export default function ImportListModal({
               borderRadius: '8px',
               background: uploading || !file || !effectiveListId
                 ? '#9ca3af'
-                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                : 'linear-gradient(135deg, #9d2398 0%, #851f80 100%)',
               color: '#ffffff',
               cursor: uploading || !file || !effectiveListId ? 'not-allowed' : 'pointer',
               fontSize: '14px',

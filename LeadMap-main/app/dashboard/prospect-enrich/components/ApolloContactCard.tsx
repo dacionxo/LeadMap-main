@@ -134,7 +134,7 @@ export default function ApolloContactCard({
         minWidth: 'max-content',
         width: 'max-content',
         boxSizing: 'border-box',
-        borderLeft: isSelected ? '4px solid #6366f1' : '4px solid transparent',
+        borderLeft: isSelected ? '4px solid #9d2398' : '4px solid transparent',
         boxShadow: isSelected 
           ? '0 4px 12px -2px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5)' 
           : '0 1px 2px rgba(0, 0, 0, 0.02)'
@@ -178,7 +178,7 @@ export default function ApolloContactCard({
             width: '18px',
             height: '18px',
             cursor: 'pointer',
-            accentColor: '#6366f1',
+            accentColor: '#9d2398',
             margin: 0
           }}
         />
@@ -259,7 +259,7 @@ export default function ApolloContactCard({
                 gap: '4px',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '13px',
-                color: isDark ? '#818cf8' : '#6366f1',
+                color: isDark ? '#b030ab' : '#9d2398',
                 textDecoration: 'none',
                 fontWeight: 400,
                 transition: 'color 0.15s ease',
@@ -271,7 +271,7 @@ export default function ApolloContactCard({
                 e.currentTarget.style.textDecoration = 'underline'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = isDark ? '#818cf8' : '#6366f1'
+                e.currentTarget.style.color = isDark ? '#b030ab' : '#9d2398'
                 e.currentTarget.style.textDecoration = 'none'
               }}
             >
@@ -341,7 +341,7 @@ export default function ApolloContactCard({
             color: listing.active
               ? (isDark ? '#10b981' : '#065f46')
               : listing.status?.toLowerCase().includes('expired') || listing.status?.toLowerCase().includes('sold')
-              ? (isDark ? '#ef4444' : '#991b1b')
+              ? (isDark ? '#e82c2c' : '#c42525')
               : (isDark ? '#e2e8f0' : '#374151'),
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             fontSize: '12px',
@@ -371,7 +371,7 @@ export default function ApolloContactCard({
               <Target style={{ 
                 width: '16px', 
                 height: '16px', 
-                color: isDark ? '#818cf8' : '#6366f1',
+                color: isDark ? '#b030ab' : '#9d2398',
                 flexShrink: 0
               }} />
               <span style={{

@@ -21,7 +21,7 @@ const DARK_THEME_COLORS = {
   buttonHoverBg: 'rgba(99, 102, 241, 0.15)',
   buttonDisabledBg: 'rgba(15, 23, 42, 0.5)',
   accent: '#818cf8',
-  activeBg: '#6366f1'
+  activeBg: '#9d2398'
 }
 
 export default function ApolloPagination({
@@ -264,7 +264,7 @@ export default function ApolloPagination({
             transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = isDark ? DARK_THEME_COLORS.accent : '#6366f1'
+            e.currentTarget.style.borderColor = isDark ? DARK_THEME_COLORS.accent : '#9d2398'
             e.currentTarget.style.boxShadow = isDark 
               ? '0 0 0 3px rgba(129, 140, 248, 0.2)' 
               : '0 0 0 3px rgba(99, 102, 241, 0.1)'

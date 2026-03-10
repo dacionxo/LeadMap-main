@@ -59,7 +59,7 @@ export default function ApolloActionBar({
       background: isDark
         ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%)'
         : 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.95) 100%)',
-      borderBottom: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(99, 102, 241, 0.1)',
+      borderBottom: isDark ? '1px solid rgba(157, 35, 152, 0.2)' : '1px solid rgba(99, 102, 241, 0.1)',
       padding: '14px 24px',
       display: 'flex',
       alignItems: 'center',
@@ -84,7 +84,7 @@ export default function ApolloActionBar({
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
           fontSize: '22px',
           fontWeight: 700,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+          background: 'linear-gradient(135deg, #9d2398 0%, #9d2398 50%, #c92bc2 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
@@ -117,7 +117,7 @@ export default function ApolloActionBar({
               transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#6366f1'
+              e.currentTarget.style.borderColor = '#9d2398'
               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
             }}
             onBlur={(e) => {
@@ -148,10 +148,10 @@ export default function ApolloActionBar({
             alignItems: 'center',
             gap: '8px',
             padding: '8px 16px',
-            border: filtersVisible ? '2px solid #6366f1' : '2px solid rgba(99, 102, 241, 0.2)',
+            border: filtersVisible ? '2px solid #9d2398' : '2px solid rgba(157, 35, 152, 0.2)',
             borderRadius: '10px',
             background: filtersVisible 
-              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+              ? 'linear-gradient(135deg, #9d2398 0%, #851f80 100%)' 
               : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%)',
             color: filtersVisible ? '#ffffff' : '#374151',
             cursor: 'pointer',
@@ -167,9 +167,9 @@ export default function ApolloActionBar({
           }}
           onMouseEnter={(e) => {
             if (!filtersVisible) {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              e.currentTarget.style.background = 'linear-gradient(135deg, #9d2398 0%, #851f80 100%)'
               e.currentTarget.style.color = '#ffffff'
-              e.currentTarget.style.borderColor = '#6366f1'
+              e.currentTarget.style.borderColor = '#9d2398'
               e.currentTarget.style.transform = 'translateY(-2px)'
               e.currentTarget.style.boxShadow = '0 8px 16px -4px rgba(99, 102, 241, 0.25)'
             } else {
@@ -180,7 +180,7 @@ export default function ApolloActionBar({
             if (!filtersVisible) {
               e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%)'
               e.currentTarget.style.color = '#374151'
-              e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.2)'
+              e.currentTarget.style.borderColor = 'rgba(157, 35, 152, 0.2)'
               e.currentTarget.style.transform = 'translateY(0)'
               e.currentTarget.style.boxShadow = '0 2px 4px rgba(99, 102, 241, 0.1)'
             } else {
@@ -244,7 +244,7 @@ export default function ApolloActionBar({
             paddingRight: '16px',
             paddingTop: '8px',
             paddingBottom: '8px',
-            border: isDark ? '2px solid rgba(99, 102, 241, 0.3)' : '2px solid rgba(99, 102, 241, 0.2)',
+            border: isDark ? '2px solid rgba(99, 102, 241, 0.3)' : '2px solid rgba(157, 35, 152, 0.2)',
             borderRadius: '12px',
             background: isDark
               ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)'
@@ -257,12 +257,12 @@ export default function ApolloActionBar({
             boxShadow: '0 2px 8px rgba(99, 102, 241, 0.1)'
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = '#6366f1'
-            e.currentTarget.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.15), 0 8px 16px rgba(99, 102, 241, 0.2)'
+            e.currentTarget.style.borderColor = '#9d2398'
+            e.currentTarget.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.15), 0 8px 16px rgba(157, 35, 152, 0.2)'
             e.currentTarget.style.transform = 'scale(1.02)'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.2)'
+            e.currentTarget.style.borderColor = 'rgba(157, 35, 152, 0.2)'
             e.currentTarget.style.boxShadow = '0 2px 8px rgba(99, 102, 241, 0.1)'
             e.currentTarget.style.transform = 'scale(1)'
           }}
@@ -296,7 +296,7 @@ export default function ApolloActionBar({
               transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#6366f1'
+              e.currentTarget.style.borderColor = '#9d2398'
               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
             }}
             onBlur={(e) => {

@@ -254,7 +254,7 @@ export default function AddToListModal({
                         onChange={(e) => setSelectedListId(e.target.value)}
                         style={{
                           marginRight: '12px',
-                          accentColor: '#6366f1'
+                          accentColor: '#9d2398'
                         }}
                       />
                       <span style={{
@@ -288,7 +288,7 @@ export default function AddToListModal({
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid #d1d5db',
+                    border: isDark ? '1px solid rgba(157, 35, 152, 0.3)' : '1px solid #d1d5db',
                     borderRadius: '6px',
                     backgroundColor: isDark ? '#1e293b' : '#ffffff',
                     color: isDark ? '#e2e8f0' : '#111827',
@@ -304,7 +304,7 @@ export default function AddToListModal({
                     disabled={!newListName.trim() || creating}
                     style={{
                       padding: '8px 16px',
-                      backgroundColor: '#6366f1',
+                      backgroundColor: '#9d2398',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '6px',
@@ -325,7 +325,7 @@ export default function AddToListModal({
                       padding: '8px 16px',
                       backgroundColor: 'transparent',
                       color: isDark ? '#94a3b8' : '#6b7280',
-                      border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid #d1d5db',
+                      border: isDark ? '1px solid rgba(157, 35, 152, 0.3)' : '1px solid #d1d5db',
                       borderRadius: '6px',
                       cursor: 'pointer',
                       fontSize: '14px',
@@ -343,8 +343,8 @@ export default function AddToListModal({
                   width: '100%',
                   padding: '10px 12px',
                   backgroundColor: 'transparent',
-                  color: isDark ? '#6366f1' : '#6366f1',
-                  border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid #6366f1',
+                  color: isDark ? '#9d2398' : '#9d2398',
+                  border: isDark ? '1px solid rgba(157, 35, 152, 0.3)' : '1px solid #9d2398',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -368,7 +368,7 @@ export default function AddToListModal({
                   padding: '10px 20px',
                   backgroundColor: 'transparent',
                   color: isDark ? '#94a3b8' : '#6b7280',
-                  border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid #d1d5db',
+                  border: isDark ? '1px solid rgba(157, 35, 152, 0.3)' : '1px solid #d1d5db',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -382,7 +382,7 @@ export default function AddToListModal({
                 disabled={!selectedListId || adding}
                 style={{
                   padding: '10px 20px',
-                  backgroundColor: '#6366f1',
+                  backgroundColor: '#9d2398',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '6px',

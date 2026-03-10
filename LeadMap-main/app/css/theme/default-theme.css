@@ -1,11 +1,11 @@
 :root {
-  --color-primary: #1eb0ff;
+  --color-primary: #0693ff;
   --color-primary-hover: #0071e3;
   --color-secondary: #49beff;
 }
 
 [data-color-theme="BLUE_THEME"] {
-  --color-primary: #1eb0ff;
+  --color-primary: #0693ff;
   --color-secondary: #49beff;
 }
 
@@ -30,6 +30,6 @@
 }
 
 [data-color-theme="CUSTOM_THEME"] {
-  --color-primary: #1eb0ff;
+  --color-primary: #0693ff;
   --color-secondary: #49beff;
 }

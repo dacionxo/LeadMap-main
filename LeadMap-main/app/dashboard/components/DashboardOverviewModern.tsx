@@ -965,7 +965,7 @@ function PipelineValueCard({ value }: PipelineValueCardProps) {
                 cy="100"
                 r="80"
                 fill="transparent"
-                stroke="#8B5CF6"
+                stroke="#9d2398"
                 strokeDasharray="110 600"
                 strokeDashoffset="-175"
                 strokeLinecap="round"
@@ -1737,8 +1737,8 @@ function ExpiredListingsCard({ value, change, trend }: ExpiredListingsCardProps)
             <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
               <defs>
                 <linearGradient id="expired-listings-gradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                  <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#f43f5e" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#e82c2c" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#e82c2c" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <path
@@ -1750,7 +1750,7 @@ function ExpiredListingsCard({ value, change, trend }: ExpiredListingsCardProps)
                 className="sparkline-draw"
                 d="M0 25 L15 30 L30 15 L45 20 L60 10 L75 18 L90 5 L100 12"
                 fill="none"
-                stroke="#f43f5e"
+                stroke="#e82c2c"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}

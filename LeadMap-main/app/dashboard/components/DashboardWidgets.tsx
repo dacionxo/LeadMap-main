@@ -821,7 +821,7 @@ function PipelineFunnelWidget({
     "#49beff", // Contacted - secondary blue
     "#10b981", // Qualified - green
     "#f59e0b", // Proposal - orange
-    "#8b5cf6", // Closed - purple
+    "#9d2398", // Closed - purple
   ];
 
   return (
@@ -943,7 +943,7 @@ function DealStageDistributionWidget({
       "var(--color-chart-2, #49beff)",
       "var(--color-chart-3, #10b981)",
       "var(--color-chart-4, #f59e0b)",
-      "var(--color-chart-5, #8b5cf6)",
+      "var(--color-chart-5, #9d2398)",
     ];
 
     // Map stage names to chart keys
@@ -990,7 +990,7 @@ function DealStageDistributionWidget({
     },
     closed: {
       label: "Closed",
-      color: "var(--color-chart-5, #8b5cf6)",
+      color: "var(--color-chart-5, #9d2398)",
     },
   } satisfies ChartConfig;
 
@@ -1039,7 +1039,7 @@ function DealStageDistributionWidget({
               "var(--color-chart-2, #49beff)",
               "var(--color-chart-3, #10b981)",
               "var(--color-chart-4, #f59e0b)",
-              "var(--color-chart-5, #8b5cf6)",
+              "var(--color-chart-5, #9d2398)",
             ];
             const color = colorMap[index] || colorMap[0];
             const percentage =

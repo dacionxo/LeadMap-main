@@ -302,7 +302,7 @@ export default function AddToCampaignModal({
                         onChange={(e) => setSelectedCampaignId(e.target.value)}
                         style={{
                           marginRight: '12px',
-                          accentColor: '#6366f1'
+                          accentColor: '#9d2398'
                         }}
                       />
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -350,7 +350,7 @@ export default function AddToCampaignModal({
                 disabled={!selectedCampaignId || adding}
                 style={{
                   padding: '10px 20px',
-                  backgroundColor: '#6366f1',
+                  backgroundColor: '#9d2398',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '6px',

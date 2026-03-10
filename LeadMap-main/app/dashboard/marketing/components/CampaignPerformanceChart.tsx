@@ -152,7 +152,7 @@ export default function CampaignPerformanceChart({
               type="monotone"
               dataKey="sent"
               fill="#e0e7ff"
-              stroke="#6366f1"
+              stroke="#9d2398"
               name="Sent"
               fillOpacity={0.3}
             />
@@ -188,7 +188,7 @@ export default function CampaignPerformanceChart({
                 yAxisId="right"
                 type="monotone"
                 dataKey="roi"
-                stroke="#8b5cf6"
+                stroke="#9d2398"
                 strokeWidth={3}
                 strokeDasharray="5 5"
                 dot={{ r: 5 }}
@@ -228,7 +228,7 @@ export default function CampaignPerformanceChart({
               type="monotone"
               dataKey="sent"
               stackId="1"
-              stroke="#6366f1"
+              stroke="#9d2398"
               fill="#e0e7ff"
               name="Sent"
             />
@@ -279,7 +279,7 @@ export default function CampaignPerformanceChart({
             <Line
               type="monotone"
               dataKey="sent"
-              stroke="#6366f1"
+              stroke="#9d2398"
               strokeWidth={2}
               dot={{ r: 4 }}
               name="Sent"

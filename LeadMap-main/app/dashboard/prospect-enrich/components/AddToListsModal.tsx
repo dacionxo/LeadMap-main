@@ -297,7 +297,7 @@ export default function AddToListsModal({
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#6366f1'
+                e.currentTarget.style.borderColor = '#9d2398'
                 e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
               }}
               onBlur={(e) => {
@@ -332,8 +332,8 @@ export default function AddToListsModal({
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#6366f1'
-                e.currentTarget.style.color = '#6366f1'
+                e.currentTarget.style.borderColor = '#9d2398'
+                e.currentTarget.style.color = '#9d2398'
                 e.currentTarget.style.backgroundColor = '#f9fafb'
               }}
               onMouseLeave={(e) => {
@@ -384,7 +384,7 @@ export default function AddToListsModal({
                 padding: '8px 16px',
                 border: 'none',
                 borderRadius: '6px',
-                backgroundColor: creating ? '#9ca3af' : '#6366f1',
+                backgroundColor: creating ? '#9ca3af' : '#9d2398',
                 color: '#ffffff',
                 cursor: creating ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
@@ -475,9 +475,9 @@ export default function AddToListsModal({
                   <div style={{
                     width: '20px',
                     height: '20px',
-                    border: `2px solid ${isSelected ? '#6366f1' : '#d1d5db'}`,
+                    border: `2px solid ${isSelected ? '#9d2398' : '#d1d5db'}`,
                     borderRadius: '4px',
-                    backgroundColor: isSelected ? '#6366f1' : '#ffffff',
+                    backgroundColor: isSelected ? '#9d2398' : '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -525,7 +525,7 @@ export default function AddToListsModal({
               padding: '8px 16px',
               border: 'none',
               borderRadius: '6px',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#9d2398',
               color: '#ffffff',
               cursor: 'pointer',
               fontSize: '14px',
@@ -536,7 +536,7 @@ export default function AddToListsModal({
               e.currentTarget.style.backgroundColor = '#4f46e5'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#6366f1'
+              e.currentTarget.style.backgroundColor = '#9d2398'
             }}
           >
             Done

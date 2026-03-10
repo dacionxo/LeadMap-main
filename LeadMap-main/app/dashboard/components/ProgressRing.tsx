@@ -49,7 +49,7 @@ export function ProgressRing({
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke={color || '#1eb0ff'}
+        stroke={color || '#0693ff'}
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
         strokeDashoffset={offset}

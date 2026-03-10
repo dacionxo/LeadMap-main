@@ -99,7 +99,7 @@ export default function ProspectSearchHeader({
           )}
           <button
             onClick={onResearchWithAI}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium px-5 py-2 rounded-lg shadow-lg shadow-indigo-500/30 text-sm transition-all flex items-center gap-2"
+            className="bg-gradient-to-r from-[#0693ff] to-purple-600 hover:from-[#0577d9] hover:to-purple-700 text-white font-medium px-5 py-2 rounded-lg shadow-lg shadow-purple-500/30 text-sm transition-all flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
             Research with AI

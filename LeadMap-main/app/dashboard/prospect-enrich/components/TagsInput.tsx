@@ -104,7 +104,7 @@ export default function TagsInput({ supabase, initialTags = [], onChange }: Tags
                 gap: '6px',
                 padding: '4px 10px',
                 background: '#eef2ff',
-                color: '#6366f1',
+                color: '#9d2398',
                 borderRadius: '16px',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '13px',
@@ -121,14 +121,14 @@ export default function TagsInput({ supabase, initialTags = [], onChange }: Tags
                   padding: 0,
                   display: 'flex',
                   alignItems: 'center',
-                  color: '#6366f1',
+                  color: '#9d2398',
                   transition: 'color 0.15s ease'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = '#4f46e5'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#6366f1'
+                  e.currentTarget.style.color = '#9d2398'
                 }}
                 aria-label={`Remove ${tag} tag`}
               >
@@ -167,7 +167,7 @@ export default function TagsInput({ supabase, initialTags = [], onChange }: Tags
           transition: 'border-color 0.15s ease'
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = '#6366f1'
+          e.currentTarget.style.borderColor = '#9d2398'
           e.currentTarget.style.outline = 'none'
           e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
         }}

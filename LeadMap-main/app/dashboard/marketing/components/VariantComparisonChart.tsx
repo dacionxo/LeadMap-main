@@ -138,7 +138,7 @@ export default function VariantComparisonChart({
             <Bar
               dataKey="click_rate"
               name="Click Rate"
-              fill="#8b5cf6"
+              fill="#9d2398"
               radius={[4, 4, 0, 0]}
             >
               {chartData.map((entry, index) => (

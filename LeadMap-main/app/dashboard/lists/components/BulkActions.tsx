@@ -76,7 +76,7 @@ export default function BulkActions({
               whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#6366f1'
+              e.currentTarget.style.borderColor = '#9d2398'
               e.currentTarget.style.background = '#f8fafc'
               e.currentTarget.style.transform = 'translateY(-1px)'
             }}
@@ -114,7 +114,7 @@ export default function BulkActions({
               whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#6366f1'
+              e.currentTarget.style.borderColor = '#9d2398'
               e.currentTarget.style.background = '#f8fafc'
               e.currentTarget.style.transform = 'translateY(-1px)'
             }}
@@ -141,7 +141,7 @@ export default function BulkActions({
               gap: '6px',
               padding: '8px 14px',
               background: '#ffffff',
-              color: '#dc2626',
+              color: '#e82c2c',
               border: '1px solid rgba(220, 38, 38, 0.2)',
               borderRadius: '8px',
               cursor: 'pointer',
@@ -152,7 +152,7 @@ export default function BulkActions({
               whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#dc2626'
+              e.currentTarget.style.borderColor = '#e82c2c'
               e.currentTarget.style.background = '#fef2f2'
               e.currentTarget.style.transform = 'translateY(-1px)'
             }}

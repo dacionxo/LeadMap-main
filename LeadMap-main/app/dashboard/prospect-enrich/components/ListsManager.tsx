@@ -189,7 +189,7 @@ export default function ListsManager({ supabase, listing, onChange }: ListsManag
                   width: '16px',
                   height: '16px',
                   cursor: 'pointer',
-                  accentColor: '#6366f1'
+                  accentColor: '#9d2398'
                 }}
               />
               <span style={{ flex: 1 }}>{list.name}</span>
@@ -220,7 +220,7 @@ export default function ListsManager({ supabase, listing, onChange }: ListsManag
             type="submit"
             style={{
               padding: '8px 12px',
-              background: '#6366f1',
+              background: '#9d2398',
               color: '#ffffff',
               border: 'none',
               borderRadius: '6px',
@@ -234,7 +234,7 @@ export default function ListsManager({ supabase, listing, onChange }: ListsManag
               e.currentTarget.style.background = '#4f46e5'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#6366f1'
+              e.currentTarget.style.background = '#9d2398'
             }}
           >
             Create
@@ -275,7 +275,7 @@ export default function ListsManager({ supabase, listing, onChange }: ListsManag
             border: '1px dashed #d1d5db',
             borderRadius: '6px',
             background: 'transparent',
-            color: '#6366f1',
+            color: '#9d2398',
             cursor: 'pointer',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             fontSize: '14px',
@@ -287,7 +287,7 @@ export default function ListsManager({ supabase, listing, onChange }: ListsManag
             transition: 'all 0.15s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#6366f1'
+            e.currentTarget.style.borderColor = '#9d2398'
             e.currentTarget.style.background = '#eef2ff'
           }}
           onMouseLeave={(e) => {

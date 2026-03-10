@@ -10,10 +10,10 @@ interface PipelineDropdownProps {
 const STATUSES = [
   { value: 'new', label: 'New', color: '#6b7280' },
   { value: 'contacted', label: 'Contacted', color: '#3b82f6' },
-  { value: 'qualified', label: 'Qualified', color: '#8b5cf6' },
+  { value: 'qualified', label: 'Qualified', color: '#9d2398' },
   { value: 'in_offer', label: 'In Offer', color: '#f59e0b' },
   { value: 'won', label: 'Won', color: '#10b981' },
-  { value: 'lost', label: 'Lost', color: '#ef4444' }
+  { value: 'lost', label: 'Lost', color: '#e82c2c' }
 ]
 
 export default function PipelineDropdown({ value, onChange }: PipelineDropdownProps) {
@@ -43,7 +43,7 @@ export default function PipelineDropdown({ value, onChange }: PipelineDropdownPr
           e.currentTarget.style.borderColor = '#d1d5db'
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = '#6366f1'
+          e.currentTarget.style.borderColor = '#9d2398'
           e.currentTarget.style.outline = 'none'
           e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)'
         }}

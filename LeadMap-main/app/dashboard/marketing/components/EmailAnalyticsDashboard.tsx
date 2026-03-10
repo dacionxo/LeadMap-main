@@ -619,8 +619,8 @@ export default function EmailAnalyticsDashboard() {
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorClicked" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#9d2398" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#9d2398" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -660,7 +660,7 @@ export default function EmailAnalyticsDashboard() {
               <Area
                 type="monotone"
                 dataKey="clicked"
-                stroke="#8b5cf6"
+                stroke="#9d2398"
                 fillOpacity={1}
                 fill="url(#colorClicked)"
                 name="Clicked"
@@ -727,7 +727,7 @@ export default function EmailAnalyticsDashboard() {
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="opens" fill="#10b981" name="Opens" />
-                  <Bar dataKey="clicks" fill="#8b5cf6" name="Clicks" />
+                  <Bar dataKey="clicks" fill="#9d2398" name="Clicks" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

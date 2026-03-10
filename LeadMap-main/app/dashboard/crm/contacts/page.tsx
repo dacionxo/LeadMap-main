@@ -176,7 +176,7 @@ export default function ContactsPage() {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                 fontSize: '28px',
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+                background: 'linear-gradient(135deg, #9d2398 0%, #9d2398 50%, #c92bc2 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -213,8 +213,8 @@ export default function ContactsPage() {
                     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#6366f1'
-                    e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    e.currentTarget.style.borderColor = '#9d2398'
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #9d2398 0%, #851f80 100%)'
                     e.currentTarget.style.color = '#ffffff'
                     e.currentTarget.style.transform = 'translateY(-1px)'
                     e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.25)'
@@ -309,7 +309,7 @@ export default function ContactsPage() {
                     boxShadow: '0 2px 8px rgba(99, 102, 241, 0.1)'
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#6366f1'
+                    e.currentTarget.style.borderColor = '#9d2398'
                     e.currentTarget.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.15), 0 8px 16px rgba(99, 102, 241, 0.2)'
                     e.currentTarget.style.transform = 'scale(1.01)'
                   }}

@@ -58,9 +58,9 @@ export default function ComparisonChart({
   const COLORS = [
     '#10b981', // green-500 for best
     '#3b82f6', // blue-500
-    '#8b5cf6', // purple-500
+    '#9d2398', // purple
     '#f59e0b', // amber-500
-    '#ef4444', // red-500
+    '#e82c2c', // red
   ]
 
   const getBarColor = (entry: any, index: number) => {

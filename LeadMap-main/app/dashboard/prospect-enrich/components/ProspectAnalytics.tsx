@@ -66,9 +66,9 @@ const COLORS = {
   secondary: "#4A90E2",
   success: "#10B981",
   warning: "#F59E0B",
-  danger: "#EF4444",
+  danger: "#e82c2c",
   info: "#06B6D4",
-  purple: "#8B5CF6",
+  purple: "#9d2398",
   pink: "#EC4899",
   orange: "#F97316",
 };

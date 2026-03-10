@@ -413,7 +413,7 @@ function EmailAnalyticsPageContent() {
                             <div
                               className="w-full h-full rounded-full bg-transparent"
                               style={{
-                                background: 'conic-gradient(#6366F1 0% 60%, #EC4899 60% 80%, #8B5CF6 80% 95%, #9CA3AF 95% 100%)',
+                                background: 'conic-gradient(#9d2398 0% 60%, #EC4899 60% 80%, #9d2398 80% 95%, #9CA3AF 95% 100%)',
                                 maskImage: 'radial-gradient(transparent 60%, black 61%)',
                                 WebkitMaskImage: 'radial-gradient(transparent 60%, black 61%)',
                               }}

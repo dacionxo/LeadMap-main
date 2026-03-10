@@ -53,12 +53,12 @@ interface DeviceData {
 const COLORS = {
   primary: '#3b82f6',
   secondary: '#10b981',
-  accent: '#8b5cf6',
+  accent: '#9d2398',
   warning: '#f59e0b',
-  danger: '#ef4444'
+  danger: '#e82c2c'
 }
 
-const CHART_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899']
+const CHART_COLORS = ['#3b82f6', '#10b981', '#9d2398', '#f59e0b', '#e82c2c', '#06b6d4', '#ec4899']
 
 /**
  * Device Analytics Component

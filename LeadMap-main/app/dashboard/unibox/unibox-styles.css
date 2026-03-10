@@ -14,7 +14,7 @@
 }
 .unibox-sidebar-active {
   background: rgba(19, 127, 236, 0.08);
-  color: #1eb0ff;
+  color: #0693ff;
 }
 .unibox-no-scrollbar::-webkit-scrollbar {
   display: none;

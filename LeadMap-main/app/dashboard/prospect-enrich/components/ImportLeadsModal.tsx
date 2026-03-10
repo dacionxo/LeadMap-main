@@ -347,7 +347,7 @@ export default function ImportLeadsModal({
                 <Loader
                   size={48}
                   style={{
-                    color: '#6366f1',
+                    color: '#9d2398',
                     margin: '0 auto 16px',
                     animation: 'spin 1s linear infinite'
                   }}
@@ -378,7 +378,7 @@ export default function ImportLeadsModal({
                     style={{
                       width: `${uploadProgress}%`,
                       height: '100%',
-                      background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
+                      background: 'linear-gradient(90deg, #9d2398 0%, #851f80 100%)',
                       transition: 'width 0.3s ease',
                       borderRadius: '4px'
                     }}
@@ -472,7 +472,7 @@ export default function ImportLeadsModal({
                 gap: '8px',
                 background: uploadStatus === 'success' ? '#f0fdf4' : '#fef2f2',
                 border: `1px solid ${uploadStatus === 'success' ? '#86efac' : '#fecaca'}`,
-                color: uploadStatus === 'success' ? '#059669' : '#dc2626'
+                color: uploadStatus === 'success' ? '#059669' : '#e82c2c'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -616,7 +616,7 @@ listing-2,https://example.com/property/2,456 Oak Ave,San Francisco,CA,94102,7500
                 padding: '8px 16px',
                 border: 'none',
                 borderRadius: '6px',
-                background: uploading ? '#9ca3af' : '#6366f1',
+                background: uploading ? '#9ca3af' : '#9d2398',
                 color: '#ffffff',
                 cursor: uploading || !file ? 'not-allowed' : 'pointer',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -634,7 +634,7 @@ listing-2,https://example.com/property/2,456 Oak Ave,San Francisco,CA,94102,7500
               }}
               onMouseLeave={(e) => {
                 if (!uploading && file) {
-                  e.currentTarget.style.background = '#6366f1'
+                  e.currentTarget.style.background = '#9d2398'
                 }
               }}
             >
