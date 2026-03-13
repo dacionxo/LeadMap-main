@@ -1622,13 +1622,16 @@ function ProspectEnrichInner() {
     })
   }, [baseListings, searchTerm])
 
-  // Calculate view-specific counts - these now respect Apollo sidebar filters
-  // Apply Apollo filters to get filtered counts for Total, Net New, and Saved
+  // Calculate view-specific counts.
+  // For category tables (fsbo/frbo/foreclosure/imports/etc), prefer authoritative
+  // DB/API counts so header totals do not cap at client-return limits (e.g. 1,000).
   const totalCount = useMemo(() => {
-    // Total = all listings in current category, with Apollo filters applied
-    const filtered = applyApolloFilters(allListings)
-    return filtered.length
-  }, [allListings, applyApolloFilters])
+    if (activeCategory !== 'all') {
+      if (remoteListingsCount > 0) return remoteListingsCount
+      return filterCounts[activeCategory] || 0
+    }
+    return filterCounts.all || 0
+  }, [activeCategory, remoteListingsCount, filterCounts])
   
   const netNewCount = useMemo(() => {
     // Net new = listings created or updated in last 30 days, excluding saved listings and listings in lists
