@@ -385,7 +385,7 @@ export function useProspectData(userId: string | undefined) {
               .from(table)
               .select('*')
               .order('created_at', { ascending: false })
-              .limit(1000) // Hard limit for client-side "all" view to prevent browser crash
+              .limit(1000000) // Increased cap so "All Prospects" can surface very large inventories (up to 1M rows per table)
             
             if (result.error) {
               console.warn(`Error fetching from ${table}:`, result.error)
@@ -439,6 +439,7 @@ export function useProspectData(userId: string | undefined) {
           .from(tableName)
           .select('*')
           .order('created_at', { ascending: false })
+          .limit(1000000) // Lift cap so category views (FSBO/FRBO/Foreclosure/Imports/etc.) can load up to 1M rows per Supabase table
           
         // Add specific handling for meta-filters if they are active but we are using default table
         // (Logic for high_value etc is handled by client-side filtering in page.tsx currently)
