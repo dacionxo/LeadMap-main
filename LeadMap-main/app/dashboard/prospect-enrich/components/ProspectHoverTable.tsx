@@ -94,6 +94,8 @@ interface PaginationStats {
 interface ProspectHoverTableProps {
   tableName?: string;
   listings?: Listing[];
+  /** Optional authoritative total for pagination display (used when rows are client-provided). */
+  totalItemsOverride?: number;
   columns?: string[];
   filters?: TableFilters;
   sortBy?: string;
@@ -118,6 +120,8 @@ interface ProspectHoverTableProps {
 
 const VALID_TABLE_NAMES = [
   "listings",
+  "listings_unified",
+  "listings_unified_materialized",
   "expired_listings",
   "fsbo_leads",
   "frbo_leads",
@@ -295,6 +299,7 @@ function getStatusBadgeClasses(
 export default function ProspectHoverTable({
   tableName,
   listings: providedListings,
+  totalItemsOverride,
   columns: providedColumns,
   filters = {},
   sortBy = "created_at",
@@ -458,7 +463,11 @@ export default function ProspectHoverTable({
         const paginated = filtered.slice(start, end);
 
         setListings(paginated);
-        setTotalCount(filtered.length);
+        setTotalCount(
+          typeof totalItemsOverride === "number" && totalItemsOverride >= 0
+            ? totalItemsOverride
+            : filtered.length
+        );
         setLoading(false);
         return;
       }
@@ -574,6 +583,7 @@ export default function ProspectHoverTable({
     [
       providedListings,
       tableName,
+      totalItemsOverride,
       filters,
       sortBy,
       sortOrder,

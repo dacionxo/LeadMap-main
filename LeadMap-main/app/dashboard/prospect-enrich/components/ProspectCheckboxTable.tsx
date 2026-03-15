@@ -127,7 +127,7 @@ function getStatusLabel(listing: Listing, tableName?: string, category?: string)
     'foreclosure': 'foreclosure_listings',
     'imports': 'imports',
   }
-  
+
   // Use category to infer table name when tableName is undefined (e.g., "all prospects" view)
   const effectiveTableName = tableName || (category ? categoryToTable[category] : undefined)
 
@@ -166,7 +166,7 @@ function getStatusLabel(listing: Listing, tableName?: string, category?: string)
 function getStatusBadgeClasses(status: string, tableName?: string, category?: string): string {
   // Normalize status to lowercase for comparison
   const normalizedStatus = status.toLowerCase()
-  
+
   // Map FilterType category to table names for "all prospects" view
   const categoryToTable: Record<string, string> = {
     'fsbo': 'fsbo_leads',
@@ -174,10 +174,10 @@ function getStatusBadgeClasses(status: string, tableName?: string, category?: st
     'foreclosure': 'foreclosure_listings',
     'imports': 'imports',
   }
-  
+
   // Use category to infer table name when tableName is undefined
   const effectiveTableName = tableName || (category ? categoryToTable[category] : undefined)
-  
+
   // Determine status based on label or table name
   if (normalizedStatus.includes('for sale') || effectiveTableName === 'fsbo_leads' || category === 'fsbo') {
     return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800 whitespace-nowrap'
@@ -208,9 +208,9 @@ const VALID_TABLE_NAMES = [
 ] as const
 
 const DEFAULT_COLUMNS = [
-  'address', 'price', 'status', 'score', 'beds', 'full_baths', 
-  'sqft', 'description', 'agent_name', 'agent_email', 'agent_phone', 
-  'agent_phone_2', 'listing_agent_phone_2', 'listing_agent_phone_5', 
+  'address', 'price', 'status', 'score', 'beds', 'full_baths',
+  'sqft', 'description', 'agent_name', 'agent_email', 'agent_phone',
+  'agent_phone_2', 'listing_agent_phone_2', 'listing_agent_phone_5',
   'year_built', 'last_sale_price', 'last_sale_date', 'actions'
 ] as const
 
@@ -274,7 +274,7 @@ export default function ProspectCheckboxTable({
   category
 }: ProspectCheckboxTableProps) {
   const columns = providedColumns || [...DEFAULT_COLUMNS]
-  
+
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [totalCount, setTotalCount] = useState(0)
@@ -288,7 +288,7 @@ export default function ProspectCheckboxTable({
   const fetchListings = useCallback(async (page: number) => {
     if (providedListings !== undefined) {
       let filtered = [...providedListings]
-      
+
       if (filters.search) {
         const query = filters.search.toLowerCase()
         filtered = filtered.filter(listing => {
@@ -299,32 +299,32 @@ export default function ProspectCheckboxTable({
           return address.includes(query) || agentName.includes(query) || agentEmail.includes(query) || listingId.includes(query)
         })
       }
-      
+
       if (filters.city) {
         filtered = filtered.filter(l => l.city?.toLowerCase() === filters.city?.toLowerCase())
       }
-      
+
       if (filters.state) {
         filtered = filtered.filter(l => l.state?.toLowerCase() === filters.state?.toLowerCase())
       }
-      
+
       if (filters.minPrice) {
         const min = parseInt(filters.minPrice)
         filtered = filtered.filter(l => l.list_price && l.list_price >= min)
       }
-      
+
       if (filters.maxPrice) {
         const max = parseInt(filters.maxPrice)
         filtered = filtered.filter(l => l.list_price && l.list_price <= max)
       }
-      
+
       if (filters.status) {
         filtered = filtered.filter(l => l.status?.toLowerCase().includes(filters.status?.toLowerCase() || ''))
       }
-      
+
       filtered.sort((a, b) => {
         let aVal: any, bVal: any
-        
+
         switch (sortBy) {
           case 'price':
           case 'list_price':
@@ -345,34 +345,34 @@ export default function ProspectCheckboxTable({
             aVal = new Date(a.created_at || 0).getTime()
             bVal = new Date(b.created_at || 0).getTime()
         }
-        
+
         if (sortOrder === 'asc') {
           return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
         } else {
           return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
         }
       })
-      
+
       const start = (page - 1) * pageSize
       const end = start + pageSize
       const paginated = filtered.slice(start, end)
-      
+
       setListings(paginated)
       setTotalCount(filtered.length)
       setLoading(false)
       return
     }
-    
+
     if (!tableName || !isValidTableName(tableName)) {
       setLoading(false)
       setListings([])
       setTotalCount(0)
       return
     }
-    
+
     try {
       setLoading(true)
-      
+
       const params = new URLSearchParams({
         table: tableName,
         page: page.toString(),
@@ -380,27 +380,27 @@ export default function ProspectCheckboxTable({
         sortBy,
         sortOrder
       })
-      
+
       if (filters.search) params.append('search', filters.search)
       if (filters.city) params.append('city', filters.city)
       if (filters.state) params.append('state', filters.state)
       if (filters.minPrice) params.append('minPrice', filters.minPrice)
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice)
       if (filters.status) params.append('status', filters.status)
-      
+
       const response = await fetch(`/api/listings/paginated?${params.toString()}`)
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch listings: ${response.statusText}`)
       }
-      
+
       const result = await response.json()
       const { data, count, error } = result
-      
+
       if (error) {
         throw new Error(error)
       }
-      
+
       const listingsWithOther = (data || []).map((listing: any) => {
         let parsedOther = listing.other
         if (listing.other && typeof listing.other === 'string') {
@@ -410,16 +410,16 @@ export default function ProspectCheckboxTable({
             parsedOther = null
           }
         }
-        
+
         return {
           ...listing,
           other: parsedOther
         }
       })
-      
+
       setListings(listingsWithOther)
       setTotalCount(count || 0)
-      
+
       if (onStatsChange) {
         onStatsChange({
           totalCount: count || 0,
@@ -429,7 +429,7 @@ export default function ProspectCheckboxTable({
           loading: false
         })
       }
-      
+
     } catch (error: any) {
       console.error('Error fetching listings:', error)
       setListings([])
@@ -482,13 +482,12 @@ export default function ProspectCheckboxTable({
     const { street, cityStateZip } = formatAddress(listing)
     const isSelected = selectedIds.has(listing.listing_id)
     const isSaved = crmContactIds.has(listing.listing_id) || (listing.property_url ? crmContactIds.has(listing.property_url) : false)
-    
+
     return (
-      <TableRow 
+      <TableRow
         key={listing.listing_id}
-        className={`group/row bg-hover dark:bg-transparent cursor-pointer ${
-          isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-        }`}
+        className={`group/row bg-hover dark:bg-transparent cursor-pointer ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+          }`}
         onClick={() => onListingClick?.(listing)}
       >
         <TableCell className="whitespace-nowrap">
@@ -498,7 +497,7 @@ export default function ProspectCheckboxTable({
             onClick={(e) => e.stopPropagation()}
           />
         </TableCell>
-        
+
         {columns.includes('address') && (
           <TableCell className="whitespace-nowrap">
             <div className="flex items-center gap-2">
@@ -524,7 +523,7 @@ export default function ProspectCheckboxTable({
             </div>
           </TableCell>
         )}
-        
+
         {columns.includes('price') && (
           <TableCell className="whitespace-nowrap">
             <div className="flex items-center gap-1">
@@ -540,7 +539,7 @@ export default function ProspectCheckboxTable({
             </div>
           </TableCell>
         )}
-        
+
         {columns.includes('status') && (
           <TableCell className="whitespace-nowrap min-w-[100px]">
             <span
@@ -550,20 +549,19 @@ export default function ProspectCheckboxTable({
             </span>
           </TableCell>
         )}
-        
+
         {columns.includes('score') && (
           <TableCell className="whitespace-nowrap">
             {listing.ai_investment_score !== null && listing.ai_investment_score !== undefined ? (
               <div className="flex items-center gap-1">
                 <Target className="h-4 w-4 text-blue-500" />
                 <span
-                  className={`text-sm font-medium ${
-                    listing.ai_investment_score >= 70
+                  className={`text-sm font-medium ${listing.ai_investment_score >= 70
                       ? 'text-green-600 dark:text-green-400'
                       : listing.ai_investment_score >= 50
-                      ? 'text-yellow-600 dark:text-yellow-400'
-                      : 'text-gray-600 dark:text-gray-400'
-                  }`}
+                        ? 'text-yellow-600 dark:text-yellow-400'
+                        : 'text-gray-600 dark:text-gray-400'
+                    }`}
                 >
                   {listing.ai_investment_score.toFixed(1)}
                 </span>
@@ -573,25 +571,25 @@ export default function ProspectCheckboxTable({
             )}
           </TableCell>
         )}
-        
+
         {columns.includes('beds') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm">{listing.beds ?? '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('full_baths') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm">{formatBaths(listing.full_baths)}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('sqft') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm">{listing.sqft ? listing.sqft.toLocaleString() : '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('description') && (
           <TableCell>
             <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 max-w-xs">
@@ -599,55 +597,55 @@ export default function ProspectCheckboxTable({
             </div>
           </TableCell>
         )}
-        
+
         {columns.includes('agent_name') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm">{listing.agent_name || '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('agent_email') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm text-gray-600 dark:text-gray-400">{listing.agent_email || '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('agent_phone') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm text-gray-600 dark:text-gray-400">{listing.agent_phone || '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('agent_phone_2') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm text-gray-600 dark:text-gray-400">{listing.agent_phone_2 || '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('listing_agent_phone_2') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm text-gray-600 dark:text-gray-400">{listing.listing_agent_phone_2 || '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('listing_agent_phone_5') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm text-gray-600 dark:text-gray-400">{listing.listing_agent_phone_5 || '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('year_built') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm">{listing.year_built ?? '-'}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('last_sale_price') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm">{formatPrice(listing.last_sale_price)}</span>
           </TableCell>
         )}
-        
+
         {columns.includes('last_sale_date') && (
           <TableCell className="whitespace-nowrap">
             <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -655,7 +653,7 @@ export default function ProspectCheckboxTable({
             </span>
           </TableCell>
         )}
-        
+
         {columns.includes('actions') && (
           <TableCell className="whitespace-nowrap">
             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -680,9 +678,8 @@ export default function ProspectCheckboxTable({
               {onSave && (
                 <button
                   onClick={() => onSave(listing, !isSaved)}
-                  className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                    isSaved ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
-                  }`}
+                  className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${isSaved ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
+                    }`}
                   title={isSaved ? 'Unsave prospect' : 'Save prospect'}
                 >
                   {isSaved ? (
@@ -744,7 +741,7 @@ export default function ProspectCheckboxTable({
   return (
     <div className="w-full" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <div className="border rounded-md border-gray-200 dark:border-gray-700 overflow-hidden bg-white" style={{ backgroundColor: '#FFFFFF' }}>
-        <div 
+        <div
           ref={tableScrollRef}
           className="overflow-x-auto overflow-y-auto"
           style={{ maxHeight: 'calc(100vh - 400px)' }}
@@ -834,7 +831,7 @@ export default function ProspectCheckboxTable({
             </TableBody>
           </Table>
         </div>
-        
+
         {showPagination && (
           <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white" style={{ backgroundColor: '#FFFFFF' }}>
             <ApolloPagination

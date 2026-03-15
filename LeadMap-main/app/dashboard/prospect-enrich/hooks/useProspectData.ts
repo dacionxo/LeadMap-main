@@ -149,6 +149,7 @@ const EXCLUSIVE_CATEGORY_FILTERS = new Set<FilterType>(['all', 'expired', 'proba
 // Resident data: property_skip_trace_residents table, matched by property_url
 const RESIDENTS_TABLE_NAME = 'property_skip_trace_residents'
 const CURRENT_RESIDENT_TYPES = new Set<string>(['Current', 'Owner-Occupant', 'owner-occupant', 'current'])
+const API_PAGE_SIZE = 1000
 
 // ============================================================================
 // Helpers
@@ -183,7 +184,8 @@ export function useProspectData(userId: string | undefined) {
   const [loading, setLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   
-  const fetchingRef = useRef(false)
+  // Monotonic request id to prevent stale fetches from overwriting newer category loads.
+  const activeRequestIdRef = useRef(0)
 
   /**
    * Resolves the correct table name for a given category.
@@ -192,6 +194,60 @@ export function useProspectData(userId: string | undefined) {
   const getTableName = useCallback((category: FilterType): string => {
     return TABLE_MAPPING[category] || DEFAULT_LISTINGS_TABLE
   }, [])
+
+  /**
+   * Fetch a representative page from a listing table via the server paginated API.
+   * We intentionally avoid hydrating every page into memory so large datasets
+   * (100k-1M+) remain responsive; full pagination is handled in ProspectHoverTable.
+   */
+  const fetchAllRowsFromApi = useCallback(
+    async (
+      tableName: string,
+      sortField: string,
+      sortOrder: 'asc' | 'desc'
+    ): Promise<{ rows: Listing[]; count: number }> => {
+      const sortByMap: Record<string, string> = {
+        date: 'created_at',
+        price: 'list_price',
+        score: 'ai_investment_score',
+      }
+      const sortBy = sortByMap[sortField] || 'created_at'
+
+      const fetchPage = async (page: number) => {
+        const params = new URLSearchParams({
+          table: tableName,
+          page: String(page),
+          pageSize: String(API_PAGE_SIZE),
+          sortBy,
+          sortOrder,
+        })
+
+        const res = await fetch(`/api/listings/paginated?${params.toString()}`, {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        if (!res.ok) {
+          throw new Error(`Failed fetching ${tableName} page ${page}: ${res.status} ${res.statusText}`)
+        }
+
+        const payload = await res.json()
+        if (payload?.error) {
+          throw new Error(
+            `API error fetching ${tableName} page ${page}: ${String(payload.error)}`
+          )
+        }
+
+        const pageRows = Array.isArray(payload?.data) ? (payload.data as Listing[]) : []
+        const totalCount = Number(payload?.count || 0)
+        return { pageRows, totalCount }
+      }
+
+      const first = await fetchPage(1)
+      return { rows: first.pageRows, count: first.totalCount }
+    },
+    []
+  )
 
   /**
    * Fetches IDs of listings that are already in the CRM.
@@ -219,7 +275,8 @@ export function useProspectData(userId: string | undefined) {
       }
       // For "all", don't add category filter - show all saved contacts
 
-      const { data: contacts } = await contactsQuery
+      const { data: contactRows } = await contactsQuery
+      const contacts = (contactRows || []) as { source_id?: string | null; tags?: string[] | null }[]
 
       if (!contacts || contacts.length === 0) {
         setCrmContactIds(new Set())
@@ -227,33 +284,33 @@ export function useProspectData(userId: string | undefined) {
         return
       }
 
-      const ids = new Set(contacts.map(c => c.source_id).filter(Boolean) as string[])
+      const ids = new Set(contacts.map((c) => c.source_id).filter(Boolean) as string[])
       setCrmContactIds(ids)
 
       // 2. Fetch the full listing details for these saved items
       if (activeCategory === 'all') {
         // For "All", we need to check all potential tables
-        // This is expensive but necessary if we want to show saved items across all categories
+        // All Prospects should aggregate core acquisition sources only.
         const tablesToCheck = [
-          DEFAULT_LISTINGS_TABLE,
-          'expired_listings',
-          'probate_leads',
           'fsbo_leads',
           'frbo_leads',
-          'imports',
-          'trash',
           'foreclosure_listings'
         ]
 
-        const promises = tablesToCheck.map(table => 
-          supabase.from(table).select('*').in('listing_id', Array.from(ids))
+        const promises: Promise<{ data: Listing[] | null }>[] = tablesToCheck.map((table) =>
+          supabase
+            .from(table)
+            .select('*')
+            .in('listing_id', Array.from(ids)) as unknown as Promise<{ data: Listing[] | null }>
         )
 
-        const results = await Promise.all(promises)
-        const combined = results.flatMap(r => r.data || [])
+        const results: { data: Listing[] | null }[] = await Promise.all(promises)
+        const combined = results.flatMap((r: { data: Listing[] | null }) => r.data || [])
         
         // Deduplicate by listing_id (just in case)
-        const uniqueSaved = Array.from(new Map(combined.map(item => [item.listing_id, item])).values())
+        const uniqueSaved = Array.from(
+          new Map(combined.map((item: Listing) => [item.listing_id, item] as const)).values()
+        ) as Listing[]
         setSavedListings(uniqueSaved)
 
       } else {
@@ -264,7 +321,7 @@ export function useProspectData(userId: string | undefined) {
           .select('*')
           .in('listing_id', Array.from(ids))
         
-        setSavedListings(data || [])
+        setSavedListings((data || []) as Listing[])
       }
 
     } catch (error) {
@@ -290,21 +347,32 @@ export function useProspectData(userId: string | undefined) {
 
       if (!propertyUrls.length) return data
 
-      const { data: rows, error } = await supabase
-        .from(RESIDENTS_TABLE_NAME)
-        .select(
-          'property_url,resident_index,resident_type,resident_name,resident_age,resident_phone_numbers,resident_previous_address'
-        )
-        .in('property_url', propertyUrls)
-        .order('property_url', { ascending: true })
-        .order('resident_index', { ascending: true })
+      const residentRows: (Record<string, unknown> & { property_url?: string })[] = []
+      const chunkSize = 500
 
-      if (error) {
-        console.warn('Error fetching property_skip_trace_residents:', error)
-        return data
+      for (let i = 0; i < propertyUrls.length; i += chunkSize) {
+        const chunk = propertyUrls.slice(i, i + chunkSize)
+        const { data: rows, error } = await supabase
+          .from(RESIDENTS_TABLE_NAME)
+          .select(
+            'property_url,resident_index,resident_type,resident_name,resident_age,resident_phone_numbers,resident_previous_address'
+          )
+          .in('property_url', chunk)
+          .order('property_url', { ascending: true })
+          .order('resident_index', { ascending: true })
+
+        if (error) {
+          console.warn('Error fetching property_skip_trace_residents chunk:', error)
+          continue
+        }
+
+        if (rows && rows.length > 0) {
+          residentRows.push(
+            ...(rows as (Record<string, unknown> & { property_url?: string })[])
+          )
+        }
       }
 
-      const residentRows = (rows || []) as (Record<string, unknown> & { property_url?: string })[]
       if (!residentRows.length) return data
 
       const byPropertyUrl = new Map<string, { current: ResidentRow[]; previous: ResidentRow[] }>()
@@ -357,41 +425,30 @@ export function useProspectData(userId: string | undefined) {
    * The VirtualizedListingsTable handles its own fetching for large datasets.
    */
   const fetchListingsData = useCallback(async (selectedFilters: Set<FilterType>, sortField: string, sortOrder: 'asc' | 'desc') => {
-    if (fetchingRef.current) return
-    fetchingRef.current = true
+    const requestId = activeRequestIdRef.current + 1
+    activeRequestIdRef.current = requestId
     setLoading(true)
+    // Clear stale rows immediately so categories do not visually "fall back" to prior table rows.
+    setListings([])
+    setAllListings([])
 
     try {
       const activeCategory = getPrimaryCategory(selectedFilters)
       let data: Listing[] = []
 
       if (activeCategory === 'all') {
-        // Aggregate from all tables - ensure every category is included
+        // Aggregate from All Prospects sources only.
         const tablesToFetch = [
-          DEFAULT_LISTINGS_TABLE,
-          'expired_listings',
-          'probate_leads',
           'fsbo_leads',
           'frbo_leads',
-          'imports',
-          'trash',
           'foreclosure_listings'
         ]
 
-        // Fetch in parallel with error handling - don't fail entire aggregation if one table fails
+        // Fetch in parallel via server API to bypass client-side row caps.
         const promises = tablesToFetch.map(async (table) => {
           try {
-            const result = await supabase
-              .from(table)
-              .select('*')
-              .order('created_at', { ascending: false })
-              .limit(1000000) // Increased cap so "All Prospects" can surface very large inventories (up to 1M rows per table)
-            
-            if (result.error) {
-              console.warn(`Error fetching from ${table}:`, result.error)
-              return { data: [], error: result.error }
-            }
-            return result
+            const result = await fetchAllRowsFromApi(table, sortField, sortOrder)
+            return { data: result.rows, error: null }
           } catch (error) {
             console.warn(`Exception fetching from ${table}:`, error)
             return { data: [], error }
@@ -434,33 +491,11 @@ export function useProspectData(userId: string | undefined) {
       } else {
         // Single category fetch
         const tableName = getTableName(activeCategory)
-
-        const query = supabase
-          .from(tableName)
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1000000) // Lift cap so category views (FSBO/FRBO/Foreclosure/Imports/etc.) can load up to 1M rows per Supabase table
-          
-        // Add specific handling for meta-filters if they are active but we are using default table
-        // (Logic for high_value etc is handled by client-side filtering in page.tsx currently)
-        
-        const { data: result, error } = await query
-
-        if (error) {
-          // Handle missing table gracefully
-          if ((error as any)?.code === 'PGRST116' || error.message?.includes('does not exist')) {
-            console.warn(`Table ${tableName} does not exist.`)
-            data = []
-          } else {
-            throw error
-          }
-        } else {
-          const rows = (result || []) as Listing[]
-          data = rows.map((row) => ({
-            ...row,
-            source_table: (row as any).source_table || tableName,
-          }))
-        }
+        const result = await fetchAllRowsFromApi(tableName, sortField, sortOrder)
+        data = (result.rows || []).map((row) => ({
+          ...row,
+          source_table: (row as any).source_table || tableName,
+        }))
       }
 
       // Attach skip-traced resident data when available
@@ -473,6 +508,9 @@ export function useProspectData(userId: string | undefined) {
         ...item,
         in_crm: crmContactIds.has(item.listing_id)
       }))
+
+      // Drop stale responses from earlier requests (e.g., user switched categories quickly).
+      if (requestId !== activeRequestIdRef.current) return
 
       setAllListings(processedData)
       
@@ -499,10 +537,11 @@ export function useProspectData(userId: string | undefined) {
     } catch (error) {
       console.error('Error fetching listings:', error)
     } finally {
-      setLoading(false)
-      fetchingRef.current = false
+      if (requestId === activeRequestIdRef.current) {
+        setLoading(false)
+      }
     }
-  }, [supabase, crmContactIds, getTableName])
+  }, [supabase, crmContactIds, getTableName, fetchAllRowsFromApi])
 
   /**
    * Optimistically updates a listing in the local state.

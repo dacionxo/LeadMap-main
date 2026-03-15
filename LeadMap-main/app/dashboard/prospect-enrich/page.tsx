@@ -144,267 +144,291 @@ function ProspectContentInner(props: any) {
 function ProspectContentWithSidebar(props: any) {
   return (
     <>
-    {/* Same layout as Deals: fixed full-bleed, DealsNavbar, container with Dashboard border/shadow */}
-    <div className="-mt-[30px]" data-page="prospect-enrich">
-      <div
-        className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden"
-      >
-        <DealsNavbar />
-        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
-          {/* Reference layout: nav sidebar (rounded-l) + content card (rounded-r) */}
-          <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
-            {/* Inline nav sidebar — same height as content card */}
-            <AppNavSidebar />
-            {/* Content card: filters + table */}
-            <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-row h-full min-h-0 overflow-hidden relative">
-            {/* Left Sidebar - Filter Sidebar */}
-            {props.filtersVisible && (
-              <ProspectFilterSidebar
-            filters={props.apolloFilters}
-            onFiltersChange={props.setApolloFilters}
-            totalCount={props.totalCount || 0}
-            netNewCount={props.netNewCount || 0}
-            savedCount={props.savedCount || 0}
-            isCollapsed={!props.filtersVisible}
-            onToggleCollapse={() => props.setFiltersVisible(!props.filtersVisible)}
-            listings={props.allListings || []}
-                isDark={props.isDark}
-                activeCategory={props.activeCategory}
-              />
-            )}
-            {/* Main content: header + table/map */}
-            <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-          <ProspectSearchHeader
-            searchQuery={props.searchTerm || ''}
-            onSearchChange={props.setSearchTerm}
-            filtersVisible={props.filtersVisible}
-            onToggleFilters={() => props.setFiltersVisible(!props.filtersVisible)}
-            onImport={() => props.setShowImportModal(true)}
-            showImportButton={props.activeCategory === 'imports'}
-            onResearchWithAI={() => {
-              console.log('Research with AI clicked')
-            }}
-            isDark={props.isDark}
-            displayView={props.displayView}
-            onDisplayViewChange={props.setDisplayView}
-            totalCount={props.totalCount || 0}
-            netNewCount={props.netNewCount || 0}
-            savedCount={props.savedCount || 0}
-            viewType={props.viewType}
-            onViewTypeChange={props.setViewType}
-          />
-            {props.displayView === 'map' ? (
-              <div className="flex-1 flex flex-col bg-white dark:bg-dark">
-                <MapView
-                  isActive={true}
-                  listings={(props.allListings || []).map(listingToMapLead)}
-                  loading={false}
-                  onStreetViewListingClick={(leadId) => {
-                    // Open lead detail modal for the clicked marker
-                    props.setSelectedListingId(leadId)
-                    props.setShowLeadModal(true)
-                  }}
-                />
+      {/* Same layout as Deals: fixed full-bleed, DealsNavbar, container with Dashboard border/shadow */}
+      <div className="-mt-[30px]" data-page="prospect-enrich">
+        <div
+          className="fixed top-0 bottom-0 left-0 right-0 flex flex-col bg-mesh dark:bg-dark overflow-hidden"
+        >
+          <DealsNavbar />
+          <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0 min-w-0">
+            {/* Reference layout: nav sidebar (rounded-l) + content card (rounded-r) */}
+            <div className="flex flex-row h-full min-h-0 overflow-hidden gap-0">
+              {/* Inline nav sidebar — same height as content card */}
+              <AppNavSidebar />
+              {/* Content card: filters + table */}
+              <div className="flex-1 bg-white dark:bg-dark/90 rounded-r-[20px] rounded-l-[0] shadow-sm border border-l-0 border-slate-200 dark:border-slate-700 flex flex-row h-full min-h-0 overflow-hidden relative">
+                {/* Left Sidebar - Filter Sidebar */}
+                {props.filtersVisible && (
+                  <ProspectFilterSidebar
+                    filters={props.apolloFilters}
+                    onFiltersChange={props.setApolloFilters}
+                    totalCount={props.totalCount || 0}
+                    netNewCount={props.netNewCount || 0}
+                    savedCount={props.savedCount || 0}
+                    isCollapsed={!props.filtersVisible}
+                    onToggleCollapse={() => props.setFiltersVisible(!props.filtersVisible)}
+                    listings={props.allListings || []}
+                    isDark={props.isDark}
+                    activeCategory={props.activeCategory}
+                  />
+                )}
+                {/* Main content: header + table/map */}
+                <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+                  <ProspectSearchHeader
+                    searchQuery={props.searchTerm || ''}
+                    onSearchChange={props.setSearchTerm}
+                    filtersVisible={props.filtersVisible}
+                    onToggleFilters={() => props.setFiltersVisible(!props.filtersVisible)}
+                    onImport={() => props.setShowImportModal(true)}
+                    showImportButton={props.activeCategory === 'imports'}
+                    onResearchWithAI={() => {
+                      console.log('Research with AI clicked')
+                    }}
+                    isDark={props.isDark}
+                    displayView={props.displayView}
+                    onDisplayViewChange={props.setDisplayView}
+                    totalCount={props.totalCount || 0}
+                    netNewCount={props.netNewCount || 0}
+                    savedCount={props.savedCount || 0}
+                    viewType={props.viewType}
+                    onViewTypeChange={props.setViewType}
+                  />
+                  {props.displayView === 'map' ? (
+                    <div className="flex-1 flex flex-col bg-white dark:bg-dark">
+                      <MapView
+                        isActive={true}
+                        listings={(props.allListings || []).map(listingToMapLead)}
+                        loading={false}
+                        onStreetViewListingClick={(leadId) => {
+                          // Open lead detail modal for the clicked marker
+                          props.setSelectedListingId(leadId)
+                          props.setSelectedListingForModal(null)
+                          props.setShowLeadModal(true)
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <ProspectHoverTable
+                      tableName={
+                        props.viewType === 'total'
+                          ? (props.activeCategory === 'all' ? undefined : props.resolvedTableName)
+                          : (props.activeCategory === 'all' ? undefined : props.resolvedTableName)
+                      }
+                      listings={
+                        props.viewType === 'total' && props.activeCategory !== 'all'
+                          ? undefined
+                          : props.filteredListings
+                      }
+                      totalItemsOverride={
+                        props.activeCategory === 'all'
+                          ? (
+                              props.viewType === 'total'
+                                ? props.totalCount
+                                : props.viewType === 'net_new'
+                                  ? props.netNewCount
+                                  : props.savedCount
+                            )
+                          : undefined
+                      }
+                      filters={{
+                        search: props.searchTerm,
+                        city: props.apolloFilters.city?.[0],
+                        state: props.apolloFilters.state?.[0],
+                        minPrice: props.apolloFilters.price_range?.min?.toString(),
+                        maxPrice: props.apolloFilters.price_range?.max?.toString(),
+                        status: props.apolloFilters.status?.[0]
+                      }}
+                      onClearFilter={(key) => {
+                        if (key === 'search') {
+                          props.setSearchTerm('')
+                          return
+                        }
+                        if (key === 'minPrice' || key === 'maxPrice') {
+                          props.setApolloFilters((prev: Record<string, any>) => ({ ...prev, price_range: undefined }))
+                          return
+                        }
+                        props.setApolloFilters((prev: Record<string, any>) => ({ ...prev, [key]: undefined }))
+                      }}
+                      onClearAllFilters={() => {
+                        props.setApolloFilters({})
+                        props.setSearchTerm('')
+                      }}
+                      sortBy={props.sortBy === 'price_high' ? 'list_price' : props.sortBy === 'price_low' ? 'list_price' : props.sortBy === 'date_new' ? 'created_at' : props.sortBy === 'date_old' ? 'created_at' : props.sortBy === 'score_high' ? 'ai_investment_score' : 'created_at'}
+                      sortOrder={props.sortBy === 'price_low' || props.sortBy === 'date_old' ? 'asc' : 'desc'}
+                      pagination={{
+                        currentPage: props.currentPage,
+                        pageSize: props.itemsPerPage,
+                        onPageChange: props.setCurrentPage,
+                        onPageSizeChange: props.setItemsPerPage
+                      }}
+                      onStatsChange={(stats) => {
+                        props.setRemoteListingsCount(stats.totalCount)
+                      }}
+                      onListingClick={(listing) => {
+                        props.setSelectedListingId(listing.listing_id)
+                        props.setSelectedListingForModal(listing)
+                        props.setShowLeadModal(true)
+                      }}
+                      selectedIds={props.selectedIds}
+                      onSelect={(listingId, selected) => {
+                        props.setSelectedIds((prev: Set<string>) => {
+                          const next = new Set(prev)
+                          if (selected) next.add(listingId)
+                          else next.delete(listingId)
+                          return next
+                        })
+                      }}
+                      crmContactIds={props.crmContactIds}
+                      onSave={props.handleSaveProspect}
+                      category={props.activeCategory}
+                      onAction={(action, listing) => {
+                        if (action === 'email') {
+                          props.handleGenerateEmail(listing as any)
+                        } else if (action === 'call') {
+                          if (listing.agent_phone) {
+                            window.open(`tel:${listing.agent_phone}`)
+                          }
+                        } else if (action === 'save' || action === 'added_to_crm') {
+                          props.handleSave(listing as any)
+                        } else if (action === 'unsave' || action === 'removed_from_crm') {
+                          props.handleSaveProspect(listing as any, false)
+                        } else if (action === 'view') {
+                          props.setSelectedListingId(listing.listing_id)
+                          props.setSelectedListingForModal(listing as Listing)
+                          props.setShowLeadModal(true)
+                        }
+                      }}
+                      isDark={props.isDark}
+                      showSummary={false}
+                      showPagination={true}
+                    />
+                  )}
+                </main>
               </div>
-            ) : (
-            <ProspectHoverTable
-          tableName={props.activeCategory === 'all' ? undefined : props.resolvedTableName}
-          listings={props.filteredListings}
-          filters={{
-            search: props.searchTerm,
-            city: props.apolloFilters.city?.[0],
-            state: props.apolloFilters.state?.[0],
-            minPrice: props.apolloFilters.price_range?.min?.toString(),
-            maxPrice: props.apolloFilters.price_range?.max?.toString(),
-            status: props.apolloFilters.status?.[0]
-          }}
-          onClearFilter={(key) => {
-            if (key === 'search') {
-              props.setSearchTerm('')
-              return
-            }
-            if (key === 'minPrice' || key === 'maxPrice') {
-              props.setApolloFilters((prev: Record<string, any>) => ({ ...prev, price_range: undefined }))
-              return
-            }
-            props.setApolloFilters((prev: Record<string, any>) => ({ ...prev, [key]: undefined }))
-          }}
-          onClearAllFilters={() => {
-            props.setApolloFilters({})
-            props.setSearchTerm('')
-          }}
-          sortBy={props.sortBy === 'price_high' ? 'list_price' : props.sortBy === 'price_low' ? 'list_price' : props.sortBy === 'date_new' ? 'created_at' : props.sortBy === 'date_old' ? 'created_at' : props.sortBy === 'score_high' ? 'ai_investment_score' : 'created_at'}
-          sortOrder={props.sortBy === 'price_low' || props.sortBy === 'date_old' ? 'asc' : 'desc'}
-          pagination={{
-            currentPage: props.currentPage,
-            pageSize: props.itemsPerPage,
-            onPageChange: props.setCurrentPage,
-            onPageSizeChange: props.setItemsPerPage
-          }}
-          onStatsChange={(stats) => {
-            props.setRemoteListingsCount(stats.totalCount)
-          }}
-          onListingClick={(listing) => {
-            props.setSelectedListingId(listing.listing_id)
-            props.setShowLeadModal(true)
-          }}
-          selectedIds={props.selectedIds}
-          onSelect={(listingId, selected) => {
-            props.setSelectedIds((prev: Set<string>) => {
-              const next = new Set(prev)
-              if (selected) next.add(listingId)
-              else next.delete(listingId)
-              return next
-            })
-          }}
-          crmContactIds={props.crmContactIds}
-          onSave={props.handleSaveProspect}
-          category={props.activeCategory}
-          onAction={(action, listing) => {
-            if (action === 'email') {
-              props.handleGenerateEmail(listing as any)
-            } else if (action === 'call') {
-              if (listing.agent_phone) {
-                window.open(`tel:${listing.agent_phone}`)
-              }
-            } else if (action === 'save' || action === 'added_to_crm') {
-              props.handleSave(listing as any)
-            } else if (action === 'unsave' || action === 'removed_from_crm') {
-              props.handleSaveProspect(listing as any, false)
-            } else if (action === 'view') {
-              props.setSelectedListingId(listing.listing_id)
-              props.setShowLeadModal(true)
-            }
-          }}
-          isDark={props.isDark}
-          showSummary={false}
-          showPagination={true}
-            />
-            )}
-            </main>
             </div>
           </div>
         </div>
-      </div>
         {/* SelectionActionBar: fixed at bottom, centered, not edge-to-edge */}
         {props.selectedIds.size > 0 && (
           <div className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 md:px-6">
             <SelectionActionBar
-            selectedCount={props.selectedIds.size}
-            onClose={() => props.setSelectedIds(new Set())}
-            onAddToCampaigns={() => props.setShowAddToCampaignModal(true)}
-            onAddToDeals={props.handleAddToDeals}
-            onAddToList={() => props.setShowAddToListModal(true)}
-            onAddToCrm={props.handleBulkSave}
-            onExport={props.handleExport}
-            isDark={props.isDark}
-          />
-        </div>
+              selectedCount={props.selectedIds.size}
+              onClose={() => props.setSelectedIds(new Set())}
+              onAddToCampaigns={() => props.setShowAddToCampaignModal(true)}
+              onAddToDeals={props.handleAddToDeals}
+              onAddToList={() => props.setShowAddToListModal(true)}
+              onAddToCrm={props.handleBulkSave}
+              onExport={props.handleExport}
+              isDark={props.isDark}
+            />
+          </div>
+        )}
+      </div>
+      {/* Lead Detail Modal */}
+      {props.showLeadModal && props.selectedListingId && (
+        <LeadDetailModal
+          listingId={props.selectedListingId}
+          listingList={props.paginatedListings}
+          selectedListing={props.selectedListingForModal}
+          onClose={() => {
+            props.setShowLeadModal(false)
+            props.setSelectedListingId(null)
+            props.setSelectedListingForModal(null)
+          }}
+          onUpdate={(updatedListing) => {
+            props.updateListing(updatedListing)
+          }}
+          sourceTable={props.resolvedTableName}
+          onAddToCampaign={(listing) => {
+            props.setAddToCampaignListingsOverride([listing])
+            props.setShowAddToCampaignModal(true)
+          }}
+          inCampaignsRefreshTrigger={props.inCampaignsRefreshTrigger}
+        />
       )}
-    </div>
-    {/* Lead Detail Modal */}
-    {props.showLeadModal && props.selectedListingId && (
-      <LeadDetailModal
-        listingId={props.selectedListingId}
-        listingList={props.paginatedListings}
-        onClose={() => {
-          props.setShowLeadModal(false)
-          props.setSelectedListingId(null)
+
+      {/* Import Leads Modal */}
+      <ImportLeadsModal
+        isOpen={props.showImportModal}
+        onClose={() => props.setShowImportModal(false)}
+        onImportComplete={(count) => {
+          props.fetchListingsData(props.selectedFilters, props.sortField, props.sortOrder)
+          props.router.push('/dashboard/prospect-enrich?filter=imports')
         }}
-        onUpdate={(updatedListing) => {
-          props.updateListing(updatedListing)
-        }}
-        sourceTable={props.resolvedTableName}
-        onAddToCampaign={(listing) => {
-          props.setAddToCampaignListingsOverride([listing])
-          props.setShowAddToCampaignModal(true)
-        }}
-        inCampaignsRefreshTrigger={props.inCampaignsRefreshTrigger}
       />
-    )}
 
-    {/* Import Leads Modal */}
-    <ImportLeadsModal
-      isOpen={props.showImportModal}
-      onClose={() => props.setShowImportModal(false)}
-      onImportComplete={(count) => {
-        props.fetchListingsData(props.selectedFilters, props.sortField, props.sortOrder)
-        props.router.push('/dashboard/prospect-enrich?filter=imports')
-      }}
-    />
-
-    {/* Find Deals Modal (opens when user clicks Compose) */}
-    <FindDealsModal
-      isOpen={props.showFindDealsModal}
-      onClose={() => {
-        props.setShowFindDealsModal(false)
-        props.setSelectedLead(null)
-      }}
-      listings={props.paginatedListings}
-      totalCount={props.totalCount}
-      netNewCount={props.netNewCount}
-      savedCount={props.savedCount}
-      viewType={props.viewType}
-      onViewTypeChange={props.setViewType}
-      searchQuery={props.searchTerm || ''}
-      onSearchChange={props.setSearchTerm}
-      currentPage={props.currentPage}
-      totalPages={Math.max(1, Math.ceil((props.viewType === 'total' ? props.totalCount : props.viewType === 'net_new' ? props.netNewCount : props.savedCount) / props.itemsPerPage))}
-      pageSize={props.itemsPerPage}
-      onPageChange={props.setCurrentPage}
-      onComposeLead={props.onComposeLeadFromModal}
-      onImport={() => props.setShowImportModal(true)}
-      showImportButton={props.activeCategory === 'imports'}
-      onResearchWithAI={() => {}}
-      isDark={props.isDark}
-      initialSelectedListingId={props.selectedLead ? (props.selectedLead.listing_id || props.selectedLead.property_url || null) : null}
-      activeCategory={props.activeCategory}
-    />
-
-    {/* Email Template Modal */}
-    {props.showEmailModal && props.selectedLead && (
-      <EmailTemplateModal
-        lead={props.selectedLead}
+      {/* Find Deals Modal (opens when user clicks Compose) */}
+      <FindDealsModal
+        isOpen={props.showFindDealsModal}
         onClose={() => {
-          props.setShowEmailModal(false)
+          props.setShowFindDealsModal(false)
           props.setSelectedLead(null)
         }}
-      />
-    )}
-
-    {/* Add to Lists Modal */}
-    {props.showAddToListModal && (
-      <AddToListModal
-        supabase={props.supabase}
-        profileId={props.profile?.id}
-        selectedCount={props.selectedIds.size}
-        onAddToList={props.handleBulkAddToList}
-        onClose={() => props.setShowAddToListModal(false)}
+        listings={props.paginatedListings}
+        totalCount={props.totalCount}
+        netNewCount={props.netNewCount}
+        savedCount={props.savedCount}
+        viewType={props.viewType}
+        onViewTypeChange={props.setViewType}
+        searchQuery={props.searchTerm || ''}
+        onSearchChange={props.setSearchTerm}
+        currentPage={props.currentPage}
+        totalPages={Math.max(1, Math.ceil((props.viewType === 'total' ? props.totalCount : props.viewType === 'net_new' ? props.netNewCount : props.savedCount) / props.itemsPerPage))}
+        pageSize={props.itemsPerPage}
+        onPageChange={props.setCurrentPage}
+        onComposeLead={props.onComposeLeadFromModal}
+        onImport={() => props.setShowImportModal(true)}
+        showImportButton={props.activeCategory === 'imports'}
+        onResearchWithAI={() => { }}
         isDark={props.isDark}
+        initialSelectedListingId={props.selectedLead ? (props.selectedLead.listing_id || props.selectedLead.property_url || null) : null}
+        activeCategory={props.activeCategory}
       />
-    )}
 
-    {/* Add to Campaigns Modal */}
-    {props.showAddToCampaignModal && props.profile?.id && (
-      <AddToCampaignModal
-        supabase={props.supabase}
-        profileId={props.profile.id}
-        selectedListings={props.addToCampaignListingsOverride ?? props.listings.filter((l: any) => props.selectedIds.has(l.listing_id || ''))}
-        onClose={() => {
-          props.setShowAddToCampaignModal(false)
-          props.setAddToCampaignListingsOverride(null)
-          props.setSelectedIds(new Set())
-        }}
-        onSuccess={() => {
-          if (props.addToCampaignListingsOverride) {
-            props.setInCampaignsRefreshTrigger((t: number) => t + 1)
+      {/* Email Template Modal */}
+      {props.showEmailModal && props.selectedLead && (
+        <EmailTemplateModal
+          lead={props.selectedLead}
+          onClose={() => {
+            props.setShowEmailModal(false)
+            props.setSelectedLead(null)
+          }}
+        />
+      )}
+
+      {/* Add to Lists Modal */}
+      {props.showAddToListModal && (
+        <AddToListModal
+          supabase={props.supabase}
+          profileId={props.profile?.id}
+          selectedCount={props.selectedIds.size}
+          onAddToList={props.handleBulkAddToList}
+          onClose={() => props.setShowAddToListModal(false)}
+          isDark={props.isDark}
+        />
+      )}
+
+      {/* Add to Campaigns Modal */}
+      {props.showAddToCampaignModal && props.profile?.id && (
+        <AddToCampaignModal
+          supabase={props.supabase}
+          profileId={props.profile.id}
+          selectedListings={props.addToCampaignListingsOverride ?? props.listings.filter((l: any) => props.selectedIds.has(l.listing_id || ''))}
+          onClose={() => {
+            props.setShowAddToCampaignModal(false)
             props.setAddToCampaignListingsOverride(null)
-          }
-          props.fetchCrmContacts(props.selectedFilters)
-        }}
-        isDark={props.isDark}
-      />
-    )}
+            props.setSelectedIds(new Set())
+          }}
+          onSuccess={() => {
+            if (props.addToCampaignListingsOverride) {
+              props.setInCampaignsRefreshTrigger((t: number) => t + 1)
+              props.setAddToCampaignListingsOverride(null)
+            }
+            props.fetchCrmContacts(props.selectedFilters)
+          }}
+          isDark={props.isDark}
+        />
+      )}
     </>
   )
 }
@@ -417,11 +441,11 @@ function ProspectEnrichInner() {
   const { profile } = useApp()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  
+
   useEffect(() => {
     setMounted(true)
   }, [])
-  
+
   // View State
   const [activeView, setActiveView] = useState<ViewType>('analytics')
   const [selectedFilters, setSelectedFilters] = useState<Set<FilterType>>(new Set<FilterType>(['all']))
@@ -432,7 +456,7 @@ function ProspectEnrichInner() {
   const [sortBy, setSortBy] = useState('relevance')
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
-  
+
   // UI State
   const [selectedLead, setSelectedLead] = useState<Listing | null>(null)
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -446,6 +470,7 @@ function ProspectEnrichInner() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(30)
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
+  const [selectedListingForModal, setSelectedListingForModal] = useState<Listing | null>(null)
   const [showLeadModal, setShowLeadModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showAddToListModal, setShowAddToListModal] = useState(false)
@@ -455,7 +480,7 @@ function ProspectEnrichInner() {
   const [showFindDealsModal, setShowFindDealsModal] = useState(false)
   // Removed useVirtualizedTable - only using ProspectHoverTable now
   const [remoteListingsCount, setRemoteListingsCount] = useState(0)
-  
+
   // Data Hook
   const {
     listings,
@@ -469,16 +494,16 @@ function ProspectEnrichInner() {
     getTableName,
     updateListing
   } = useProspectData(profile?.id)
-  
+
   // Track listings that are in lists (to exclude from Net New)
   const [listItemIds, setListItemIds] = useState<Set<string>>(new Set())
-  
+
   const supabase = useMemo(() => createClientComponentClient(), [])
   const headerScrollRef = useRef<HTMLDivElement>(null)
   // Removed dataScrollContainerRef - no longer needed
 
   const activeCategory = useMemo(() => getPrimaryCategory(selectedFilters), [selectedFilters])
-  
+
   // Calculate filter counts - fetch from separate tables
   const [filterCounts, setFilterCounts] = useState<Record<FilterType, number>>({
     all: 0,
@@ -493,13 +518,13 @@ function ProspectEnrichInner() {
     price_drop: 0,
     new_listings: 0
   })
-  
+
   // Resolve table name using the hook's logic
   const resolvedTableName = useMemo(() => {
     // If "all" is selected, we return default table but virtualized table shouldn't be used anyway
     return getTableName(activeCategory)
   }, [activeCategory, getTableName])
-  
+
   // Removed shouldUseVirtualizedTable - only using ProspectHoverTable now
 
   // Market Segments (Apollo.io style) - only include valid FilterType values
@@ -529,7 +554,7 @@ function ProspectEnrichInner() {
       { key: 'high_value' as FilterType, label: 'High Value', count: counts.high_value || 0 },
       { key: 'price_drop' as FilterType, label: 'Price Drops', count: counts.price_drop || 0 },
       { key: 'new_listings' as FilterType, label: 'New Listings', count: counts.new_listings || 0 }
-  ]
+    ]
   }, [filterCounts])
 
   const handleEnrich = async (listingId: string) => {
@@ -556,17 +581,17 @@ function ProspectEnrichInner() {
 
   const handleSave = async (lead: Listing, listId?: string) => {
     if (!profile?.id) return
-    
+
     try {
       const sourceId = lead.listing_id || lead.property_url
       if (!sourceId) return
 
       // Get the current category from selected filters
       const currentCategory = getPrimaryCategory(selectedFilters)
-      
+
       // Use the add_to_list function with category
       await add_to_list(supabase, profile.id, sourceId, lead, listId, currentCategory)
-      
+
       // Refresh the lists
       await fetchCrmContacts(selectedFilters)
     } catch (error) {
@@ -577,7 +602,7 @@ function ProspectEnrichInner() {
 
   const handleSaveProspect = async (listing: Listing, saved: boolean) => {
     if (!profile?.id) return
-    
+
     try {
       const sourceId = listing.listing_id || listing.property_url
       if (!sourceId) {
@@ -618,7 +643,7 @@ function ProspectEnrichInner() {
             .eq('user_id', profile.id)
         }
       }
-      
+
       // Refresh the CRM contacts to update the saved state
       await fetchCrmContacts(selectedFilters)
     } catch (error) {
@@ -633,7 +658,7 @@ function ProspectEnrichInner() {
     try {
       // Get the selected listings
       const selectedListings = listings.filter(l => selectedIds.has(l.listing_id || ''))
-      
+
       if (selectedListings.length === 0) {
         alert('No listings selected')
         return
@@ -700,7 +725,7 @@ function ProspectEnrichInner() {
 
   const handleRemoveFromCrm = async (lead: Listing) => {
     if (!profile?.id) return
-    
+
     try {
       const sourceId = lead.listing_id || lead.property_url
       if (!sourceId) return
@@ -729,31 +754,31 @@ function ProspectEnrichInner() {
 
   const handleBulkSave = async (listId?: string) => {
     if (selectedIds.size === 0) return
-    
+
     try {
       const selectedListings = listings.filter(l => selectedIds.has(l.listing_id))
-      
+
       // Filter out already-saved listings
       const unsavedListings = selectedListings.filter(listing => {
         const sourceId = listing.listing_id || listing.property_url
         return sourceId && !crmContactIds.has(sourceId)
       })
-      
+
       if (unsavedListings.length === 0) {
         alert('All selected prospects are already saved')
         return
       }
-      
+
       let successCount = 0
       // Save each unsaved listing
       // Get the current category from selected filters
       const currentCategory = getPrimaryCategory(selectedFilters)
-      
+
       if (!profile?.id) {
         alert('Please log in to save prospects')
         return
       }
-      
+
       for (const listing of unsavedListings) {
         try {
           const sourceId = listing.listing_id || listing.property_url
@@ -765,13 +790,13 @@ function ProspectEnrichInner() {
           console.error('Error saving listing:', error)
         }
       }
-      
+
       setSelectedIds(new Set())
       const skippedCount = selectedListings.length - unsavedListings.length
-      
+
       // Refresh CRM contacts after bulk save
       await fetchCrmContacts(selectedFilters)
-      
+
       if (skippedCount > 0) {
         alert(`Saved ${successCount} prospect${successCount > 1 ? 's' : ''}${skippedCount > 0 ? ` (${skippedCount} already saved)` : ''}`)
       } else {
@@ -834,8 +859,8 @@ function ProspectEnrichInner() {
     const list = filteredListings || listings || []
     const toExport = selectedIds.size > 0
       ? list.filter((l: Listing) =>
-          selectedIds.has(l.listing_id || '') || (l.property_url && selectedIds.has(l.property_url))
-        )
+        selectedIds.has(l.listing_id || '') || (l.property_url && selectedIds.has(l.property_url))
+      )
       : list
     if (toExport.length === 0) {
       alert('No listings to export')
@@ -853,7 +878,7 @@ function ProspectEnrichInner() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, selectedFilters])
-  
+
   // Fetch listings that are in lists (to exclude from Net New)
   useEffect(() => {
     const fetchListItems = async () => {
@@ -861,14 +886,14 @@ function ProspectEnrichInner() {
         setListItemIds(new Set())
         return
       }
-      
+
       try {
         // First, get all lists for this user
         const { data: userLists } = await supabase
           .from('lists')
           .select('id')
           .eq('user_id', profile.id)
-        
+
         if (userLists && userLists.length > 0) {
           const listIds = userLists.map(l => l.id)
           // Then get all list items that are listings from list_memberships table
@@ -877,7 +902,7 @@ function ProspectEnrichInner() {
             .select('item_id')
             .eq('item_type', 'listing')
             .in('list_id', listIds)
-          
+
           if (items) {
             const ids = new Set(items.map(item => item.item_id).filter(Boolean) as string[])
             setListItemIds(ids)
@@ -892,7 +917,7 @@ function ProspectEnrichInner() {
         setListItemIds(new Set())
       }
     }
-    
+
     fetchListItems()
   }, [profile?.id, supabase])
 
@@ -907,7 +932,7 @@ function ProspectEnrichInner() {
   useEffect(() => {
     setCurrentPage(1)
   }, [selectedFilters, searchTerm, statusFilter, priceRange, viewType])
-  
+
   // Clear selections when switching between view types (total, net_new, saved)
   useEffect(() => {
     setSelectedIds(new Set())
@@ -916,39 +941,39 @@ function ProspectEnrichInner() {
   // Helper to update URL params when filters change
   const updateUrlParams = useCallback((filters: Set<FilterType>, search?: string, view?: string, sort?: string, page?: number, apolloFilters?: Record<string, any>) => {
     const params = new URLSearchParams()
-    
+
     // Add filter param (only if not 'all')
     const primaryCategory = getPrimaryCategory(filters)
     if (primaryCategory !== 'all') {
       params.set('filter', primaryCategory)
     }
-    
+
     // Add meta filters
     const metaFilters = Array.from(filters).filter(f => !['all', 'expired', 'probate', 'fsbo', 'frbo', 'imports', 'trash', 'foreclosure'].includes(f))
     if (metaFilters.length > 0) {
       params.set('meta', metaFilters.join(','))
     }
-    
+
     // Add search
     if (search) {
       params.set('search', search)
     }
-    
+
     // Add view
     if (view) {
       params.set('view', view)
     }
-    
+
     // Add sort
     if (sort) {
       params.set('sort', sort)
     }
-    
+
     // Add page
     if (page && page > 1) {
       params.set('page', page.toString())
     }
-    
+
     // Add Apollo filters (serialize to JSON for complex objects)
     if (apolloFilters && Object.keys(apolloFilters).length > 0) {
       try {
@@ -957,7 +982,7 @@ function ProspectEnrichInner() {
         console.warn('Failed to serialize Apollo filters:', e)
       }
     }
-    
+
     // Update URL without page reload
     const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`
     router.replace(newUrl, { scroll: false })
@@ -1008,7 +1033,7 @@ function ProspectEnrichInner() {
     } catch (e) {
       // Ignore parse errors
     }
-    
+
     // Only update if filters actually changed
     const apolloStr = JSON.stringify(apolloFilters)
     const currentApolloStr = JSON.stringify(currentApollo)
@@ -1016,7 +1041,7 @@ function ProspectEnrichInner() {
       const timeoutId = setTimeout(() => {
         updateUrlParams(selectedFilters, searchTerm, viewTypeSelector, sortBy, currentPage, apolloFilters)
       }, 300) // Debounce by 300ms
-      
+
       return () => clearTimeout(timeoutId)
     }
   }, [apolloFilters, selectedFilters, searchTerm, viewTypeSelector, sortBy, currentPage, updateUrlParams, searchParams])
@@ -1029,19 +1054,19 @@ function ProspectEnrichInner() {
       if (viewParam && ['table', 'map'].includes(viewParam)) {
         setViewTypeSelector(viewParam as 'table' | 'map')
       }
-      
+
       // Parse search
       const searchParam = searchParams.get('search')
       if (searchParam !== null) {
         setSearchTerm(searchParam)
       }
-      
+
       // Parse sort
       const sortParam = searchParams.get('sort')
       if (sortParam) {
         setSortBy(sortParam)
       }
-      
+
       // Parse page
       const pageParam = searchParams.get('page')
       if (pageParam) {
@@ -1050,7 +1075,7 @@ function ProspectEnrichInner() {
           setCurrentPage(pageNum)
         }
       }
-      
+
       // Parse Apollo filters
       const apolloParam = searchParams.get('apollo')
       if (apolloParam) {
@@ -1063,11 +1088,11 @@ function ProspectEnrichInner() {
           console.warn('Failed to parse Apollo filters from URL:', e)
         }
       }
-      
+
       // Parse meta filters
       const metaParam = searchParams.get('meta')
       if (metaParam) {
-        const metaFilters = metaParam.split(',').filter(f => 
+        const metaFilters = metaParam.split(',').filter(f =>
           ['high_value', 'price_drop', 'new_listings'].includes(f)
         ) as FilterType[]
         if (metaFilters.length > 0) {
@@ -1091,10 +1116,10 @@ function ProspectEnrichInner() {
   const toggleFilter = (filterKey: FilterType) => {
     setSelectedFilters(prev => {
       const newSet = new Set<FilterType>()
-      
+
       // Define mutually exclusive filter groups (only one can be selected at a time)
       const exclusiveFilters: FilterType[] = ['all', 'expired', 'probate', 'fsbo', 'frbo', 'imports', 'trash', 'foreclosure']
-      
+
       if (filterKey === 'all') {
         newSet.add('all')
       } else if (exclusiveFilters.includes(filterKey)) {
@@ -1130,19 +1155,19 @@ function ProspectEnrichInner() {
           })
         }
       }
-      
+
       // Update URL params
       updateUrlParams(newSet, searchTerm, viewTypeSelector, sortBy, currentPage, apolloFilters)
-      
+
       return newSet
     })
   }
-  
+
   // Handle primary category filter from URL query parameter - sync with URL
   useEffect(() => {
     const filterParam = searchParams.get('filter')
     const validFilters: FilterType[] = ['expired', 'probate', 'fsbo', 'frbo', 'imports', 'trash', 'foreclosure']
-    
+
     if (filterParam && validFilters.includes(filterParam as FilterType)) {
       // Set the filter from URL
       const filterType = filterParam as FilterType
@@ -1165,7 +1190,7 @@ function ProspectEnrichInner() {
         prev.forEach(f => {
           if (['high_value', 'price_drop', 'new_listings'].includes(f)) {
             newSet.add(f)
-      }
+          }
         })
         return newSet
       })
@@ -1180,7 +1205,7 @@ function ProspectEnrichInner() {
     setSelectedIds(new Set())
     setApolloFilters({})
     setCurrentPage(1)
-    
+
     // Clear URL params
     router.replace(window.location.pathname, { scroll: false })
   }
@@ -1190,7 +1215,7 @@ function ProspectEnrichInner() {
   useEffect(() => {
     const fetchCounts = async () => {
       if (!profile?.id) return
-      
+
       try {
         const counts: Record<FilterType, number> = {
           all: 0,
@@ -1207,13 +1232,13 @@ function ProspectEnrichInner() {
         }
 
         const tableFilters: FilterType[] = ['expired', 'probate', 'fsbo', 'frbo', 'imports', 'trash', 'foreclosure']
-        
+
         // Fetch counts from individual category tables
         await Promise.all(tableFilters.map(async (filterKey) => {
           const tableName = getTableName(filterKey)
-          
+
           if (!tableName) return
-          
+
           try {
             const { count } = await supabase
               .from(tableName)
@@ -1224,56 +1249,23 @@ function ProspectEnrichInner() {
             console.warn(`Table ${tableName} not found or error counting:`, e)
           }
         }))
-        
-        // Calculate "all" count - deduplicate by listing_id to avoid double-counting
-        const allTables = [
-          DEFAULT_LISTINGS_TABLE,
-          'expired_listings',
-          'probate_leads',
-          'fsbo_leads',
-          'frbo_leads',
-          'imports',
-          'trash',
-          'foreclosure_listings'
-        ]
-        
-        // Fetch all listing_ids from all tables and deduplicate
-        const allListingIds = new Set<string>()
-        await Promise.all(allTables.map(async (tableName) => {
-          try {
-            const { data } = await supabase
-              .from(tableName)
-              .select('listing_id')
-              .limit(100000) // Large limit to get all IDs
-            
-            if (data) {
-              data.forEach(item => {
-                if (item.listing_id) {
-                  allListingIds.add(item.listing_id)
-                }
-              })
-            }
-          } catch (e) {
-            // Table might not exist yet - ignore
-            console.warn(`Table ${tableName} not found or error fetching IDs:`, e)
-          }
-        }))
-        
-        counts.all = allListingIds.size
+
+        // All Prospects = For Sale + For Rent + Foreclosures
+        counts.all = (counts.fsbo || 0) + (counts.frbo || 0) + (counts.foreclosure || 0)
 
         // Calculate high_value, price_drop, new_listings from current category table
         const currentCategory = getPrimaryCategory(selectedFilters)
         const categoryTableName = getTableName(currentCategory)
-        
+
         // For meta filters, calculate from the current category table, not just 'listings'
         const { data: categoryData } = await supabase
           .from(categoryTableName)
           .select('list_price, list_price_min, created_at, updated_at')
-        
+
         if (categoryData) {
           const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
           const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000)
-          
+
           categoryData.forEach(listing => {
             if ((listing.list_price || 0) >= 500000) counts.high_value++
             if (listing.list_price_min && listing.list_price) {
@@ -1320,13 +1312,13 @@ function ProspectEnrichInner() {
       // Price range
       if (apolloFilters.price_range) {
         const price = listing.list_price || 0
-        const min = typeof apolloFilters.price_range.min === 'number' 
-          ? apolloFilters.price_range.min 
+        const min = typeof apolloFilters.price_range.min === 'number'
+          ? apolloFilters.price_range.min
           : (apolloFilters.price_range.min ? parseFloat(apolloFilters.price_range.min) : undefined)
         const max = typeof apolloFilters.price_range.max === 'number'
           ? apolloFilters.price_range.max
           : (apolloFilters.price_range.max ? parseFloat(apolloFilters.price_range.max) : undefined)
-        
+
         if (min !== undefined && !isNaN(min) && price < min) return false
         if (max !== undefined && !isNaN(max) && price > max) return false
       }
@@ -1418,12 +1410,12 @@ function ProspectEnrichInner() {
       // Enriched - check for any enrichment data (agent info, AI score, or additional phone numbers)
       if (apolloFilters.enriched) {
         const hasEnrichment = !!(
-          listing.agent_email || 
-          listing.agent_phone || 
+          listing.agent_email ||
+          listing.agent_phone ||
           listing.agent_phone_2 ||
           listing.listing_agent_phone_2 ||
           listing.listing_agent_phone_5 ||
-          listing.agent_name || 
+          listing.agent_name ||
           listing.ai_investment_score ||
           listing.last_sale_price ||
           listing.last_sale_date
@@ -1472,7 +1464,7 @@ function ProspectEnrichInner() {
   // Get base listings based on viewType, then apply Apollo filters and sorting
   const baseListings = useMemo(() => {
     let sourceListings: Listing[]
-    
+
     switch (viewType) {
       case 'total':
         // For "total" view, show all listings including saved ones
@@ -1487,20 +1479,20 @@ function ProspectEnrichInner() {
           const createdTime = l.created_at ? new Date(l.created_at).getTime() : 0
           const updatedTime = l.updated_at ? new Date(l.updated_at).getTime() : 0
           const mostRecentTime = Math.max(createdTime, updatedTime)
-          
+
           // Must have at least one timestamp
           if (mostRecentTime === 0) return false
-          
+
           // Must be created or updated in last 30 days
           if (mostRecentTime < thirtyDaysAgo) return false
-          
+
           // Exclude saved listings (in CRM contacts)
           const sourceId = l.listing_id || l.property_url
           if (sourceId && crmContactIds.has(sourceId)) return false
-          
+
           // Exclude listings that are in any list
           if (sourceId && listItemIds.has(sourceId)) return false
-          
+
           return true
         })
         break
@@ -1510,7 +1502,7 @@ function ProspectEnrichInner() {
         // This ensures saved listings are properly separated by category
         // Use allListings since it contains all listings for the current category (including saved ones)
         const currentCategoryListingIds = new Set(allListings.map(l => l.listing_id))
-        
+
         // Filter saved listings to only include those in the current category
         // Also deduplicate by listing_id to prevent duplicates
         const savedMap = new Map<string, Listing>()
@@ -1523,28 +1515,28 @@ function ProspectEnrichInner() {
             }
           }
         })
-        
+
         sourceListings = Array.from(savedMap.values())
         break
       }
       default:
         sourceListings = listings
     }
-    
+
     // Apply market segment filters
     // Note: Category filters (expired, fsbo, frbo, probate, imports, trash, foreclosure) 
     // are now handled at the database level by querying separate tables.
     // Only apply non-category filters here (high_value, price_drop, new_listings)
     let filtered = sourceListings
     if (!(selectedFilters.has('all') && selectedFilters.size === 1)) {
-      const activeFilters = Array.from(selectedFilters).filter(f => 
-        f !== 'all' && 
-        f !== 'expired' && 
-        f !== 'fsbo' && 
-        f !== 'frbo' && 
-        f !== 'probate' && 
-        f !== 'imports' && 
-        f !== 'trash' && 
+      const activeFilters = Array.from(selectedFilters).filter(f =>
+        f !== 'all' &&
+        f !== 'expired' &&
+        f !== 'fsbo' &&
+        f !== 'frbo' &&
+        f !== 'probate' &&
+        f !== 'imports' &&
+        f !== 'trash' &&
         f !== 'foreclosure'
       )
       if (activeFilters.length > 0) {
@@ -1572,10 +1564,10 @@ function ProspectEnrichInner() {
         })
       }
     }
-    
+
     // Apply Apollo filters
     let apolloFiltered = applyApolloFilters(filtered)
-    
+
     // Apply sorting based on sortBy
     return [...apolloFiltered].sort((a, b) => {
       switch (sortBy) {
@@ -1607,17 +1599,17 @@ function ProspectEnrichInner() {
       // Apply search term filter
       if (searchTerm) {
         const address = `${l.street || ''} ${l.city || ''} ${l.state || ''}`.toLowerCase()
-        const matchesSearch = 
+        const matchesSearch =
           address.includes(searchTerm.toLowerCase()) ||
           (l.city && l.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (l.state && l.state.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (l.zip_code && l.zip_code.includes(searchTerm)) ||
           (l.listing_id && l.listing_id.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (l.agent_name && l.agent_name.toLowerCase().includes(searchTerm.toLowerCase()))
-        
+
         if (!matchesSearch) return false
       }
-      
+
       return true
     })
   }, [baseListings, searchTerm])
@@ -1632,39 +1624,51 @@ function ProspectEnrichInner() {
     }
     return filterCounts.all || 0
   }, [activeCategory, remoteListingsCount, filterCounts])
-  
+
   const netNewCount = useMemo(() => {
-    // Net new = listings created or updated in last 30 days, excluding saved listings and listings in lists
-    // Must match the exact logic used in baseListings for 'net_new' viewType
-    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
-    const netNewListings = listings.filter(l => {
-      // Check both created_at and updated_at for "new to user" listings
-      const createdTime = l.created_at ? new Date(l.created_at).getTime() : 0
-      const updatedTime = l.updated_at ? new Date(l.updated_at).getTime() : 0
-      const mostRecentTime = Math.max(createdTime, updatedTime)
-      
-      // Must have at least one timestamp
-      if (mostRecentTime === 0) return false
-      
-      // Must be created or updated in last 30 days
-      if (mostRecentTime < thirtyDaysAgo) return false
-      
-      // Exclude saved listings (in CRM contacts)
-      const sourceId = l.listing_id || l.property_url
-      if (sourceId && crmContactIds.has(sourceId)) return false
-      
-      // Exclude listings that are in any list
-      if (sourceId && listItemIds.has(sourceId)) return false
-      
-      return true
-    })
-    // Apply Apollo filters to net new listings
-    const filtered = applyApolloFilters(netNewListings)
-    return filtered.length
-  }, [listings, crmContactIds, listItemIds, applyApolloFilters])
-  
+    // Use the same net-new counting logic across All Prospects + category tabs:
+    // net_new = total_count - saved_count (with category-aware saved dedupe).
+    let savedForScope = 0
+
+    if (activeCategory === 'all') {
+      const savedMap = new Map<string, Listing>()
+      savedListings.forEach((listing) => {
+        const listingId = listing.listing_id
+        if (listingId && !savedMap.has(listingId)) {
+          savedMap.set(listingId, listing)
+        }
+      })
+      savedForScope = applyApolloFilters(Array.from(savedMap.values())).length
+    } else {
+      const currentCategoryListingIds = new Set(allListings.map((l) => l.listing_id))
+      const savedMap = new Map<string, Listing>()
+      savedListings.forEach((listing) => {
+        const listingId = listing.listing_id
+        if (listingId && currentCategoryListingIds.has(listingId) && !savedMap.has(listingId)) {
+          savedMap.set(listingId, listing)
+        }
+      })
+      savedForScope = applyApolloFilters(Array.from(savedMap.values())).length
+    }
+
+    return Math.max(totalCount - savedForScope, 0)
+  }, [activeCategory, totalCount, savedListings, allListings, applyApolloFilters])
+
   // Saved count is now category-specific and respects Apollo filters
   const savedCount = useMemo(() => {
+    if (activeCategory === 'all') {
+      // For All Prospects, saved should aggregate saved records from the all-prospects source tables.
+      const savedMap = new Map<string, Listing>()
+      savedListings.forEach((listing) => {
+        const listingId = listing.listing_id
+        if (listingId && !savedMap.has(listingId)) {
+          savedMap.set(listingId, listing)
+        }
+      })
+      const aggregatedSavedListings = Array.from(savedMap.values())
+      return applyApolloFilters(aggregatedSavedListings).length
+    }
+
     // Filter saved listings to only show those that exist in the current category
     const currentCategoryListingIds = new Set(allListings.map(l => l.listing_id))
     const savedMap = new Map<string, Listing>()
@@ -1680,7 +1684,7 @@ function ProspectEnrichInner() {
     // Apply Apollo filters to saved listings
     const filtered = applyApolloFilters(categorySavedListings)
     return filtered.length
-  }, [savedListings, allListings, applyApolloFilters])
+  }, [activeCategory, savedListings, allListings, applyApolloFilters])
 
   const paginatedListings = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
@@ -1689,8 +1693,13 @@ function ProspectEnrichInner() {
   }, [filteredListings, currentPage, itemsPerPage])
 
   const activeTableItemCount = useMemo(() => {
-    return remoteListingsCount || filteredListings.length
-  }, [remoteListingsCount, filteredListings.length])
+    // Only use server authoritative table count for TOTAL view on category tabs.
+    // For net_new/saved/all tabs, use the filtered in-memory list length.
+    if (viewType === 'total' && activeCategory !== 'all') {
+      return remoteListingsCount || filteredListings.length
+    }
+    return filteredListings.length
+  }, [viewType, activeCategory, remoteListingsCount, filteredListings.length])
 
   const totalPages = Math.max(1, Math.ceil(Math.max(activeTableItemCount, 1) / itemsPerPage))
 
@@ -1737,78 +1746,80 @@ function ProspectEnrichInner() {
       </DashboardLayout>
     )
   }
-  
+
   return (
     <DashboardLayout fullBleed hideHeader>
       <div className="flex-1 flex flex-col min-h-0">
         <ProspectContentInner
-        activeCategory={activeCategory}
-        resolvedTableName={resolvedTableName}
-        filteredListings={filteredListings}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        apolloFilters={apolloFilters}
-        setApolloFilters={setApolloFilters}
-        sortBy={sortBy}
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        setCurrentPage={setCurrentPage}
-        setItemsPerPage={setItemsPerPage}
-        setRemoteListingsCount={setRemoteListingsCount}
-        setSelectedListingId={setSelectedListingId}
-        setShowLeadModal={setShowLeadModal}
-        selectedIds={selectedIds}
-        setSelectedIds={setSelectedIds}
-        crmContactIds={crmContactIds}
-        handleSaveProspect={handleSaveProspect}
-        handleGenerateEmail={handleGenerateEmail}
-        handleSave={handleSave}
-        isDark={isDark}
-        showLeadModal={showLeadModal}
-        selectedListingId={selectedListingId}
-        paginatedListings={paginatedListings}
-        updateListing={updateListing}
-        showImportModal={showImportModal}
-        setShowImportModal={setShowImportModal}
-        fetchListingsData={fetchListingsData}
-        selectedFilters={selectedFilters}
-        sortField={sortField}
-        sortOrder={sortOrder}
-        router={router}
-        showEmailModal={showEmailModal}
-        selectedLead={selectedLead}
-        setShowEmailModal={setShowEmailModal}
-        setSelectedLead={setSelectedLead}
-        showFindDealsModal={showFindDealsModal}
-        setShowFindDealsModal={setShowFindDealsModal}
-        onComposeLeadFromModal={handleComposeLeadFromModal}
-        showAddToListModal={showAddToListModal}
-        setShowAddToListModal={setShowAddToListModal}
-        handleBulkAddToList={handleBulkAddToList}
-        handleBulkSave={handleBulkSave}
-        handleAddToDeals={handleAddToDeals}
-        handleExport={handleExport}
-        profile={profile}
-        showAddToCampaignModal={showAddToCampaignModal}
-        setShowAddToCampaignModal={setShowAddToCampaignModal}
-        addToCampaignListingsOverride={addToCampaignListingsOverride}
-        setAddToCampaignListingsOverride={setAddToCampaignListingsOverride}
-        inCampaignsRefreshTrigger={inCampaignsRefreshTrigger}
-        setInCampaignsRefreshTrigger={setInCampaignsRefreshTrigger}
-        listings={listings}
-        fetchCrmContacts={fetchCrmContacts}
-        supabase={supabase}
-        filtersVisible={filtersVisible}
-        setFiltersVisible={setFiltersVisible}
-        totalCount={totalCount}
-        netNewCount={netNewCount}
-        savedCount={savedCount}
-        allListings={allListings}
-        viewType={viewType}
-        setViewType={setViewType}
-        displayView={displayView}
-        setDisplayView={setDisplayView}
-      />
+          activeCategory={activeCategory}
+          resolvedTableName={resolvedTableName}
+          filteredListings={filteredListings}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          apolloFilters={apolloFilters}
+          setApolloFilters={setApolloFilters}
+          sortBy={sortBy}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          setCurrentPage={setCurrentPage}
+          setItemsPerPage={setItemsPerPage}
+          setRemoteListingsCount={setRemoteListingsCount}
+          setSelectedListingId={setSelectedListingId}
+          setSelectedListingForModal={setSelectedListingForModal}
+          setShowLeadModal={setShowLeadModal}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          crmContactIds={crmContactIds}
+          handleSaveProspect={handleSaveProspect}
+          handleGenerateEmail={handleGenerateEmail}
+          handleSave={handleSave}
+          isDark={isDark}
+          showLeadModal={showLeadModal}
+          selectedListingId={selectedListingId}
+          selectedListingForModal={selectedListingForModal}
+          paginatedListings={paginatedListings}
+          updateListing={updateListing}
+          showImportModal={showImportModal}
+          setShowImportModal={setShowImportModal}
+          fetchListingsData={fetchListingsData}
+          selectedFilters={selectedFilters}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          router={router}
+          showEmailModal={showEmailModal}
+          selectedLead={selectedLead}
+          setShowEmailModal={setShowEmailModal}
+          setSelectedLead={setSelectedLead}
+          showFindDealsModal={showFindDealsModal}
+          setShowFindDealsModal={setShowFindDealsModal}
+          onComposeLeadFromModal={handleComposeLeadFromModal}
+          showAddToListModal={showAddToListModal}
+          setShowAddToListModal={setShowAddToListModal}
+          handleBulkAddToList={handleBulkAddToList}
+          handleBulkSave={handleBulkSave}
+          handleAddToDeals={handleAddToDeals}
+          handleExport={handleExport}
+          profile={profile}
+          showAddToCampaignModal={showAddToCampaignModal}
+          setShowAddToCampaignModal={setShowAddToCampaignModal}
+          addToCampaignListingsOverride={addToCampaignListingsOverride}
+          setAddToCampaignListingsOverride={setAddToCampaignListingsOverride}
+          inCampaignsRefreshTrigger={inCampaignsRefreshTrigger}
+          setInCampaignsRefreshTrigger={setInCampaignsRefreshTrigger}
+          listings={listings}
+          fetchCrmContacts={fetchCrmContacts}
+          supabase={supabase}
+          filtersVisible={filtersVisible}
+          setFiltersVisible={setFiltersVisible}
+          totalCount={totalCount}
+          netNewCount={netNewCount}
+          savedCount={savedCount}
+          allListings={allListings}
+          viewType={viewType}
+          setViewType={setViewType}
+          displayView={displayView}
+          setDisplayView={setDisplayView}
+        />
       </div>
     </DashboardLayout>
   )

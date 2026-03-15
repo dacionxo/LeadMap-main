@@ -220,6 +220,11 @@ export default function ProspectFilterSidebar({
   onViewTypeChange,
   activeCategory
 }: ProspectFilterSidebarProps) {
+  const supportsFsboExtendedFilters = useMemo(
+    () => ['fsbo', 'all', 'foreclosure', 'frbo', 'imports'].includes(String(activeCategory || '').toLowerCase()),
+    [activeCategory]
+  )
+
   // Start with all groups collapsed so pinned filters show as rows only (no auto dropdown)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [pinnedFilterIds, setPinnedFilterIds] = useState<Set<string>>(
@@ -307,7 +312,7 @@ export default function ProspectFilterSidebar({
   }, [listings])
 
   useEffect(() => {
-    if (activeCategory !== 'fsbo') {
+    if (!supportsFsboExtendedFilters) {
       setFsboUniqueValues({})
       return
     }
@@ -322,10 +327,10 @@ export default function ProspectFilterSidebar({
       .catch(() => { if (!cancelled) setFsboUniqueValues({}) })
       .finally(() => { if (!cancelled) setFsboOptionsLoading(false) })
     return () => { cancelled = true }
-  }, [activeCategory])
+  }, [supportsFsboExtendedFilters])
 
   const fsboFilterGroups: FilterGroup[] = useMemo(() => {
-    if (activeCategory !== 'fsbo') return []
+    if (!supportsFsboExtendedFilters) return []
     return FSBO_FILTER_COLUMNS.map(({ id, title }) => ({
       id,
       title,
@@ -333,7 +338,7 @@ export default function ProspectFilterSidebar({
       category: 'property' as const,
       options: (fsboUniqueValues[id] || []).map((v) => ({ label: v, value: v }))
     }))
-  }, [activeCategory, fsboUniqueValues])
+  }, [supportsFsboExtendedFilters, fsboUniqueValues])
 
   const toggleExpand = (id: string) => {
     setExpandedGroups(prev => {
@@ -375,16 +380,16 @@ export default function ProspectFilterSidebar({
   const visibleFilters = useMemo(() => {
     const main = FILTER_GROUPS.filter((fg) => pinnedFilterIds.has(fg.id))
     const more = FILTER_GROUPS.filter((fg) => !pinnedFilterIds.has(fg.id))
-    const fsbo = activeCategory === 'fsbo' && fsboFilterGroups.length > 0 ? fsboFilterGroups : []
+    const fsbo = supportsFsboExtendedFilters && fsboFilterGroups.length > 0 ? fsboFilterGroups : []
     if (showMoreFilters) {
       return [...main, ...more, ...fsbo]
     }
     return main
-  }, [showMoreFilters, activeCategory, fsboFilterGroups, pinnedFilterIds])
+  }, [showMoreFilters, supportsFsboExtendedFilters, fsboFilterGroups, pinnedFilterIds])
 
   const moreFiltersCount =
     FILTER_GROUPS.filter((fg) => !pinnedFilterIds.has(fg.id)).length +
-    (activeCategory === 'fsbo' ? fsboFilterGroups.length : 0)
+    (supportsFsboExtendedFilters ? fsboFilterGroups.length : 0)
 
   if (isCollapsed) {
     return (

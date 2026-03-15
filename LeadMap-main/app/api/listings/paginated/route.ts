@@ -53,6 +53,8 @@ export async function GET(request: NextRequest) {
   // Validate table name to prevent SQL injection
   const validTables = [
     'listings',
+    'listings_unified',
+    'listings_unified_materialized',
     'expired_listings',
     'fsbo_leads',
     'frbo_leads',

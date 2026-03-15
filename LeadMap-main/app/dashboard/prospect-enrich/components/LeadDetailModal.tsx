@@ -223,6 +223,8 @@ function parseResidentPhoneNumbers(
 interface LeadDetailModalProps {
   listingId: string | null;
   listingList: Listing[]; // Array of all listings for pagination
+  /** Optional listing payload from the clicked row for immediate/fallback hydration. */
+  selectedListing?: Listing | null;
   onClose: () => void;
   onUpdate?: (updatedListing: Listing) => void;
   /** Supabase table name for this category (e.g. fsbo_leads). Used for fetch/update when not "listings". */
@@ -355,6 +357,7 @@ function logLeadDetailCategoryFailure(
 export default function LeadDetailModal({
   listingId,
   listingList,
+  selectedListing,
   onClose,
   onUpdate,
   sourceTable,
@@ -386,23 +389,38 @@ export default function LeadDetailModal({
       // Use the listing from the list directly - no need to fetch
       setListing(listingList[index]);
     } else {
-      logLeadDetailCategoryFailure(tableName, 'load', {
-        listingId,
-        error: 'Listing not found in list',
-      });
-      setListing(null);
+      const selectedMatches =
+        selectedListing &&
+        (selectedListing.listing_id === listingId ||
+          selectedListing.property_url === listingId);
+
+      if (selectedMatches) {
+        setCurrentIndex(0);
+        setListing(selectedListing);
+      } else {
+        logLeadDetailCategoryFailure(tableName, 'load', {
+          listingId,
+          error: 'Listing not found in list',
+        });
+        // Let the dedicated fallback fetch effect hydrate this by ID.
+        setListing(null);
+      }
     }
-  }, [listingId, listingList, tableName]);
+  }, [listingId, listingList, selectedListing, tableName]);
 
   useEffect(() => {
     if (!listing) return;
     setIsSaved(!!listing.in_crm);
   }, [listing]);
 
-  // When listing changes, default left panel to Photos when listing has photos
+  // Keep the left-panel toggle stable across listings.
+  // If photos exist, default to Photos; otherwise default to Google Earth.
   useEffect(() => {
-    if (listing && getPhotoUrls(listing.photos_json).length > 0) {
+    if (!listing) return;
+    if (getPhotoUrls(listing.photos_json).length > 0) {
       setLeftPanelView("photos");
+    } else {
+      setLeftPanelView("google_earth");
     }
   }, [listing?.listing_id]);
 
@@ -443,6 +461,13 @@ export default function LeadDetailModal({
     },
     [supabase, listingList, tableName]
   );
+
+  // Fallback hydration: when the selected row isn't present in listingList,
+  // fetch the listing by ID from the category table.
+  useEffect(() => {
+    if (!listingId || listing) return;
+    fetchListing(listingId);
+  }, [listingId, listing, fetchListing]);
 
   const handleUpdate = useCallback(
     async (updates: Partial<Listing>) => {
@@ -788,43 +813,47 @@ export default function LeadDetailModal({
                   </div>
                 )}
 
-                {/* Photos / Google Earth toggle — right when Photos selected, center when Google Earth selected */}
-                {hasPhotos && (
-                  <div
-                    className={`absolute top-4 z-20 ${
-                      leftPanelView === "photos"
-                        ? "right-6"
-                        : "left-1/2 -translate-x-1/2"
-                    }`}
-                  >
-                    <div className="bg-white rounded-full p-1 shadow-md border border-slate-200 flex items-center">
-                      <button
-                        type="button"
-                        onClick={() => setLeftPanelView("photos")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                          leftPanelView === "photos"
-                            ? "bg-[#0071e3] text-white shadow-sm"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        <Camera className="w-4 h-4" />
-                        Photos
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setLeftPanelView("google_earth")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                          leftPanelView === "google_earth"
-                            ? "bg-[#0071e3] text-white shadow-sm"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        <Globe className="w-4 h-4" />
-                        Google Earth
-                      </button>
-                    </div>
+                {/* Photos / Google Earth slider toggle */}
+                <div
+                  className={`absolute top-4 z-20 ${
+                    leftPanelView === "photos"
+                      ? "right-6"
+                      : "left-1/2 -translate-x-1/2"
+                  }`}
+                >
+                  <div className="bg-white rounded-full p-1 shadow-md border border-slate-200 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hasPhotos) setLeftPanelView("photos");
+                      }}
+                      disabled={!hasPhotos}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        leftPanelView === "photos" && hasPhotos
+                          ? "bg-[#0071e3] text-white shadow-sm"
+                          : hasPhotos
+                            ? "text-slate-600 hover:text-slate-900"
+                            : "text-slate-400 cursor-not-allowed"
+                      }`}
+                      title={hasPhotos ? "Show Photos" : "No photos available"}
+                    >
+                      <Camera className="w-4 h-4" />
+                      Photos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLeftPanelView("google_earth")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        leftPanelView === "google_earth"
+                          ? "bg-[#0071e3] text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Globe className="w-4 h-4" />
+                      Google Earth
+                    </button>
                   </div>
-                )}
+                </div>
 
                 {showPhotos ? (
                   <div className="absolute inset-0 flex flex-col">
