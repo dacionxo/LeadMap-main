@@ -124,7 +124,7 @@ function getStatusLabel(listing: Listing, activeCategory?: FilterType): string {
   }
 
   // Generic fallback for other categories
-  return listing.active ? 'Active' : 'Foreclosure'
+  return listing.active ? 'Active' : 'Inactive'
 }
 
 function getStatusBadgeClasses(status: string, activeCategory?: FilterType): string {

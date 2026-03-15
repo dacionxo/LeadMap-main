@@ -231,7 +231,7 @@ function getStatusLabel(
   }
 
   // Generic fallback for other tables
-  return listing.active ? "Active" : "Foreclosure";
+  return listing.active ? "Active" : "Inactive";
 }
 
 function getStatusBadgeClasses(
