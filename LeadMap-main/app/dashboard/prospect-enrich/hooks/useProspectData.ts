@@ -150,6 +150,8 @@ const EXCLUSIVE_CATEGORY_FILTERS = new Set<FilterType>(['all', 'expired', 'proba
 const RESIDENTS_TABLE_NAME = 'property_skip_trace_residents'
 const CURRENT_RESIDENT_TYPES = new Set<string>(['Current', 'Owner-Occupant', 'owner-occupant', 'current'])
 const API_PAGE_SIZE = 1000
+const API_MAX_ROWS_PER_TABLE = 500000
+const API_MAX_PAGES_PER_TABLE = Math.ceil(API_MAX_ROWS_PER_TABLE / API_PAGE_SIZE)
 
 // ============================================================================
 // Helpers
@@ -196,9 +198,9 @@ export function useProspectData(userId: string | undefined) {
   }, [])
 
   /**
-   * Fetch a representative page from a listing table via the server paginated API.
-   * We intentionally avoid hydrating every page into memory so large datasets
-   * (100k-1M+) remain responsive; full pagination is handled in ProspectHoverTable.
+   * Fetch rows from a listing table via the server paginated API.
+   * Loads subsequent pages so category datasets continue past the first 1,000 rows.
+   * A guarded max page/row limit keeps memory and network usage bounded.
    */
   const fetchAllRowsFromApi = useCallback(
     async (
@@ -244,7 +246,35 @@ export function useProspectData(userId: string | undefined) {
       }
 
       const first = await fetchPage(1)
-      return { rows: first.pageRows, count: first.totalCount }
+      if (!first.pageRows.length) {
+        return { rows: [], count: first.totalCount }
+      }
+
+      const allRows: Listing[] = [...first.pageRows]
+      const expectedPages = first.totalCount > 0
+        ? Math.ceil(first.totalCount / API_PAGE_SIZE)
+        : 1
+      const maxPagesToFetch = Math.max(
+        1,
+        Math.min(expectedPages, API_MAX_PAGES_PER_TABLE)
+      )
+
+      for (let page = 2; page <= maxPagesToFetch; page++) {
+        if (allRows.length >= API_MAX_ROWS_PER_TABLE) break
+
+        const { pageRows } = await fetchPage(page)
+        if (!pageRows.length) break
+
+        allRows.push(...pageRows)
+
+        // Short page indicates end of dataset for this query.
+        if (pageRows.length < API_PAGE_SIZE) break
+      }
+
+      return {
+        rows: allRows.slice(0, API_MAX_ROWS_PER_TABLE),
+        count: first.totalCount
+      }
     },
     []
   )

@@ -1217,6 +1217,9 @@ function ProspectEnrichInner() {
       if (!profile?.id) return
 
       try {
+        const META_SCAN_PAGE_SIZE = 1000
+        const META_SCAN_MAX_ROWS = 500000
+        const META_SCAN_MAX_PAGES = Math.ceil(META_SCAN_MAX_ROWS / META_SCAN_PAGE_SIZE)
         const counts: Record<FilterType, number> = {
           all: 0,
           expired: 0,
@@ -1257,14 +1260,30 @@ function ProspectEnrichInner() {
         const currentCategory = getPrimaryCategory(selectedFilters)
         const categoryTableName = getTableName(currentCategory)
 
-        // For meta filters, calculate from the current category table, not just 'listings'
-        const { data: categoryData } = await supabase
-          .from(categoryTableName)
-          .select('list_price, list_price_min, created_at, updated_at')
+        // For meta filters, scan the full current category table in pages
+        // so counts are not limited by Supabase's default row window.
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000)
+        let scannedRows = 0
 
-        if (categoryData) {
-          const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
-          const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000)
+        for (let page = 0; page < META_SCAN_MAX_PAGES; page++) {
+          const start = page * META_SCAN_PAGE_SIZE
+          const end = start + META_SCAN_PAGE_SIZE - 1
+
+          const { data: categoryData, error: categoryDataError } = await supabase
+            .from(categoryTableName)
+            .select('list_price, list_price_min, created_at, updated_at')
+            .range(start, end)
+
+          if (categoryDataError) {
+            console.warn(`Error scanning ${categoryTableName} for meta filters:`, categoryDataError)
+            break
+          }
+
+          if (!categoryData || categoryData.length === 0) {
+            break
+          }
+
+          scannedRows += categoryData.length
 
           categoryData.forEach(listing => {
             if ((listing.list_price || 0) >= 500000) counts.high_value++
@@ -1280,6 +1299,13 @@ function ProspectEnrichInner() {
               counts.new_listings++
             }
           })
+
+          if (categoryData.length < META_SCAN_PAGE_SIZE) {
+            break
+          }
+          if (scannedRows >= META_SCAN_MAX_ROWS) {
+            break
+          }
         }
 
         setFilterCounts(counts)

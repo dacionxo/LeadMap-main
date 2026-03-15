@@ -18,8 +18,9 @@ const FSBO_FILTER_COLUMNS = new Set([
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const pageSize = parseInt(searchParams.get('pageSize') || '50')
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
+  const requestedPageSize = parseInt(searchParams.get('pageSize') || '50', 10)
+  const pageSize = Math.min(1000, Math.max(1, Number.isFinite(requestedPageSize) ? requestedPageSize : 50))
   const table = searchParams.get('table') || 'listings'
   const search = searchParams.get('search') || ''
   const sortBy = searchParams.get('sortBy') || 'created_at'

@@ -317,6 +317,13 @@ const MapComponent: React.FC<{
   // Below this zoom we show ~50 sampled pins (whole US); at or above we show full property pins.
   const minMarkerRenderZoom = 8;
   const maxZoomedOutPins = 50;
+  const getMaxPinsForZoom = (zoom: number | null | undefined): number => {
+    if (zoom == null || zoom < minMarkerRenderZoom) return maxZoomedOutPins; // National view cap
+    if (zoom < 10) return 300; // Statewide/regional view cap
+    if (zoom < 12) return 800; // Metro/county view cap
+    if (zoom < 14) return 1500; // City view cap
+    return 2500; // Neighborhood/street view cap
+  };
 
   // At nationwide zoom, show one marker per grid cell to prevent icon overlap
   const sampleLeadsForNationwideView = (leads: Lead[]): Lead[] => {
@@ -546,7 +553,7 @@ const MapComponent: React.FC<{
       // Nationwide view: sample across all leads, capped to ~50 pins.
       visibleLeadsWithCoords = sampleLeadsForNationwideView(
         leadsWithCoords
-      ).slice(0, maxZoomedOutPins);
+      ).slice(0, getMaxPinsForZoom(currentZoom));
     } else {
       // Zoomed-in view: only render leads that are currently inside the viewport, and cap to a reasonable max.
       const bounds = map.getBounds();
@@ -556,7 +563,7 @@ const MapComponent: React.FC<{
             return bounds.contains({ lat: lead.latitude, lng: lead.longitude });
           })
         : leadsWithCoords;
-      const maxInViewPins = 2500;
+      const maxInViewPins = getMaxPinsForZoom(currentZoom);
       visibleLeadsWithCoords =
         inView.length > maxInViewPins ? inView.slice(0, maxInViewPins) : inView;
     }

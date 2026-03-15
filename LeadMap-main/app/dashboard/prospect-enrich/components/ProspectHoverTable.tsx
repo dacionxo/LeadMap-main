@@ -1004,8 +1004,8 @@ export default function ProspectHoverTable({
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
                         {listing.last_sale_date
                           ? new Date(
-                              listing.last_sale_date
-                            ).toLocaleDateString()
+                            listing.last_sale_date
+                          ).toLocaleDateString()
                           : "-"}
                       </td>
                     )}

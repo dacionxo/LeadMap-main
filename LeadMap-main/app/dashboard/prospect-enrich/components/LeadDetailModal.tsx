@@ -364,7 +364,10 @@ export default function LeadDetailModal({
   onAddToCampaign,
   inCampaignsRefreshTrigger,
 }: LeadDetailModalProps) {
-  const tableName = sourceTable && VALID_LISTING_TABLES.includes(sourceTable) ? sourceTable : 'listings';
+  const fallbackTableName =
+    sourceTable && VALID_LISTING_TABLES.includes(sourceTable)
+      ? sourceTable
+      : "listings";
   const { profile } = useApp();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
@@ -375,19 +378,41 @@ export default function LeadDetailModal({
   const [showListsManager, setShowListsManager] = useState(false);
   const [inCampaigns, setInCampaigns] = useState(false);
   const [leftPanelView, setLeftPanelView] = useState<"photos" | "google_earth">("photos");
+  const [hydrationRequest, setHydrationRequest] = useState<{
+    id: string;
+    table: string;
+  } | null>(null);
   const autoAssignRef = useRef(false);
   const streetViewContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClientComponentClient();
+
+  const resolveListingTable = useCallback(
+    (candidate?: Listing | null): string => {
+      const fromListing = candidate?.source_table;
+      if (fromListing && VALID_LISTING_TABLES.includes(fromListing)) {
+        return fromListing;
+      }
+      return fallbackTableName;
+    },
+    [fallbackTableName]
+  );
 
   // Use listing from listingList directly for instant load, only fetch if needed for updates
   useEffect(() => {
     if (!listingId) return;
 
-    const index = listingList.findIndex((l) => l.listing_id === listingId);
+    const index = listingList.findIndex(
+      (l) => l.listing_id === listingId || l.property_url === listingId
+    );
     if (index >= 0) {
       setCurrentIndex(index);
-      // Use the listing from the list directly - no need to fetch
-      setListing(listingList[index]);
+      const candidate = listingList[index];
+      setListing(candidate);
+      const resolvedId = candidate.listing_id || candidate.property_url || listingId;
+      setHydrationRequest({
+        id: resolvedId,
+        table: resolveListingTable(candidate),
+      });
     } else {
       const selectedMatches =
         selectedListing &&
@@ -397,16 +422,32 @@ export default function LeadDetailModal({
       if (selectedMatches) {
         setCurrentIndex(0);
         setListing(selectedListing);
+        const resolvedId =
+          selectedListing.listing_id || selectedListing.property_url || listingId;
+        setHydrationRequest({
+          id: resolvedId,
+          table: resolveListingTable(selectedListing),
+        });
       } else {
-        logLeadDetailCategoryFailure(tableName, 'load', {
+        logLeadDetailCategoryFailure(fallbackTableName, 'load', {
           listingId,
           error: 'Listing not found in list',
         });
         // Let the dedicated fallback fetch effect hydrate this by ID.
+        setHydrationRequest({
+          id: listingId,
+          table: fallbackTableName,
+        });
         setListing(null);
       }
     }
-  }, [listingId, listingList, selectedListing, tableName]);
+  }, [
+    fallbackTableName,
+    listingId,
+    listingList,
+    resolveListingTable,
+    selectedListing,
+  ]);
 
   useEffect(() => {
     if (!listing) return;
@@ -430,71 +471,164 @@ export default function LeadDetailModal({
 
 
   const fetchListing = useCallback(
-    async (id: string) => {
+    async (id: string, preferredTable?: string) => {
       // Only fetch if we need fresh data (e.g., after updates). Use source table so fsbo_leads etc. return all columns.
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from(tableName)
-          .select("*")
-          .eq("listing_id", id)
-          .single();
+        const listMatch =
+          listingList.find((l) => l.listing_id === id || l.property_url === id) ??
+          selectedListing ??
+          null;
 
-        if (error) {
-          logLeadDetailCategoryFailure(tableName, 'fetch', { listingId: id, error });
-          console.error("Error fetching listing:", error);
-          // Fallback to listing from list if fetch fails
-          const fallbackListing = listingList.find((l) => l.listing_id === id);
-          setListing(fallbackListing || null);
-        } else {
-          setListing(data);
+        const tableCandidates = Array.from(
+          new Set(
+            [
+              preferredTable,
+              resolveListingTable(listMatch),
+              fallbackTableName,
+              "listings",
+              ...VALID_LISTING_TABLES,
+            ].filter(
+              (table): table is string =>
+                !!table && VALID_LISTING_TABLES.includes(table)
+            )
+          )
+        );
+
+        for (const table of tableCandidates) {
+          const byListingId = await supabase
+            .from(table)
+            .select("*")
+            .eq("listing_id", id)
+            .maybeSingle();
+
+          if (byListingId.error) {
+            logLeadDetailCategoryFailure(table, "fetch", {
+              listingId: id,
+              error: byListingId.error,
+            });
+            continue;
+          }
+          if (byListingId.data) {
+            setListing({ ...byListingId.data, source_table: table });
+            return;
+          }
+
+          const byPropertyUrl = await supabase
+            .from(table)
+            .select("*")
+            .eq("property_url", id)
+            .maybeSingle();
+
+          if (byPropertyUrl.error) {
+            logLeadDetailCategoryFailure(table, "fetch", {
+              listingId: id,
+              error: byPropertyUrl.error,
+            });
+            continue;
+          }
+          if (byPropertyUrl.data) {
+            setListing({ ...byPropertyUrl.data, source_table: table });
+            return;
+          }
         }
+
+        const fallbackListing = listingList.find(
+          (l) => l.listing_id === id || l.property_url === id
+        );
+        setListing(fallbackListing || null);
       } catch (err) {
-        logLeadDetailCategoryFailure(tableName, 'fetch', { listingId: id, error: err });
+        logLeadDetailCategoryFailure(fallbackTableName, "fetch", {
+          listingId: id,
+          error: err,
+        });
         console.error("Error:", err);
         // Fallback to listing from list if fetch fails
-        const fallbackListing = listingList.find((l) => l.listing_id === id);
+        const fallbackListing = listingList.find(
+          (l) => l.listing_id === id || l.property_url === id
+        );
         setListing(fallbackListing || null);
       } finally {
         setLoading(false);
       }
     },
-    [supabase, listingList, tableName]
+    [supabase, listingList, selectedListing, resolveListingTable, fallbackTableName]
   );
+
+  const hydrateListingAtIndex = useCallback(
+    (index: number) => {
+      const candidate = listingList[index];
+      if (!candidate) return;
+      setCurrentIndex(index);
+      setListing(candidate);
+      const resolvedId = candidate.listing_id || candidate.property_url;
+      if (resolvedId) fetchListing(resolvedId, resolveListingTable(candidate));
+    },
+    [fetchListing, listingList, resolveListingTable]
+  );
+
+  useEffect(() => {
+    if (!hydrationRequest) return;
+    fetchListing(hydrationRequest.id, hydrationRequest.table);
+  }, [fetchListing, hydrationRequest]);
 
   // Fallback hydration: when the selected row isn't present in listingList,
   // fetch the listing by ID from the category table.
   useEffect(() => {
     if (!listingId || listing) return;
-    fetchListing(listingId);
-  }, [listingId, listing, fetchListing]);
+    fetchListing(listingId, resolveListingTable(selectedListing));
+  }, [listingId, listing, fetchListing, resolveListingTable, selectedListing]);
 
   const handleUpdate = useCallback(
     async (updates: Partial<Listing>) => {
       if (!listing) return;
+      const targetTable = resolveListingTable(listing);
+      const listingIdentifier = listing.listing_id || listing.property_url;
+      const identifierColumn = listing.listing_id ? "listing_id" : "property_url";
+      if (!listingIdentifier) {
+        logLeadDetailCategoryFailure(targetTable, "update", {
+          listingId: listingId ?? undefined,
+          error: "Missing listing_id/property_url for update",
+        });
+        return;
+      }
 
       try {
         const { data, error } = await supabase
-          .from(tableName)
+          .from(targetTable)
           .update(updates)
-          .eq("listing_id", listing.listing_id)
+          .eq(identifierColumn, listingIdentifier)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
-          logLeadDetailCategoryFailure(tableName, 'update', { listingId: listing.listing_id, error });
+          logLeadDetailCategoryFailure(targetTable, "update", {
+            listingId: listingIdentifier,
+            error,
+          });
           console.error("Failed to update listing:", error);
           return;
         }
+        if (!data) {
+          logLeadDetailCategoryFailure(targetTable, "update", {
+            listingId: listingIdentifier,
+            error: "No row returned from update",
+          });
+          return;
+        }
 
-        setListing(data);
-        onUpdate?.(data);
+        const updatedWithTable = { ...data, source_table: targetTable };
+        setListing(updatedWithTable);
+        onUpdate?.(updatedWithTable);
       } catch (err) {
-        logLeadDetailCategoryFailure(tableName, 'update', { listingId: listing.listing_id, error: err });
+        logLeadDetailCategoryFailure(targetTable, "update", {
+          listingId: listingIdentifier,
+          error: err,
+        });
         console.error("Error updating listing:", err);
       }
     },
-    [listing, supabase, onUpdate, tableName]
+    [listing, supabase, onUpdate, resolveListingTable, listingId]
   );
 
   useEffect(() => {
@@ -539,28 +673,22 @@ export default function LeadDetailModal({
       setIsSaved(true);
       setListing((prev) => (prev ? { ...prev, in_crm: true } : prev));
     } catch (error) {
-      logLeadDetailCategoryFailure(tableName, 'save', { listingId: sourceId, error });
+      logLeadDetailCategoryFailure(resolveListingTable(listing), 'save', { listingId: sourceId, error });
       console.error("Error saving listing:", error);
     } finally {
       setIsSaving(false);
     }
-  }, [listing, profile?.id, isSaved, isSaving, supabase, tableName]);
+  }, [listing, profile?.id, isSaved, isSaving, supabase, resolveListingTable]);
 
   const goToPrevious = () => {
     if (currentIndex > 0) {
-      const newIndex = currentIndex - 1;
-      setCurrentIndex(newIndex);
-      // Use listing directly from list - no fetch needed
-      setListing(listingList[newIndex]);
+      hydrateListingAtIndex(currentIndex - 1);
     }
   };
 
   const goToNext = () => {
     if (currentIndex < listingList.length - 1) {
-      const newIndex = currentIndex + 1;
-      setCurrentIndex(newIndex);
-      // Use listing directly from list - no fetch needed
-      setListing(listingList[newIndex]);
+      hydrateListingAtIndex(currentIndex + 1);
     }
   };
 
@@ -577,19 +705,15 @@ export default function LeadDetailModal({
   useEffect(() => {
     const handleArrowKeys = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" && currentIndex > 0) {
-        const newIndex = currentIndex - 1;
-        setCurrentIndex(newIndex);
-        setListing(listingList[newIndex]);
+        hydrateListingAtIndex(currentIndex - 1);
       }
       if (e.key === "ArrowRight" && currentIndex < listingList.length - 1) {
-        const newIndex = currentIndex + 1;
-        setCurrentIndex(newIndex);
-        setListing(listingList[newIndex]);
+        hydrateListingAtIndex(currentIndex + 1);
       }
     };
     window.addEventListener("keydown", handleArrowKeys);
     return () => window.removeEventListener("keydown", handleArrowKeys);
-  }, [currentIndex, listingList]);
+  }, [currentIndex, hydrateListingAtIndex, listingList.length]);
 
   if (!listingId) return null;
 

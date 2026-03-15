@@ -139,6 +139,14 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
   const markerZoomThreshold = 6;
   const minMarkerRenderZoom = 8;
   const maxZoomedOutPins = 50;
+  const maxGeocodePerPass = 120;
+  const getMaxPinsForZoom = (zoom: number | null | undefined): number => {
+    if (zoom == null || zoom < minMarkerRenderZoom) return maxZoomedOutPins; // National view cap
+    if (zoom < 10) return 300; // Statewide/regional view cap
+    if (zoom < 12) return 800; // Metro/county view cap
+    if (zoom < 14) return 1500; // City view cap
+    return 2500; // Neighborhood/street view cap
+  };
 
   // Nationwide marker: blue dot, 20% smaller (26px), black shadow outline, ratios retained
   const createNationwideMarkerHTML = (): string => {
@@ -638,7 +646,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
     if (isZoomedOut) {
       visibleLeadsWithCoords = sampleLeadsForNationwideView(
         leadsWithCoords
-      ).slice(0, maxZoomedOutPins);
+      ).slice(0, getMaxPinsForZoom(currentZoom));
     } else {
       const mapBounds = map.current.getBounds();
       const inView = mapBounds
@@ -652,7 +660,7 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
             );
           })
         : leadsWithCoords;
-      const maxInViewPins = 2500;
+      const maxInViewPins = getMaxPinsForZoom(currentZoom);
       visibleLeadsWithCoords =
         inView.length > maxInViewPins ? inView.slice(0, maxInViewPins) : inView;
     }
@@ -706,13 +714,14 @@ const MapboxViewFallback: React.FC<MapboxViewFallbackProps> = ({
 
     // Geocode only when zoomed in (state level+) to avoid loading many markers at nationwide
     if (leadsWithoutCoords.length > 0 && !isZoomedOut) {
-      setGeocodingCount(leadsWithoutCoords.length);
+      const geocodeBatch = leadsWithoutCoords.slice(0, maxGeocodePerPass);
+      setGeocodingCount(geocodeBatch.length);
 
       // Get current cached geocodes
       const currentCache = geocodedLeads;
 
       Promise.all(
-        leadsWithoutCoords.map(async (lead) => {
+        geocodeBatch.map(async (lead) => {
           const coords = await geocodeAddress(lead, currentCache);
           return { lead, coords };
         })

@@ -2,7 +2,6 @@
 
 import { useApp } from "@/app/providers";
 import MapView from "@/components/MapView";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSearchParams } from "next/navigation";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
@@ -17,6 +16,8 @@ const LeadDetailModal = lazy(
 
 interface Listing {
   listing_id: string;
+  property_url?: string;
+  source_table?: string | null;
   address?: string;
   street?: string;
   unit?: string;
@@ -44,7 +45,6 @@ interface Listing {
   primary_photo?: string;
   photos_json?: unknown;
   url?: string;
-  property_url?: string;
   text?: string;
   description?: string;
   agent_name?: string;
@@ -64,7 +64,6 @@ function getFirstPhotoUrl(photosJson: unknown): string | undefined {
 export default function MapPage() {
   const { profile } = useApp();
   const searchParams = useSearchParams();
-  const supabase = useMemo(() => createClientComponentClient(), []);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
@@ -77,6 +76,27 @@ export default function MapPage() {
     lng: number;
   } | null>(null);
   const lastFlownListingIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
+  const loadSessionRef = useRef(0);
+  const activeAbortRef = useRef<AbortController | null>(null);
+
+  const MAP_TABLES = useMemo(
+    () => [
+      "listings",
+      "expired_listings",
+      "probate_leads",
+      "fsbo_leads",
+      "frbo_leads",
+      "imports",
+      "trash",
+      "foreclosure_listings",
+    ],
+    []
+  );
+  const MAP_INITIAL_PAGE_SIZE = 1000;
+  const MAP_LAZY_PAGE_SIZE = 1000;
+  const MAP_MAX_PAGES_PER_TABLE = 12; // Lazy cap: do not fully paginate each table
+  const MAP_LAZY_MAX_RECORDS = 500000;
 
   const handleGeocodeResult = useCallback(
     (result: { lat: number; lng: number; formattedAddress?: string }) => {
@@ -139,8 +159,15 @@ export default function MapPage() {
           if (data.formattedAddress) setSearchQuery(data.formattedAddress);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [searchParams, listings]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (profile?.id) {
@@ -185,57 +212,142 @@ export default function MapPage() {
     setShowOnboarding(false);
   };
 
+  const fetchTablePage = useCallback(
+    async (
+      table: string,
+      page: number,
+      pageSize: number,
+      signal: AbortSignal
+    ): Promise<Listing[]> => {
+      const response = await fetch(
+        `/api/map/listings?table=${encodeURIComponent(table)}&mode=pin&page=${page}&pageSize=${pageSize}&sortBy=created_at&sortOrder=desc`,
+        {
+          credentials: "include",
+          cache: "no-store",
+          signal,
+        }
+      );
+
+      if (!response.ok) {
+        const message = await response.text().catch(() => "");
+        throw new Error(
+          `Failed loading ${table} page ${page}: ${response.status} ${response.statusText} ${message}`.trim()
+        );
+      }
+
+      const payload = await response.json();
+      return Array.isArray(payload?.data) ? (payload.data as Listing[]) : [];
+    },
+    []
+  );
+
+  const mergeDedup = useCallback((current: Listing[], incoming: Listing[]): Listing[] => {
+    if (!incoming.length) return current;
+    const map = new Map<string, Listing>();
+    current.forEach((row) => {
+      const key = row.listing_id || row.property_url || "";
+      if (key) map.set(key, row);
+    });
+    incoming.forEach((row) => {
+      const key = row.listing_id || row.property_url || "";
+      if (key && !map.has(key)) {
+        map.set(key, row);
+      }
+    });
+    return Array.from(map.values());
+  }, []);
+
   const fetchListings = async () => {
+    const sessionId = loadSessionRef.current + 1;
+    loadSessionRef.current = sessionId;
+    activeAbortRef.current?.abort();
+    const abortController = new AbortController();
+    activeAbortRef.current = abortController;
+
     try {
       setLoading(true);
-
-      // Fetch from all prospect tables (same as prospect-enrich page)
-      const tablesToFetch = [
-        "listings",
-        "expired_listings",
-        "probate_leads",
-        "fsbo_leads",
-        "frbo_leads",
-        "imports",
-        "trash",
-        "foreclosure_listings",
-      ];
-
-      // Fetch in parallel with error handling
-      const promises = tablesToFetch.map(async (table) => {
+      const initialPromises = MAP_TABLES.map(async (table) => {
         try {
-          const result = await supabase
-            .from(table)
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(2000); // Increased limit for map view
-
-          if (result.error) {
-            console.warn(`Error fetching from ${table}:`, result.error);
-            return [];
-          }
-          return result.data || [];
+          return await fetchTablePage(
+            table,
+            1,
+            MAP_INITIAL_PAGE_SIZE,
+            abortController.signal
+          );
         } catch (error) {
-          console.warn(`Exception fetching from ${table}:`, error);
+          console.warn(`Initial map fetch failed for ${table}:`, error);
           return [];
         }
       });
+      const initialResults = await Promise.all(initialPromises);
+      const initialRows = initialResults.flat();
 
-      const results = await Promise.allSettled(promises);
+      if (
+        isMountedRef.current &&
+        loadSessionRef.current === sessionId &&
+        !abortController.signal.aborted
+      ) {
+        setListings(initialRows);
+        setLoading(false);
+      }
 
-      // Aggregate all successful results
-      const allListings: Listing[] = [];
-      results.forEach((result) => {
-        if (result.status === "fulfilled" && Array.isArray(result.value)) {
-          allListings.push(...result.value);
+      // Heavy lazy-load: append additional lightweight pages in controlled background batches.
+      const tablePageMap = new Map<string, number>();
+      MAP_TABLES.forEach((table) => tablePageMap.set(table, 2));
+      let currentRows = initialRows;
+
+      for (let pass = 0; pass < MAP_MAX_PAGES_PER_TABLE - 1; pass += 1) {
+        if (abortController.signal.aborted) break;
+        if (currentRows.length >= MAP_LAZY_MAX_RECORDS) break;
+
+        const pagePromises = MAP_TABLES.map(async (table) => {
+          const page = tablePageMap.get(table) || 2;
+          try {
+            const rows = await fetchTablePage(
+              table,
+              page,
+              MAP_LAZY_PAGE_SIZE,
+              abortController.signal
+            );
+            return { table, page, rows };
+          } catch (error) {
+            console.warn(`Lazy map fetch failed for ${table} page ${page}:`, error);
+            return { table, page, rows: [] as Listing[] };
+          }
+        });
+
+        const pageResults = await Promise.all(pagePromises);
+        const nonEmptyRows = pageResults.flatMap((r) => r.rows);
+        pageResults.forEach(({ table, page }) => {
+          tablePageMap.set(table, page + 1);
+        });
+
+        if (!nonEmptyRows.length) break;
+
+        currentRows = mergeDedup(currentRows, nonEmptyRows).slice(
+          0,
+          MAP_LAZY_MAX_RECORDS
+        );
+
+        if (
+          isMountedRef.current &&
+          loadSessionRef.current === sessionId &&
+          !abortController.signal.aborted
+        ) {
+          setListings(currentRows);
         }
-      });
 
-      setListings(allListings);
+        await new Promise((resolve) => setTimeout(resolve, 60));
+      }
     } catch (error) {
       console.error("Error fetching listings:", error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+      if (activeAbortRef.current === abortController) {
+        activeAbortRef.current = null;
+      }
     }
   };
 
@@ -344,6 +456,16 @@ export default function MapPage() {
     setFlyToCenter(null);
   }, []);
 
+  const selectedListing = useMemo(() => {
+    if (!selectedListingId) return null;
+    return (
+      listings.find(
+        (l) =>
+          l.listing_id === selectedListingId || l.property_url === selectedListingId
+      ) ?? null
+    );
+  }, [listings, selectedListingId]);
+
   return (
     <DashboardLayout hideHeader fullBleed>
       <div className="flex flex-row h-full w-full min-h-0 bg-white dark:bg-gray-900">
@@ -405,6 +527,8 @@ export default function MapPage() {
             <LeadDetailModal
               listingId={selectedListingId}
               listingList={listings}
+              selectedListing={selectedListing}
+              sourceTable={selectedListing?.source_table ?? null}
               onClose={handleCloseModal}
             />
           </Suspense>
